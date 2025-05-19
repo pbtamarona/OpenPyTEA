@@ -1,5 +1,55 @@
-import numpy as np
+"""
+===============================================================================
+Description:
+------------
+This module provides equipment cost estimation functions based on empirical 
+cost correlations derived from various peer-reviewed engineering literature. 
+The functions allow for the calculation of capital costs for a wide range of 
+chemical process equipment, such as boilers, compressors, heat exchangers, 
+reactors, turbines, pumps, and more.
 
+Each function typically accepts a capacity or design parameter (`s`), performs 
+validation against known applicability limits, and returns the estimated cost 
+adjusted to the original publication year. Some functions also account for 
+multiple parallel units when the specified capacity exceeds standard bounds.
+
+References include sources like Towler & Sinnott (2010), Ulrich (2003), Kreutz 
+(2002), Manzolini (2006/2011), Parkinson (2016), and others.
+
+Contents:
+---------
+- General utilities for parallelization and cost calculation
+- Cost models for:
+  * Furnaces and Boilers
+  * Compressors and Blowers
+  * Cyclones
+  * CCS technologies
+  * Heat Exchangers
+  * Electric Motors
+  * Pumps
+  * Pressure Vessels
+  * Reactors
+  * Turbines
+
+Usage:
+------
+Import this module in your process modeling or techno-economic analysis 
+scripts to access the cost correlation functions. Example:
+
+    from cost_correlations import boilers_packaged_towler_2010
+
+    cost, num_units, year = boilers_packaged_towler_2010(150000)
+
+    print(f"Estimated Cost (USD): {cost}, Units: {num_units}, Year: {year}")
+
+Note:
+-----
+All cost values are reported in USD and are representative of the year stated 
+in the corresponding function. Inflation or currency adjustments must be 
+applied separately to normalize to a target year.
+===============================================================================
+"""
+import numpy as np
 
 def calculate_parallel_units(s, upper_bound):
     num_units = np.ones_like(s, dtype=int)
@@ -13,7 +63,8 @@ def calculate_parallel_units(s, upper_bound):
     return num_units, adjusted_s
 
 
-# cost correlations from various literature
+# Cost calculation functions
+# -----------------------------------------------------------------------------
 def calculate_cost(s, s0, c0, f, cost_year, num_units):
     ci = (c0 * (s / s0) ** f) * 1e6
     return ci*num_units, num_units, cost_year
@@ -35,7 +86,8 @@ def validate_input_range(s, lower_bound, upper_bound):
         )
     return s
 
-
+# Collection of cost correlations for various equipment types
+# -----------------------------------------------------------------------------
 # Burner / Furnace / Boilers
 def burner_parkinson_2016(s):  # doi: https://doi.org/10.1002/ceat.201600414  /  https://doi.org/10.1016/j.ijhydene.2020.11.079
     # s in m3 of vessel volume
