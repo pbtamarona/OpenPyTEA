@@ -1,6 +1,8 @@
 import pandas as pd
+import numpy as np
 import math
 from scipy.optimize import root_scalar
+
 from equipment import *
 
 def calculate_isbl(config):
