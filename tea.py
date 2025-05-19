@@ -1,6 +1,10 @@
+import matplotlib.pyplot as plt
+import scienceplots
+plt.style.use(['science','ieee'])
 import pandas as pd
 import numpy as np
 import math
+from copy import deepcopy
 from scipy.optimize import root_scalar
 
 from equipment import *
@@ -163,6 +167,41 @@ def calculate_operating_labor(config):
 
     return operating_labor_costs
 
+
+def calculate_variable_opex(config):
+    """
+    Calculate the total variable operating expenses (OPEX) based on the provided configuration.
+    Args:
+        config (dict): A configuration dictionary containing a 'variable_opex' key. 
+            The value should be a dictionary where each key is an item name and each value is a dictionary 
+            with 'consumption' (float or int) and 'price' (float or int) keys.
+    Returns:
+        float: The total variable production costs calculated as the sum of (consumption * price) for each item.
+    Example:
+        config = {
+            'variable_opex': {
+                'electricity': {'consumption': 1000, 'price': 0.1},
+                'water': {'consumption': 500, 'price': 0.05}
+            }
+        }
+        total_opex = calculate_variable_opex(config)
+    """
+    
+    variable_opex_items = config.get('variable_opex_inputs', {})
+    variable_production_costs = 0
+
+    for item, details in variable_opex_items.items():
+        consumption = details.get('consumption', 0)
+        price = details.get('price', 0)
+
+        cost = consumption * price
+        variable_production_costs += cost
+
+    config['variable_opex'] = variable_production_costs
+
+    return variable_production_costs
+
+
 def calculate_fixed_opex(config):
     """
     Calculate the fixed operating expenses (OPEX) for a chemical process based on the provided configuration.
@@ -251,7 +290,7 @@ def calculate_cash_flow(config):
     - The function raises a ValueError if `project_lifetime` is less than or equal to 3.
     """
     
-    project_lifetime = config["project_lifetime"]
+    project_lifetime = int(config["project_lifetime"])
     fixed_capital = config["fixed_capital"]
     working_capital = config["working_capital"]
     fixed_opex = config["fixed_opex"]
@@ -466,6 +505,30 @@ def calculate_payback_time(config):
         
     return payback_time
 
+def calculate_roi(config):
+    """
+    Calculate the return on investment (ROI) for a given project configuration.
+    Args:
+        config (dict): A dictionary containing the following keys:
+            - "gross_profit_array" (array-like): Array of gross profits for each period.
+            - "tax_paid_array" (array-like): Array of taxes paid for each period.
+            - "fixed_capital" (float): The fixed capital investment.
+            - "working_capital" (float): The working capital investment.
+            - "project_lifetime" (int or float): The total lifetime of the project.
+    Returns:
+        float: The calculated ROI as a fraction.
+    Notes:
+        ROI is calculated as the sum of net profits over the project lifetime divided by
+        the product of project lifetime and total investment (fixed + working capital).
+    """
+
+    net_profit = config["gross_profit_array"] - config["tax_paid_array"]
+    total_investment = config["fixed_capital"] + config["working_capital"]
+
+    roi = np.sum(net_profit) / (config['project_lifetime'] * np.sum(total_investment))
+        
+    return roi
+
 def calculate_irr(config):
     """
     Calculates the Internal Rate of Return (IRR) for a given cash flow series.
@@ -491,3 +554,65 @@ def calculate_irr(config):
     
     except (ValueError, RuntimeError):
         return float('nan')
+
+def tornado_plot(config, plus_minus_value):
+
+    keys = ['project_lifetime',
+            'interest_rate',
+            'operator_hourly_rate']
+    
+    sensitivity_factors = {
+    key: [
+        config[key] * (1 - plus_minus_value), 
+        config[key] * (1 + plus_minus_value)
+    ] 
+    for key in keys
+    }
+
+    sensitivity_results = {}
+    for factor, values in sensitivity_factors.items():
+        sensitivity_results[factor] = []
+        sensitivity_config = deepcopy(config)
+        for value in values:
+            sensitivity_config[factor] = value
+            calculate_fixed_capital(sensitivity_config)
+            calculate_variable_opex(sensitivity_config)
+            calculate_fixed_opex(sensitivity_config)
+            calculate_cash_flow(sensitivity_config)
+            sensitivity_results[factor].append(calculate_levelized_cost(sensitivity_config))
+
+    # Calculate the base case LCOH
+    lcoh_base = calculate_levelized_cost(config)
+
+    # Prepare data for plotting
+    factors = list(sensitivity_results.keys())
+    positive_impacts = [sensitivity_results[factor][0] for factor in factors] - lcoh_base
+    negative_impacts = [sensitivity_results[factor][1] for factor in factors] - lcoh_base
+    total_effects = [abs(p) + abs(n) for p, n in zip(positive_impacts, negative_impacts)]
+
+    # Sort factors by total effect
+    sorted_data = sorted(zip(total_effects, factors, positive_impacts, negative_impacts), key=lambda x: x[0])
+    _, factors, positive_impacts, negative_impacts = zip(*sorted_data)
+
+    # Mapping of original factor names to desired labels
+    labels = {
+        "project_lifetime": "Project lifetime",
+        "interest_rate": "Interest rate",
+        "operator_hourly_rate": "Operator hourly rate",
+    }
+
+    # Get the labels for the sorted factors
+    labels_sorted = [labels[factor] for factor in factors]
+
+    # Plotting
+    y_pos = np.arange(len(labels_sorted))
+    plt.figure(figsize=(3.3, 4))
+    plt.barh(y_pos, positive_impacts, color="#87CEEB", edgecolor="black", label=r'-50\%')
+    plt.barh(y_pos, negative_impacts, color="#FF9999", edgecolor="black", label=r'+50\%')
+    plt.xlim(-2.05,2.05)
+    plt.yticks(y_pos, labels_sorted)
+    plt.xticks([-2, -1, 0, 1, 2], [round(lcoh_base - 2, 1), round(lcoh_base - 1, 1), round(lcoh_base, 1), round(lcoh_base + 1, 1), round(lcoh_base + 2, 1)])
+    plt.xlabel(r'Levelized cost of product / [US\$$\cdot$unit$^{-1}$]')
+    plt.legend(loc='best')
+
+    plt.show()
