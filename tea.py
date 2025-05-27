@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 import scienceplots
 plt.style.use(['science','ieee'])
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import math
 from copy import deepcopy
 from scipy.optimize import root_scalar
+from scipy.stats import truncnorm, norm
 
 from equipment import *
 
@@ -64,7 +66,7 @@ def calculate_isbl(config):
 
     return isbl
 
-def calculate_fixed_capital(config):
+def calculate_fixed_capital(config, fc=1.0):
     """
     Calculate the fixed capital investment for a process based on its configuration.
     This function computes the inside battery limits (ISBL), outside battery limits (OSBL),
@@ -93,7 +95,7 @@ def calculate_fixed_capital(config):
     The function updates the input `config` dictionary in-place with the calculated values.
     """
 
-    isbl = calculate_isbl(config)
+    isbl = calculate_isbl(config) * fc
     
     processTypes = {
     'Solids': {'OS': 0.4, 'DE': 0.2, 'X': 0.1},
@@ -202,7 +204,7 @@ def calculate_variable_opex(config):
     return variable_production_costs
 
 
-def calculate_fixed_opex(config):
+def calculate_fixed_opex(config, fp=1.0):
     """
     Calculate the fixed operating expenses (OPEX) for a chemical process based on the provided configuration.
     This function computes various components of fixed OPEX, including labor, supervision, overheads, maintenance, taxes, insurance, rent, environmental charges, supplies, and general plant overhead. It also accounts for interest on working capital, patents and royalties, distribution and selling costs, and R&D costs. The result is stored in the 'fixed_opex' key of the input config dictionary.
@@ -250,47 +252,34 @@ def calculate_fixed_opex(config):
 
     fixed_production_costs += patents_royalties + distribution_selling_costs + RnD_costs
 
-    config['fixed_opex'] = fixed_production_costs
+    config['fixed_opex'] = fixed_production_costs * fp
 
     return fixed_production_costs
 
 def calculate_cash_flow(config):
-    """
-    Calculates the annual cash flow and related financial arrays for a project based on the provided configuration.
-    Parameters
-    ----------
-    config : dict
-        Dictionary containing the following keys:
-            - "project_lifetime" (int): Total number of years for the project (must be > 3).
-            - "fixed_capital" (float): Total fixed capital investment.
-            - "working_capital" (float): Working capital required.
-            - "fixed_opex" (float): Annual fixed operating expenses.
-            - "variable_opex" (float): Annual variable operating expenses.
-            - "annual_prod" (float): Annual production quantity.
-            - "product_price" (float): Price per unit of product.
-            - "tax_rate" (float): Corporate tax rate (as a fraction, e.g., 0.3 for 30%).
-    Returns
-    -------
-    tuple of numpy.ndarray
-        A tuple containing the following arrays, each of length `project_lifetime`:
-            - capital_cost_array: Annual capital expenditures.
-            - prod_array: Annual production quantities.
-            - cash_cost_array: Annual cash operating costs.
-            - revenue_array: Annual revenues.
-            - gross_profit_array: Annual gross profits (revenue - cash costs).
-            - depreciation_array: Annual depreciation amounts.
-            - taxable_income_array: Annual taxable incomes.
-            - tax_paid_array: Annual taxes paid.
-            - cash_flow: Annual cash flows.
-    Notes
-    -----
-    - The function updates the input `config` dictionary with the computed arrays.
-    - Depreciation is calculated over half the project lifetime.
-    - Working capital is recovered in the final year.
-    - The function raises a ValueError if `project_lifetime` is less than or equal to 3.
-    """
     
-    project_lifetime = int(config["project_lifetime"])
+    # Assume self.project_lifetime is a NumPy array with shape (n_components)
+    n_components = len(config["project_lifetime"]) if isinstance(config["project_lifetime"], (list, np.ndarray)) else 1
+    
+    project_lifetime = config["project_lifetime"]
+
+    if isinstance(project_lifetime, (list, np.ndarray)):
+        project_lifetime = np.array(project_lifetime, dtype=float)  # ensure numeric
+
+        project_lifetime = project_lifetime.astype(int)
+
+        # Check if all elements are integer-like (e.g., 3.0 is OK, 3.5 is not)
+        if not np.all(np.equal(np.mod(project_lifetime, 1), 0)):
+            raise TypeError("All values in project_lifetime must be integers.")
+
+        if np.any(np.array(project_lifetime < 3)):
+            raise ValueError("All project_lifetime values must be greater than 3.")
+        
+    else:
+        project_lifetime = int(project_lifetime)
+        if project_lifetime < 3:
+            raise ValueError("Project lifetime must be greater than 3.")
+           
     fixed_capital = config["fixed_capital"]
     working_capital = config["working_capital"]
     fixed_opex = config["fixed_opex"]
@@ -298,78 +287,131 @@ def calculate_cash_flow(config):
     annual_prod = config["annual_prod"]
     product_price = config["product_price"]
     tax_rate = config["tax_rate"]
-    
-    if project_lifetime <= 3:
-        raise ValueError("Project lifetime must be greater than 3.")
         
     # Initialize arrays
-    capital_cost_array = np.zeros(project_lifetime)
-    prod_array = np.zeros(project_lifetime)
-    revenue_array = np.zeros(project_lifetime)
-    cash_cost_array = np.zeros(project_lifetime)
-    gross_profit_array = np.zeros(project_lifetime)
-    depreciation_array = np.zeros(project_lifetime)
-    taxable_income_array = np.zeros(project_lifetime)
-    tax_paid_array = np.zeros(project_lifetime)
+    capital_cost_array = [np.zeros(lifetime) for lifetime in project_lifetime] if isinstance(project_lifetime, (list, np.ndarray)) else np.zeros(project_lifetime)
+    prod_array = [np.zeros(lifetime) for lifetime in project_lifetime] if isinstance(project_lifetime, (list, np.ndarray)) else np.zeros(project_lifetime)
+    revenue_array = [np.zeros(lifetime) for lifetime in project_lifetime] if isinstance(project_lifetime, (list, np.ndarray)) else np.zeros(project_lifetime)
+    cash_cost_array = [np.zeros(lifetime) for lifetime in project_lifetime] if isinstance(project_lifetime, (list, np.ndarray)) else np.zeros(project_lifetime)
+    gross_profit_array = [np.zeros(lifetime) for lifetime in project_lifetime] if isinstance(project_lifetime, (list, np.ndarray)) else np.zeros(project_lifetime)
+    depreciation_array = [np.zeros(lifetime) for lifetime in project_lifetime] if isinstance(project_lifetime, (list, np.ndarray)) else np.zeros(project_lifetime)
+    taxable_income_array = [np.zeros(lifetime) for lifetime in project_lifetime] if isinstance(project_lifetime, (list, np.ndarray)) else np.zeros(project_lifetime)
+    tax_paid_array = [np.zeros(lifetime) for lifetime in project_lifetime] if isinstance(project_lifetime, (list, np.ndarray)) else np.zeros(project_lifetime)
+
+    cash_flow = [np.zeros(lifetime) for lifetime in project_lifetime] if isinstance(project_lifetime, (list, np.ndarray)) else np.zeros(project_lifetime)
 
     previous_taxable_income = 0
     depreciation_counter = 0
-    depreciation_amount = fixed_capital / (project_lifetime / 2)
+    depreciation_duration = project_lifetime // 2  # array of durations
+    depreciation_amount = fixed_capital / depreciation_duration  # array of amounts
+    
+    if isinstance(project_lifetime, (list, np.ndarray)):
+        for i in range(n_components): 
+            for year in range(project_lifetime[i]):
+                if year == 0:
+                    prod = 0
+                    cash_cost = 0
+                    capital_cost = fixed_capital[i] * 0.3
+                    revenue = 0
+                elif year == 1:
+                    prod = 0
+                    cash_cost = 0
+                    capital_cost = fixed_capital[i] * 0.6
+                    revenue = 0
+                elif year == 2:
+                    prod = 0.4 * annual_prod
+                    cash_cost = fixed_opex[i] + 0.4 * variable_opex[i]
+                    capital_cost = fixed_capital[i] * 0.1 + working_capital
+                    revenue = product_price * prod
+                elif year == 3:
+                    prod = 0.8 * annual_prod
+                    cash_cost = fixed_opex[i] + 0.8 * variable_opex[i]
+                    capital_cost = 0
+                    revenue = product_price * prod
+                else:
+                    prod = annual_prod
+                    cash_cost = fixed_opex[i] + variable_opex[i]
+                    capital_cost = 0
+                    revenue = product_price * prod
 
-    cash_flow = np.zeros(project_lifetime)
+                gross_profit = revenue - cash_cost
 
-    for year in range(project_lifetime):
-        if year == 0:
-            prod = 0
-            cash_cost = 0
-            capital_cost = fixed_capital * 0.3
-            revenue = 0
-        elif year == 1:
-            prod = 0
-            cash_cost = 0
-            capital_cost = fixed_capital * 0.6
-            revenue = 0
-        elif year == 2:
-            prod = 0.4 * annual_prod
-            cash_cost = fixed_opex + 0.4 * variable_opex
-            capital_cost = fixed_capital * 0.1 + working_capital
-            revenue = product_price * prod
-        elif year == 3:
-            prod = 0.8 * annual_prod
-            cash_cost = fixed_opex + 0.8 * variable_opex
-            capital_cost = 0
-            revenue = product_price * prod
-        else:
-            prod = annual_prod
-            cash_cost = fixed_opex + variable_opex
-            capital_cost = 0
-            revenue = product_price * prod
+                if gross_profit > 0 and depreciation_counter < depreciation_duration[i]:
+                    depreciation = depreciation_amount[i]
+                    depreciation_counter += 1
+                else:
+                    depreciation = 0
 
-        gross_profit = revenue - cash_cost
+                taxable_income = gross_profit - depreciation
+                tax_paid = tax_rate * previous_taxable_income if previous_taxable_income > 0 else 0
 
-        if gross_profit > 0 and depreciation_counter < (project_lifetime/2):
-            depreciation = depreciation_amount
-            depreciation_counter += 1
-        else:
-            depreciation = 0
+                capital_cost_array[i][year] = capital_cost
+                prod_array[i][year] = prod
+                cash_cost_array[i][year] = cash_cost
+                revenue_array[i][year] = revenue
+                gross_profit_array[i][year] = gross_profit
+                depreciation_array[i][year] = depreciation
+                taxable_income_array[i][year] = taxable_income
+                tax_paid_array[i][year] = tax_paid
+                cash_flow[i][year] = gross_profit - tax_paid - capital_cost
 
-        taxable_income = gross_profit - depreciation
-        tax_paid = tax_rate * previous_taxable_income if previous_taxable_income > 0 else 0
+                previous_taxable_income = taxable_income
 
-        capital_cost_array[year] = capital_cost
-        prod_array[year] = prod
-        cash_cost_array[year] = cash_cost
-        revenue_array[year] = revenue
-        gross_profit_array[year] = gross_profit
-        depreciation_array[year] = depreciation
-        taxable_income_array[year] = taxable_income
-        tax_paid_array[year] = tax_paid
-        cash_flow[year] = gross_profit - tax_paid - capital_cost
+            capital_cost_array[i][-1] -= working_capital
+            cash_flow[i][-1] += working_capital
+    else:
+        for year in range(project_lifetime):
+            if year == 0:
+                prod = 0
+                cash_cost = 0
+                capital_cost = fixed_capital * 0.3
+                revenue = 0
+            elif year == 1:
+                prod = 0
+                cash_cost = 0
+                capital_cost = fixed_capital * 0.6
+                revenue = 0
+            elif year == 2:
+                prod = 0.4 * annual_prod
+                cash_cost = fixed_opex + 0.4 * variable_opex
+                capital_cost = fixed_capital * 0.1 + working_capital
+                revenue = product_price * prod
+            elif year == 3:
+                prod = 0.8 * annual_prod
+                cash_cost = fixed_opex + 0.8 * variable_opex
+                capital_cost = 0
+                revenue = product_price * prod
+            else:
+                prod = annual_prod
+                cash_cost = fixed_opex + variable_opex
+                capital_cost = 0
+                revenue = product_price * prod
 
-        previous_taxable_income = taxable_income
+            gross_profit = revenue - cash_cost
 
-    capital_cost_array[-1] -= working_capital  
-    cash_flow[-1] += working_capital
+            if gross_profit > 0 and depreciation_counter < (project_lifetime/2):
+                depreciation = depreciation_amount
+                depreciation_counter += 1
+            else:
+                depreciation = 0
+
+            taxable_income = gross_profit - depreciation
+            tax_paid = tax_rate * previous_taxable_income if previous_taxable_income > 0 else 0
+
+            capital_cost_array[year] = capital_cost
+            prod_array[year] = prod
+            cash_cost_array[year] = cash_cost
+            revenue_array[year] = revenue
+            gross_profit_array[year] = gross_profit
+            depreciation_array[year] = depreciation
+            taxable_income_array[year] = taxable_income
+            tax_paid_array[year] = tax_paid
+            cash_flow[year] = gross_profit - tax_paid - capital_cost
+
+            previous_taxable_income = taxable_income
+
+        capital_cost_array[-1] -= working_capital  
+        cash_flow[-1] += working_capital
 
     config.update({
         "capital_cost_array": capital_cost_array,
@@ -453,29 +495,24 @@ def create_cash_flow_table(config):
     return formatted_df
 
 def calculate_levelized_cost(config):
-    """
-    Calculates the levelized cost of production for a given configuration.
-    This function discounts capital and operating expenditures, as well as production output,
-    over the project lifetime using the provided interest rate, and computes the levelized cost
-    (i.e., the discounted total cost per unit of discounted production).
-    Args:
-        config (dict): A dictionary containing the following keys:
-            - "capital_cost_array" (array-like): Annual capital expenditures for each year.
-            - "prod_array" (array-like): Annual production output for each year.
-            - "cash_cost_array" (array-like): Annual operating (cash) costs for each year.
-            - "interest_rate" (float): Discount rate to apply to future cash flows.
-    Returns:
-        float: The levelized cost of production (non-negative), calculated as the ratio of
-                the sum of discounted costs (capital + operating) to the sum of discounted production.
-    """
+
+    n_components = len(config["project_lifetime"]) if isinstance(config["project_lifetime"], (list, np.ndarray)) else int(config["project_lifetime"])
 
     capital_cost, prod, cash_cost = config["capital_cost_array"], config["prod_array"], config["cash_cost_array"]
-    (disc_capex, disc_opex, disc_prod) = (np.zeros(len(cash_cost)), np.zeros(len(cash_cost)), np.zeros(len(cash_cost)))
+    (disc_capex, disc_opex, disc_prod) = (np.zeros(n_components), np.zeros(n_components), np.zeros(n_components))
 
-    for year in range(len(cash_cost)):
-        disc_capex[year] = (capital_cost[year]) / ((1 + config["interest_rate"]) ** (year+1))
-        disc_opex[year] = (cash_cost[year]) / ((1 + config["interest_rate"]) ** (year+1))
-        disc_prod[year] = prod[year] / ((1 + config["interest_rate"]) ** (year+1))
+    if isinstance(config["project_lifetime"], (list, np.ndarray)):
+        for i in range(n_components):
+            for year in range(len(cash_cost[i])):
+                discount_factor = (1 + config["interest_rate"][i]) ** (year+1)
+                disc_capex[year] += (capital_cost[i][year]) / discount_factor
+                disc_opex[year] += (cash_cost[i][year]) / discount_factor
+                disc_prod[year] += prod[i][year] / discount_factor
+    else:
+        for year in range(n_components):
+            disc_capex[year] = (capital_cost[year]) / ((1 + config["interest_rate"]) ** (year+1))
+            disc_opex[year] = (cash_cost[year]) / ((1 + config["interest_rate"]) ** (year+1))
+            disc_prod[year] = prod[year] / ((1 + config["interest_rate"]) ** (year+1))
 
     return max(np.sum(disc_capex + disc_opex) / np.sum(disc_prod), 0)
 
@@ -556,63 +593,276 @@ def calculate_irr(config):
         return float('nan')
 
 def tornado_plot(config, plus_minus_value):
+    """
+    Generate a tornado plot to visualize the sensitivity of the levelized cost of product to key input parameters.
+    This function performs a one-at-a-time sensitivity analysis on selected parameters in the `config` dictionary,
+    varying each parameter by ±`plus_minus_value` (as a fraction, e.g., 0.2 for ±20%) and recalculating the
+    levelized cost of product (LCOH). The results are displayed as a horizontal bar chart (tornado plot), showing
+    the impact of each parameter on the LCOH.
+    Parameters
+    ----------
+    config : dict
+        Configuration dictionary containing all techno-economic parameters, including top-level keys and nested
+        variable OPEX input prices.
+    plus_minus_value : float
+        Fractional change to apply to each parameter for sensitivity analysis (e.g., 0.2 for ±20%).
+    Returns
+    -------
+    None
+        Displays a matplotlib tornado plot. Does not return any value.
+    Notes
+    -----
+    - The function assumes the existence of several calculation functions:
+      `calculate_levelized_cost`, `calculate_variable_opex`, `calculate_fixed_opex`,
+      `calculate_fixed_capital`, and `calculate_cash_flow`.
+    - The tornado plot highlights which parameters have the largest effect on the LCOH.
+    - The plot uses blue bars for -X% changes and red bars for +X% changes.
+    """
 
-    keys = ['project_lifetime',
-            'interest_rate',
-            'operator_hourly_rate']
-    
-    sensitivity_factors = {
-    key: [
-        config[key] * (1 - plus_minus_value), 
-        config[key] * (1 + plus_minus_value)
-    ] 
-    for key in keys
-    }
+    top_level_keys = [
+        'fixed_capital',
+        'fixed_opex',
+        'project_lifetime',
+        'interest_rate',
+        'operator_hourly_rate',
+    ]
 
-    sensitivity_results = {}
-    for factor, values in sensitivity_factors.items():
-        sensitivity_results[factor] = []
-        sensitivity_config = deepcopy(config)
-        for value in values:
-            sensitivity_config[factor] = value
-            calculate_fixed_capital(sensitivity_config)
-            calculate_variable_opex(sensitivity_config)
-            calculate_fixed_opex(sensitivity_config)
-            calculate_cash_flow(sensitivity_config)
-            sensitivity_results[factor].append(calculate_levelized_cost(sensitivity_config))
+    nested_price_keys = [
+        f"variable_opex_inputs.{k}.price" 
+        for k in config['variable_opex_inputs'].keys()
+    ]
 
-    # Calculate the base case LCOH
+    all_keys = top_level_keys + nested_price_keys
+
     lcoh_base = calculate_levelized_cost(config)
 
-    # Prepare data for plotting
+    def get_original_value(config, full_key):
+        keys = full_key.split('.')
+        ref = config
+        for k in keys:
+            ref = ref[k]
+        return ref
+
+    def update_and_evaluate(config, factor, value):
+        config_copy = deepcopy(config)
+
+        if factor == 'fixed_capital':
+            calculate_fixed_capital(config_copy, fc=value)
+            calculate_variable_opex(config_copy)
+            calculate_fixed_opex(config_copy)
+        elif factor == 'fixed_opex':
+            config_copy[factor] = value
+            calculate_fixed_capital(config_copy)
+            calculate_variable_opex(config_copy)
+            calculate_fixed_opex(config_copy, fp=value)
+        elif factor in nested_price_keys:
+            config_copy[factor] = value
+            # Update the price of the specific variable OPEX item
+            item_name = factor.split('.')[1]
+            config_copy['variable_opex_inputs'][item_name]['price'] = value
+            calculate_fixed_capital(config_copy)
+            calculate_variable_opex(config_copy)
+            calculate_fixed_opex(config_copy)
+        else:
+            config_copy[factor] = value
+            calculate_fixed_capital(config_copy)
+            calculate_variable_opex(config_copy)
+            calculate_fixed_opex(config_copy)
+
+        calculate_cash_flow(config_copy)
+        return calculate_levelized_cost(config_copy)
+
+    # Perform sensitivity analysis
+    sensitivity_results = {}
+    for key in all_keys:
+        original = get_original_value(config, key)
+        if key == 'fixed_capital' or key == 'fixed_opex':
+            low = (1 - plus_minus_value)
+            high = (1 + plus_minus_value)
+        else:
+            low = original * (1 - plus_minus_value)
+            high = original * (1 + plus_minus_value)
+        lcoh_low = update_and_evaluate(config, key, low)
+        lcoh_high = update_and_evaluate(config, key, high)
+        sensitivity_results[key] = [lcoh_low, lcoh_high]
+
+    # Extract LCOH values
     factors = list(sensitivity_results.keys())
-    positive_impacts = [sensitivity_results[factor][0] for factor in factors] - lcoh_base
-    negative_impacts = [sensitivity_results[factor][1] for factor in factors] - lcoh_base
-    total_effects = [abs(p) + abs(n) for p, n in zip(positive_impacts, negative_impacts)]
+    lcoh_lows = np.array([sensitivity_results[f][0] for f in factors])
+    lcoh_highs = np.array([sensitivity_results[f][1] for f in factors])
+    total_effects = np.abs(lcoh_highs - lcoh_lows)
 
-    # Sort factors by total effect
-    sorted_data = sorted(zip(total_effects, factors, positive_impacts, negative_impacts), key=lambda x: x[0])
-    _, factors, positive_impacts, negative_impacts = zip(*sorted_data)
+    # Sort by total effect
+    sorted_indices = np.argsort(total_effects)
+    factors_sorted = [factors[i] for i in sorted_indices]
+    lcoh_lows_sorted = lcoh_lows[sorted_indices]
+    lcoh_highs_sorted = lcoh_highs[sorted_indices]
 
-    # Mapping of original factor names to desired labels
-    labels = {
+    # Prepare bar components
+    bar_left = np.minimum(lcoh_lows_sorted, lcoh_highs_sorted)
+    bar_width = np.abs(lcoh_highs_sorted - lcoh_lows_sorted)
+
+    # Assign colors: blue for -X%, red for +X%
+    colors_low = ['#87CEEB'] * len(factors_sorted)   # blue for -X%
+    colors_high = ['#FF9999'] * len(factors_sorted)  # red for +X%
+
+    # Label mapping
+    label_map = {
+        "fixed_capital": "Fixed capital",
+        "fixed_opex": "Fixed OPEX",
         "project_lifetime": "Project lifetime",
         "interest_rate": "Interest rate",
         "operator_hourly_rate": "Operator hourly rate",
     }
+    for var in config['variable_opex_inputs']:
+        label_map[f"variable_opex_inputs.{var}.price"] = f"{var.capitalize()} price"
 
-    # Get the labels for the sorted factors
-    labels_sorted = [labels[factor] for factor in factors]
-
-    # Plotting
+    labels_sorted = [label_map[f] for f in factors_sorted]
     y_pos = np.arange(len(labels_sorted))
-    plt.figure(figsize=(3.3, 4))
-    plt.barh(y_pos, positive_impacts, color="#87CEEB", edgecolor="black", label=r'-50\%')
-    plt.barh(y_pos, negative_impacts, color="#FF9999", edgecolor="black", label=r'+50\%')
-    plt.xlim(-2.05,2.05)
+
+    # Plot
+    plt.figure(figsize=(3, 2))
+    for i in range(len(y_pos)):
+        # Bar for -X% (blue)
+        plt.barh(y_pos[i], abs(lcoh_base - lcoh_lows_sorted[i]), left=min(lcoh_base, lcoh_lows_sorted[i]),
+                 color=colors_low[i], edgecolor='black', label=r'-{}\%'.format(int(plus_minus_value * 100)) if i == 0 else "")
+        # Bar for +X% (red)
+        plt.barh(y_pos[i], abs(lcoh_highs_sorted[i] - lcoh_base), left=min(lcoh_base, lcoh_highs_sorted[i]),
+                 color=colors_high[i], edgecolor='black', label=r'+{}\%'.format(int(plus_minus_value * 100)) if i == 0 else "")
+
+    plt.axvline(x=lcoh_base, color='black', linestyle='--', linewidth=1)
     plt.yticks(y_pos, labels_sorted)
-    plt.xticks([-2, -1, 0, 1, 2], [round(lcoh_base - 2, 1), round(lcoh_base - 1, 1), round(lcoh_base, 1), round(lcoh_base + 1, 1), round(lcoh_base + 2, 1)])
+    plt.xlim(left=min(lcoh_lows_sorted) * 0.95, right=max(lcoh_highs_sorted) * 1.05)
     plt.xlabel(r'Levelized cost of product / [US\$$\cdot$unit$^{-1}$]')
     plt.legend(loc='best')
-
+    plt.tight_layout()
     plt.show()
+
+
+def monte_carlo(config, num_samples: int = 1_000_000, batch_size: int = 1000, show_input_distributions: bool = True):
+
+    config_copy = deepcopy(config)
+    num_batches = num_samples // batch_size
+
+    def truncated_normal_samples(mean, std, low, high, size):
+        a, b = (low - mean) / std, (high - mean) / std
+        return truncnorm.rvs(a, b, loc=mean, scale=std, size=size)
+
+    # Preallocate arrays
+    fixed_capitals = np.zeros(num_samples)
+    fixed_opexs = np.zeros(num_samples)
+    operator_hourlys = np.zeros(num_samples)
+    project_lifetimes = np.zeros(num_samples)
+    interests = np.zeros(num_samples)
+    lcohs = np.zeros(num_samples)
+
+    # Preallocate variable opex price samples
+    variable_opex_price_samples = {
+        item: np.zeros(num_samples)
+        for item in config_copy['variable_opex_inputs']
+    }
+
+    for i in tqdm(range(num_batches), desc="Running Monte Carlo"):
+        start = i * batch_size
+        end = start + batch_size
+
+
+        fixed_capitals[start:end] = truncated_normal_samples(
+            1, 0.3/2, 0.25, 2, batch_size
+        )
+        fixed_opexs[start:end] = truncated_normal_samples(
+            1, 0.3/2, 0.25, 2, batch_size
+        )
+        operator_hourlys[start:end] = truncated_normal_samples(
+            config['operator_hourly_rate'], 20/2, 10, 100, batch_size
+        )
+        project_lifetimes[start:end] = truncated_normal_samples(
+            config['project_lifetime'], 10/2, 5, 40, batch_size
+        )
+        interests[start:end] = truncated_normal_samples(
+            config['interest_rate'], 0.03/2, 0.01, 2, batch_size
+        )
+
+        # Sample variable opex prices
+        for item, props in config['variable_opex_inputs'].items():
+            price_mean = props['price']
+            price_std = props['price_std']
+            price_min = props['price_min']
+            price_max = props['price_max']
+            variable_opex_price_samples[item][start:end] = truncated_normal_samples(
+                price_mean, price_std, price_min, price_max, batch_size
+            )
+
+        # Update batch config
+        config_copy.update({
+            'operator_hourly_rate': operator_hourlys[start:end],
+            'project_lifetime': project_lifetimes[start:end],
+            'interest_rate': interests[start:end],
+        })
+
+        # Update variable opex prices in config for this batch
+        for item in config_copy['variable_opex_inputs']:
+            config_copy['variable_opex_inputs'][item]['price'] = variable_opex_price_samples[item][start:end]
+
+        # Run calculations
+        calculate_fixed_capital(config_copy, fixed_capitals[start:end])
+        calculate_variable_opex(config_copy)
+        calculate_fixed_opex(config_copy, fixed_opexs[start:end])
+        calculate_cash_flow(config_copy)
+        lcohs[start:end] = calculate_levelized_cost(config_copy)
+
+    # Plotting
+    if show_input_distributions:
+        mu, std = norm.fit(operator_hourlys)
+        # Collect all input parameter arrays for plotting
+        input_distributions = {
+            'Fixed capital investment': fixed_capitals,
+            'Fixed production costs': fixed_opexs,
+            'Operator hourly rate': operator_hourlys,
+            'Project lifetime': project_lifetimes,
+            'Interest rate': interests,
+        }
+
+        # Include variable opex price inputs
+        for item, samples in variable_opex_price_samples.items():
+            input_distributions[f'{item.capitalize()} price'] = samples
+
+        # Set up subplots: adjust layout depending on number of variables
+        n_params = len(input_distributions)
+        n_cols = 3
+        n_rows = (n_params + n_cols - 1) // n_cols
+
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 3, n_rows * 2))
+        axes = axes.flatten()  # Flatten for easy indexing
+
+        # Plot each distribution
+        for idx, (label, data) in enumerate(input_distributions.items()):
+            ax = axes[idx]
+            mu, std = norm.fit(data)
+            ax.hist(data, bins=50, density=True, color='#FFFFE0', edgecolor='black', zorder=2)
+            x = np.linspace(min(data), max(data), 1000)
+            ax.plot(x, norm.pdf(x, mu, std), 'r-', label=fr'$\mu$={mu:.2f}, $\sigma$={std:.2f}')
+            ax.set_xlabel(label)
+            ax.legend(loc='best')
+
+        # Turn off any unused subplots
+        for i in range(n_params, len(axes)):
+            axes[i].axis('off')
+
+        fig.tight_layout()
+        plt.show()
+
+    # Histogram of LCOP values
+    plt.figure(figsize=(3, 2))
+    mu_lcoh, std_lcoh = norm.fit(lcohs)
+    count, bins, _ = plt.hist(lcohs, bins=30, density=True, color='skyblue', edgecolor='black', zorder=2)
+    # Plot fitted normal curve
+    x = np.linspace(min(bins), max(bins), 10000)
+    p = norm.pdf(x, mu_lcoh, std_lcoh)
+    plt.plot(x, p, '-', color='indianred', label=fr'$\mu$={mu_lcoh:.2f}, $\sigma$={std_lcoh:.2f}', zorder=2)
+    plt.xlabel(r'Levelized cost of product / [US\$$\cdot$kg$^{-1}$]')
+    plt.ylabel("Probability density")
+    plt.legend(loc='upper right', fontsize=8)
+    plt.show()
+
+    return lcohs
