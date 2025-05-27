@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-import scienceplots
-plt.style.use(['science','ieee'])
+# import scienceplots
+# plt.style.use(['science','ieee'])
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
@@ -721,7 +721,7 @@ def tornado_plot(config, plus_minus_value):
     y_pos = np.arange(len(labels_sorted))
 
     # Plot
-    plt.figure(figsize=(3, 2))
+    plt.figure(figsize=(6, 4))
     for i in range(len(y_pos)):
         # Bar for -X% (blue)
         plt.barh(y_pos[i], abs(lcoh_base - lcoh_lows_sorted[i]), left=min(lcoh_base, lcoh_lows_sorted[i]),
@@ -832,7 +832,7 @@ def monte_carlo(config, num_samples: int = 1_000_000, batch_size: int = 1000, sh
         n_cols = 3
         n_rows = (n_params + n_cols - 1) // n_cols
 
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 3, n_rows * 2))
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 5, n_rows * 3))
         axes = axes.flatten()  # Flatten for easy indexing
 
         # Plot each distribution
@@ -853,7 +853,7 @@ def monte_carlo(config, num_samples: int = 1_000_000, batch_size: int = 1000, sh
         plt.show()
 
     # Histogram of LCOP values
-    plt.figure(figsize=(3, 2))
+    plt.figure(figsize=(6, 4))
     mu_lcoh, std_lcoh = norm.fit(lcohs)
     count, bins, _ = plt.hist(lcohs, bins=30, density=True, color='skyblue', edgecolor='black', zorder=2)
     # Plot fitted normal curve
