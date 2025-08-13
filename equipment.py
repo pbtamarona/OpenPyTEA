@@ -64,7 +64,9 @@ class Equipment:
             'Double pipe': double_pipe_hx_towler_2010,
             'Thermosiphon reboiler': thermosiphon_reboiler_towler_2010,
             'U-tube kettle reboiler': u_tube_kettle_reboiler_towler_2010,
-            'Plate & frame': plate_frame_hx_towler_2010
+            'Plate & frame': plate_frame_hx_towler_2010,
+            'Plate fin three-streams': three_stream_plate_fin_hx_esdu_1997,
+            'Plate fin four-streams': four_stream_plate_fin_hx_esdu_1997
         },
         'Furnace/heater': {
             'Cylindrical furnace': cylindrical_furnace_towler_2010,
@@ -90,6 +92,12 @@ class Equipment:
             'Axial gas': axial_gas_turbine_ulrich_2003,
             'Radial expander': radial_expander_ulrich_2003
         },
+        'Vessel': {
+            'Vertical CS': vertical_cs_press_vessel_towler_2010,
+            'Horizontal CS': horizontal_cs_press_vessel_towler_2010,
+            'Vertical 304SS': vertical_304ss_press_vessel_towler_2010,
+            'Horizontal 304SS': horizontal_304ss_press_vessel_towler_2010
+        }
     }
 
     def __init__(self, name: str, process_type: str, material: str, param: float, type: str, subtype: str = None):

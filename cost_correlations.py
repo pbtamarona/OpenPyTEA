@@ -223,6 +223,20 @@ def plate_frame_hx_towler_2010(s):  # doi: https://doi.org/10.1016/B978-0-12-821
     return calculate_cost_linear(s, 1600, 210, 0.95, 2010, num_units)
 
 
+def three_stream_plate_fin_hx_esdu_1997(s):  # doi: https://www.esdu.com/cgi-bin/ps.pl?t=doc&p=esdu_97006a
+    # s is active heat exchanger volume in m3 (0.01-10)
+    s = validate_input_range(s, 0.01, 10)
+    num_units, s = calculate_parallel_units(s, 10)
+    return calculate_cost_linear(s, 0, 39031.4*s*1.64, -0.67, 1997, num_units)
+
+
+def four_stream_plate_fin_hx_esdu_1997(s):  # doi: https://www.esdu.com/cgi-bin/ps.pl?t=doc&p=esdu_97006a
+    # s is active heat exchanger volume in m3 (0.01-10)
+    s = validate_input_range(s, 0.01, 10)
+    num_units, s = calculate_parallel_units(s, 10)
+    return calculate_cost_linear(s, 0, 49503.9*s*1.64, -0.65, 1997, num_units)
+
+
 # Motors
 def explosion_proof_motor_towler_2010(s):  # doi: https://doi.org/10.1016/B978-0-12-821179-3.00007-8
     # s in kW of power (1.0-2500)
