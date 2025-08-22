@@ -79,7 +79,9 @@ class Equipment:
             'Totally enclosed': totally_enclosed_motor_ulrich_2003
         },
         'PSA': psa_towler_1994,
-        'Pump': single_stage_centrifugal_pump_towler_2010,
+        'Pump': {
+            'Centrifugal': single_stage_centrifugal_pump_towler_2010
+        },
         'Reactor': {
             'Fluidized Bed': indirect_fluidbed_ulrich_2003,
             'Vertical CS Vessel': vertical_cs_press_vessel_towler_2010,
