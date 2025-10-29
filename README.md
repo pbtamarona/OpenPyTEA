@@ -42,6 +42,8 @@ The main dependencies include:
 - `tqdm`  
 - `jupyter`
 
+---
+
 ## ⚙️ Package Structure
 ```bash
 OpenPyTEA/
@@ -57,6 +59,8 @@ OpenPyTEA/
 ├── docs/                   # Documentation files
 └── README.md
 ```
+
+---
 
 ## 🧠 Core Concepts
 
@@ -129,6 +133,8 @@ results = monte_carlo(
 ```
 Outputs include probability distributions and confidence intervals for LCOP or NPV—supporting uncertainty-informed decision-making.
 
+---
+
 ## 📘 Example Workflows
 
 Example notebooks are available in the `examples/` folder, including:
@@ -147,6 +153,8 @@ Each notebook demonstrates:
 - Cash-flow and investment evaluation
 - Sensitivity and uncertainty analysis
 - Visualization of key economic indicators
+
+---
 
 ## 🧑‍🏫 Educational Use
 
@@ -171,6 +179,8 @@ git checkout -b feature-new-equipment
 
 Please follow PEP8 coding conventions and include a short description of your updates.
 
+---
+
 ## 📚 Citation
 
 If you use **OpenPyTEA** in your research, please cite this GitHub repository:
@@ -188,6 +198,7 @@ If you use **OpenPyTEA** in your research, please cite this GitHub repository:
 }
 ```
 
+---
 
 ## 📄 License
 
