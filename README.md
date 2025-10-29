@@ -175,13 +175,13 @@ Please follow PEP8 coding conventions and include a short description of your up
 
 If you use **OpenPyTEA** in your research, please cite this GitHub repository:
 
-> Tamarona, P.B., Vlugt, T.J.H., & Ramdin, M. (2025). *OpenPyTEA: An open-source Python toolkit for techno-economic assessment of process plants with uncertainty evaluation.* GitHub Repository. Available at: [https://github.com/pbtamarona/OpenPyTEA](https://github.com/pbtamarona/OpenPyTEA)
+> Tamarona, P.B., Vlugt, T.J.H., & Ramdin, M. (2025). *OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation.* GitHub Repository. Available at: [https://github.com/pbtamarona/OpenPyTEA](https://github.com/pbtamarona/OpenPyTEA)
 
 **BibTeX:**
 ```bibtex
 @misc{tamarona2025openpytea,
   author       = {Panji B. Tamarona and Thijs J.H. Vlugt and Melvin Ramdin},
-  title        = {OpenPyTEA: An open-source Python toolkit for techno-economic assessment of process plants with uncertainty evaluation},
+  title        = {OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation},
   year         = {2025},
   howpublished = {\url{https://github.com/pbtamarona/OpenPyTEA}},
   note         = {Accessed: YYYY-MM-DD}
