@@ -46,13 +46,14 @@ The main dependencies include:
 ```bash
 OpenPyTEA/
 │
-├── cost_correlations.py    # Equipment cost correlations and inflation adjustment
 ├── equipment.py            # Equipment-level costing and inflation correction
 ├── plant.py                # Plant-level TEA: CAPEX, OPEX, cash flows, financial metrics
 ├── analysis.py             # Sensitivity and uncertainty analysis (tornado plots, Monte Carlo)
 │
+├── requirements.txt        # Dependencies
+│
 ├── examples/               # Example notebooks and case studies
-├── data/                   # Cost correlations and CEPCI data
+├── data/                   # Cost correlations database and CEPCI data
 ├── docs/                   # Documentation files
 └── README.md
 ```
@@ -75,7 +76,7 @@ compressor = Equipment(
 print(compressor.installed_cost)
 ```
 
-Each equipment item retrieves its cost correlation from the internal database in `cost_correlations.py` and adjusts the cost to the desired year using the Chemical Engineering Plant Cost Index (CEPCI).
+Each equipment item retrieves its cost correlation from the internal database in `data/cost_correlations.csv` and adjusts the cost to the desired year using the Chemical Engineering Plant Cost Index (CEPCI).
 
 ### 2. **Plant-level techno-economic assessment**
 
