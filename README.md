@@ -190,7 +190,7 @@ If you use **OpenPyTEA** in your research, please cite this GitHub repository:
 **BibTeX:**
 ```bibtex
 @misc{tamarona2025openpytea,
-  author       = {Panji B. Tamarona and Thijs J.H. Vlugt and Melvin Ramdin},
+  author       = {Panji B. Tamarona and Thijs J.H. Vlugt and Mahinder Ramdin},
   title        = {OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation},
   year         = {2025},
   howpublished = {\url{https://github.com/pbtamarona/OpenPyTEA}},
