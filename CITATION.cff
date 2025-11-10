@@ -1,4 +1,4 @@
-cff-version: 1.0.0
+cff-version: 1.2.0
 message: "If you use OpenPyTEA, please cite it as below."
 title: "OpenPyTEA: An open-source Python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
 abstract: >
