@@ -2,22 +2,22 @@ key,category,type,units,s_lower,s_upper,a,b,n,s0,c0,f,form,cost_year,source,note
 propeller_mixer_towler_2010,Agitators & mixers,Propeller mixer,"driver power, kW",5,75,17000,1130,1.05,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 spiral_ribbon_mixer_towler_2010,Agitators & mixers,Spiral ribbon mixer,"driver power, kW",5,35,30800,125,2,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 static_mixer_towler_2010,Agitators & mixers,Static mixer,"flow, L/s",1,50,570,1170,0.4,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
-boilers_packaged_towler_2010,Boilers & Furnaces,"Boiler, packaged",kg/h steam,5000,200000,124000,10,1,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,15-40 bar,doi.org/10.1016/B978-0-12-821179-3.00007-8
-boilers_erected_towler_2010,Boilers & Furnaces,"Boiler, field erected",kg/h steam,20000,800000,130000,53,0.9,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,15-40 bar,doi.org/10.1016/B978-0-12-821179-3.00007-8
-burner_parkinson_2016,Boilers & Furnaces,Burner,m3 vessel volume,,,,,,81.3,0.1776,0.6,power,2016,Parkinson (2016) ,,,doi:10.1002/ceat.201600414 / doi.org/10.1016/j.ijhydene.2020.11.079
-cylindrical_furnace_towler_2010,Boilers & Furnaces,"Furnace, cylindrical","duty, MW",0.2,60,80000,109000,0.8,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
-box_furnace_towler_2010,Boilers & Furnaces,"Furnace, box","duty, MW",30,120,43000,111000,0.8,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
-electric_arc_furnace_parkinson_2016,Boilers & Furnaces,Electric arc furnace,MWe net electric power,,,,,,175,48.84,0.6,power,2016,Parkinson (2016),,,doi:10.1002/ceat.201600414 / doi.org/10.1016/j.ijhydene.2020.11.079
-pyrolysis_furnace_ulrich_2003,Boilers & Furnaces,Pyrolysis furnace,kW heating duty,2900,60000,12158.694,277.701,0.837,,,,linear,2003,Ulrich (2003),,,http://www.ulrichvasudesign.com/index.html
+boilers_packaged_towler_2010,Boilers & furnaces,"Boiler, packaged",kg/h steam,5000,200000,124000,10,1,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,15-40 bar,doi.org/10.1016/B978-0-12-821179-3.00007-8
+boilers_erected_towler_2010,Boilers & furnaces,"Boiler, field erected",kg/h steam,20000,800000,130000,53,0.9,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,15-40 bar,doi.org/10.1016/B978-0-12-821179-3.00007-8
+burner_parkinson_2016,Boilers & furnaces,Burner,m3 vessel volume,,,,,,81.3,0.1776,0.6,power,2016,Parkinson (2016) ,,,doi:10.1002/ceat.201600414 / doi.org/10.1016/j.ijhydene.2020.11.079
+cylindrical_furnace_towler_2010,Boilers & furnaces,"Furnace, cylindrical","duty, MW",0.2,60,80000,109000,0.8,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
+box_furnace_towler_2010,Boilers & furnaces,"Furnace, box","duty, MW",30,120,43000,111000,0.8,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
+electric_arc_furnace_parkinson_2016,Boilers & furnaces,Electric arc furnace,MWe net electric power,,,,,,175,48.84,0.6,power,2016,Parkinson (2016),,,doi:10.1002/ceat.201600414 / doi.org/10.1016/j.ijhydene.2020.11.079
+pyrolysis_furnace_ulrich_2003,Boilers & furnaces,Pyrolysis furnace,kW heating duty,2900,60000,12158.694,277.701,0.837,,,,linear,2003,Ulrich (2003),,,http://www.ulrichvasudesign.com/index.html
 high_speed_disk_centrifuge_towler_2010,Centrifuges,"Centrifuge, high-speed disk","diameter, m",0.26,0.49,57000,480000,0.7,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 atmospheric_suspended_basket_centrifuge_towler_2010,Centrifuges,"Centrifuge, atmospheric suspended basket","power, kW",2,20,65000,750,1.5,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 mea_ccs_technology_2011,CO2 capture,MEA CCS technology,kg/s,,,,,,38.4,40.2405,0.8,power,2011,NREL (2011),,,https://www.nrel.gov/docs/fy06osti/39947.pdf
-air_blower_manzolini_2006,Compressors & Blowers,Air blower,MWe electric power,,,,,,1,0.2898,0.67,power,2006,Manzolini (2006) ,,,doi:10.1115/GT2006-90353
+air_blower_manzolini_2006,Compressors & blowers,Air blower,MWe electric power,,,,,,1,0.2898,0.67,power,2006,Manzolini (2006) ,,,doi:10.1115/GT2006-90353
 co2_compressor_manzolini_2011,Compressors & Blowers,CO2 compressor,MWe electric power,,,,,,13,13.8305,0.67,power,2011,Manzolini (2011) ,,,doi:10.1016/j.ijggc.2012.06.021
-h2_compressor_pandolfo_1987,Compressors & Blowers,H2 compressor,MWe electric power,,,,,,1,0.0012,0.82,power,1987,Pandolfo (1987),,,doi.org/10.1001/jama.2014.2634
-blower_towler_2010,Compressors & Blowers,Blower,m^3/h,200,5000,4450,57,0.8,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
-centrifugal_compressor_towler_2010,Compressors & Blowers,"Compressor, centrifugal","driver power, kW",75,30000,580000,20000,0.6,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
-reciprocating_compressor_towler_2010,Compressors & Blowers,"Compressor, reciprocating","driver power, kW",93,16800,260000,2700,0.75,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
+h2_compressor_pandolfo_1987,Compressors & blowers,H2 compressor,MWe electric power,,,,,,1,0.0012,0.82,power,1987,Pandolfo (1987),,,doi.org/10.1001/jama.2014.2634
+blower_towler_2010,Compressors & blowers,Blower,m^3/h,200,5000,4450,57,0.8,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
+centrifugal_compressor_towler_2010,Compressors & blowers,"Compressor, centrifugal","driver power, kW",75,30000,580000,20000,0.6,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
+reciprocating_compressor_towler_2010,Compressors & blowers,"Compressor, reciprocating","driver power, kW",93,16800,260000,2700,0.75,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 belt_conveyor_05m_towler_2010,Conveyors,Belt conveyor (0.5 m wide),"length, m",10,500,41000,730,1,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 belt_conveyor_10m_towler_2010,Conveyors,Belt conveyor (1.0 m wide),"length, m",10,500,46000,1320,1,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 bucket_elevator_05m_towler_2010,Conveyors,Bucket elevator,"height, m",10,30,17000,2600,1,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,0.5 m bucket,doi.org/10.1016/B978-0-12-821179-3.00007-8
@@ -31,9 +31,9 @@ gas_multi_cyclone_ulrich_2003,Cyclones,Gas multi-cyclone,m3/s volumetric gas rat
 direct_contact_rotary_dryer_towler_2010,Dryers,Direct contact rotary dryer,"area, m^2",11,180,15000,10500,0.9,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,Note 1,Direct heated,doi.org/10.1016/B978-0-12-821179-3.00007-8
 atmospheric_tray_batch_dryer_towler_2010,Dryers,Atmospheric tray batch dryer,"area, m^2",3,20,12000,7900,0.5,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 spray_dryer_towler_2010,Dryers,Spray dryer,"evaporation rate, kg/h",400,4000,410000,2200,0.7,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
-explosion_proof_motor_towler_2010,Electric Motors,Explosion-proof motor,kW shaft power,1,2500,-1100,2100,0.6,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
-explosion_proof_motor_ulrich_2003,Electric Motors,Explosion-proof motor,kW shaft power,2.5,5000,-206.374,177.886,0.923,,,,linear,2003,Ulrich (2003),,,http://www.ulrichvasudesign.com/index.html
-totally_enclosed_motor_ulrich_2003,Electric Motors,Totally enclosed motor,kW shaft power,0.2,9000,6.567,116.02,0.921,,,,linear,2003,Ulrich (2003),,,http://www.ulrichvasudesign.com/index.html
+explosion_proof_motor_towler_2010,Motors & generators,Explosion-proof motor,kW shaft power,1,2500,-1100,2100,0.6,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
+explosion_proof_motor_ulrich_2003,Motors & generators,Explosion-proof motor,kW shaft power,2.5,5000,-206.374,177.886,0.923,,,,linear,2003,Ulrich (2003),,,http://www.ulrichvasudesign.com/index.html
+totally_enclosed_motor_ulrich_2003,Motors & generators,Totally enclosed motor,kW shaft power,0.2,9000,6.567,116.02,0.921,,,,linear,2003,Ulrich (2003),,,http://www.ulrichvasudesign.com/index.html
 vertical_tube_evaporator_towler_2010,Evaporators,Vertical tube evaporator,"area, m^2",11,640,33000,36000,0.55,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 agitated_falling_film_evaporator_towler_2010,Evaporators,Agitated falling film evaporator,"area, m^2",0.5,12,88000,6500,0.75,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,Note 2,Type 304 SS,doi.org/10.1016/B978-0-12-821179-3.00007-8
 u_shell_tube_hx_towler_2010,Heat exchangers,U-tube shell & tube,"area, m^2",10,1000,28000,54,1.2,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
@@ -42,6 +42,8 @@ double_pipe_hx_towler_2010,Heat exchangers,Double pipe,"area, m^2",1,80,1900,250
 thermosiphon_reboiler_towler_2010,Heat exchangers,Thermosiphon reboiler,"area, m^2",10,500,30400,122,1.1,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 u_tube_kettle_reboiler_towler_2010,Heat exchangers,U-tube kettle reboiler,"area, m^2",10,500,29000,400,0.9,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 plate_frame_hx_towler_2010,Heat exchangers,Plate & frame,"area, m^2",1,500,1600,210,0.95,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,Note 2,Type 304 SS,doi.org/10.1016/B978-0-12-821179-3.00007-8
+plate_fin_3streams_hx_esdu_1997,Heat exchangers,Plate & fin 3-streams,"volume, m^3",0.01,2,0,64011.496,0.33,,,,linear,1997,ESDU 97006,,Curve-fitted. Originally reported in poundsterlling,https://www.esdu.com/cgi-bin/ps.pl?t=doc&p=esdu_97006a
+plate_fin_4to6_streams_hx_esdu_1997,Heat exchangers,Plate & fin 4-to-6-streams,"volume, m^3",0.01,2,0,81186.396,0.35,,,,linear,1997,ESDU 97006,,Curve-fitted. Originally reported in poundsterlling,https://www.esdu.com/cgi-bin/ps.pl?t=doc&p=esdu_97006a
 plate_and_frame_filter_towler_2010,Filters,Plate & frame filter,"capacity, m^3",0.4,1.4,128000,89000,0.5,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 vacuum_drum_filter_towler_2010,Filters,Vacuum drum filter,"area, m^2",10,180,-73000,93000,0.3,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 psa_towler_1994,Gas separation,Pressure-swing adsorber,kmol/h, , ,19753.8,258.858,1,,,,linear,1994,Towler (1994) doi:10.1021/ie950359+,,,https://doi.org/10.1021/ie950359+

@@ -3,8 +3,11 @@ import pandas as pd
 import numpy as np
 
 # --- Fixed CSV data sources ---
-CEPCI_CSV_PATH = os.path.join("data", "cepci_values.csv")
-COST_DB_PATH   = os.path.join("data", "cost_correlations.csv")
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+CEPCI_CSV_PATH = os.path.join(BASE_DIR, "data", "cepci_values.csv")
+COST_DB_PATH   = os.path.join(BASE_DIR, "data", "cost_correlations.csv")
 
 
 def inflation_adjustment(equipment_cost, cost_year, target_year=2023):
