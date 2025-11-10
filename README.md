@@ -183,7 +183,15 @@ Please follow PEP8 coding conventions and include a short description of your up
 
 ## 📚 Citation
 
-If you use **OpenPyTEA** in your research, please cite this GitHub repository:
+If you use **OpenPyTEA** in your research, please cite it using the automatic GitHub citation feature or the `CITATION.cff` file included in this repository.
+
+On GitHub, click:
+```
+Repository page → "Cite this repository"
+```
+This will provide formatted citation export options (BibTeX, APA, MLA, etc.) based on the CITATION.cff metadata.
+
+Or if you prefer to cite manually, you may use:
 
 > Tamarona, P.B., Vlugt, T.J.H., & Ramdin, M. (2025). *OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation.* GitHub Repository. Available at: [https://github.com/pbtamarona/OpenPyTEA](https://github.com/pbtamarona/OpenPyTEA)
 
@@ -193,7 +201,8 @@ If you use **OpenPyTEA** in your research, please cite this GitHub repository:
   author       = {Panji B. Tamarona and Thijs J.H. Vlugt and Mahinder Ramdin},
   title        = {OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation},
   year         = {2025},
-  howpublished = {\url{https://github.com/pbtamarona/OpenPyTEA}},
+  url          = {\url{https://github.com/pbtamarona/OpenPyTEA}},
+  version      = {1.0.0}
   note         = {Accessed: YYYY-MM-DD}
 }
 ```

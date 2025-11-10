@@ -1,0 +1,39 @@
+cff-version: 1.0.0
+message: "If you use OpenPyTEA, please cite it as below."
+title: "OpenPyTEA: An open-source Python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
+abstract: >
+  OpenPyTEA is an open-source Python toolkit for techno-economic assessment (TEA)
+  of chemical and energy systems. It integrates equipment cost estimation, cash-flow
+  analysis, and uncertainty evaluation into a transparent and reproducible workflow,
+  bridging process modeling and economic evaluation.
+authors:
+  - given-names: "Panji B."
+    family-names: "Tamarona"
+    email: "P.B.Tamarona@tudelft.nl"
+  - given-names: "Thijs J.H."
+    family-names: "Vlugt"
+  - given-names: "Mahinder"
+    family-names: "Ramdin"
+    email: "M.Ramdin@tudelft.nl"
+version: "1.0.0"
+license: "MIT"
+repository-code: "https://github.com/pbtamarona/OpenPyTEA"
+url: "https://github.com/pbtamarona/OpenPyTEA"
+keywords:
+  - "techno-economic assessment"
+  - "process design"
+  - "process plant"
+  - "energy systems"
+  - "chemical engineering"
+preferred-citation:
+  type: software
+  title: "OpenPyTEA: An open-source Python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
+  authors:
+    - given-names: "Panji B."
+      family-names: "Tamarona"
+    - given-names: "Thijs J.H."
+      family-names: "Vlugt"
+    - given-names: "Mahinder"
+      family-names: "Ramdin"
+  url: "https://github.com/pbtamarona/OpenPyTEA"
+  version: "1.0.0"
