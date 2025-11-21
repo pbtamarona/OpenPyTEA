@@ -1,8 +1,17 @@
 [project]
-name = "openpytea"
+name = "OpenPyTEA"
 version = "1.0.0"
-description = "Add your description here"
+description = "OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = [
+    "chemical-engineering",
+    "process-design",
+    "power-plant",
+    "techno-economic-analysis",
+    "process-plant",
+]
 requires-python = ">=3.11"
 dependencies = [
     "matplotlib>=3.10.7",
@@ -12,6 +21,13 @@ dependencies = [
     "scipy>=1.16.3",
     "tqdm>=4.67.1",
 ]
+maintainers = [
+  {name = "Panji B. Tamarona", email = "P.B.Tamarona@tudelft.nl"}
+]
+
+[urls]
+Repository = "https://github.com/PBTamarona/OpenPyTEA"
+Issues = "https://github.com/PBTamarona/OpenPyTEA/issues"
 
 [project.optional-dependencies]
 ipython = [

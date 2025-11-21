@@ -14,24 +14,19 @@
 
 ## 📦 Installation
 
-### 1. **Clone the repository**
+### 1. **Using `uv`**
+
 ```bash
-git clone https://github.com/pbtamarona/OpenPyTEA.git
-cd OpenPyTEA
+uv add git+https://github.com/pbtamarona/OpenPyTEA
 ```
 
-### 2. **(Recommended) Create a virtual environment**
+### 2. **Using `pip`**
+
 ```bash
-python -m venv env
-source env/bin/activate       # Linux / macOS
-env\Scripts\activate          # Windows
+pip install git+https://github.com/pbtamarona/OpenPyTEA
 ```
 
-### 3. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-We recommend to use **OpenPyTEA** with **Python ≥ 3.9**.  
+**OpenPyTEA** requires **Python ≥ 3.11**.  
 The main dependencies include:
 
 - `numpy`  
@@ -45,19 +40,15 @@ The main dependencies include:
 ---
 
 ## ⚙️ Package Structure
-```bash
-OpenPyTEA/
-│
+```
+src/openpytea/
 ├── equipment.py            # Equipment-level costing and inflation correction
 ├── plant.py                # Plant-level TEA: CAPEX, OPEX, cash flows, financial metrics
 ├── analysis.py             # Sensitivity and uncertainty analysis (tornado plots, Monte Carlo)
-│
-├── requirements.txt        # Dependencies
-│
-├── examples/               # Example notebooks and case studies
-├── data/                   # Cost correlations database and CEPCI data
-├── docs/                   # Documentation files
-└── README.md
+└── data/                   # Cost correlations database and CEPCI data
+examples/                   # Example notebooks and case studies
+walkthrough.ipynb           # walkthrough of the package
+README.md
 ```
 
 ---
