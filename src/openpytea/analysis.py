@@ -6,7 +6,7 @@ from tqdm import tqdm
 from scipy.stats import truncnorm, norm
 from itertools import cycle
 
-from plant import *
+from .plant import *
 
 def try_clear_output(*args, **kwargs):
     try:
