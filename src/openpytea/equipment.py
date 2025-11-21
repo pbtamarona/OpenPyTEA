@@ -3,26 +3,27 @@ import pandas as pd
 import numpy as np
 
 # --- Fixed CSV data sources ---
+from importlib.resources import files, as_file
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+data_dir = files("openpytea.data")
 
-CEPCI_CSV_PATH = os.path.join(BASE_DIR, "data", "cepci_values.csv")
-COST_DB_PATH   = os.path.join(BASE_DIR, "data", "cost_correlations.csv")
+with as_file(data_dir / "cepci_values.csv") as CEPCI_CSV_PATH:
+    CEPCI_DF = pd.read_csv(CEPCI_CSV_PATH).set_index("year")
 
+with as_file(data_dir / "cost_correlations.csv") as COST_DB_PATH:
+    COST_DB_DF = pd.read_csv(COST_DB_PATH)
 
 def inflation_adjustment(equipment_cost, cost_year, target_year=2023):
-    df = pd.read_csv(CEPCI_CSV_PATH).set_index("year")
-    if cost_year not in df.index:
+    if cost_year not in CEPCI_DF.index:
         raise ValueError(f"CEPCI not available for year {cost_year}")
-    if target_year not in df.index:
+    if target_year not in CEPCI_DF.index:
         raise ValueError(f"CEPCI not available for target year {target_year}")
-    return float(equipment_cost) * (df.loc[target_year, "cepci"] / df.loc[cost_year, "cepci"])
+    return float(equipment_cost) * (CEPCI_DF.loc[target_year, "cepci"] / CEPCI_DF.loc[cost_year, "cepci"])
 
 
 class CostCorrelationDB:
 
-    def __init__(self, csv_path=COST_DB_PATH):
-        df = pd.read_csv(csv_path)
+    def __init__(self, df=COST_DB_DF):
         df.columns = [c.strip().lower() for c in df.columns]
         for col in ["s_lower","s_upper","upper_parallel","a","b","n","s0","c0","f","cost_year"]:
             if col in df.columns:

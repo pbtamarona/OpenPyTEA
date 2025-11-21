@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from typing import List, Dict, Literal, Optional
 from scipy.optimize import root_scalar
 
-from equipment import *
-from analysis import *
+from .equipment import *
+from .analysis import *
 
 
 class Plant:
