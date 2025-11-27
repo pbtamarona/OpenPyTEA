@@ -6,10 +6,16 @@ import numpy as np
 plt.style.use(['science','ieee'])
 from tqdm import tqdm
 from scipy.stats import truncnorm, norm
-from IPython.display import clear_output
 from itertools import cycle
 
-from plant import *
+from .plant import *
+
+def try_clear_output(*args, **kwargs):
+    try:
+        from IPython.display import clear_output
+        clear_output(*args, **kwargs)
+    except ImportError:
+        pass
 
 # type_costs = defaultdict(float)
 # for eq in mp_equipment:
@@ -294,12 +300,12 @@ def monte_carlo(plant, num_samples: int = 1_000_000, batch_size: int = 1000,
         # Show live plot every 1/10 of the simulation
         if show_plot_updates:
             if (i + 1) % update_interval == 0 or (i + 1) == num_batches:
-                clear_output(wait=True)  # Clear previous output
+                try_clear_output(wait=True)  # Clear previous output
                 plot_monte_carlo(lcops[:end])
 
     # Final plot after all batches
     if show_final_plot:
-        clear_output(wait=True)
+        try_clear_output(wait=True)
         plot_monte_carlo(lcops)
     plant.monte_carlo_lcops = lcops
 
