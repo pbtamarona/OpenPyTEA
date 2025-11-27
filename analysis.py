@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
+from collections import defaultdict
 import scienceplots
+import seaborn as sns
 import numpy as np
 plt.style.use(['science','ieee'])
 from tqdm import tqdm
@@ -8,6 +10,33 @@ from IPython.display import clear_output
 from itertools import cycle
 
 from plant import *
+
+# type_costs = defaultdict(float)
+# for eq in mp_equipment:
+#     type_costs[eq.type] += eq.purchased_cost
+
+# # Convert to sorted list (largest at bottom)
+# equip_sorted = sorted(type_costs.items(), key=lambda x: x[1], reverse=True)
+
+# labels = [e[0].replace("&", r"\&") for e in equip_sorted]
+# costs  = [e[1] for e in equip_sorted]
+
+# # Generate colors from the Plasma colormap
+# colors = sns.color_palette("plasma", n_colors=len(costs))
+
+# fig, ax = plt.subplots(figsize=(2.5, 1.8))
+
+# bottom = 0
+# for (label, cost, color) in zip(labels, costs, colors):
+#     ax.bar("MP Plant", cost, bottom=bottom, label=label, color=color)
+#     bottom += cost
+
+# ax.set_ylabel(r"Purchased cost / [\$]")
+# # ax.set_title("Stacked Equipment Cost (largest → smallest)")
+# ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='x-small')
+# plt.tight_layout()
+# plt.show()
+
 
 def tornado_plot(plant, plus_minus_value, label=r'Levelized cost of product'):
     """
