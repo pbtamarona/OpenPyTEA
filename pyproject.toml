@@ -1,6 +1,6 @@
 [project]
 name = "OpenPyTEA"
-version = "1.0.0"
+version = "1.0.1"
 description = "OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
 readme = "README.md"
 license = "MIT"
