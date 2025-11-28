@@ -1,13 +1,9 @@
-import pandas as pd
-import numpy as np
 import math
 from copy import deepcopy
-from dataclasses import dataclass
 from typing import List, Dict, Literal, Optional
 from scipy.optimize import root_scalar
 
 from .equipment import *
-from .analysis import *
 
 
 class Plant:
@@ -164,7 +160,8 @@ class Plant:
         if print_results:
             # Print the resultS
             print(f"ISBL cost estimation: ${self.isbl:,.2f}")
-
+        else:
+            return self.isbl
 
 
     def calculate_fixed_capital(self, fc=None, print_results=False):
@@ -220,6 +217,8 @@ class Plant:
             print(f"Contingency: ${self.contigency:,.2f}")
             print("===================================")
             print(f"Fixed capital investment: ${self.fixed_capital:,.2f}")
+        else:
+            return self.fixed_capital
 
     def calculate_variable_opex(self, print_results=False):
         """
@@ -259,6 +258,8 @@ class Plant:
                 print(f"  - {item_name}: ${cost:,.2f} per year")
             print("===================================")
             print(f"Total Variable OPEX: ${self.variable_production_costs:,.2f} per year")
+        else:
+            return self.variable_production_costs
 
 
     def calculate_operating_labor(self):
@@ -304,6 +305,8 @@ class Plant:
 
         self.operators_hired = math.ceil(operators_per_shifts * operating_shifts_per_year / working_shifts_per_year)
         self.operating_labor_costs = self.operators_hired * working_hours_per_year * self.operator_hourly_rate
+
+        return self.operating_labor_costs
 
 
     def calculate_fixed_opex(self, fp=None, print_results=False):
@@ -379,6 +382,9 @@ class Plant:
             print(f"R&D costs: ${self.RnD_costs:,.2f} per year")
             print("===================================")
             print(f"Fixed OPEX: ${self.fixed_production_costs:,.2f} per year")
+
+        else:
+            return self.fixed_production_costs
 
 
     def calculate_cash_flow(self, print_results: bool = False):
@@ -532,8 +538,8 @@ class Plant:
 
             for year, pv, npv in zip(years, pv_to_print, npv_to_print):
                 print(f"{year:4d} | ${float(pv):15,.2f} | ${float(npv):15,.2f}")
-
-        # return pv_array, npv_array
+        else:
+            return npv_array[-1]
 
     def calculate_levelized_cost(self, print_results=False):
         self.calculate_fixed_capital(fc=1.0 if self.fc is None else self.fc)
@@ -563,6 +569,8 @@ class Plant:
 
         if print_results:
             print(f"Levelized cost: ${self.levelized_cost:,.3f}/kg")
+        else:
+            return self.levelized_cost
 
     def calculate_payback_time(self, print_results=False):
         """
@@ -590,6 +598,8 @@ class Plant:
 
         if print_results:
             print(f"Payback time: {self.payback_time:.2f} years")
+        else:
+            return self.payback_time
 
     def calculate_roi(self, print_results=False):
         """
@@ -615,6 +625,8 @@ class Plant:
 
         if print_results:
             print(f"Return of investment: {self.roi*100:.2f}%")
+        else:
+            return self.roi
 
     def calculate_irr(self, print_results: bool = False):
         """
@@ -701,6 +713,8 @@ class Plant:
                 print(f"Internal Rate of Return: {self.irr * 100:.2f}%")
             else:
                 print("Internal Rate of Return: undefined")
+        else:
+            return self.irr
 
 
 # Depreciation models

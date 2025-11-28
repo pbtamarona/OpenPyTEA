@@ -10,12 +10,71 @@ from itertools import cycle
 
 from .plant import *
 
+# HELPER FUNCTIONS
 def try_clear_output(*args, **kwargs):
     try:
         from IPython.display import clear_output
         clear_output(*args, **kwargs)
     except ImportError:
         pass
+
+def get_original_value(plant, full_key):
+    """
+    Retrieve the value of a parameter from the plant object.
+    Supports both dot-notation attributes and nested dictionaries
+    such as variable_opex_inputs.<key>.price
+    """
+    keys = full_key.split('.')
+    ref = plant
+    for k in keys:
+        if isinstance(ref, dict):
+            ref = ref[k]["price"]
+        else:
+            ref = getattr(ref, k)
+    return ref
+
+def update_and_evaluate(plant, factor, value, nested_price_keys):
+    """
+    Update the plant parameter (top-level or nested price) and 
+    recalculate LCOP. Returns the resulting LCOP.
+    
+    Parameters
+    ----------
+    plant : object
+        The plant object to copy and evaluate.
+    factor : str
+        Parameter name (e.g., 'fixed_capital', 'variable_opex_inputs.electricity')
+    value : float
+        New value to plug into the plant model.
+    nested_price_keys : list of str
+        Keys belonging to variable_opex_inputs.<key>
+    """
+    plant_copy = deepcopy(plant)
+
+    if factor == 'fixed_capital':
+        plant_copy.calculate_fixed_capital(fc=value)
+
+    elif factor == 'fixed_opex':
+        plant_copy.calculate_fixed_opex(fp=value)
+
+    elif factor in nested_price_keys:
+        parts = factor.split('.')   # ['variable_opex_inputs', '<name>']
+        config = {
+            'variable_opex_inputs': {
+                parts[1]: {
+                    'price': value,
+                }
+            }
+        }
+        plant_copy.update_configuration(config)
+
+    else:
+        # Generic top-level parameter update
+        config = {factor: value}
+        plant_copy.update_configuration(config)
+
+    plant_copy.calculate_levelized_cost()
+    return plant_copy.levelized_cost
 
 # type_costs = defaultdict(float)
 # for eq in mp_equipment:
@@ -42,6 +101,136 @@ def try_clear_output(*args, **kwargs):
 # ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='x-small')
 # plt.tight_layout()
 # plt.show()
+
+def sensitivity_plot(
+    plants,
+    parameter,
+    plus_minus_value,
+    n_points=21,
+    label=r'Levelized cost of product / [US\$$\cdot$kg$^{-1}_\mathrm{H_2}$]'
+):
+    """
+    Compare sensitivity of multiple plants to the same parameter.
+    
+    Parameters
+    ----------
+    plants : list
+        List of plant objects [plant1, plant2, ...].
+    parameter : str
+        Parameter to vary (same syntax as before, e.g. 'interest_rate' or
+        'variable_opex_inputs.electricity').
+    plus_minus_value : float
+        Fractional range for variation (e.g. 0.2 for ±20%).
+    n_points : int
+        Number of points in the sweep.
+    label : str
+        Y-axis label.
+    """
+
+    # Allow single plant for convenience
+    if not isinstance(plants, (list, tuple)):
+        plants = [plants]
+
+    # Color cycle for multiple plants
+    line_colors = cycle(plt.cm.Set2.colors)
+
+    # Use the first plant to define allowed parameters & label map
+    first_plant = plants[0]
+
+    top_level_keys = [
+        'fixed_capital',
+        'fixed_opex',
+        'project_lifetime',
+        'interest_rate',
+        'operator_hourly_rate'
+    ]
+    nested_price_keys_first = [
+        f"variable_opex_inputs.{k}" for k in first_plant.variable_opex_inputs.keys()
+    ]
+
+    valid_parameters = set(top_level_keys + nested_price_keys_first)
+
+    # --- Allow shorthand input like "co2_tax" instead of full path ---
+    # Build mapping from short name -> full name for variable opex inputs
+    short_to_full = {
+        k: f"variable_opex_inputs.{k}"
+        for k in first_plant.variable_opex_inputs.keys()
+    }
+
+    # If the user passed a short variable OPEX key, expand it
+    if parameter in short_to_full:
+        parameter = short_to_full[parameter]
+
+    if parameter not in valid_parameters:
+        raise ValueError(f"Unrecognized parameter: {parameter}")
+
+    # Generate percent deviations (e.g., -20% to +20%) – same for all plants
+    pct_changes = np.linspace(-plus_minus_value, plus_minus_value, n_points)
+    pct_axis = pct_changes * 100  # for plotting in %
+
+    # Build cleaner x-label (based on first plant)
+    label_map = {
+        "fixed_capital": "Fixed CAPEX",
+        "fixed_opex": "Fixed OPEX",
+        "project_lifetime": "Project lifetime",
+        "interest_rate": "Interest rate",
+        "operator_hourly_rate": "Operator hourly rate",
+    }
+    for var in first_plant.variable_opex_inputs:
+        label_map[f"variable_opex_inputs.{var}"] = f"{var.capitalize()} price"
+
+    label_raw = label_map.get(
+    parameter,
+    parameter.replace("variable_opex_inputs.", "")
+             .replace(".price", "")
+    )
+
+    # Now apply underscore replacement + capitalization to BOTH cases
+    label_clean = label_raw.replace("_", " ").capitalize()
+
+    x_label = label_clean + r" / [$\pm$ \%]"
+
+    plt.figure(figsize=(3.4, 2.4))
+
+    # Loop over plants and plot each sensitivity curve
+    for i, plant in enumerate(plants):
+        # Rebuild nested_price_keys for this specific plant
+        nested_price_keys = [
+            f"variable_opex_inputs.{k}" for k in plant.variable_opex_inputs.keys()
+        ]
+
+        # Get baseline for this plant (LCOP at nominal parameter)
+        lcop_base = plant.levelized_cost
+
+        # Get original (baseline) value for this plant
+        if parameter in ['fixed_capital', 'fixed_opex']:
+            original_value = 1.0
+        else:
+            original_value = get_original_value(plant, parameter)
+
+        # Convert pct changes into actual parameter values (per plant)
+        param_values = original_value * (1 + pct_changes)
+
+        # Compute LCOP for each variation for this plant
+        lcop_values = [
+            update_and_evaluate(plant, parameter, v, nested_price_keys)
+            for v in param_values
+        ]
+
+        color = next(line_colors)
+        # Try to use plant.name if it exists, otherwise fallback
+        plant_label = getattr(plant, "name", f"Plant {i+1}")
+
+        plt.plot(pct_axis, lcop_values, linewidth=1, color=color, label=plant_label, linestyle='-')
+
+        # Optional: mark baseline LCOP at 0% for each plant
+        # plt.axhline(y=lcop_base, linestyle='--', linewidth=0.75, color=color, alpha=0.5)
+
+    plt.xlabel(x_label)
+    plt.ylabel(label)
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.show()
 
 
 def tornado_plot(plant, plus_minus_value, label=r'Levelized cost of product'):
@@ -88,46 +277,6 @@ def tornado_plot(plant, plus_minus_value, label=r'Levelized cost of product'):
     all_keys = top_level_keys + nested_price_keys
 
     lcop_base = plant.levelized_cost
-
-    # Function to traverse nested attributes/dictionaries
-    def get_original_value(plant, full_key):
-        keys = full_key.split('.')
-        ref = plant
-        for k in keys:
-            if isinstance(ref, dict):
-                ref = ref[k]["price"]
-            else:
-                ref = getattr(ref, k)
-        return ref
-
-    def update_and_evaluate(plant, factor, value):
-        plant_copy = deepcopy(plant)
-        if factor == 'fixed_capital':
-            plant_copy.calculate_fixed_capital(fc=value)
-
-        elif factor == 'fixed_opex':
-            plant_copy.calculate_fixed_opex(fp=value)
-
-        elif factor in nested_price_keys:
-            parts = factor.split('.')
-            config = {
-                'variable_opex_inputs': {
-                    parts[1] : {
-                        'price': value,
-                    }
-                }
-            }
-            plant_copy.update_configuration(config)
-
-        else:
-            config = {
-                factor: value
-            }
-            plant_copy.update_configuration(config)
-
-        plant_copy.calculate_levelized_cost()
-        
-        return plant_copy.levelized_cost
 
     # Perform sensitivity analysis
     sensitivity_results = {}
