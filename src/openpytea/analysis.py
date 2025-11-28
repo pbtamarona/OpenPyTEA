@@ -102,23 +102,17 @@ def update_and_evaluate(plant, factor, value, nested_price_keys):
 # plt.tight_layout()
 # plt.show()
 
-def sensitivity_plot(
-    plants,
-    parameter,
-    plus_minus_value,
-    n_points=21,
-    label=r'Levelized cost of product / [US\$$\cdot$kg$^{-1}_\mathrm{H_2}$]'
-):
+def sensitivity_plot(plants, parameter, plus_minus_value, n_points=21, label=r'Levelized cost of product'):
     """
     Compare sensitivity of multiple plants to the same parameter.
-    
+
     Parameters
     ----------
     plants : list
         List of plant objects [plant1, plant2, ...].
     parameter : str
         Parameter to vary (same syntax as before, e.g. 'interest_rate' or
-        'variable_opex_inputs.electricity').
+        'variable_opex_inputs.electricity', or shorthand like 'co2_tax').
     plus_minus_value : float
         Fractional range for variation (e.g. 0.2 for ±20%).
     n_points : int
@@ -151,13 +145,10 @@ def sensitivity_plot(
     valid_parameters = set(top_level_keys + nested_price_keys_first)
 
     # --- Allow shorthand input like "co2_tax" instead of full path ---
-    # Build mapping from short name -> full name for variable opex inputs
     short_to_full = {
         k: f"variable_opex_inputs.{k}"
         for k in first_plant.variable_opex_inputs.keys()
     }
-
-    # If the user passed a short variable OPEX key, expand it
     if parameter in short_to_full:
         parameter = short_to_full[parameter]
 
@@ -180,14 +171,13 @@ def sensitivity_plot(
         label_map[f"variable_opex_inputs.{var}"] = f"{var.capitalize()} price"
 
     label_raw = label_map.get(
-    parameter,
-    parameter.replace("variable_opex_inputs.", "")
-             .replace(".price", "")
+        parameter,
+        parameter.replace("variable_opex_inputs.", "")
+                 .replace(".price", "")
     )
 
-    # Now apply underscore replacement + capitalization to BOTH cases
+    # Apply underscore replacement + capitalization to BOTH cases
     label_clean = label_raw.replace("_", " ").capitalize()
-
     x_label = label_clean + r" / [$\pm$ \%]"
 
     plt.figure(figsize=(3.4, 2.4))
@@ -199,32 +189,43 @@ def sensitivity_plot(
             f"variable_opex_inputs.{k}" for k in plant.variable_opex_inputs.keys()
         ]
 
+        # Valid parameters for THIS plant
+        plant_valid_params = set(top_level_keys + nested_price_keys)
+
         # Get baseline for this plant (LCOP at nominal parameter)
         lcop_base = plant.levelized_cost
 
-        # Get original (baseline) value for this plant
-        if parameter in ['fixed_capital', 'fixed_opex']:
-            original_value = 1.0
-        else:
-            original_value = get_original_value(plant, parameter)
-
-        # Convert pct changes into actual parameter values (per plant)
-        param_values = original_value * (1 + pct_changes)
-
-        # Compute LCOP for each variation for this plant
-        lcop_values = [
-            update_and_evaluate(plant, parameter, v, nested_price_keys)
-            for v in param_values
-        ]
-
         color = next(line_colors)
-        # Try to use plant.name if it exists, otherwise fallback
         plant_label = getattr(plant, "name", f"Plant {i+1}")
 
-        plt.plot(pct_axis, lcop_values, linewidth=1, color=color, label=plant_label, linestyle='-')
+        # If this plant does NOT have the parameter ➜ flat horizontal line
+        if parameter not in plant_valid_params:
+            lcop_values = np.full_like(pct_axis, fill_value=lcop_base, dtype=float)
 
-        # Optional: mark baseline LCOP at 0% for each plant
-        # plt.axhline(y=lcop_base, linestyle='--', linewidth=0.75, color=color, alpha=0.5)
+        else:
+            # Get original (baseline) value for this plant
+            if parameter in ['fixed_capital', 'fixed_opex']:
+                original_value = 1.0
+            else:
+                original_value = get_original_value(plant, parameter)
+
+            # Convert pct changes into actual parameter values (per plant)
+            param_values = original_value * (1 + pct_changes)
+
+            # Compute LCOP for each variation for this plant
+            lcop_values = [
+                update_and_evaluate(plant, parameter, v, nested_price_keys)
+                for v in param_values
+            ]
+
+        plt.plot(
+            pct_axis,
+            lcop_values,
+            linewidth=1,
+            color=color,
+            label=plant_label,
+            linestyle='-'
+        )
 
     plt.xlabel(x_label)
     plt.ylabel(label)

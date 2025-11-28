@@ -99,16 +99,25 @@ Main outputs include:
 
 ### 3. **Sensitivity and uncertainty analysis**
 
-**OpenPyTEA** provides integrated tools for visual and probabilistic analysis of cost and performance drivers.
+**OpenPyTEA** provides integrated tools for visual sensitivity and probabilistic analysis of cost and performance drivers.
 
+One-Way Sensitivity Line Plot
+```python
+from openpytea.analysis import sensitivity_plot
+
+results = sensitivity_plot(
+    plant, 
+    parameter="electricity", 
+    plus_minus_value =0.5
+    )
+```
 Tornado Plot (One-at-a-Time Sensitivity)
 ```python
 from openpytea.analysis import tornado_plot
 
 tornado_plot(
     plant,
-    params=['CAPEX', 'fuel_price', 'interest_rate', 'product_price'],
-    metric='LCOP'
+    plus_minus_value = 0.5,
 )
 ```
 Monte Carlo Simulation
@@ -117,10 +126,9 @@ from openpytea.analysis import monte_carlo
 
 results = monte_carlo(
     plant,
-    n_iter=5000,
-    variable_std={'CAPEX': 0.15, 'fuel_price': 0.10},
-    metric='NPV'
+    num_samples=1_000_000
 )
+
 ```
 Outputs include probability distributions and confidence intervals for LCOP or NPV—supporting uncertainty-informed decision-making.
 
