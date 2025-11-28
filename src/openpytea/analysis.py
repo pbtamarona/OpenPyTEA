@@ -281,15 +281,16 @@ def tornado_plot(plant, plus_minus_value, label=r'Levelized cost of product'):
     # Perform sensitivity analysis
     sensitivity_results = {}
     for key in all_keys:
-        if key == 'fixed_capital' or key == 'fixed_opex':
+        if key in ['fixed_capital', 'fixed_opex']:
             low = (1 - plus_minus_value)
             high = (1 + plus_minus_value)
         else:
             original = get_original_value(plant, key)
             low = original * (1 - plus_minus_value)
             high = original * (1 + plus_minus_value)
-        lcop_high = update_and_evaluate(plant, key, high)    
-        lcop_low = update_and_evaluate(plant, key, low)
+
+        lcop_low = update_and_evaluate(plant, key, low, nested_price_keys)
+        lcop_high = update_and_evaluate(plant, key, high, nested_price_keys)
         
         sensitivity_results[key] = [lcop_low, lcop_high]
 
