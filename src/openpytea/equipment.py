@@ -120,6 +120,7 @@ class Equipment:
                  material: str = 'Carbon steel',
                  num_units: int | None = None,
                  purchased_cost: float | None = None,
+                 cost_year: int | None = None,
                  cost_func: str | None = None,       # explicit correlation key
                  target_year: int = 2023):
         
@@ -130,13 +131,15 @@ class Equipment:
         self.category = category
         self.type = type
         self.num_units = num_units
-        self.cost_year = None
+        self.cost_year = cost_year if cost_year is not None else None
         self.target_year = target_year
         self._cost_func = cost_func
         self._db = CostCorrelationDB()  # always loads from the fixed CSV file
 
         if purchased_cost is not None:
             self.purchased_cost = purchased_cost
+            if cost_year is not None:
+                self.purchased_cost = inflation_adjustment(purchased_cost, cost_year, target_year=self.target_year)
             if self.num_units is None:
                 self.num_units = 1
         else:

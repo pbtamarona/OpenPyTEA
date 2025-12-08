@@ -102,7 +102,7 @@ def update_and_evaluate(plant, factor, value, nested_price_keys):
 # plt.tight_layout()
 # plt.show()
 
-def sensitivity_plot(plants, parameter, plus_minus_value, n_points=21, label=r'Levelized cost of product'):
+def sensitivity_plot(plants, parameter, plus_minus_value, n_points=21, figsize=(3.2, 2.2), label=r'Levelized cost of product'):
     """
     Compare sensitivity of multiple plants to the same parameter.
 
@@ -136,22 +136,37 @@ def sensitivity_plot(plants, parameter, plus_minus_value, n_points=21, label=r'L
         'fixed_opex',
         'project_lifetime',
         'interest_rate',
-        'operator_hourly_rate'
+        'operator_hourly_rate' 
     ]
+
+    # Get the nested price keys from the first plant
     nested_price_keys_first = [
         f"variable_opex_inputs.{k}" for k in first_plant.variable_opex_inputs.keys()
     ]
 
-    valid_parameters = set(top_level_keys + nested_price_keys_first)
+    # Collect all the nested price keys from all plants
+    nested_price_keys_all = set(nested_price_keys_first)
+    for plant in plants[1:]:
+        nested_price_keys_all.update([f"variable_opex_inputs.{k}" for k in plant.variable_opex_inputs.keys()])
+
+    # Combine the top level keys and all nested price keys
+    valid_parameters = set(top_level_keys + list(nested_price_keys_all))
 
     # --- Allow shorthand input like "co2_tax" instead of full path ---
-    short_to_full = {
-        k: f"variable_opex_inputs.{k}"
-        for k in first_plant.variable_opex_inputs.keys()
-    }
+    short_to_full = {}
+
+    # Collect all shorthand to full mappings across all plants
+    for plant in plants:
+        short_to_full.update({
+            k: f"variable_opex_inputs.{k}"
+            for k in plant.variable_opex_inputs.keys()
+        })
+
+    # If parameter is shorthand, convert to full path
     if parameter in short_to_full:
         parameter = short_to_full[parameter]
 
+    # Ensure the parameter is valid
     if parameter not in valid_parameters:
         raise ValueError(f"Unrecognized parameter: {parameter}")
 
@@ -159,7 +174,7 @@ def sensitivity_plot(plants, parameter, plus_minus_value, n_points=21, label=r'L
     pct_changes = np.linspace(-plus_minus_value, plus_minus_value, n_points)
     pct_axis = pct_changes * 100  # for plotting in %
 
-    # Build cleaner x-label (based on first plant)
+    # Build cleaner x-label (based on all plants)
     label_map = {
         "fixed_capital": "Fixed CAPEX",
         "fixed_opex": "Fixed OPEX",
@@ -167,20 +182,23 @@ def sensitivity_plot(plants, parameter, plus_minus_value, n_points=21, label=r'L
         "interest_rate": "Interest rate",
         "operator_hourly_rate": "Operator hourly rate",
     }
-    for var in first_plant.variable_opex_inputs:
-        label_map[f"variable_opex_inputs.{var}"] = f"{var.capitalize()} price"
+
+    # Collect all unique variable_opex_inputs from all plants
+    for plant in plants:
+        for var in plant.variable_opex_inputs:
+            label_map[f"variable_opex_inputs.{var}"] = f"{var.capitalize()} price"
 
     label_raw = label_map.get(
         parameter,
         parameter.replace("variable_opex_inputs.", "")
-                 .replace(".price", "")
+                .replace(".price", "")
     )
 
     # Apply underscore replacement + capitalization to BOTH cases
     label_clean = label_raw.replace("_", " ").capitalize()
     x_label = label_clean + r" / [$\pm$ \%]"
 
-    plt.figure(figsize=(3.4, 2.4))
+    plt.figure(figsize=figsize)
 
     # Loop over plants and plot each sensitivity curve
     for i, plant in enumerate(plants):
@@ -189,7 +207,7 @@ def sensitivity_plot(plants, parameter, plus_minus_value, n_points=21, label=r'L
             f"variable_opex_inputs.{k}" for k in plant.variable_opex_inputs.keys()
         ]
 
-        # Valid parameters for THIS plant
+        # Valid parameters for THIS plant (includes top-level and nested ones)
         plant_valid_params = set(top_level_keys + nested_price_keys)
 
         # Get baseline for this plant (LCOP at nominal parameter)
@@ -201,7 +219,6 @@ def sensitivity_plot(plants, parameter, plus_minus_value, n_points=21, label=r'L
         # If this plant does NOT have the parameter ➜ flat horizontal line
         if parameter not in plant_valid_params:
             lcop_values = np.full_like(pct_axis, fill_value=lcop_base, dtype=float)
-
         else:
             # Get original (baseline) value for this plant
             if parameter in ['fixed_capital', 'fixed_opex']:
@@ -234,7 +251,8 @@ def sensitivity_plot(plants, parameter, plus_minus_value, n_points=21, label=r'L
     plt.show()
 
 
-def tornado_plot(plant, plus_minus_value, label=r'Levelized cost of product'):
+
+def tornado_plot(plant, plus_minus_value, figsize=(3.4, 2.4), label=r'Levelized cost of product'):
     """
     Generate a tornado plot to visualize the sensitivity of the levelized cost of product to key input parameters.
     This function performs a one-at-a-time sensitivity analysis on selected parameters in the `config` dictionary,
@@ -330,7 +348,7 @@ def tornado_plot(plant, plus_minus_value, label=r'Levelized cost of product'):
     y_pos = np.arange(len(labels_sorted))
 
     # Plot
-    plt.figure(figsize=(3.4, 2.4))
+    plt.figure(figsize=figsize)
     for i in range(len(y_pos)):
         # Bar for -X% (blue)
         plt.barh(y_pos[i], abs(lcop_lows_sorted[i] - lcop_base), left=min(lcop_base,lcop_lows_sorted[i]),
@@ -352,6 +370,7 @@ def monte_carlo(plant, num_samples: int = 1_000_000, batch_size: int = 1000,
                 show_input_distributions: bool = False, 
                 show_plot_updates: bool = False,
                 show_final_plot: bool = True,
+                figsize=None,
                 label=r'Levelized cost of product'):
     
     plant.calculate_fixed_capital()
@@ -479,8 +498,9 @@ def monte_carlo(plant, num_samples: int = 1_000_000, batch_size: int = 1000,
         n_params = len(input_distributions)
         n_cols = 3
         n_rows = (n_params + n_cols - 1) // n_cols
-
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 5, n_rows * 3))
+        if figsize is None:
+            figsize = (n_cols * 5, n_rows * 3)
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
         axes = axes.flatten()  # Flatten for easy indexing
 
         # Plot each distribution
@@ -501,12 +521,15 @@ def monte_carlo(plant, num_samples: int = 1_000_000, batch_size: int = 1000,
         plt.show()
 
 
-def plot_multiple_monte_carlo(plants, bins=30, label=r'Levelized cost of product]'):
-    plt.figure()
+def plot_multiple_monte_carlo(plants, bins=30, figsize=None, label=r'Levelized cost of product'):
+    if figsize is None:
+        plt.figure()
+    else:
+        plt.figure(figsize=figsize)
     
     # Separate color cycles for histograms and lines
     hist_colors = cycle(plt.cm.tab10.colors)   # e.g., from tab10 colormap
-    line_colors = cycle(plt.cm.Set2.colors)    # different palette for lines
+    line_colors = cycle(plt.cm.tab10.colors)    # different palette for lines
     
     for plant in plants:
         if plant.monte_carlo_lcops is not None:

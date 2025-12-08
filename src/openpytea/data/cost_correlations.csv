@@ -58,6 +58,7 @@ centrifugal_pump_almeland_2009,Pumps,Centrifugal pump,kW driver power,,,,,,197,0
 indirect_fluidbed_ulrich_2003,Reactors,Indirect fluidized-bed,m3 reactor volume,0.3,2400,12272.26,8973.191,0.647,,,,linear,2003,Ulrich (2003),,,http://www.ulrichvasudesign.com/index.html
 jacketed_agitated_reactor_towler_2010,Reactors,Jacketed agitated,m3 volume,0.5,100,61500,32500,0.8,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 jacketed_agitated_glass_lined_reactor_towler_2010,Reactors,Glass-lined agitated,m3 volume,0.5,25,12800,88200,0.4,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
+tubular_fixed_bed_reactor_towler_2010,Reactors,Tubular fixed bed,kg shell mass,160,250000,12760,37.4,0.85,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,Adjusted from vertical CS pressure vessel (Towler & Sinnott); +10% in a and b,doi.org/10.1016/B978-0-12-821179-3.00007-8
 floating_roof_tank_towler_2010,Tanks,Floating-roof tank,"capacity, m^3",100,10000,113000,3250,0.65,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 cone_roof_tank_towler_2010,Tanks,Cone-roof tank,"capacity, m^3",10,4000,58000,1600,0.7,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,,,doi.org/10.1016/B978-0-12-821179-3.00007-8
 sieve_tray_towler_2010,Trays,Sieve tray,"column diameter, m",0.5,5,130,440,1.8,,,,linear,2010,Towler & Sinnott (2010) Table 7.2,Note 5,"Cost per tray, based on a stack of 30 trays",doi.org/10.1016/B978-0-12-821179-3.00007-8

@@ -57,6 +57,13 @@ class Plant:
         self.product_price = configuration.get('product_price', 0)
         self.tax_rate = configuration.get('tax_rate', 0)
         self.depreciation = configuration.get('depreciation', None)
+        self.operators_per_shift = configuration.get('operators_per_shift', None)
+        self.operators_hired = configuration.get('operators_hired', None)
+        self.working_weeks_per_year = configuration.get('working_weeks_per_year', 49)
+        self.working_shifts_per_week = configuration.get('working_shifts_per_week', 5)
+        self.operating_shifts_per_day = configuration.get('operating_shifts_per_day', 3)
+        self.additional_capex_years = configuration.get('additional_capex_years', None)
+        self.additional_capex_cost = configuration.get('additional_capex_cost', None)
         self.fc = None
         self.fp = None
 
@@ -89,6 +96,13 @@ class Plant:
         self.plant_utilization = configuration.get('plant_utilization', self.plant_utilization)
         self.product_price = configuration.get('product_price', self.product_price)
         self.tax_rate = configuration.get('tax_rate', self.tax_rate)
+        self.operators_per_shift = configuration.get('operators_per_shift', self.operators_per_shift)
+        self.operators_hired = configuration.get('operators_hired', self.operators_hired)
+        self.working_weeks_per_year = configuration.get('working_weeks_per_year', self.working_weeks_per_year)
+        self.working_shifts_per_week = configuration.get('working_shifts_per_week', self.working_shifts_per_week)
+        self.operating_shifts_per_day = configuration.get('operating_shifts_per_day', self.operating_shifts_per_day)
+        self.additional_capex_years = configuration.get('additional_capex_years', self.additional_capex_years)
+        self.additional_capex_cost = configuration.get('additional_capex_cost', self.additional_capex_cost)
 
         # NEW: allow updating depreciation block
         if 'depreciation' in configuration:
@@ -261,53 +275,56 @@ class Plant:
         else:
             return self.variable_production_costs
 
+    def count_units_by_process_type(self, equipments, target_process_types, excluded_cats=None):
+        if excluded_cats is None:
+            excluded_cats = {}
+        count = 0
+        for equipment in equipments:
+            if equipment.process_type in target_process_types and equipment.category not in excluded_cats:
+                count += 1
+        return count
+    
+    def calculate_operators_per_shift(self, no_fluid_process=None, no_solid_process=None):
+        if self.operators_per_shift is not None:
+            return self.operators_per_shift
+        else:
+            if no_fluid_process is None:
+                no_fluid_process = self.count_units_by_process_type(self.equipment_list, {'Fluids', 'Mixed'}, {'Pumps', 'Pressure vessels'})
+            if no_solid_process is None:
+                no_solid_process = self.count_units_by_process_type(self.equipment_list, {'Solids', 'Mixed'}, {'Pumps', 'Pressure vessels'})
 
-    def calculate_operating_labor(self):
-        """
-        Calculate the annual operating labor costs based on the equipment configuration.
-        This function estimates the number of operators required per shift and the total annual labor cost,
-        taking into account the types and numbers of process units, operator hourly rate, and working schedule.
-        Args:
-            config (dict): Configuration dictionary containing:
-                - 'equipment' (list): List of equipment objects, each with attributes:
-                    - process_type (str): Type of process ('Fluids', 'Solids', or 'Mixed').
-                    - type (str): Equipment type (e.g., 'Pump', 'Vessel', 'Cyclone', etc.).
-                    - num_units (int): Number of units for this equipment.
-                - 'operator_hourly_rate' (float): Hourly wage rate for operators.
-        Returns:
-            float: Total annual operating labor costs.
-        Raises:
-            ValueError: If the number of solid process units exceeds 2.
-        """
+            if no_solid_process > 2:
+                raise ValueError("Number of solid processes needs to be less than or equal to 2.")
 
-        def count_units_by_process_type(equipments, target_process_types):
-            excluded_types = {'Pump', 'Vessel', 'Cyclone'}
-            count = 0
-            for equipment in equipments:
-                if equipment.process_type in target_process_types and equipment.type not in excluded_types:
-                    count += equipment.num_units
-            return count
+            operators_per_shifts = (6.29 + 31.7 * (no_solid_process ** 2) + 0.23 * no_fluid_process) ** 0.5
+            return operators_per_shifts
+    
+    def calculate_operators_hired(self, no_fluid_process=None, no_solid_process=None):
+        if self.operators_hired is not None:
+            working_shifts_per_year = self.working_weeks_per_year * self.working_shifts_per_week
             
-        no_fluid_process = count_units_by_process_type(self.equipment_list, {'Fluids', 'Mixed'})
-        no_solid_process = count_units_by_process_type(self.equipment_list, {'Solids', 'Mixed'})
+            return self.operators_hired
+        
+        else:        
+            operators_per_shifts = self.calculate_operators_per_shift(no_fluid_process, no_solid_process)
 
-        operators_per_shifts = (6.29 + 31.7 * (no_solid_process ** 2) + 0.23 * no_fluid_process) ** 0.5
+            operating_shifts_per_year = 365 * self.operating_shifts_per_day
 
-        if no_solid_process > 2:
-            raise ValueError("Number of solid processes needs to be less than or equal to 2.")
+            working_shifts_per_year = self.working_weeks_per_year * self.working_shifts_per_week
+            
+            operators_hired = math.ceil(operators_per_shifts * operating_shifts_per_year / working_shifts_per_year)
+            return operators_hired
+        
+    def calculate_operating_labor(self, no_fluid_process=None, no_solid_process=None):
+        # Need to fix and improve this function later
+        operators_hired = self.calculate_operators_hired(no_fluid_process,no_solid_process)
 
-        working_weeks_per_year = 49
-        working_shifts_per_week = 5  # 8-hour shifts
-        operating_shifts_per_year = 365 * 3
+        working_shifts_per_year = self.working_weeks_per_year * self.working_shifts_per_week
+        working_hours_per_year = working_shifts_per_year * (24/self.operating_shifts_per_day) 
 
-        working_shifts_per_year = working_weeks_per_year * working_shifts_per_week
-        working_hours_per_year = working_shifts_per_year * 8
-
-        self.operators_hired = math.ceil(operators_per_shifts * operating_shifts_per_year / working_shifts_per_year)
-        self.operating_labor_costs = self.operators_hired * working_hours_per_year * self.operator_hourly_rate
+        self.operating_labor_costs = operators_hired * working_hours_per_year * self.operator_hourly_rate
 
         return self.operating_labor_costs
-
 
     def calculate_fixed_opex(self, fp=None, print_results=False):
         """
@@ -386,7 +403,6 @@ class Plant:
         else:
             return self.fixed_production_costs
 
-
     def calculate_cash_flow(self, print_results: bool = False):
         
         # 0) Upstream calcs (capital, opex breakdowns)
@@ -431,6 +447,19 @@ class Plant:
         if 2 < n_years:
             capex[:, 2] += self.working_capital
         capex[:, -1] -= self.working_capital
+
+        # --- Add additional CAPEX at specified years ---
+        if self.additional_capex_years is not None and self.additional_capex_cost is not None:
+            additional_capex_years = np.atleast_1d(self.additional_capex_years).astype(int)
+            additional_capex_cost = np.atleast_1d(self.additional_capex_cost).astype(float)
+            
+            # Check if the number of years matches the number of costs
+            if additional_capex_years.shape[0] != additional_capex_cost.shape[0]:
+                raise ValueError("The number of additional_capex_years must match the number of additional_capex_costs.")
+            
+            # Apply additional CAPEX at the specified years
+            for i, year in enumerate(additional_capex_years):
+                capex[:, year-1] += additional_capex_cost[i]  # Add the broadcasted costs
 
         # --- Production ramp ---
         nameplate = self.daily_prod * 365.0 * self.plant_utilization
