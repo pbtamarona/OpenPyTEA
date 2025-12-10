@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from collections import defaultdict
 import scienceplots
 import seaborn as sns
 import numpy as np
