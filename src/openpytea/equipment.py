@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 # --- Fixed CSV data sources ---
 from importlib.resources import files, as_file
@@ -12,7 +12,7 @@ with as_file(data_dir / "cepci_values.csv") as CEPCI_CSV_PATH:
 with as_file(data_dir / "cost_correlations.csv") as COST_DB_PATH:
     COST_DB_DF = pd.read_csv(COST_DB_PATH)
 
-def inflation_adjustment(equipment_cost, cost_year, target_year=2023):
+def inflation_adjustment(equipment_cost, cost_year, target_year=2024):
     if cost_year not in CEPCI_DF.index:
         raise ValueError(f"CEPCI not available for year {cost_year}")
     if target_year not in CEPCI_DF.index:
@@ -122,7 +122,7 @@ class Equipment:
                  purchased_cost: float | None = None,
                  cost_year: int | None = None,
                  cost_func: str | None = None,       # explicit correlation key
-                 target_year: int = 2023):
+                 target_year: int = 2024):
         
         self.name = name
         self.process_type = process_type

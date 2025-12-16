@@ -1,14 +1,26 @@
 # 🧩 OpenPyTEA
-**OpenPyTEA** is an open-source Python toolkit for **techno-economic assessment (TEA)** of chemical and energy systems.  It integrates **equipment cost estimation**, **cash-flow analysis**, and **uncertainty evaluation** into a **transparent and reproducible** workflow.  **OpenPyTEA** bridges the gap between process modeling and economic evaluation—empowering both researchers and students to perform standardized TEA directly in Python.
+
+**OpenPyTEA** is an open-source Python toolkit for performing **techno-economic assessment (TEA)** of chemical and energy systems. It was created to address a persistent gap in the TEA workflow: while process simulators model mass and energy balances, researchers often lack an equally transparent and flexible way to evaluate the **economic feasibility** of their designs. Commercial tools remain *black boxes*, and many academic TEA implementations are process-specific, undocumented, or difficult to reproduce.
+
+**OpenPyTEA** provides a fully open, modular, and traceable framework that brings TEA into the Python ecosystem. By integrating **equipment cost estimation**, **capital and operating expenditure modeling**, **cash-flow analysis**, **cost breakdown plots**, **sensitivity evaluation**, and **Monte Carlo uncertainty propagation**, the toolkit enables users to perform end-to-end TEA with clarity and reproducibility.
+
+Beyond its functionality, **OpenPyTEA is designed as a community-driven TEA platform**. Users can contribute new equipment cost correlations, improve economic models, report issues, and expand the toolkit’s capabilities over time. This collaborative approach helps build a shared, transparent, and continually improving TEA resource—similar to the open-source progress seen in the LCA community.
+
+Whether used for early-stage process design, technology screening, or teaching, **OpenPyTEA** makes TEA more accessible, consistent, and aligned with FAIR research principles.
+
+**For a full walkthrough of the features and usage of OpenPyTEA, refer to the `walkthrough.ipynb` notebook**:  
+https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb
 
 ---
 
 ## ✨ Key Features
-- **Modular architecture:** distinct modules for cost correlations, equipment modeling, plant-level assessment, and uncertainty analysis.  
-- **Transparent and reproducible:** all equations and assumptions are openly defined for full traceability.  
-- **Built-in uncertainty tools:** automatic generation of tornado plots and Monte Carlo simulations.  
-- **Extensible:** easy integration with life-cycle assessment or optimization frameworks.  
-- **Educational use:** ideal for teaching process design and cost analysis without commercial software.
+- **Modular architecture:** clean separation of cost correlations, equipment objects, plant economics, and uncertainty analysis.  
+- **Transparent and reproducible:** all algorithms, equations, and assumptions are openly available for full traceability.
+- **Cost breakdown visualization:** built-in helpers to plot stacked bar charts of direct equipment costs, fixed capital, and operating costs.
+- **Built-in uncertainty tools:** automatic generation of sensitivity plots and Monte Carlo simulations.  
+- **Interoperable and extensible:** easy integration with process simulators, optimization frameworks, and LCA tools.  
+- **Education-friendly:** ideal for teaching TEA and process design without reliance on proprietary software.  
+- **Community-driven:** users can contribute new correlations, improve models, request features, and shape the evolution of the platform.  
 
 ---
 
@@ -31,11 +43,10 @@ The main dependencies include:
 
 - `numpy`  
 - `pandas`  
-- `matplotlib`  
 - `scipy`  
-- `openpyxl`  
+- `matplotlib`  
+- `scienceplots`  
 - `tqdm`  
-- `jupyter`
 
 ---
 
@@ -44,7 +55,7 @@ The main dependencies include:
 src/openpytea/
 ├── equipment.py            # Equipment-level costing and inflation correction
 ├── plant.py                # Plant-level TEA: CAPEX, OPEX, cash flows, financial metrics
-├── analysis.py             # Sensitivity and uncertainty analysis (tornado plots, Monte Carlo)
+├── analysis.py             # Sensitivity and uncertainty analysis (sensitivity plots, Monte Carlo)
 └── data/                   # Cost correlations database and CEPCI data
 examples/                   # Example notebooks and case studies
 walkthrough.ipynb           # walkthrough of the package
@@ -63,12 +74,14 @@ Each process unit (e.g., compressor, heat exchanger, reactor) is represented by 
 from openpytea.equipment import Equipment
 
 compressor = Equipment(
-    eq_type='compressor',
-    sizing_var=5000,  # kW
-    material='carbon_steel'
+    name='COMP',
+    param=5000,  # kW
+    category='Compressors & Blowers',
+    type='Compressor, centrifugal',
+    material='Carbon steel'
 )
 
-print(compressor.installed_cost)
+print(compressor.direct_cost)
 ```
 
 Each equipment item retrieves its cost correlation from the internal database in `data/cost_correlations.csv` and adjusts the cost to the desired year using the Chemical Engineering Plant Cost Index (CEPCI).
@@ -80,22 +93,45 @@ Multiple equipment objects can be grouped into a `Plant` instance for full TEA
 ```python
 from openpytea.plant import Plant
 
-plant = Plant(
-    name='Hydrogen_Liquefaction',
-    equipment_list=[compressor],
-    location='Netherlands',
-    lifetime=20,
-    interest_rate=0.08,
-    tax_rate=0.21
+ammonia_plant = Plant(
+    'name':'Ammonia Production Plant', 'country':'Netherlands',
+    'process_type':'Fluids', 'equipment'=[compressor],
+    'interest_rate':0.09, 'plant_utilization':0.95, 'project_lifetime':20,  # in years
+    'plant_products': {  # Here we define the product(s) of the plant
+        'ammonia': {
+            'production':125_000, # Daily production in kg/day,
+        }
+    },
+    'variable_opex_inputs':{
+        'electricity':{
+            'consumption': 110,  # Daily consumption, in MWh 
+            'price': 75  # US$/MWh
+        }
+        'hydrogen':{
+            'consumption': 22_000,  # Daily consumption, in kg/day
+            'price': 2  # US$/kg
+        }
+    }
 )
 
-plant.run_cashflow(product_price=3.5, production_rate=10000)
-print(plant.results_summary())
+plant.calculate_cash_flow(print_results=True)
+plant.calculate_levelized_cost()
 ```
 Main outputs include:
 - Capital expenditures (CAPEX): inside/outside battery limits, engineering, contingency, and location factors
-- Operating expenditures (OPEX): utilities, maintenance, labor, taxes, and overheads
-- Financial metrics: Net Present Value (NPV), Internal Rate of Return (IRR), Return on Investment (ROI), Payback Period (PBP), and Levelized Cost of Product (LCOP)
+- Operating expenditures (OPEX): variable and operating expenditures, including utilities, maintenance, labor, and overhead costs
+- Financial metrics: Net Present Value (NPV), Internal Rate of Return (IRR), Return on Investment (ROI), Payback Time (PBT), and Levelized Cost of Product (LCOP)
+
+### 3. **CAPEX and OPEX breakdown plots**
+
+OpenPyTEA includes convenience functions for visualizing the economic structure of a process plant using stacked bar plots:
+
+- `plot_direct_costs_bar(plant)`: direct equipment costs (per equipment item).  
+- `plot_fixed_capital_bar(plant)`: fixed capital components (ISBL, OSBL, design & engineering, contingency).  
+- `plot_variable_opex_bar(plant)`: variable operating costs by input mass and energy stream.  
+- `plot_fixed_opex_bar(plant)`: fixed operating expenses, including labor, supervision, maintenance, overhead, R&D, and more.
+
+These plots provide a quick visual breakdown of the main CAPEX and OPEX contributors in a flowsheet.
 
 ### 3. **Sensitivity and uncertainty analysis**
 
@@ -111,6 +147,8 @@ results = sensitivity_plot(
     plus_minus_value =0.5
     )
 ```
+The `plant` input may also be a list of `Plant` objects to generate comparison plots.
+
 Tornado Plot (One-at-a-Time Sensitivity)
 ```python
 from openpytea.analysis import tornado_plot
@@ -120,6 +158,7 @@ tornado_plot(
     plus_minus_value = 0.5,
 )
 ```
+
 Monte Carlo Simulation
 ```python
 from openpytea.analysis import monte_carlo
@@ -130,7 +169,7 @@ results = monte_carlo(
 )
 
 ```
-Outputs include probability distributions and confidence intervals for LCOP or NPV—supporting uncertainty-informed decision-making.
+Outputs include probability distributions and confidence intervals for LCOP or NPV—supporting uncertainty-informed decision-making. With `plot_multiple_monte_carlo`, **OpenPyTEA** can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons.
 
 ---
 
@@ -140,8 +179,7 @@ Example notebooks are available in the `examples/` folder, including:
 
 - Hydrogen liquefaction  
 - Hydrogen production  
-- Geothermal power  
-- Distillation  
+- Geothermal heat and power  
 
 Run any example via:
 ```bash
