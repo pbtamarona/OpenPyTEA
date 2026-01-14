@@ -60,7 +60,7 @@ class CostCorrelationDB:
             ce = a + b * (s_adj ** n)
             purchased = ce * units
 
-        elif form == "quadratic log–log":
+        elif form == "quad log–log":
             K1, K2, K3 = r["K1"], r["K2"], r["K3"]
 
             logS = np.log10(s_adj)
