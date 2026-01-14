@@ -49,10 +49,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install flake8
+      - name: Install lint tools
         run: |
-          python -m pip install --upgrade pip
-          pip install flake8
+          pip install flake8 nbqa
 
       - name: Run flake8
-        run: flake8 src/openpytea examples walkthrough.ipynb
+        run: flake8 src/openpytea
+
+      - name: Lint notebooks
+        run: |
+          nbqa flake8 examples walkthrough.ipynb
