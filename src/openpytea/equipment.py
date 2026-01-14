@@ -55,14 +55,20 @@ class CostCorrelationDB:
         form = r.get("form", "linear")
         year = int(r["cost_year"])
 
-        if form == "linear":
+        if form == "power-law":
             a, b, n = r["a"], r["b"], r["n"]
             ce = a + b * (s_adj ** n)
             purchased = ce * units
-        elif form == "power":
-            s0, c0, f = r["s0"], r["c0"], r["f"]
-            ci = (c0 * (s_adj / s0) ** f) * 1e6
-            purchased = ci * units
+
+        elif form == "quadratic log–log":
+            K1, K2, K3 = r["K1"], r["K2"], r["K3"]
+
+            logS = np.log10(s_adj)
+            logCe = K1 + K2 * logS + K3 * (logS ** 2)
+
+            ce = 10 ** logCe
+            purchased = ce * units 
+        
         else:
             raise ValueError(f"Unsupported form '{form}' for key '{key}'")
 
