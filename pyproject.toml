@@ -12,7 +12,7 @@ keywords = [
     "techno-economic-analysis",
     "process-plant",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = [
     "matplotlib>=3.8",
