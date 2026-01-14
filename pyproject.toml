@@ -1,7 +1,7 @@
 [project]
 name = "OpenPyTEA"
 version = "1.2.0"
-description = "OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
+description = "OpenPyTEA: An open-source Python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -12,33 +12,38 @@ keywords = [
     "techno-economic-analysis",
     "process-plant",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.9"
+
 dependencies = [
-    "matplotlib>=3.10.7",
-    "numpy>=2.3.5",
-    "pandas>=2.3.3",
+    "matplotlib>=3.8",
+    "numpy>=1.24",
+    "pandas>=1.5",
     "scienceplots>=2.2.0",
-    "scipy>=1.16.3",
-    "seaborn>=0.13.2",
-    "tqdm>=4.67.1",
-    "jinja2>=3.1.6",
+    "scipy>=1.10",
+    "seaborn>=0.12",
+    "tqdm>=4.64",
+    "jinja2>=3.1",
 ]
+
 maintainers = [
-  {name = "Panji B. Tamarona", email = "P.B.Tamarona@tudelft.nl"}
+  { name = "Panji B. Tamarona", email = "P.B.Tamarona@tudelft.nl" }
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+]
+ipython = [
+    "ipython>=8.0",
 ]
 
 [urls]
 Repository = "https://github.com/PBTamarona/OpenPyTEA"
 Issues = "https://github.com/PBTamarona/OpenPyTEA/issues"
 
-[project.optional-dependencies]
-ipython = [
-    "ipython==9.6.0",
-]
-
 [build-system]
 requires = ["uv_build>=0.9.10,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv_build]
-package-data = {"openpytea" = ["data/*.csv"]}
+package-data = { "openpytea" = ["data/*.csv"] }
