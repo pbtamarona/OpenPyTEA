@@ -67,6 +67,8 @@ jobs:
   pypi-publish:
     runs-on: ubuntu-latest
     needs: release-build
+    environment:
+      name: pypi
       # OPTIONAL: Link to PyPI project page
       # url: https://pypi.org/project/YOURPROJECT/${{ github.event.release.name }}
 
@@ -79,16 +81,17 @@ jobs:
           path: dist/
 
       # Publish to PyPI using token stored in GitHub secrets
-      # - name: Publish to PyPI
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     packages-dir: dist/
-      #     pypi-token: ${{ secrets.PYPI_API_TOKEN }}
-      - name: Publish to Test PyPI
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
-          repository-url: https://test.pypi.org/legacy/
           username: __token__
-          password: ${{ secrets.PYPI_API_TOKEN_TESTS }}
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      # - name: Publish to Test PyPI
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     packages-dir: dist/
+      #     repository-url: https://test.pypi.org/legacy/
+      #     username: __token__
+      #     password: ${{ secrets.PYPI_API_TOKEN_TESTS }}
           

@@ -1,15 +1,18 @@
 # 🧩 OpenPyTEA
 
-**OpenPyTEA** is an open-source Python toolkit for performing **techno-economic assessment (TEA)** of chemical and energy systems. It was created to address a persistent gap in the TEA workflow: while process simulators model mass and energy balances, researchers often lack an equally transparent and flexible way to evaluate the **economic feasibility** of their designs. Commercial tools remain *black boxes*, and many academic TEA implementations are process-specific, undocumented, or difficult to reproduce.
+**OpenPyTEA** is an open-source Python toolkit for performing **techno-economic assessment (TEA)** of chemical and energy systems. It was created to address a persistent gap in the TEA workflow: while process simulators model mass and energy balances, researchers often lack an equally transparent and flexible way to evaluate the **economic feasibility** of their designs. Commercial tools remain *black-box tools*, and many academic TEA implementations are process-specific, undocumented, or difficult to reproduce.
 
 **OpenPyTEA** provides a fully open, modular, and traceable framework that brings TEA into the Python ecosystem. By integrating **equipment cost estimation**, **capital and operating expenditure modeling**, **cash-flow analysis**, **cost breakdown plots**, **sensitivity evaluation**, and **Monte Carlo uncertainty propagation**, the toolkit enables users to perform end-to-end TEA with clarity and reproducibility.
 
 Beyond its functionality, **OpenPyTEA is designed as a community-driven TEA platform**. Users can contribute new equipment cost correlations, improve economic models, report issues, and expand the toolkit’s capabilities over time. This collaborative approach helps build a shared, transparent, and continually improving TEA resource—similar to the open-source progress seen in the LCA community.
 
-Whether used for early-stage process design, technology screening, or teaching, **OpenPyTEA** makes TEA more accessible, consistent, and aligned with FAIR research principles.
+Whether used for early-stage process design, technology screening, or teaching, **OpenPyTEA** makes TEA more accessible, consistent, and aligned with FAIR research principles (Findable, Accessible, Interoperable, and Reusable).
 
 **For a full walkthrough of the features and usage of OpenPyTEA, refer to the `walkthrough.ipynb` notebook**:  
 https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb
+
+**For some case-study examples, please check the `examples` folder:**
+https://github.com/pbtamarona/OpenPyTEA/tree/main/examples
 
 ---
 
@@ -26,31 +29,39 @@ https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb
 
 ## 📦 Installation
 
-### 1. **Using `uv`**
+### 1. **Install from PyPI (recommended)**
 
 ```bash
-uv add git+https://github.com/pbtamarona/OpenPyTEA
+pip install openpytea
 ```
 
-### 2. **Using `pip`**
+### 2. **Install from GitHub (development version)**
 
 ```bash
 pip install git+https://github.com/pbtamarona/OpenPyTEA
 ```
 
-**OpenPyTEA** requires **Python ≥ 3.11**.  
+or with `uv`:
+
+```bash
+uv add git+https://github.com/pbtamarona/OpenPyTEA
+```
+
+
+**OpenPyTEA** requires **Python ≥ 3.9**.  
 The main dependencies include:
 
+- `matplotlib`
 - `numpy`  
-- `pandas`  
-- `scipy`  
-- `matplotlib`  
+- `pandas`
 - `scienceplots`  
+- `scipy`    
 - `tqdm`  
+- `jinja2` 
 
 ---
 
-## ⚙️ Package Structure
+## ⚙️ Package (Repository) Structure
 ```
 src/openpytea/
 ├── equipment.py            # Equipment-level costing and inflation correction
@@ -76,7 +87,7 @@ from openpytea.equipment import Equipment
 compressor = Equipment(
     name='COMP',
     param=5000,  # kW
-    category='Compressors & Blowers',
+    category='Compressors, fans, & Blowers',
     type='Compressor, centrifugal',
     material='Carbon steel'
 )
@@ -93,10 +104,14 @@ Multiple equipment objects can be grouped into a `Plant` instance for full TEA
 ```python
 from openpytea.plant import Plant
 
-ammonia_plant = Plant(
-    'name':'Ammonia Production Plant', 'country':'Netherlands',
-    'process_type':'Fluids', 'equipment'=[compressor],
-    'interest_rate':0.09, 'plant_utilization':0.95, 'project_lifetime':20,  # in years
+ammonia_plant = Plant({
+    'name':'Ammonia Production Plant', 
+    'country':'Netherlands',
+    'process_type':'Fluids', 
+    'equipment'=[compressor],
+    'interest_rate':0.09, 
+    'plant_utilization':0.95, 
+    'project_lifetime':20,  # in years
     'plant_products': {  # Here we define the product(s) of the plant
         'ammonia': {
             'production':125_000, # Daily production in kg/day,
@@ -106,13 +121,13 @@ ammonia_plant = Plant(
         'electricity':{
             'consumption': 110,  # Daily consumption, in MWh 
             'price': 75  # US$/MWh
-        }
+        },
         'hydrogen':{
             'consumption': 22_000,  # Daily consumption, in kg/day
             'price': 2  # US$/kg
-        }
-    }
-)
+        },
+    },
+})
 
 plant.calculate_cash_flow(print_results=True)
 plant.calculate_levelized_cost()
@@ -133,7 +148,7 @@ OpenPyTEA includes convenience functions for visualizing the economic structure 
 
 These plots provide a quick visual breakdown of the main CAPEX and OPEX contributors in a flowsheet.
 
-### 3. **Sensitivity and uncertainty analysis**
+### 4. **Sensitivity and uncertainty analysis**
 
 **OpenPyTEA** provides integrated tools for visual sensitivity and probabilistic analysis of cost and performance drivers.
 
@@ -177,8 +192,8 @@ Outputs include probability distributions and confidence intervals for LCOP or N
 
 Example notebooks are available in the `examples/` folder, including:
 
-- Hydrogen liquefaction  
 - Hydrogen production  
+- Hydrogen liquefaction  
 - Geothermal heat and power  
 
 Run any example via:
@@ -239,7 +254,7 @@ Or if you prefer to cite manually, you may use:
   title        = {OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation},
   year         = {2025},
   url          = {\url{https://github.com/pbtamarona/OpenPyTEA}},
-  version      = {1.2.0}
+  version      = {1.2.0},
   note         = {Accessed: YYYY-MM-DD}
 }
 ```
