@@ -44,6 +44,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install build pytest
 
+      # Install the package locally for testing
+      - name: Install OpenPyTEA
+        run: pip install -e .
+
       # Run tests to ensure package is okay
       - name: Run tests
         run: pytest
