@@ -408,10 +408,13 @@ class Plant:
                     f"${sum(self.additional_capex_cost):,.2f}"
                 )
                 print("===================================")
+                total_capex = (
+                    self.fixed_capital
+                    + sum(self.additional_capex_cost)
+                )
                 print(
                     f"Fixed capital investment: "
-                    f"${self.fixed_capital
-                        + sum(self.additional_capex_cost):,.2f}"
+                    f"${total_capex:,.2f}"
                 )
             else:
                 # Print the results
