@@ -48,6 +48,9 @@ jobs:
       - name: Install OpenPyTEA
         run: pip install -e .
 
+      - name: Verify installation
+        run: python -c "import openpytea; print(openpytea.__file__)"
+
       # Run tests to ensure package is okay
       - name: Run tests
         run: pytest
