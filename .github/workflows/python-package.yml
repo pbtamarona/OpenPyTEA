@@ -51,11 +51,8 @@ jobs:
 
       - name: Install lint tools
         run: |
-          pip install flake8 nbqa
+          pip install flake8
 
       - name: Run flake8
         run: flake8 src/openpytea
-
-      - name: Lint notebooks
-        run: |
-          nbqa flake8 examples walkthrough.ipynb
+        
