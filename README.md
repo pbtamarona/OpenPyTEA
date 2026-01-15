@@ -70,6 +70,7 @@ src/openpytea/
 └── data/                   # Cost correlations database and CEPCI data
 examples/                   # Example notebooks and case studies
 walkthrough.ipynb           # walkthrough of the package
+pyproject.toml
 README.md
 ```
 
