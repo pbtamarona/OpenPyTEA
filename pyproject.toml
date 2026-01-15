@@ -47,3 +47,7 @@ build-backend = "uv_build"
 
 [tool.uv_build]
 package-data = { "openpytea" = ["data/*.csv"] }
+
+[tool.black]
+line-length = 60
+target-version = ['py310']
