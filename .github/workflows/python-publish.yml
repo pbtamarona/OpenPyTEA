@@ -51,9 +51,6 @@ jobs:
       - name: Verify installation
         run: python -c "import openpytea; print(openpytea.__file__)"
 
-      - name: Check package version
-        run: python -c "import openpytea; print(openpytea.__version__)"
-
       # Run tests to ensure package is okay
       - name: Run tests
         run: PYTHONPATH=src pytest

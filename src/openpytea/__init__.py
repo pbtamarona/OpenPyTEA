@@ -6,8 +6,8 @@ from .analysis import (plot_direct_costs_bar, plot_fixed_capital_bar,
                        plot_monte_carlo, plot_monte_carlo_inputs,
                        plot_multiple_monte_carlo)
 
+__version__ = "1.2.0"
 
-# Define what gets exported when someone does `from openpytea import *`
 __all__ = [
     "Plant",
     "Equipment",
