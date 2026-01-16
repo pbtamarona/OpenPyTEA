@@ -27,7 +27,7 @@ jobs:
       # Set up Python
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"  # Pin to a specific version for reproducibility
+          python-version: "3.10"  # Pin to a specific version for reproducibility
 
       # Cache pip dependencies
       - name: Cache pip
@@ -61,7 +61,7 @@ jobs:
       # Build source and wheel distributions
       - name: Build distributions
         run: |
-          python -m build --no-isolation
+          python -m build
 
       # Upload built distributions as artifact for publishing
       - name: Upload distributions

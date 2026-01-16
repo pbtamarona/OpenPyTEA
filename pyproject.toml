@@ -42,11 +42,8 @@ Repository = "https://github.com/PBTamarona/OpenPyTEA"
 Issues = "https://github.com/PBTamarona/OpenPyTEA/issues"
 
 [build-system]
-requires = ["uv_build>=0.9.10,<0.10.0"]
-build-backend = "uv_build"
-
-[tool.uv_build]
-package-data = { "openpytea" = ["data/*.csv"] }
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 60
@@ -54,4 +51,9 @@ target-version = ['py310']
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["openpytea"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+openpytea = ["data/*.csv"]
