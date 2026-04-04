@@ -1,0 +1,13 @@
+[project]
+name = "openpytea-gui-backend"
+version = "0.1.0"
+description = "FastAPI backend for OpenPyTEA GUI"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "openpytea @ file:///${PROJECT_ROOT}/../",
+]
+
+[tool.setuptools]
+packages = ["app"]
