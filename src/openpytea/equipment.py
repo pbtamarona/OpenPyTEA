@@ -17,41 +17,47 @@ with as_file(
     COST_DB_DF = pd.read_csv(COST_DB_PATH)
 
 
-def inflation_adjustment(
-    equipment_cost, cost_year, target_year=2024
-):
+def inflation_adjustment(equipment_cost, cost_year, target_year=2024):
     """
-    Adjust equipment cost from one year to another using
-    the Chemical Engineering Plant Cost Index (CEPCI).
+    Adjust equipment cost from one year to another using the Chemical
+    Engineering Plant Cost Index (CEPCI).
+
+    This function uses historical CEPCI values to convert equipment costs
+    between different years, accounting for inflation in the chemical
+    engineering industry.
 
     Parameters
     ----------
     equipment_cost : float
-        The cost of the equipment in the cost_year.
+        The cost of the equipment in the cost_year (in USD).
     cost_year : int
         The year in which the equipment_cost is valued.
-        Must be available in CEPCI_DF.
+        Must be available in CEPCI_DF index.
     target_year : int, optional
         The year to adjust the cost to. Default is 2024.
-        Must be available in CEPCI_DF.
+        Must be available in CEPCI_DF index.
 
     Returns
     -------
     float
-        The inflation-adjusted equipment cost in the target_year.
+        The inflation-adjusted equipment cost in target_year (in USD).
 
     Raises
     ------
     ValueError
-        If cost_year is not available in CEPCI_DF.
+        If cost_year is not found in CEPCI_DF.
     ValueError
-        If target_year is not available in CEPCI_DF.
+        If target_year is not found in CEPCI_DF.
+
+    Notes
+    -----
+    The adjustment factor is calculated as:
+    adjusted_cost = equipment_cost * (CEPCI[target_year] / CEPCI[cost_year])
 
     Examples
     --------
-    >>> adjusted_cost = inflation_adjustment(10000, 2020, 2024)
-    >>> print(adjusted_cost)
-    12345.67
+    >>> # Adjust from 2015 to 2023
+    >>> new_cost = inflation_adjustment(50000, 2015, 2023)
     """
     if cost_year not in CEPCI_DF.index:
         raise ValueError(
@@ -69,47 +75,75 @@ def inflation_adjustment(
 
 class CostCorrelationDB:
     """
-    A database interface for equipment cost correlations.
-    This class manages cost estimation correlations for equipment based on
-    size/capacity parameters. It supports multiple correlation forms
-    (power-law, quad log-log) and handles equipment parallelization when
-    capacity limits are exceeded.
-    Attributes:
-        df (pd.DataFrame): DataFrame containing cost correlation data with
-        columns including: key, category, type, form, s_lower, s_upper,
-        upper_parallel, a, b, n, k1, k2, k3, cost_year, and other parameters.
-    Methods:
-        __init__(df: pd.DataFrame) -> None:
-            Initialize the database with a cost correlation DataFrame.
-            Normalizes column names to lowercase and converts numeric columns.
-        _parallelize(s: float, cap: float | None) -> tuple[int, float]:
-            Calculate number of parallel units and adjusted size when capacity
-            is exceeded.
-            Args:
-                s: Equipment size/capacity.
-                cap: Unit capacity limit. If None, no parallelization occurs.
-            Returns:
-                Tuple of (number_of_units, adjusted_size_per_unit).
-        evaluate(key: str, s: float) -> tuple[float, int, int]:
-            Calculate purchased equipment cost based on
-            correlation key and size.
-            Args:
-                key: Unique identifier for the cost correlation.
-                s: Equipment size/capacity parameter.
-            Returns:
-                Tuple of (total_cost, number_of_units, cost_year).
-            Raises:
-                KeyError: If correlation key not found in database.
-                ValueError: If size is below lower bound or
-                form is unsupported.
-        key_for_category_type(eq_category: str, type: str | None)
-        -> str | None:
+    Database interface for equipment cost correlations.
+
+    Manages cost estimation correlations for equipment based on size/capacity
+    parameters. Supports multiple correlation forms (power-law, quad log-log)
+    and handles equipment parallelization when capacity limits are exceeded.
+
+    Attributes
+    ----------
+    df : pd.DataFrame
+        Cost correlation data with columns: key, category, type, form,
+        s_lower, s_upper, upper_parallel, a, b, n, k1, k2, k3, cost_year.
+
+    Methods
+    -------
+    __init__(df: pd.DataFrame) -> None
+        Initialize database with cost correlation DataFrame.
+        Normalizes column names to lowercase and converts numeric columns.
+
+    _parallelize(s: float, cap: float | None) -> tuple[int, float]
+        Calculate parallel units and adjusted size when capacity exceeded.
+
+        Parameters
+        ----------
+        s : float
+            Equipment size/capacity.
+        cap : float | None
+            Unit capacity limit. If None, no parallelization occurs.
+
+        Returns
+        -------
+        tuple[int, float]
+            (number_of_units, adjusted_size_per_unit).
+
+    evaluate(key: str, s: float) -> tuple[float, int, int]
+        Calculate purchased equipment cost based on correlation key and size.
+
+        Parameters
+        ----------
+        key : str
+            Unique identifier for the cost correlation.
+        s : float
+            Equipment size/capacity parameter.
+
+        Returns
+        -------
+        tuple[float, int, int]
+            (total_cost, number_of_units, cost_year).
+
+        Raises
+        ------
+        KeyError
+            If correlation key not found in database.
+        ValueError
+            If size below lower bound or form unsupported.
+
+    key_for_category_type(eq_category: str, type: str | None) -> str | None
         Look up correlation key by equipment category and optional type.
-            Args:
-                eq_category: Equipment category name.
-                type: Equipment type (optional).
-            Returns:
-                Correlation key if found, None otherwise.
+
+        Parameters
+        ----------
+        eq_category : str
+            Equipment category name.
+        type : str | None
+            Equipment sub-type (optional).
+
+        Returns
+        -------
+        str | None
+            Correlation key if found, None otherwise.
     """
 
     def __init__(self, df=COST_DB_DF):
@@ -212,54 +246,82 @@ class CostCorrelationDB:
 class Equipment:
     """
     Equipment cost estimation class for process equipment.
-    This class manages the cost calculation of process equipment
-    based on process type, material, and equipment parameters.
-    It supports both direct cost input and calculated costs
-    based on correlations from a cost database.
-    Attributes:
-        process_factors (dict):
+
+    This class manages the cost calculation of process equipment based on
+    process type, material, and equipment parameters. It supports both direct
+    cost input and calculated costs based on correlations from a cost database.
+
+    Attributes
+    ----------
+    process_factors : dict
         Dictionary of process type factors affecting cost calculation.
-            Keys are process types ("Solids", "Fluids", "Mixed", "Electrical").
-            Values are dicts with factors: fer, fp, fi, fel, fc, fs, fl.
-        material_factors (dict): Dictionary of material type multipliers.
-            Maps material names to cost multiplication factors (1.0 to 1.7).
-    Args:
-        name (str): Equipment identifier/name.
-        param (float):
+        Keys are process types ("Solids", "Fluids", "Mixed", "Electrical").
+        Values are dicts with factors: fer, fp, fi, fel, fc, fs, fl.
+    material_factors : dict
+        Dictionary of material type multipliers.
+        Maps material names to cost multiplication factors (1.0 to 1.7).
+
+    Parameters
+    ----------
+    name : str
+        Equipment identifier/name.
+    param : float
         Equipment parameter (size, capacity) for cost correlation lookup.
-        process_type (str): Type of process
-        ("Solids", "Fluids", "Mixed", or "Electrical").
-        category (str): Equipment category for database lookup.
-        type (str | None): Equipment sub-type for database lookup.
+    process_type : str
+        Type of process ("Solids", "Fluids", "Mixed", or "Electrical").
+    category : str
+        Equipment category for database lookup.
+    type : str | None, optional
+        Equipment sub-type for database lookup. Default is None.
+    material : str, optional
+        Material of construction. Default is "Carbon steel".
+    num_units : int | None, optional
+        Number of identical units. Default is None (set to 1 if
+        purchased_cost provided).
+    purchased_cost : float | None, optional
+        Direct purchased cost input. If provided, param is ignored.
         Default is None.
-        material (str): Material of construction.
-        Default is "Carbon steel".
-        num_units (int | None): Number of identical units.
-        Default is None (set to 1 if purchased_cost provided).
-        purchased_cost (float | None): Direct purchased cost input.
-        If provided, param is ignored. Default is None.
-        cost_year (int | None): Year of the purchased_cost quote.
-        Default is None.
-        cost_func (str | None): Explicit cost correlation key from database.
+    cost_year : int | None, optional
+        Year of the purchased_cost quote. Default is None.
+    cost_func : str | None, optional
+        Explicit cost correlation key from database.
         Default is None (auto-resolved).
-        target_year (int): Target year for inflation adjustment.
-        Default is 2024.
-    Methods:
-        _resolve_key() -> str: Resolves the cost correlation key
-        from database or explicit input.
-        _calc_purchased_cost() -> float: Calculates purchased cost
-        using database correlation.
-        calculate_direct_cost() -> float: Calculates total direct cost
-        including process and material factors.
-        __str__() -> str: Returns formatted string representation of equipment
-        specifications and costs.
-    Raises:
-        ValueError:
+    target_year : int, optional
+        Target year for inflation adjustment. Default is 2024.
+
+    Methods
+    -------
+    _resolve_key() -> str
+        Resolves the cost correlation key from database or explicit input.
+    _calc_purchased_cost() -> float
+        Calculates purchased cost using database correlation.
+    calculate_direct_cost() -> float
+        Calculates total direct cost including process and material factors.
+    to_dict() -> dict
+        Converts equipment specifications and costs to dictionary format.
+    __str__() -> str
+        Returns formatted string representation of equipment specifications
+        and costs.
+
+    Raises
+    ------
+    ValueError
         If process_type or material not found in factor dictionaries.
-        KeyError:
-        If category/type combination not found in database
-        and cost_func not specified.
-    ️"""
+    KeyError
+        If category/type combination not found in database and cost_func
+        not specified.
+
+    Examples
+    --------
+    >>> eq = Equipment(
+    ...     name="Reactor",
+    ...     param=100,
+    ...     process_type="Fluids",
+    ...     category="Reactor",
+    ...     material="304 stainless steel"
+    ... )
+    >>> print(eq.direct_cost)
+    """
 
     process_factors = {
         "Solids": {
@@ -420,6 +482,21 @@ class Equipment:
             )
         )
         return self.direct_cost
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "category": self.category,
+            "type": self.type,
+            "material": self.material,
+            "process_type": self.process_type,
+            "param": self.param,
+            "num_units": self.num_units,
+            "cost_year": self.cost_year,
+            "target_year": self.target_year,
+            "purchased_cost": float(self.purchased_cost),
+            "direct_cost": float(self.direct_cost),
+        }
 
     def __str__(self) -> str:
         return (
