@@ -67,12 +67,69 @@ src/openpytea/
 ├── equipment.py            # Equipment-level costing and inflation correction
 ├── plant.py                # Plant-level TEA: CAPEX, OPEX, cash flows, financial metrics
 ├── analysis.py             # Sensitivity and uncertainty analysis (sensitivity plots, Monte Carlo)
+├── plotting.py             # Visualization tools (stacked bars, sensitivity, tornado, MC histograms)
+├── helpers.py              # Shared utility functions
+├── io.py                   # JSON load/save and full TEA runner
 └── data/                   # Cost correlations database and CEPCI data
 examples/                   # Example notebooks and case studies
-walkthrough.ipynb           # walkthrough of the package
+walkthrough.ipynb           # Walkthrough of the package
+
+backend/                    # FastAPI backend for the web GUI
+├── app/
+│   ├── main.py             # FastAPI app with CORS and router mounting
+│   ├── state.py            # In-memory session state
+│   ├── schemas.py          # Pydantic request/response models
+│   ├── util.py             # JSON serialization utilities
+│   ├── routers/            # API endpoints (equipment, plant, analysis, I/O)
+│   └── presets/            # Example preset JSON files
+└── requirements.txt
+
+frontend/                   # React + TypeScript web GUI
+├── src/
+│   ├── api/client.ts       # Typed API client
+│   ├── types/index.ts      # TypeScript interfaces
+│   ├── pages/              # Equipment, Plant Config, Results, Analysis, Monte Carlo
+│   ├── App.tsx             # Tab navigation + examples dropdown
+│   └── App.css             # Styling
+└── package.json
+
 pyproject.toml
 README.md
+GUI_ARCHITECTURE.md         # Detailed architecture notes for the web GUI
 ```
+
+---
+
+## 🖥️ Web GUI
+
+OpenPyTEA includes an optional web-based graphical interface for users who prefer a visual workflow over Python scripting. The GUI provides the full TEA workflow through a tabbed browser interface:
+
+- **Equipment** — add, edit, and remove equipment with cost database lookup
+- **Plant Config** — configure location, financial parameters, labor, products, and variable OPEX
+- **Results** — run calculations and view metric cards, cost breakdown charts, and cash flow tables
+- **Analysis** — one-way sensitivity plots and tornado diagrams
+- **Monte Carlo** — uncertainty analysis with histogram distributions and summary statistics
+- **Examples** — built-in presets from the case study notebooks for quick demonstration
+
+### Running the GUI
+
+**Backend** (requires Python 3.10+ with OpenPyTEA installed):
+```bash
+cd backend
+pip install -r requirements.txt
+PYTHONPATH=../src python3 -m uvicorn app.main:app --reload --port 8000
+```
+
+**Frontend** (requires Node.js):
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Then open http://localhost:5173. Click **Examples** in the header to load a case study preset and explore.
+
+For detailed architecture documentation, see `GUI_ARCHITECTURE.md`.
 
 ---
 

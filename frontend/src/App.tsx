@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import EquipmentPage from "./pages/EquipmentPage";
 import PlantConfigPage from "./pages/PlantConfigPage";
 import ResultsPage from "./pages/ResultsPage";
 import AnalysisPage from "./pages/AnalysisPage";
 import MonteCarloPage from "./pages/MonteCarloPage";
-import { saveProject, loadProject } from "./api/client";
+import { saveProject, loadProject, getExamples, loadExample } from "./api/client";
+import type { ExamplePreset } from "./api/client";
 import type { CalculationResults } from "./types";
 import "./App.css";
 
@@ -14,7 +15,14 @@ function App() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Equipment");
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [examples, setExamples] = useState<ExamplePreset[]>([]);
+  const [examplesOpen, setExamplesOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    getExamples().then(setExamples).catch(() => {});
+  }, []);
 
   const handleSave = async () => {
     try {
@@ -38,11 +46,25 @@ function App() {
       await loadProject(file);
       setResults(null);
       setError(null);
+      setRefreshKey((k) => k + 1);
       setTab("Equipment");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Load failed");
     }
     e.target.value = "";
+  };
+
+  const handleLoadExample = async (id: string) => {
+    setExamplesOpen(false);
+    try {
+      const res = await loadExample(id);
+      setResults(null);
+      setError(null);
+      setRefreshKey((k) => k + 1);
+      setTab("Equipment");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load example");
+    }
   };
 
   return (
@@ -57,6 +79,24 @@ function App() {
           ))}
         </nav>
         <div className="header-actions">
+          <div className="examples-dropdown">
+            <button className="btn-examples" onClick={() => setExamplesOpen(!examplesOpen)}>
+              Examples
+            </button>
+            {examplesOpen && (
+              <>
+                <div className="dropdown-backdrop" onClick={() => setExamplesOpen(false)} />
+                <div className="dropdown-menu">
+                  {examples.map((ex) => (
+                    <button key={ex.id} className="dropdown-item" onClick={() => handleLoadExample(ex.id)}>
+                      <span className="dropdown-item-title">{ex.title}</span>
+                      <span className="dropdown-item-desc">{ex.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <button className="btn-secondary" onClick={handleSave}>Save</button>
           <button className="btn-secondary" onClick={() => fileRef.current?.click()}>Load</button>
           <input ref={fileRef} type="file" accept=".json" hidden onChange={handleLoad} />
@@ -64,8 +104,8 @@ function App() {
       </header>
       {error && <div className="error-bar">{error}<button onClick={() => setError(null)}>&times;</button></div>}
       <main className="main">
-        {tab === "Equipment" && <EquipmentPage />}
-        {tab === "Plant Config" && <PlantConfigPage />}
+        {tab === "Equipment" && <EquipmentPage key={refreshKey} />}
+        {tab === "Plant Config" && <PlantConfigPage key={refreshKey} />}
         {tab === "Results" && <ResultsPage results={results} setResults={setResults} setError={setError} />}
         {tab === "Analysis" && <AnalysisPage setError={setError} />}
         {tab === "Monte Carlo" && <MonteCarloPage setError={setError} />}

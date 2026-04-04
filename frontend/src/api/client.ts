@@ -57,3 +57,13 @@ export const loadProject = async (file: File) => {
   }
   return res.json();
 };
+
+// Examples
+export interface ExamplePreset {
+  id: string;
+  title: string;
+  description: string;
+}
+export const getExamples = () => request<ExamplePreset[]>("/project/examples");
+export const loadExample = (id: string) =>
+  request<{ ok: boolean; title: string; equipment_count: number }>(`/project/examples/${id}`, { method: "POST" });

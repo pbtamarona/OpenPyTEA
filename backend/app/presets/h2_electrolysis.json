@@ -1,0 +1,41 @@
+{
+  "id": "h2_electrolysis",
+  "title": "Hydrogen Production - Water Electrolysis",
+  "description": "50,000 kg/day H2 via PEM water electrolysis (Case Study 1)",
+  "equipment": [
+    {"name": "Stack", "process_type": "Fluids", "category": "Electrolysis", "type": "Stack", "material": "Carbon steel", "purchased_cost": 17194000, "cost_year": 2020},
+    {"name": "Mechanical BOP", "process_type": "Fluids", "category": "Electrolysis", "type": "Mechanical", "material": "Carbon steel", "purchased_cost": 11019000, "cost_year": 2020},
+    {"name": "Electrical BOP", "process_type": "Electrical", "category": "Electrolysis", "type": "Electrical", "material": "Carbon steel", "purchased_cost": 16974000, "cost_year": 2020}
+  ],
+  "plant": {
+    "plant_name": "Water Electrolysis",
+    "process_type": "Fluids",
+    "country": "United States",
+    "region": "Gulf Coast",
+    "currency": "USD",
+    "exchange_rate": 1.0,
+    "interest_rate": 0.09,
+    "project_lifetime": 20,
+    "plant_utilization": 0.95,
+    "tax_rate": 0.0,
+    "working_capital": null,
+    "depreciation": null,
+    "operators_per_shift": null,
+    "operators_hired": null,
+    "operator_hourly_rate": {"rate": 38.11, "std": 10, "min": 25, "max": 50},
+    "working_weeks_per_year": 49,
+    "working_shifts_per_week": 5,
+    "operating_shifts_per_day": 3,
+    "variable_opex_inputs": {
+      "electricity": {"consumption": 2352000, "price": 0.05, "std": 0.025, "min": 0.01, "max": 3},
+      "water": {"consumption": 189000, "price": 0.00237, "std": 0.001, "min": 0, "max": 0.005}
+    },
+    "plant_products": {
+      "hydrogen": {"production": 50000}
+    },
+    "fc": null,
+    "fp": null,
+    "additional_capex_years": null,
+    "additional_capex_cost": null
+  }
+}

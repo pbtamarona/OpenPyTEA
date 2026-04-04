@@ -1,0 +1,50 @@
+{
+  "id": "lh2_smr_best",
+  "title": "Liquid H2 - SMR Best Case",
+  "description": "125,000 kg/day liquid H2 via SMR liquefaction, best-case efficiency (Case Study 2)",
+  "equipment": [
+    {"name": "PFHX-1", "param": 2.83, "process_type": "Fluids", "category": "Heat exchangers", "type": "Plate & fin 4-to-6-streams", "material": "Aluminum"},
+    {"name": "PFHX-2", "param": 1.90, "process_type": "Fluids", "category": "Heat exchangers", "type": "Plate & fin 4-to-6-streams", "material": "Aluminum"},
+    {"name": "PFHX-3", "param": 1.75, "process_type": "Fluids", "category": "Heat exchangers", "type": "Plate & fin 3-streams", "material": "Aluminum"},
+    {"name": "INT-1", "param": 170.63, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "Carbon steel"},
+    {"name": "INT-2", "param": 407.88, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "Carbon steel"},
+    {"name": "COMP-1", "param": 2950.72, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, centrifugal", "material": "Carbon steel"},
+    {"name": "COMP-2", "param": 3561.59, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, centrifugal", "material": "Carbon steel"},
+    {"name": "MTR-1", "param": 3278.58, "process_type": "Electrical", "category": "Motors & generators", "type": "Totally enclosed motor", "material": "Carbon steel"},
+    {"name": "MTR-2", "param": 3957.32, "process_type": "Electrical", "category": "Motors & generators", "type": "Totally enclosed motor", "material": "Carbon steel"},
+    {"name": "FS-1", "param": 3100.65, "process_type": "Fluids", "category": "Pressure vessels", "type": "Vertical CS", "material": "Carbon steel"},
+    {"name": "FS-2", "param": 2989.35, "process_type": "Fluids", "category": "Pressure vessels", "type": "Vertical CS", "material": "Carbon steel"}
+  ],
+  "plant": {
+    "plant_name": "SMR best",
+    "process_type": "Fluids",
+    "country": "Netherlands",
+    "region": "",
+    "currency": "USD",
+    "exchange_rate": 1.0,
+    "interest_rate": 0.09,
+    "project_lifetime": 20,
+    "plant_utilization": 0.95,
+    "tax_rate": 0.0,
+    "working_capital": null,
+    "depreciation": null,
+    "operators_per_shift": null,
+    "operators_hired": null,
+    "operator_hourly_rate": {"rate": 38.11, "std": 10, "min": 20, "max": 50},
+    "working_weeks_per_year": 49,
+    "working_shifts_per_week": 5,
+    "operating_shifts_per_day": 3,
+    "variable_opex_inputs": {
+      "electricity": {"consumption": 175632, "price": 0.10, "std": 0.025, "min": 0.01, "max": 3},
+      "refrigerant": {"consumption": 36, "price": 5, "std": 1.5, "min": 1, "max": 10},
+      "cooling_water": {"consumption": 952560, "price": 0.00024592, "std": 0.0001, "min": 0.00001, "max": 0.0004}
+    },
+    "plant_products": {
+      "liquid_h2": {"production": 125000}
+    },
+    "fc": null,
+    "fp": null,
+    "additional_capex_years": null,
+    "additional_capex_cost": null
+  }
+}

@@ -263,3 +263,68 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
 .chart-section {
   margin-top: 20px;
 }
+
+/* Examples dropdown */
+.examples-dropdown {
+  position: relative;
+}
+
+.btn-examples {
+  padding: 6px 14px;
+  border: 1px solid #06d6a0;
+  background: rgba(6, 214, 160, .15);
+  color: #06d6a0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all .15s;
+}
+.btn-examples:hover { background: rgba(6, 214, 160, .25); }
+
+.dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.2);
+  min-width: 340px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 50;
+  padding: 6px;
+}
+
+.dropdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background .1s;
+}
+.dropdown-item:hover { background: #f0f4ff; }
+
+.dropdown-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.dropdown-item-desc {
+  font-size: 12px;
+  color: #868e96;
+  line-height: 1.3;
+}

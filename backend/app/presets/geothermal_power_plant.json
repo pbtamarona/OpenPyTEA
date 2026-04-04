@@ -1,0 +1,44 @@
+{
+  "id": "geothermal_power_plant",
+  "title": "Geothermal Power Plant",
+  "description": "Geothermal ORC power generation, Netherlands (Case Study 3)",
+  "equipment": [
+    {"name": "EVAP", "param": 150.1, "process_type": "Fluids", "category": "Heat Exchangers", "type": "Plate & frame", "material": "Carbon steel"},
+    {"name": "COND", "param": 625.3, "process_type": "Fluids", "category": "Heat Exchangers", "type": "Plate & frame", "material": "Carbon steel"},
+    {"name": "PUMP", "param": 2640.6, "process_type": "Fluids", "category": "Pumps", "type": "Centrifugal", "material": "Carbon steel"},
+    {"name": "TURB", "param": 952.9, "process_type": "Fluids", "category": "Turbines", "type": "Radial expander", "material": "Carbon steel"},
+    {"name": "ESP", "process_type": "Fluids", "category": "Pumps", "type": "Submersible", "material": "Carbon steel", "num_units": 1, "purchased_cost": 1519067.61, "cost_year": 2024},
+    {"name": "Separator", "process_type": "Fluids", "category": "Separators", "type": "Two-phase separator", "material": "Carbon steel", "num_units": 1, "purchased_cost": 15444, "cost_year": 2024},
+    {"name": "Filter", "process_type": "Fluids", "category": "Filters", "type": "Sand filter", "material": "Carbon steel", "num_units": 1, "purchased_cost": 723608.7, "cost_year": 2024}
+  ],
+  "plant": {
+    "plant_name": "Power plant",
+    "process_type": "Fluids",
+    "country": "Netherlands",
+    "region": "",
+    "currency": "USD",
+    "exchange_rate": 1.0,
+    "interest_rate": 0.05,
+    "project_lifetime": 30,
+    "plant_utilization": 0.83,
+    "tax_rate": 0.0,
+    "working_capital": null,
+    "depreciation": null,
+    "operators_per_shift": null,
+    "operators_hired": 3,
+    "operator_hourly_rate": {"rate": 31, "std": 10, "min": 20, "max": 50},
+    "working_weeks_per_year": 49,
+    "working_shifts_per_week": 5,
+    "operating_shifts_per_day": 3,
+    "variable_opex_inputs": {
+      "electricity": {"consumption": 26741.6, "price": 0.083, "std": 0.025, "min": 0.01, "max": 3}
+    },
+    "plant_products": {
+      "power": {"production": 22869.6, "price": 0.083, "std": 0.025, "min": 0.01, "max": 3}
+    },
+    "fc": null,
+    "fp": null,
+    "additional_capex_years": null,
+    "additional_capex_cost": null
+  }
+}
