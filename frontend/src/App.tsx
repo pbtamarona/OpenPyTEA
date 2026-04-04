@@ -18,7 +18,17 @@ function App() {
   const [examples, setExamples] = useState<ExamplePreset[]>([]);
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem("openpytea-theme");
+    if (saved) return saved === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    localStorage.setItem("openpytea-theme", dark ? "dark" : "light");
+  }, [dark]);
 
   useEffect(() => {
     getExamples().then(setExamples).catch(() => {});
@@ -100,6 +110,9 @@ function App() {
           <button className="btn-secondary" onClick={handleSave}>Save</button>
           <button className="btn-secondary" onClick={() => fileRef.current?.click()}>Load</button>
           <input ref={fileRef} type="file" accept=".json" hidden onChange={handleLoad} />
+          <button className="btn-theme" onClick={() => setDark((d) => !d)} title={dark ? "Switch to light mode" : "Switch to dark mode"}>
+            {dark ? "\u2600\uFE0F" : "\uD83C\uDF19"}
+          </button>
         </div>
       </header>
       {error && <div className="error-bar">{error}<button onClick={() => setError(null)}>&times;</button></div>}
