@@ -113,11 +113,11 @@ def _extract_results(plant: Plant) -> dict:
         "payback_time": to_jsonable(getattr(plant, "payback_time", None)),
     }
 
-    return {
+    return to_jsonable({
         "capital_costs": capital_costs,
         "variable_opex": variable_opex,
         "fixed_opex": fixed_opex,
         "revenue": revenue,
         "cash_flow": cash_flow,
         "metrics": metrics,
-    }
+    })
