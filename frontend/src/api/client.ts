@@ -1,4 +1,9 @@
-const BASE = "http://localhost:8000/api";
+import type {
+  EquipmentItem, EquipmentInput, CostDBEntry, PlantConfig,
+  CalculationResults, SensitivityResult, TornadoResult, MonteCarloResult,
+} from "../types";
+
+const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
 async function request<T>(path: string, opts?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -13,8 +18,6 @@ async function request<T>(path: string, opts?: RequestInit): Promise<T> {
 }
 
 // Equipment
-import type { EquipmentItem, EquipmentInput, CostDBEntry, PlantConfig, CalculationResults, SensitivityResult, TornadoResult, MonteCarloResult } from "../types";
-
 export const getEquipment = () => request<EquipmentItem[]>("/equipment");
 export const addEquipment = (eq: EquipmentInput) =>
   request<EquipmentItem>("/equipment", { method: "POST", body: JSON.stringify(eq) });

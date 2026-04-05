@@ -58,7 +58,7 @@ class PlantConfigIn(BaseModel):
     plant_products: dict[str, dict] = Field(default_factory=dict)
     fc: float | None = None
     fp: float | None = None
-    additional_capex_years: list[float] | None = None
+    additional_capex_years: list[int] | None = None
     additional_capex_cost: list[float] | None = None
 
 

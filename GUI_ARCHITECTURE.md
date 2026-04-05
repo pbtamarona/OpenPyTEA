@@ -7,7 +7,7 @@ The GUI is a client-server application wrapping the OpenPyTEA Python library. Th
 ## Stack
 
 - **Backend**: FastAPI (Python), runs on port 8000
-- **Frontend**: React 18 + TypeScript + Vite, runs on port 5173
+- **Frontend**: React 19 + TypeScript + Vite, runs on port 5173
 - **Charts**: Recharts (React-native charting, no matplotlib on the frontend)
 - **Styling**: Plain CSS (no framework), defined in `App.css`
 - **State**: In-memory on the backend (module-level singletons in `state.py`). No database. Single-user session.
@@ -178,8 +178,10 @@ frontend/
 
 **Backend:**
 ```bash
+pip install -e .          # install OpenPyTEA from repo root
 cd backend
-PYTHONPATH=../src python3.10 -m uvicorn app.main:app --reload --port 8000
+pip install -r requirements.txt
+PYTHONPATH=../src python3 -m uvicorn app.main:app --reload --port 8000
 ```
 
 **Frontend:**

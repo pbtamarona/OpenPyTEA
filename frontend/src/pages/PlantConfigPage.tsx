@@ -34,10 +34,17 @@ export default function PlantConfigPage() {
     return Object.keys(loc as Record<string, number>);
   })();
 
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const save = async () => {
-    await setPlantConfig(config);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSaveError(null);
+    try {
+      await setPlantConfig(config);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e: unknown) {
+      setSaveError(e instanceof Error ? e.message : "Save failed");
+    }
   };
 
   const u = (field: keyof PlantConfig, value: unknown) =>
@@ -254,6 +261,7 @@ export default function PlantConfigPage() {
 
       {/* Save */}
       <div style={{ textAlign: "right", marginTop: 8 }}>
+        {saveError && <span style={{ color: "#e63946", marginRight: 12, fontSize: 13 }}>{saveError}</span>}
         <button className="btn-primary" style={{ padding: "10px 32px", fontSize: 15 }} onClick={save}>
           {saved ? "Saved!" : "Save Configuration"}
         </button>

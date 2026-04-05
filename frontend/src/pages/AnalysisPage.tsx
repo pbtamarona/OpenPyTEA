@@ -28,12 +28,14 @@ export default function AnalysisPage({ setError }: Props) {
   const [tornResult, setTornResult] = useState<TornadoResult | null>(null);
   const [tornLoading, setTornLoading] = useState(false);
 
-  useEffect(() => {
+  const fetchParams = () => {
     getSensitivityParameters().then((p) => {
       setParameters(p);
-      if (p.length > 0) setSensParam(p[0]);
+      if (p.length > 0 && !sensParam) setSensParam(p[0]);
     }).catch(() => {});
-  }, []);
+  };
+
+  useEffect(fetchParams, []);
 
   const doSensitivity = async () => {
     setSensLoading(true);

@@ -2,10 +2,8 @@ import { useState } from "react";
 import { runCalculations } from "../api/client";
 import type { CalculationResults } from "../types";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
-
-const COLORS = ["#4361ee", "#f72585", "#7209b7", "#3a0ca3", "#4cc9f0", "#f77f00", "#06d6a0", "#e63946", "#457b9d", "#2a9d8f", "#e9c46a", "#264653", "#a8dadc", "#d62828"];
 
 interface Props {
   results: CalculationResults | null;
@@ -125,7 +123,7 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis tickFormatter={(v: number) => (v / 1e6).toFixed(1) + "M"} />
-                  <Tooltip formatter={(v: number) => fmt(v)} />
+                  <Tooltip formatter={(v) => fmt(Number(v))} />
                   <Bar dataKey="value" fill="#4361ee" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -155,7 +153,7 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" tickFormatter={(v: number) => (v / 1e3).toFixed(0) + "k"} />
                   <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number) => fmt(v)} />
+                  <Tooltip formatter={(v) => fmt(Number(v))} />
                   <Bar dataKey="value" fill="#f72585" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -184,7 +182,7 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis tickFormatter={(v: number) => (v / 1e6).toFixed(1) + "M"} />
-                  <Tooltip formatter={(v: number) => fmt(v)} />
+                  <Tooltip formatter={(v) => fmt(Number(v))} />
                   <Bar dataKey="value" fill="#7209b7" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -223,9 +221,9 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
                 {((results.cash_flow.cash_flow as unknown as number[][]).length > 0 ?
                   (results.cash_flow.cash_flow as unknown as number[][])[0] :
                   []
-                ).map((_, yearIdx) => (
+                ).map((_val, yearIdx) => (
                   <tr key={yearIdx}>
-                    <td>{yearIdx}</td>
+                    <td>{yearIdx + 1}</td>
                     <td className="number">{fmt(((results.cash_flow.capital_cost_array as unknown as number[][])?.[0]?.[yearIdx]) ?? 0)}</td>
                     <td className="number">{fmt(((results.cash_flow.revenue_array as unknown as number[][])?.[0]?.[yearIdx]) ?? 0)}</td>
                     <td className="number">{fmt(((results.cash_flow.cash_cost_array as unknown as number[][])?.[0]?.[yearIdx]) ?? 0)}</td>

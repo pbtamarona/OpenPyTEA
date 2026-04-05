@@ -109,8 +109,8 @@ export default function MonteCarloPage({ setError }: Props) {
                       <XAxis dataKey="bin" tickFormatter={(v: number) => v.toFixed(1)} />
                       <YAxis />
                       <Tooltip
-                        formatter={(v: number) => v.toLocaleString()}
-                        labelFormatter={(v: number) => `Value: ${Number(v).toFixed(2)}`}
+                        formatter={(v) => Number(v).toLocaleString()}
+                        labelFormatter={(v) => `Value: ${Number(v).toFixed(2)}`}
                       />
                       <Bar dataKey="count" fill="#4361ee" radius={[2, 2, 0, 0]} />
                     </BarChart>

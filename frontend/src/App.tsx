@@ -67,7 +67,7 @@ function App() {
   const handleLoadExample = async (id: string) => {
     setExamplesOpen(false);
     try {
-      const res = await loadExample(id);
+      await loadExample(id);
       setResults(null);
       setError(null);
       setRefreshKey((k) => k + 1);

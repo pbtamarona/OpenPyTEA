@@ -113,8 +113,9 @@ OpenPyTEA includes an optional web-based graphical interface for users who prefe
 
 ### Running the GUI
 
-**Backend** (requires Python 3.10+ with OpenPyTEA installed):
+**Backend** (requires Python 3.10+):
 ```bash
+pip install -e .          # install OpenPyTEA from repo root
 cd backend
 pip install -r requirements.txt
 PYTHONPATH=../src python3 -m uvicorn app.main:app --reload --port 8000
