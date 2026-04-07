@@ -390,7 +390,8 @@ def run_plant(plant_input_path, plant_output_path,
     return plant
 
 
-def run_tea(equipment_path, plant_path, analysis_path, output_dir="results"):
+def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
+            output_dir="results"):
     """
     Execute a complete Techno-Economic Analysis (TEA) workflow.
     This function orchestrates the entire TEA pipeline by loading
@@ -398,11 +399,11 @@ def run_tea(equipment_path, plant_path, analysis_path, output_dir="results"):
     and exporting results as JSON files and/or plots.
     Parameters
     ----------
-    equipment_path : str or Path
+    equipment_input_path : str or Path
         Path to the equipment configuration file.
-    plant_path : str or Path
+    plant_input_path : str or Path
         Path to the plant configuration file.
-    analysis_path : str or Path
+    analysis_input_path : str or Path
         Path to the analysis configuration file specifying which analyses to
         run and their parameters.
     output_dir : str or Path, optional
@@ -434,7 +435,7 @@ def run_tea(equipment_path, plant_path, analysis_path, output_dir="results"):
         analysis configuration file
     """
     # --- Load inputs ---
-    analysis_cfg = load_analysis_config(analysis_path)
+    analysis_cfg = load_analysis_config(analysis_input_path)
     analysis_block = analysis_cfg.get("analysis", {})
     output_cfg = analysis_cfg.get("output", {})
 
@@ -450,8 +451,8 @@ def run_tea(equipment_path, plant_path, analysis_path, output_dir="results"):
     if save_json or save_plots:
         output_dir.mkdir(parents=True, exist_ok=True)
 
-    equipment_list = load_equipment_config(equipment_path)
-    plant = load_plant_config(plant_path, equipment_list)
+    equipment_list = load_equipment_config(equipment_input_path)
+    plant = load_plant_config(plant_input_path, equipment_list)
     plant.calculate_all()
 
     results = {}

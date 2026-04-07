@@ -1561,10 +1561,15 @@ class Plant:
                 "working_capital": self.working_capital,
                 "additional_capex_cost": deepcopy(
                     self.additional_capex_cost.tolist()
-                    if self.additional_capex_cost is not None else None),
+                    if isinstance(self.additional_capex_cost, np.ndarray)
+                    else self.additional_capex_cost
+                ) if self.additional_capex_cost is not None else None,
+
                 "additional_capex_years": deepcopy(
                     self.additional_capex_years.tolist()
-                    if self.additional_capex_years is not None else None),
+                    if isinstance(self.additional_capex_years, np.ndarray)
+                    else self.additional_capex_years
+                ) if self.additional_capex_years is not None else None,
                 "fc": self.fc,
                 "fp": self.fp,
                 "depreciation": deepcopy(self.depreciation),

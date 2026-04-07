@@ -1,0 +1,34 @@
+{
+  "equipment": [
+    {
+      "name": "Stack",
+      "param": 0,
+      "process_type": "Fluids",
+      "category": "Electrolysis",
+      "type": "Stack",
+      "material": "Carbon steel",
+      "purchased_cost": 17194000,
+      "cost_year": 2020
+    },
+    {
+      "name": "Mechanical BOP",
+      "param": 0,
+      "process_type": "Fluids",
+      "category": "Electrolysis",
+      "type": "Mechanical",
+      "material": "Carbon steel",
+      "purchased_cost": 11019000,
+      "cost_year": 2020
+    },
+    {
+      "name": "Electrical BOP",
+      "param": 0,
+      "process_type": "Electrical",
+      "category": "Electrolysis",
+      "type": "Electrical",
+      "material": "Carbon steel",
+      "purchased_cost": 16974000,
+      "cost_year": 2020
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "plant": {
+    "plant_name": "Steam Reforming",
+    "process_type": "Fluids",
+    "country": "United States",
+    "region": "Gulf Coast",
+    "interest_rate": 0.09,
+    "project_lifetime": 30,
+    "plant_utilization": 0.95,
+
+    "operator_hourly_rate": {
+      "rate": 38.11,
+      "std": 10,
+      "max": 50,
+      "min": 25
+    },
+
+    "plant_products": {
+      "hydrogen": {
+        "production": 50000,
+        "price": 5.5
+      }
+    },
+
+    "variable_opex_inputs": {
+      "electricity": {
+        "consumption": 38293.44,
+        "price": 0.05,
+        "std": 0.03,
+        "max": 3,
+        "min": 0.01
+      },
+      "methane_feed": {
+        "consumption": 219936,
+        "price": 0.4,
+        "std": 0.25,
+        "max": 5,
+        "min": 0
+      },
+      "cooling_water": {
+        "consumption": 485344.08,
+        "price": 0.00024592,
+        "std": 0.0001,
+        "max": 0.0004,
+        "min": 0.00001
+      },
+      "CO2_tax": {
+        "consumption": 602991.36,
+        "price": 0.075,
+        "std": 0.02,
+        "max": 0.15,
+        "min": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "equipment": [
+    {"name": "COMP-1", "param": 205, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, centrifugal", "material": "Carbon steel"},
+    {"name": "MTR-1", "param": 227.78, "process_type": "Electrical", "category": "Motors & generators", "type": "Totally enclosed motor", "material": "Carbon steel"},
+
+    {"name": "COMP-2", "param": 2993, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, centrifugal", "material": "Carbon steel"},
+    {"name": "MTR-2", "param": 3325.56, "process_type": "Electrical", "category": "Motors & generators", "type": "Totally enclosed motor", "material": "Carbon steel"},
+
+    {"name": "COMP-3", "param": 363, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, centrifugal", "material": "Carbon steel"},
+    {"name": "MTR-3", "param": 403.33, "process_type": "Electrical", "category": "Motors & generators", "type": "Totally enclosed motor", "material": "Carbon steel"},
+
+    {"name": "HX-1", "param": 28.37, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "316 stainless steel"},
+    {"name": "COOLER-1", "param": 41.85, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "Carbon steel"},
+    {"name": "COOLER-2", "param": 26.21, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "Carbon steel"},
+
+    {"name": "REACTOR", "param": 147.26, "process_type": "Mixed", "category": "Reactors", "type": "Indirect fluidized-bed", "material": "316 stainless steel"},
+    {"name": "FURNACE", "param": 22608, "process_type": "Fluids", "category": "Boilers, heaters, & furnaces", "type": "Pyrolysis furnace", "material": "316 stainless steel"},
+    {"name": "CYCLONE", "param": 36.70, "process_type": "Mixed", "category": "Dust collectors", "type": "Gas multi-cyclone", "material": "316 stainless steel"},
+    {"name": "PSA", "param": 1017.98, "process_type": "Fluids", "category": "Gas separation", "type": "Pressure-swing adsorber", "material": "Carbon steel"}
+  ]
+}
