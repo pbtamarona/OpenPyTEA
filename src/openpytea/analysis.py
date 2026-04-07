@@ -126,12 +126,14 @@ def fixed_capital_data(plants, additional_capex=False, pct=False):
         if additional_capex:
             extra = getattr(plant, "additional_capex_cost", None)
 
-            if isinstance(extra, (list, tuple)):
-                total_extra = float(sum(extra)) if extra else 0.0
+            if isinstance(extra, (list, tuple, np.ndarray)):
+                total_extra = float(
+                    sum(x for x in extra if isinstance(x, (int, float)))
+                )
             else:
                 try:
-                    total_extra = float(extra)
-                except Exception:
+                    total_extra = float(extra) if extra is not None else 0.0
+                except (TypeError, ValueError):
                     total_extra = 0.0
 
             if total_extra != 0:
@@ -443,7 +445,10 @@ def sensitivity_data(plants,
 
     # --- X label ---
     label_clean = _make_label(parameter.split(".")[-1])
-    x_label = label_clean + r" / [$\pm$ \%]"
+    if parameter in top_level_keys:
+        x_label = label_clean + r" / [$\pm$ \%]"
+    else:
+        x_label = label_clean + r" price / [$\pm$ \%]"
 
     # --- Core computation ---
     results = []
