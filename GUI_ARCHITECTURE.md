@@ -19,7 +19,7 @@ backend/
   app/
     main.py           # FastAPI app, CORS config, router mounting
     state.py          # Module-level session state: equipment_list, plant, plant_config, results, mc_results
-    schemas.py        # Pydantic request/response models (EquipmentIn, PlantConfigIn, SensitivityIn, etc.)
+    schemas.py        # Pydantic request/response models with full type coverage for all endpoints
     util.py           # to_jsonable() — recursive numpy-to-native converter for JSON responses
     routers/
       equipment.py    # CRUD for equipment items + cost correlation DB lookup endpoints
@@ -151,6 +151,10 @@ frontend/
 
 6. **Example presets** — JSON preset files live in `backend/app/presets/`. Each contains a complete project (equipment + plant config) extracted from the case study notebooks. The frontend header has an "Examples" dropdown that lists them via `GET /api/project/examples` and loads one via `POST /api/project/examples/{id}`. Loading a preset replaces the current session and navigates to the Equipment tab. Adding a new example is just adding a `.json` file to the presets directory — no code changes needed.
 
+7. **Response model validation** — all endpoints declare a `response_model` in their route decorator. FastAPI validates every response against typed Pydantic schemas before sending it to the client. This ensures the backend can never silently return malformed data, and auto-generates accurate OpenAPI/Swagger docs at `/docs`.
+
+8. **Error surfacing** — all frontend API calls propagate errors to the global error bar (top of the page). No silent `.catch(() => {})` — every failure is reported to the user.
+
 ## Available Example Presets
 
 | ID | Title | Source |
@@ -172,7 +176,7 @@ frontend/
 - Cash flow table assumes scenario index 0 (the library supports multi-scenario arrays)
 - The cost DB category dropdown shows raw CSV keys — could benefit from nicer formatting
 - No chart export/download functionality
-- No dark mode
+- ~~No dark mode~~ (implemented)
 
 ## How to Run
 

@@ -93,16 +93,23 @@ def _extract_results(plant: Plant) -> dict:
         "total": float(getattr(plant, "revenue", 0)),
     }
 
+    def _flatten(arr):
+        """Flatten 2D (1, N) arrays to 1D lists."""
+        val = to_jsonable(arr)
+        if val and isinstance(val[0], list):
+            return val[0]
+        return val
+
     cash_flow = {
-        "capital_cost_array": to_jsonable(getattr(plant, "capital_cost_array", [])),
-        "revenue_array": to_jsonable(getattr(plant, "revenue_array", [])),
-        "cash_cost_array": to_jsonable(getattr(plant, "cash_cost_array", [])),
-        "gross_profit_array": to_jsonable(getattr(plant, "gross_profit_array", [])),
-        "depreciation_array": to_jsonable(getattr(plant, "depreciation_array", [])),
-        "taxable_income_array": to_jsonable(getattr(plant, "taxable_income_array", [])),
-        "tax_paid_array": to_jsonable(getattr(plant, "tax_paid_array", [])),
-        "cash_flow": to_jsonable(getattr(plant, "cash_flow", [])),
-        "production_array": to_jsonable(getattr(plant, "prod_array", [])),
+        "capital_cost_array": _flatten(getattr(plant, "capital_cost_array", [])),
+        "revenue_array": _flatten(getattr(plant, "revenue_array", [])),
+        "cash_cost_array": _flatten(getattr(plant, "cash_cost_array", [])),
+        "gross_profit_array": _flatten(getattr(plant, "gross_profit_array", [])),
+        "depreciation_array": _flatten(getattr(plant, "depreciation_array", [])),
+        "taxable_income_array": _flatten(getattr(plant, "taxable_income_array", [])),
+        "tax_paid_array": _flatten(getattr(plant, "tax_paid_array", [])),
+        "cash_flow": _flatten(getattr(plant, "cash_flow", [])),
+        "production_array": _flatten(getattr(plant, "prod_array", [])),
     }
 
     metrics = {
