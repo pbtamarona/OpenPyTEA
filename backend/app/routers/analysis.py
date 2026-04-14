@@ -87,7 +87,8 @@ def run_monte_carlo(data: MonteCarloIn):
     }
 
     for metric_name, values in result["metrics"].items():
-        arr = np.asarray(values)
+        arr = np.asarray(values, dtype=float)
+        arr = arr[np.isfinite(arr)]
         if arr.size == 0 or np.all(arr == 0):
             continue
         counts, bin_edges = np.histogram(arr, bins=80)
@@ -108,7 +109,10 @@ def run_monte_carlo(data: MonteCarloIn):
         }
 
     for input_name, values in result["inputs"].items():
-        arr = np.asarray(values)
+        arr = np.asarray(values, dtype=float)
+        arr = arr[np.isfinite(arr)]
+        if arr.size == 0:
+            continue
         counts, bin_edges = np.histogram(arr, bins=50)
         summary["inputs"][input_name] = {
             "mean": float(np.mean(arr)),
