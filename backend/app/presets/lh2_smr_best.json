@@ -35,7 +35,7 @@
     "working_shifts_per_week": 5,
     "operating_shifts_per_day": 3,
     "variable_opex_inputs": {
-      "electricity": {"consumption": 175632, "price": 0.10, "std": 0.025, "min": 0.01, "max": 3},
+      "electricity": {"consumption": 173661.6, "price": 0.10, "std": 0.025, "min": 0.01, "max": 3},
       "refrigerant": {"consumption": 36, "price": 5, "std": 1.5, "min": 1, "max": 10},
       "cooling_water": {"consumption": 952560, "price": 0.00024592, "std": 0.0001, "min": 0.00001, "max": 0.0004}
     },
