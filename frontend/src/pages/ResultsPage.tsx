@@ -206,7 +206,7 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
       )}
 
       {/* Cash Flow Table */}
-      {results.cash_flow.cash_flow && (results.cash_flow.cash_flow as unknown as number[][]).length > 0 && (
+      {results.cash_flow.cash_flow && results.cash_flow.cash_flow.length > 0 && (
         <div className="card">
           <h2>Cash Flow</h2>
           <div style={{ overflowX: "auto" }}>
@@ -218,18 +218,15 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {((results.cash_flow.cash_flow as unknown as number[][]).length > 0 ?
-                  (results.cash_flow.cash_flow as unknown as number[][])[0] :
-                  []
-                ).map((_val, yearIdx) => (
+                {results.cash_flow.cash_flow.map((_val, yearIdx) => (
                   <tr key={yearIdx}>
                     <td>{yearIdx + 1}</td>
-                    <td className="number">{fmt(((results.cash_flow.capital_cost_array as unknown as number[][])?.[0]?.[yearIdx]) ?? 0)}</td>
-                    <td className="number">{fmt(((results.cash_flow.revenue_array as unknown as number[][])?.[0]?.[yearIdx]) ?? 0)}</td>
-                    <td className="number">{fmt(((results.cash_flow.cash_cost_array as unknown as number[][])?.[0]?.[yearIdx]) ?? 0)}</td>
-                    <td className="number">{fmt(((results.cash_flow.gross_profit_array as unknown as number[][])?.[0]?.[yearIdx]) ?? 0)}</td>
-                    <td className="number">{fmt(((results.cash_flow.tax_paid_array as unknown as number[][])?.[0]?.[yearIdx]) ?? 0)}</td>
-                    <td className="number">{fmt(((results.cash_flow.cash_flow as unknown as number[][])?.[0]?.[yearIdx]) ?? 0)}</td>
+                    <td className="number">{fmt(results.cash_flow.capital_cost_array[yearIdx] ?? 0)}</td>
+                    <td className="number">{fmt(results.cash_flow.revenue_array[yearIdx] ?? 0)}</td>
+                    <td className="number">{fmt(results.cash_flow.cash_cost_array[yearIdx] ?? 0)}</td>
+                    <td className="number">{fmt(results.cash_flow.gross_profit_array[yearIdx] ?? 0)}</td>
+                    <td className="number">{fmt(results.cash_flow.tax_paid_array[yearIdx] ?? 0)}</td>
+                    <td className="number">{fmt(results.cash_flow.cash_flow[yearIdx] ?? 0)}</td>
                   </tr>
                 ))}
               </tbody>

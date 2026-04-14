@@ -67,7 +67,17 @@ export interface CalculationResults {
   variable_opex: { breakdown: Record<string, number>; total: number };
   fixed_opex: Record<string, number>;
   revenue: { breakdown: Record<string, number>; total: number };
-  cash_flow: Record<string, number[][]>;
+  cash_flow: {
+    capital_cost_array: number[];
+    revenue_array: number[];
+    cash_cost_array: number[];
+    gross_profit_array: number[];
+    depreciation_array: number[];
+    taxable_income_array: number[];
+    tax_paid_array: number[];
+    cash_flow: number[];
+    production_array: number[];
+  };
   metrics: {
     levelized_cost: number | null;
     npv: number | null;
