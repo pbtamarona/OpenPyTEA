@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from openpytea.equipment import Equipment
 
 from app import state
+from app.schemas import LoadResponse, LoadExampleResponse, ExamplePreset
 from app.util import to_jsonable
 
 router = APIRouter()
@@ -41,7 +42,7 @@ def save_project():
     return project
 
 
-@router.post("/load")
+@router.post("/load", response_model=LoadResponse)
 async def load_project(file: UploadFile = File(...)):
     """Load a project from an uploaded JSON file."""
     try:
@@ -81,7 +82,7 @@ async def load_project(file: UploadFile = File(...)):
     return {"ok": True, "equipment_count": len(state.equipment_list)}
 
 
-@router.get("/examples")
+@router.get("/examples", response_model=list[ExamplePreset])
 def list_examples():
     """List available example presets."""
     examples = []
@@ -98,7 +99,7 @@ def list_examples():
     return examples
 
 
-@router.post("/examples/{example_id}")
+@router.post("/examples/{example_id}", response_model=LoadExampleResponse)
 def load_example(example_id: str):
     """Load an example preset into the session."""
     preset_file = PRESETS_DIR / f"{example_id}.json"

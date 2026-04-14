@@ -6,7 +6,10 @@ from fastapi import APIRouter, HTTPException
 from openpytea.analysis import sensitivity_data, tornado_data, monte_carlo
 
 from app import state
-from app.schemas import SensitivityIn, TornadoIn, MonteCarloIn
+from app.schemas import (
+    SensitivityIn, TornadoIn, MonteCarloIn,
+    SensitivityResult, TornadoResult, MonteCarloResult,
+)
 from app.util import to_jsonable
 
 router = APIRouter()
@@ -18,7 +21,7 @@ def _require_plant():
     return state.plant
 
 
-@router.get("/sensitivity/parameters")
+@router.get("/sensitivity/parameters", response_model=list[str])
 def get_sensitivity_parameters():
     plant = _require_plant()
     top = ["fixed_capital", "fixed_opex", "project_lifetime", "interest_rate", "operator_hourly_rate"]
@@ -27,7 +30,7 @@ def get_sensitivity_parameters():
     return top + var_keys + prod_keys
 
 
-@router.post("/sensitivity")
+@router.post("/sensitivity", response_model=SensitivityResult)
 def run_sensitivity(data: SensitivityIn):
     plant = _require_plant()
     try:
@@ -44,7 +47,7 @@ def run_sensitivity(data: SensitivityIn):
     return to_jsonable(result)
 
 
-@router.post("/tornado")
+@router.post("/tornado", response_model=TornadoResult)
 def run_tornado(data: TornadoIn):
     plant = _require_plant()
     try:
@@ -59,7 +62,7 @@ def run_tornado(data: TornadoIn):
     return to_jsonable(result)
 
 
-@router.post("/monte-carlo")
+@router.post("/monte-carlo", response_model=MonteCarloResult)
 def run_monte_carlo(data: MonteCarloIn):
     plant = _require_plant()
     try:

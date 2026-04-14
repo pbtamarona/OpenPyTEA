@@ -11,7 +11,11 @@ const defaultInput: EquipmentInput = {
   purchased_cost: null, cost_year: null,
 };
 
-export default function EquipmentPage() {
+interface Props {
+  setError: (e: string | null) => void;
+}
+
+export default function EquipmentPage({ setError }: Props) {
   const [items, setItems] = useState<EquipmentItem[]>([]);
   const [categories, setCategories] = useState<Record<string, CostDBEntry[]>>({});
   const [processTypes, setProcessTypes] = useState<string[]>([]);
@@ -20,9 +24,11 @@ export default function EquipmentPage() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [form, setForm] = useState<EquipmentInput>({ ...defaultInput });
   const [useDirectCost, setUseDirectCost] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
-  const refresh = () => getEquipment().then(setItems).catch(() => {});
+  const refresh = () => getEquipment().then(setItems).catch((e: unknown) => {
+    setError(e instanceof Error ? e.message : "Failed to load equipment");
+  });
 
   useEffect(() => {
     refresh();
@@ -37,7 +43,7 @@ export default function EquipmentPage() {
     setForm({ ...defaultInput });
     setEditIndex(null);
     setUseDirectCost(false);
-    setError(null);
+    setModalError(null);
     setShowModal(true);
   };
 
@@ -50,7 +56,7 @@ export default function EquipmentPage() {
     });
     setEditIndex(item.index);
     setUseDirectCost(item.param === null);
-    setError(null);
+    setModalError(null);
     setShowModal(true);
   };
 
@@ -71,7 +77,7 @@ export default function EquipmentPage() {
       setShowModal(false);
       refresh();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed");
+      setModalError(e instanceof Error ? e.message : "Failed");
     }
   };
 
@@ -136,7 +142,7 @@ export default function EquipmentPage() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>{editIndex !== null ? "Edit Equipment" : "Add Equipment"}</h2>
-            {error && <div style={{ color: "#e63946", marginBottom: 12, fontSize: 13 }}>{error}</div>}
+            {modalError && <div style={{ color: "#e63946", marginBottom: 12, fontSize: 13 }}>{modalError}</div>}
             <div className="form-grid">
               <div className="form-group">
                 <label>Name</label>

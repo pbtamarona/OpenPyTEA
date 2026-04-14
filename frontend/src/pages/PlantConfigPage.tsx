@@ -15,7 +15,11 @@ const defaultConfig: PlantConfig = {
   additional_capex_years: null, additional_capex_cost: null,
 };
 
-export default function PlantConfigPage() {
+interface Props {
+  setError: (e: string | null) => void;
+}
+
+export default function PlantConfigPage({ setError }: Props) {
   const [config, setConfig] = useState<PlantConfig>({ ...defaultConfig });
   const [locations, setLocations] = useState<Record<string, unknown>>({});
   const [saved, setSaved] = useState(false);
@@ -23,8 +27,12 @@ export default function PlantConfigPage() {
   useEffect(() => {
     getPlantConfig().then((c) => {
       if (c && Object.keys(c).length > 0) setConfig(c as PlantConfig);
-    }).catch(() => {});
-    getLocations().then(setLocations).catch(() => {});
+    }).catch((e: unknown) => {
+      setError(e instanceof Error ? e.message : "Failed to load plant config");
+    });
+    getLocations().then(setLocations).catch((e: unknown) => {
+      setError(e instanceof Error ? e.message : "Failed to load locations");
+    });
   }, []);
 
   const regions = (() => {

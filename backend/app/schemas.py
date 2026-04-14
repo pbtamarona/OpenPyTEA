@@ -4,6 +4,27 @@ from pydantic import BaseModel, Field
 from typing import Any
 
 
+# ── Generic responses ──────────────────────────────────────────────
+
+
+class OkResponse(BaseModel):
+    ok: bool = True
+
+
+class LoadResponse(BaseModel):
+    ok: bool = True
+    equipment_count: int
+
+
+class LoadExampleResponse(BaseModel):
+    ok: bool = True
+    title: str | None = None
+    equipment_count: int
+
+
+# ── Equipment ──────────────────────────────────────────────────────
+
+
 class EquipmentIn(BaseModel):
     name: str
     param: float | None = None
@@ -31,6 +52,23 @@ class EquipmentOut(BaseModel):
     target_year: int
     purchased_cost: float
     direct_cost: float
+
+
+class CostDBEntry(BaseModel):
+    key: str
+    type: str | None = None
+    units: str = ""
+    s_lower: float | None = None
+    s_upper: float | None = None
+
+
+class ExamplePreset(BaseModel):
+    id: str
+    title: str
+    description: str = ""
+
+
+# ── Plant configuration ───────────────────────────────────────────
 
 
 class PlantConfigIn(BaseModel):
@@ -62,13 +100,77 @@ class PlantConfigIn(BaseModel):
     additional_capex_cost: list[float] | None = None
 
 
+# ── Calculation results ───────────────────────────────────────────
+
+
+class CapitalCosts(BaseModel):
+    purchased_cost: float
+    isbl: float
+    osbl: float
+    design_and_engineering: float
+    contingency: float
+    fixed_capital: float
+    working_capital: float | None = None
+
+
+class VariableOpex(BaseModel):
+    breakdown: dict[str, float]
+    total: float
+
+
+class FixedOpex(BaseModel):
+    operating_labor: float
+    supervision: float
+    direct_salary_overhead: float
+    laboratory_charges: float
+    maintenance: float
+    taxes_insurance: float
+    rent_of_land: float
+    environmental_charges: float
+    operating_supplies: float
+    general_plant_overhead: float
+    interest_working_capital: float
+    patents_royalties: float
+    distribution_selling: float
+    rnd: float
+    total: float
+
+
+class Revenue(BaseModel):
+    breakdown: dict[str, float]
+    total: float
+
+
+class CashFlow(BaseModel):
+    capital_cost_array: list[float]
+    revenue_array: list[float]
+    cash_cost_array: list[float]
+    gross_profit_array: list[float]
+    depreciation_array: list[float]
+    taxable_income_array: list[float]
+    tax_paid_array: list[float]
+    cash_flow: list[float]
+    production_array: list[float]
+
+
+class Metrics(BaseModel):
+    levelized_cost: float | None = None
+    npv: float | None = None
+    irr: float | None = None
+    roi: float | None = None
+    payback_time: float | None = None
+
+
 class CalculationResults(BaseModel):
-    capital_costs: dict[str, Any]
-    variable_opex: dict[str, Any]
-    fixed_opex: dict[str, Any]
-    revenue: dict[str, Any]
-    cash_flow: dict[str, Any]
-    metrics: dict[str, Any]
+    capital_costs: CapitalCosts
+    variable_opex: VariableOpex
+    fixed_opex: FixedOpex
+    revenue: Revenue
+    cash_flow: CashFlow
+    metrics: Metrics
+
+
+# ── Analysis inputs ───────────────────────────────────────────────
 
 
 class SensitivityIn(BaseModel):
@@ -89,3 +191,66 @@ class MonteCarloIn(BaseModel):
     num_samples: int = 50000
     batch_size: int = 1000
     additional_capex: bool = False
+
+
+# ── Analysis results ──────────────────────────────────────────────
+
+
+class SensitivityCurve(BaseModel):
+    plant: str
+    x: list[float]
+    y: list[float | None]
+    baseline: float
+
+
+class SensitivityResult(BaseModel):
+    curves: list[SensitivityCurve]
+    xlabel: str
+    ylabel: str
+    parameter: str
+    metric: str
+
+
+class TornadoResult(BaseModel):
+    factors: list[str]
+    lows: list[float]
+    highs: list[float]
+    base_value: float
+    labels: list[str]
+    plus_minus_value: float
+    metric: str
+    xlabel: str
+
+
+class Histogram(BaseModel):
+    bin_edges: list[float]
+    counts: list[int]
+
+
+class MCMetricStats(BaseModel):
+    mean: float
+    std: float
+    min: float
+    max: float
+    p5: float
+    p25: float
+    p50: float
+    p75: float
+    p95: float
+    histogram: Histogram
+
+
+class MCInputStats(BaseModel):
+    mean: float
+    std: float
+    min: float
+    max: float
+    histogram: Histogram
+
+
+class MonteCarloResult(BaseModel):
+    name: str
+    num_samples: int
+    currency: str
+    metrics: dict[str, MCMetricStats]
+    inputs: dict[str, MCInputStats]

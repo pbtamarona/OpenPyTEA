@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from openpytea.plant import Plant
 
 from app import state
-from app.schemas import PlantConfigIn
+from app.schemas import PlantConfigIn, CalculationResults, OkResponse
 from app.util import to_jsonable
 
 router = APIRouter()
@@ -15,7 +15,7 @@ def get_plant_config():
     return state.plant_config
 
 
-@router.put("/config")
+@router.put("/config", response_model=OkResponse)
 def set_plant_config(data: PlantConfigIn):
     state.plant_config = data.model_dump()
     return {"ok": True}
@@ -31,7 +31,7 @@ def get_process_types():
     return Plant.processTypes
 
 
-@router.post("/calculate")
+@router.post("/calculate", response_model=CalculationResults)
 def calculate():
     if not state.plant_config:
         raise HTTPException(status_code=400, detail="Plant not configured")

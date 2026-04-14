@@ -31,7 +31,9 @@ function App() {
   }, [dark]);
 
   useEffect(() => {
-    getExamples().then(setExamples).catch(() => {});
+    getExamples().then(setExamples).catch((e: unknown) => {
+      setError(e instanceof Error ? e.message : "Failed to load examples");
+    });
   }, []);
 
   const handleSave = async () => {
@@ -117,8 +119,8 @@ function App() {
       </header>
       {error && <div className="error-bar">{error}<button onClick={() => setError(null)}>&times;</button></div>}
       <main className="main">
-        {tab === "Equipment" && <EquipmentPage key={refreshKey} />}
-        {tab === "Plant Config" && <PlantConfigPage key={refreshKey} />}
+        {tab === "Equipment" && <EquipmentPage key={refreshKey} setError={setError} />}
+        {tab === "Plant Config" && <PlantConfigPage key={refreshKey} setError={setError} />}
         {tab === "Results" && <ResultsPage results={results} setResults={setResults} setError={setError} />}
         {tab === "Analysis" && <AnalysisPage setError={setError} />}
         {tab === "Monte Carlo" && <MonteCarloPage setError={setError} />}

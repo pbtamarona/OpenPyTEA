@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from openpytea.equipment import Equipment, CostCorrelationDB
 
 from app import state
-from app.schemas import EquipmentIn, EquipmentOut
+from app.schemas import EquipmentIn, EquipmentOut, OkResponse, CostDBEntry
 
 router = APIRouter()
 
@@ -44,12 +44,12 @@ def _make_equipment(data: EquipmentIn) -> Equipment:
     )
 
 
-@router.get("")
+@router.get("", response_model=list[EquipmentOut])
 def list_equipment():
     return [_eq_to_out(i, eq) for i, eq in enumerate(state.equipment_list)]
 
 
-@router.post("")
+@router.post("", response_model=EquipmentOut)
 def add_equipment(data: EquipmentIn):
     try:
         eq = _make_equipment(data)
@@ -59,7 +59,7 @@ def add_equipment(data: EquipmentIn):
     return _eq_to_out(len(state.equipment_list) - 1, eq)
 
 
-@router.put("/{index}")
+@router.put("/{index}", response_model=EquipmentOut)
 def update_equipment(index: int, data: EquipmentIn):
     if index < 0 or index >= len(state.equipment_list):
         raise HTTPException(status_code=404, detail="Equipment not found")
@@ -71,7 +71,7 @@ def update_equipment(index: int, data: EquipmentIn):
     return _eq_to_out(index, eq)
 
 
-@router.delete("/{index}")
+@router.delete("/{index}", response_model=OkResponse)
 def delete_equipment(index: int):
     if index < 0 or index >= len(state.equipment_list):
         raise HTTPException(status_code=404, detail="Equipment not found")
@@ -79,7 +79,7 @@ def delete_equipment(index: int):
     return {"ok": True}
 
 
-@router.get("/cost-db/categories")
+@router.get("/cost-db/categories", response_model=dict[str, list[CostDBEntry]])
 def get_cost_db_categories():
     """Return grouped categories with their types, units, and param ranges."""
     df = _db.df
@@ -98,12 +98,12 @@ def get_cost_db_categories():
     return groups
 
 
-@router.get("/process-types")
+@router.get("/process-types", response_model=list[str])
 def get_process_types():
     return list(Equipment.process_factors.keys())
 
 
-@router.get("/materials")
+@router.get("/materials", response_model=list[str])
 def get_materials():
     return list(Equipment.material_factors.keys())
 

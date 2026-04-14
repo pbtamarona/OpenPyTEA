@@ -32,7 +32,9 @@ export default function AnalysisPage({ setError }: Props) {
     getSensitivityParameters().then((p) => {
       setParameters(p);
       if (p.length > 0 && !sensParam) setSensParam(p[0]);
-    }).catch(() => {});
+    }).catch((e: unknown) => {
+      setError(e instanceof Error ? e.message : "Failed to load parameters");
+    });
   };
 
   useEffect(fetchParams, []);
