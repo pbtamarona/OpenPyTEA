@@ -1,0 +1,116 @@
+{
+  "equipment": [
+    {
+      "name": "COMP-1", 
+      "param": 945,
+      "process_type": "Fluids",
+      "category": "Compressors, fans, & blowers",
+      "type": "Compressor, centrifugal",
+      "material": "Carbon steel"
+    },
+    {
+      "name": "MTR-1",
+      "param": 1050,
+      "process_type": "Electrical",
+      "category": "Motors & generators",
+      "type": "Totally enclosed motor",
+      "material": "Carbon steel"
+    },
+    {
+      "name": "COMP-2",
+      "param": 491,
+      "process_type": "Fluids",
+      "category": "Compressors, fans, & blowers",
+      "type": "Compressor, centrifugal",
+      "material": "Carbon steel"
+    },
+    {
+      "name": "MTR-2",
+      "param": 545.56,
+      "process_type": "Electrical",
+      "category": "Motors & generators",
+      "type": "Totally enclosed motor",
+      "material": "Carbon steel"
+    },
+    {
+      "name": "HX-1",
+      "param": 31.87,
+      "process_type": "Fluids",
+      "category": "Heat Exchangers",
+      "type": "U-tube shell & tube",
+      "material": "304 stainless steel"
+    },
+    {
+      "name": "HX-2",
+      "param": 22.74,
+      "process_type": "Fluids",
+      "category": "Heat Exchangers",
+      "type": "U-tube shell & tube",
+      "material": "304 stainless steel"
+    },
+    {
+      "name": "HX-3",
+      "param": 107.19,
+      "process_type": "Fluids",
+      "category": "Heat Exchangers",
+      "type": "U-tube shell & tube",
+      "material": "304 stainless steel"
+    },
+    {
+      "name": "COOLER",
+      "param": 191.47,
+      "process_type": "Fluids",
+      "category": "Heat Exchangers",
+      "type": "U-tube shell & tube",
+      "material": "Carbon steel"
+    },
+    {
+      "name": "SMR-REACTOR",
+      "param": 160,
+      "process_type": "Fluids",
+      "category": "Reactors",
+      "type": "Tubular fixed bed",
+      "material": "304 stainless steel"
+    },
+    {
+      "name": "WGS-HT-REACTOR",
+      "param": 376.54,
+      "process_type": "Fluids",
+      "category": "Reactors",
+      "type": "Tubular fixed bed",
+      "material": "304 stainless steel"
+    },
+    {
+      "name": "WGS-LT-REACTOR",
+      "param": 3822.92,
+      "process_type": "Fluids",
+      "category": "Reactors",
+      "type": "Tubular fixed bed",
+      "material": "304 stainless steel"
+    },
+    {
+      "name": "FURNACE",
+      "param": 33.26,
+      "process_type": "Fluids",
+      "category": "Boilers, heaters, & furnaces",
+      "type": "Furnace, cylindrical",
+      "material": "304 stainless steel"
+    },
+    {
+      "name": "PUMP",
+      "param": 5.16,
+      "process_type": "Fluids",
+      "category": "Pumps",
+      "type": "Single-stage centrifugal",
+      "material": "Carbon steel"
+    },
+    {
+      "name": "PSA",
+      "param": 1023.49,
+      "process_type": "Fluids",
+      "category": "Gas separation",
+      "type": "Pressure-swing adsorber",
+      "material": "Carbon steel"
+    }
+  ]
+}

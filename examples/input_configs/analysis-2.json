@@ -1,0 +1,19 @@
+{
+  "analysis": {
+    "monte_carlo": {
+      "run": true,
+      "args": {
+        "num_samples": 1000000,
+        "batch_size": 10000,
+        "additional_capex": false
+      },
+      "metric": ["LCOP"]
+    }
+  },
+  "output": {
+    "save_json": true,
+    "save_plots": true,
+    "plot_format": "pdf",
+    "dpi": 600
+  }
+}

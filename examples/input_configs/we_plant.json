@@ -1,0 +1,42 @@
+{
+  "plant": {
+    "plant_name": "Water Electrolysis",
+    "process_type": "Fluids",
+    "country": "United States",
+    "region": "Gulf Coast",
+    "interest_rate": 0.09,
+    "project_lifetime": 30,
+    "plant_utilization": 0.95,
+    "operators_hired": 14,
+    "operator_hourly_rate": {
+      "rate": 38.11,
+      "std": 10,
+      "max": 50,
+      "min": 25
+    },
+
+    "additional_capex_costs": [17194000, 17194000],
+    "additional_capex_years": [10, 20],
+
+    "plant_products": {
+      "hydrogen": { "production": 50000, "price": 5.5 }
+    },
+
+    "variable_opex_inputs": {
+      "electricity": {
+        "consumption": 2352000,
+        "price": 0.05,
+        "std": 0.03,
+        "max": 3,
+        "min": 0.01
+      },
+      "water": {
+        "consumption": 378000.0,
+        "price": 0.003,
+        "std": 0.001,
+        "max": 0.005,
+        "min": 0
+      }
+    }
+  }
+}

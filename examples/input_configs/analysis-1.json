@@ -1,0 +1,72 @@
+{
+  "analysis": {
+    "direct_costs": {
+      "run": true,
+      "args": {
+        "pct": false
+      }
+    },
+    "fixed_capital": {
+      "run": true,
+      "args": {
+        "additional_capex": false,
+        "pct": false
+      }
+    },
+    "fixed_opex": {
+      "run": true,
+      "args": {
+        "pct": true
+      }
+    },
+    "variable_opex": {
+      "run": true,
+      "args": {
+        "pct": false
+      }
+    },
+    "sensitivity": {
+      "run": true,
+      "cases": [
+        {
+          "name": "methane_feed_lcop",
+          "args": {
+            "parameter": "methane_feed",
+            "plus_minus_value": 1.0,
+            "metric": "LCOP"
+          }
+        },
+        {
+          "name": "electricity_npv",
+          "args": {
+            "parameter": "electricity",
+            "plus_minus_value": 0.5,
+            "metric": "NPV"
+          }
+        }
+      ]
+    },
+    "tornado": {
+      "run": true,
+      "args": {
+        "plus_minus_value": 0.5,
+        "metric": "NPV"
+      }
+    },
+    "monte_carlo": {
+      "run": true,
+      "args": {
+        "num_samples": 1000000,
+        "batch_size": 10000,
+        "additional_capex": false
+      },
+      "metric": ["LCOP", "NPV"]
+    }
+  },
+  "output": {
+    "save_json": true,
+    "save_plots": true,
+    "plot_format": "pdf",
+    "dpi": 600
+  }
+}
