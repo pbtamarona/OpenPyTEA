@@ -245,6 +245,9 @@ def export_equipment_results(equipment_list, filepath):
     """
     filepath = Path(filepath)
 
+    # Ensure directory exists
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+
     equipment_data = [eq.to_dict() for eq in equipment_list]
 
     total_purchased = sum((eq.get("purchased_cost") or 0.0)
@@ -299,6 +302,9 @@ def export_plant_results(plant, filepath):
     >>> export_plant_results(plant, "output/plant_results.json")
     """
     filepath = Path(filepath)
+
+    # Ensure directory exists
+    filepath.parent.mkdir(parents=True, exist_ok=True)
 
     output = {
         "metadata": {
