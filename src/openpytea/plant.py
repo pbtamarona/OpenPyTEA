@@ -1119,6 +1119,16 @@ class Plant:
             return df.style.format(fmt)
 
     def calculate_npv(self, print_results: bool = False):
+        self.calculate_fixed_capital(
+            fc=1.0 if self.fc is None else self.fc
+        )
+        self.calculate_variable_opex()
+        self.calculate_fixed_opex(
+            fp=1.0 if self.fp is None else self.fp
+        )
+        self.calculate_revenue()
+        self.calculate_cash_flow()
+
         # Ensure 2D cash_flow: [n_scenarios, n_years]
         cf = np.asarray(self.cash_flow, dtype=float)
         if cf.ndim == 1:
