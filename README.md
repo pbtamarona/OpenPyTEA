@@ -2,7 +2,7 @@
 
 **OpenPyTEA** is an open-source Python toolkit for performing **techno-economic assessment (TEA)** of chemical and energy systems. It was created to address a persistent gap in the TEA workflow: while process simulators model mass and energy balances, researchers often lack an equally transparent and flexible way to evaluate the **economic feasibility** of their designs. Commercial tools remain *black-box tools*, and many academic TEA implementations are process-specific, undocumented, or difficult to reproduce.
 
-**OpenPyTEA** provides a fully open, modular, and traceable framework that brings TEA into the Python ecosystem. By integrating **equipment cost estimation**, **capital and operating expenditure modeling**, **cash-flow analysis**, **cost breakdown plots**, **sensitivity evaluation**, and **Monte Carlo uncertainty propagation**, the toolkit enables users to perform end-to-end TEA with clarity and reproducibility.
+**OpenPyTEA** provides a fully open, modular, and traceable framework that brings TEA into the Python ecosystem. By integrating **equipment cost estimation**, **capital and operating expenditure modeling**, **cash-flow analysis**, **cost breakdowns**, **sensitivity evaluation**, and **Monte Carlo uncertainty propagation**, the toolkit enables users to perform end-to-end TEA with clarity and reproducibility.
 
 Beyond its functionality, **OpenPyTEA is designed as a community-driven TEA platform**. Users can contribute new equipment cost correlations, improve economic models, report issues, and expand the toolkit’s capabilities over time. This collaborative approach helps build a shared, transparent, and continually improving TEA resource—similar to the open-source progress seen in the LCA community.
 
@@ -19,8 +19,10 @@ https://github.com/pbtamarona/OpenPyTEA/tree/main/examples
 ## ✨ Key Features
 - **Modular architecture:** clean separation of cost correlations, equipment objects, plant economics, and uncertainty analysis.  
 - **Transparent and reproducible:** all algorithms, equations, and assumptions are openly available for full traceability.
-- **Cost breakdown visualization:** built-in helpers to plot stacked bar charts of direct equipment costs, fixed capital, and operating costs.
-- **Built-in uncertainty tools:** automatic generation of sensitivity plots and Monte Carlo simulations.  
+- **Cost breakdown visualization:** built-in functions to plot stacked bar charts of equipment costs, fixed capital, and operating costs.
+- **Built-in uncertainty tools:** automatic generation of sensitivity plots and Monte Carlo simulations.
+- **Workflow using JSON configuration files:** standardized input/output structure via `io.py` for reproducible analyses and multi-scenario evaluation.
+- **Flexible analysis and visualization:** separation of data processing (`analysis.py`) and plotting (`plotting.py`) allows users to apply custom visualization tools.
 - **Interoperable and extensible:** easy integration with process simulators, optimization frameworks, and LCA tools.  
 - **Education-friendly:** ideal for teaching TEA and process design without reliance on proprietary software.  
 - **Community-driven:** users can contribute new correlations, improve models, request features, and shape the evolution of the platform.  
@@ -47,7 +49,6 @@ or with `uv`:
 uv add git+https://github.com/pbtamarona/OpenPyTEA
 ```
 
-
 **OpenPyTEA** requires **Python ≥ 3.9**.  
 The main dependencies include:
 
@@ -67,6 +68,9 @@ src/openpytea/
 ├── equipment.py            # Equipment-level costing and inflation correction
 ├── plant.py                # Plant-level TEA: CAPEX, OPEX, cash flows, financial metrics
 ├── analysis.py             # Sensitivity and uncertainty analysis (sensitivity plots, Monte Carlo)
+├── plotting.py             # Visualization functions (plots and figures)
+├── io.py                   # JSON-based workflow: load inputs and export results
+├── helpers.py              # Helper functions for data handling and common operations
 └── data/                   # Cost correlations database and CEPCI data
 examples/                   # Example notebooks and case studies
 walkthrough.ipynb           # walkthrough of the package
@@ -195,14 +199,24 @@ results = monte_carlo(
 Outputs include probability distributions and confidence intervals for LCOP or NPV—supporting uncertainty-informed decision-making. With `plot_multiple_monte_carlo`, **OpenPyTEA** can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons.
 
 ---
+### 5. **Workflow using JSON configuration files**
+
+**OpenPyTEA** supports a workflow using structured JSON input files via the `io.py` module. This enables standardized, reproducible, and scalable TEA studies.
+
+Key functionalities include:
+- `run_equipment()`: evaluate equipment costs from JSON input
+- `run_plant()`: construct and evaluate a plant configuration
+- `run_tea()`: execute full TEA, including cost breakdowns, sensitivity, and uncertainty analysis
+
+This workflow is demonstrated in `case_study_1_with_JSON.ipynb` in the example folder.
 
 ## 📘 Example Workflows
 
 Example notebooks are available in the `examples/` folder, including:
 
-- Hydrogen production  
-- Hydrogen liquefaction  
-- Geothermal heat and power  
+- Comparison of hydrogen production pathwways 
+- Hydrogen liquefaction precooling system
+- Geothermal-based heating and power generation
 
 Run any example via:
 ```bash
@@ -213,8 +227,6 @@ Each notebook demonstrates:
 - Cash-flow and investment evaluation
 - Sensitivity and uncertainty analysis
 - Visualization of key economic indicators
-
----
 
 ## 🧑‍🏫 Educational Use
 
