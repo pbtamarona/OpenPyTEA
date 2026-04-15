@@ -83,8 +83,9 @@ def test_monte_carlo_data(test_plant):
 
     result = monte_carlo(
         test_plant,
-        n_samples=1000,
-        metrics=["NPV", "LCOP"],
+        num_samples=1000,
+        batch_size=1000,
+        additional_capex=False,
     )
 
     assert isinstance(result, dict)

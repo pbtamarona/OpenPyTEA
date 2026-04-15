@@ -1,8 +1,9 @@
 import matplotlib
 import pytest
 from openpytea import Equipment, Plant
-
+import matplotlib.pyplot as plt
 matplotlib.use("Agg")
+plt.rcParams["text.usetex"] = False
 
 
 @pytest.fixture

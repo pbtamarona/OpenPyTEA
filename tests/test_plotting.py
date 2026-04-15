@@ -1,3 +1,5 @@
+import matplotlib
+import matplotlib.pyplot as plt
 from openpytea import (
     direct_costs_data,
     sensitivity_data,
@@ -6,6 +8,9 @@ from openpytea import (
     plot_sensitivity,
     plot_tornado,
 )
+matplotlib.use("Agg")
+
+plt.rcParams["text.usetex"] = False
 
 
 def test_plot_stacked_bar_runs(test_plant):
