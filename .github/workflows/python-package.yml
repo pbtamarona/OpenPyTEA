@@ -35,7 +35,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest
+          pytest tests -q
 
   lint:
     runs-on: ubuntu-latest
