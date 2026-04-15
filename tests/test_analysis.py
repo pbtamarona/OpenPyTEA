@@ -89,7 +89,10 @@ def test_monte_carlo_data(test_plant):
     )
 
     assert isinstance(result, dict)
-    assert "NPV" in result
-    assert "LCOP" in result
-    assert len(result["NPV"]) == 1000
-    assert len(result["LCOP"]) == 1000
+    assert "metrics" in result
+    assert "inputs" in result
+    assert "NPV" in result["metrics"]
+    assert "ROI" in result["metrics"]
+    assert "PBT" in result["metrics"]
+    assert "LCOP" in result["metrics"]
+    assert len(result["metrics"]["NPV"]) == 1000
