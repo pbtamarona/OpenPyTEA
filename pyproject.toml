@@ -57,3 +57,19 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 openpytea = ["data/*.csv"]
+
+[tool.ruff]
+# Only check Python files (default, but explicit is cleaner)
+extend-include = ["*.py"]
+extend-exclude = ["*.ipynb", "notebooks/", ".ipynb_checkpoints/"]
+
+# Optional but recommended
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]  # errors, flakes, warnings
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"

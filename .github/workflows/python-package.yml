@@ -39,20 +39,25 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    continue-on-error: true   # 🔑 non-blocking
+    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python (latest)
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install lint tools
         run: |
-          pip install flake8
+          python -m pip install --upgrade pip
+          pip install ruff vulture
 
-      - name: Run flake8
-        run: flake8 src/openpytea
-        
+      - name: Run Ruff
+        run: |
+          ruff check src/openpytea tests
+
+      - name: Run Vulture
+        run: |
+          vulture src/openpytea tests --min-confidence 80
