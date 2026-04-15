@@ -76,6 +76,13 @@ README.md
 
 ---
 
+## 🏗️ Software Architecture
+
+![OpenPyTEA Architecture](examples/img/architecture.png)
+Software architecture and data flow of **OpenPyTEA**, illustrating the progression from user input to TEA output. Users provide economic assumptions, process simulation results, and equipment-sizing parameters. Equipment-sizing information is linked with cost correlations and CEPCI values stored in CSV databases to calculate inflation-adjusted purchased and direct costs. `Equipment` objects are aggregated into a `Plant` object, where CAPEX, OPEX, and financial performance metrics are evaluated. The `analysis.py` module subsequently operates on `Plant` objects to perform sensitivity and uncertainty analyses.
+
+---
+
 ## 🧠 Core Concepts
 
 ### 1. **Equipment-level costing**
