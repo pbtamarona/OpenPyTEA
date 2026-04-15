@@ -1,3 +1,4 @@
+import warnings
 from itertools import cycle
 from scipy.stats import norm
 import matplotlib.pyplot as plt
@@ -457,6 +458,24 @@ def plot_monte_carlo(
         if label is None:
             label = _default_metric_label(r"\$", metric)
 
+    n_total = values.size
+    finite_mask = np.isfinite(values)
+    n_filtered = n_total - np.count_nonzero(finite_mask)
+    values = values[finite_mask]
+
+    if n_filtered > 0:
+        warnings.warn(
+            f"Filtered {n_filtered} non-finite value(s) "
+            f"from Monte Carlo data before plotting.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+
+    if values.size == 0:
+        raise ValueError(
+            "No finite Monte Carlo values available for plotting."
+        )
+
     mu, std = norm.fit(values)
 
     created_fig = None
@@ -586,8 +605,27 @@ def plot_monte_carlo_inputs(
 
     for idx, (label, arr) in enumerate(inputs.items()):
         ax = axes[idx]
+
+        values = np.asarray(arr, dtype=float)
+        finite_mask = np.isfinite(values)
+        n_filtered = values.size - np.count_nonzero(finite_mask)
+        values = values[finite_mask]
+
+        if n_filtered > 0:
+            warnings.warn(
+                f"Filtered {n_filtered} non-finite value(s) from "
+                f"Monte Carlo input '{label}' before plotting.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+
+        if values.size == 0:
+            raise ValueError(
+                f"No finite values available for Monte Carlo input '{label}'."
+            )
+
         ax.hist(
-            np.asarray(arr, dtype=float),
+            values,
             bins=bins,
             density=True,
             color=hist_color,
@@ -680,8 +718,26 @@ def plot_multiple_monte_carlo(
         else:
             continue
 
-        values = values[np.isfinite(values)]
+        n_total = values.size
+        finite_mask = np.isfinite(values)
+        n_filtered = n_total - np.count_nonzero(finite_mask)
+        values = values[finite_mask]
+
+        if n_filtered > 0:
+            warnings.warn(
+                f"Filtered {n_filtered} non-finite value(s) from "
+                f"Monte Carlo data for '{name}' before plotting.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+
         if values.size == 0:
+            warnings.warn(
+                f"No finite values available for Monte Carlo data "
+                f"for '{name}'. Skipping dataset.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
             continue
 
         plotted_any = True
