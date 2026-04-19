@@ -43,6 +43,10 @@ export default function PlantConfigPage({ setError }: Props) {
   })();
 
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [editingVarOpexKey, setEditingVarOpexKey] = useState<string | null>(null);
+  const [editingVarOpexName, setEditingVarOpexName] = useState("");
+  const [editingProductKey, setEditingProductKey] = useState<string | null>(null);
+  const [editingProductName, setEditingProductName] = useState("");
 
   const save = async () => {
     setSaveError(null);
@@ -76,6 +80,18 @@ export default function PlantConfigPage({ setError }: Props) {
     });
   };
 
+  const renameVarOpex = (oldKey: string, newKey: string) => {
+    const trimmed = newKey.trim();
+    if (!trimmed || trimmed === oldKey) { setEditingVarOpexKey(null); return; }
+    setConfig((prev) => {
+      const renamed = Object.fromEntries(
+        Object.entries(prev.variable_opex_inputs).map(([k, v]) => (k === oldKey ? [trimmed, v] : [k, v]))
+      );
+      return { ...prev, variable_opex_inputs: renamed };
+    });
+    setEditingVarOpexKey(null);
+  };
+
   const updateVarOpex = (key: string, field: string, value: number) => {
     setConfig((prev) => ({
       ...prev,
@@ -102,6 +118,18 @@ export default function PlantConfigPage({ setError }: Props) {
       delete copy[key];
       return { ...prev, plant_products: copy };
     });
+  };
+
+  const renameProduct = (oldKey: string, newKey: string) => {
+    const trimmed = newKey.trim();
+    if (!trimmed || trimmed === oldKey) { setEditingProductKey(null); return; }
+    setConfig((prev) => {
+      const renamed = Object.fromEntries(
+        Object.entries(prev.plant_products).map(([k, v]) => (k === oldKey ? [trimmed, v] : [k, v]))
+      );
+      return { ...prev, plant_products: renamed };
+    });
+    setEditingProductKey(null);
   };
 
   const updateProduct = (key: string, field: string, value: number) => {
@@ -226,13 +254,35 @@ export default function PlantConfigPage({ setError }: Props) {
             <tbody>
               {Object.entries(config.plant_products).map(([key, val]) => (
                 <tr key={key}>
-                  <td><strong>{key}</strong></td>
+                  <td>
+                    {editingProductKey === key ? (
+                      <input
+                        value={editingProductName}
+                        onChange={(e) => setEditingProductName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") renameProduct(key, editingProductName);
+                          if (e.key === "Escape") setEditingProductKey(null);
+                        }}
+                        autoFocus
+                        style={{ width: 130 }}
+                      />
+                    ) : (
+                      <strong>{key}</strong>
+                    )}
+                  </td>
                   <td><input type="number" value={val.production ?? 0} onChange={(e) => updateProduct(key, "production", +e.target.value)} style={{ width: 100 }} /></td>
                   <td><input type="number" value={val.price ?? 0} onChange={(e) => updateProduct(key, "price", +e.target.value)} style={{ width: 80 }} /></td>
                   <td><input type="number" value={val.std ?? 0} onChange={(e) => updateProduct(key, "std", +e.target.value)} style={{ width: 60 }} /></td>
                   <td><input type="number" value={val.min ?? 0} onChange={(e) => updateProduct(key, "min", +e.target.value)} style={{ width: 60 }} /></td>
                   <td><input type="number" value={val.max ?? 99999} onChange={(e) => updateProduct(key, "max", +e.target.value)} style={{ width: 70 }} /></td>
-                  <td><button className="btn-danger" onClick={() => removeProduct(key)}>Remove</button></td>
+                  <td style={{ display: "flex", gap: 6 }}>
+                    {editingProductKey === key ? (
+                      <button className="btn-primary" onClick={() => renameProduct(key, editingProductName)}>Done</button>
+                    ) : (
+                      <button className="btn-primary" onClick={() => { setEditingProductKey(key); setEditingProductName(key); }}>Edit</button>
+                    )}
+                    <button className="btn-danger" onClick={() => removeProduct(key)}>Remove</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -252,13 +302,35 @@ export default function PlantConfigPage({ setError }: Props) {
             <tbody>
               {Object.entries(config.variable_opex_inputs).map(([key, val]) => (
                 <tr key={key}>
-                  <td><strong>{key}</strong></td>
+                  <td>
+                    {editingVarOpexKey === key ? (
+                      <input
+                        value={editingVarOpexName}
+                        onChange={(e) => setEditingVarOpexName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") renameVarOpex(key, editingVarOpexName);
+                          if (e.key === "Escape") setEditingVarOpexKey(null);
+                        }}
+                        autoFocus
+                        style={{ width: 130 }}
+                      />
+                    ) : (
+                      <strong>{key}</strong>
+                    )}
+                  </td>
                   <td><input type="number" value={val.consumption ?? 0} onChange={(e) => updateVarOpex(key, "consumption", +e.target.value)} style={{ width: 100 }} /></td>
                   <td><input type="number" value={val.price ?? 0} onChange={(e) => updateVarOpex(key, "price", +e.target.value)} style={{ width: 80 }} /></td>
                   <td><input type="number" value={val.std ?? 0} onChange={(e) => updateVarOpex(key, "std", +e.target.value)} style={{ width: 60 }} /></td>
                   <td><input type="number" value={val.min ?? 0} onChange={(e) => updateVarOpex(key, "min", +e.target.value)} style={{ width: 60 }} /></td>
                   <td><input type="number" value={val.max ?? 99999} onChange={(e) => updateVarOpex(key, "max", +e.target.value)} style={{ width: 70 }} /></td>
-                  <td><button className="btn-danger" onClick={() => removeVarOpex(key)}>Remove</button></td>
+                  <td style={{ display: "flex", gap: 6 }}>
+                    {editingVarOpexKey === key ? (
+                      <button className="btn-primary" onClick={() => renameVarOpex(key, editingVarOpexName)}>Done</button>
+                    ) : (
+                      <button className="btn-primary" onClick={() => { setEditingVarOpexKey(key); setEditingVarOpexName(key); }}>Edit</button>
+                    )}
+                    <button className="btn-danger" onClick={() => removeVarOpex(key)}>Remove</button>
+                  </td>
                 </tr>
               ))}
             </tbody>

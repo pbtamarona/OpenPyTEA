@@ -92,7 +92,7 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
         </div>
         <div className="metric-card">
           <div className="label">ROI</div>
-          <div className="value">{pct(m.roi)}</div>
+          <div className="value">{m.roi != null ? m.roi.toFixed(2) + "%" : "-"}</div>
         </div>
         <div className="metric-card">
           <div className="label">Payback Time</div>
