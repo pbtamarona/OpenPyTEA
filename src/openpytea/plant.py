@@ -1186,7 +1186,8 @@ class Plant:
             return
 
         if final_npv.size == 1:
-            return float(final_npv[0])
+            self.npv = float(final_npv[0])
+            return self.npv
 
         return final_npv
 

@@ -2,3 +2,5 @@ __pycache__
 venv/
 .python-version
 for_publication/
+*.egg-info/
+frontend/dist/

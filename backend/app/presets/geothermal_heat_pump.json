@@ -1,0 +1,45 @@
+{
+  "id": "geothermal_heat_pump",
+  "title": "Geothermal Heat Pump",
+  "description": "Geothermal district heating with heat pump, Netherlands (Case Study 3)",
+  "equipment": [
+    {"name": "HEX", "param": 60, "process_type": "Fluids", "category": "Heat Exchangers", "type": "Plate & frame", "material": "Carbon steel", "num_units": 6},
+    {"name": "EVAP", "param": 625.3, "process_type": "Fluids", "category": "Heat Exchangers", "type": "Plate & frame", "material": "Carbon steel", "num_units": 29},
+    {"name": "COND", "param": 383.4, "process_type": "Fluids", "category": "Heat Exchangers", "type": "Plate & frame", "material": "Carbon steel", "num_units": 39},
+    {"name": "COMP", "param": 2640.6, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, reciprocating", "material": "Carbon steel", "num_units": 1},
+    {"name": "MIX_SPLIT", "process_type": "Fluids", "category": "Mixers & splitters", "type": "Static", "material": "Carbon steel", "num_units": 10, "purchased_cost": 46839.78, "cost_year": 2023},
+    {"name": "ESP", "process_type": "Fluids", "category": "Pumps", "type": "Submersible", "material": "Carbon steel", "num_units": 1, "purchased_cost": 1499118.06, "cost_year": 2023},
+    {"name": "Separator", "process_type": "Fluids", "category": "Separators", "type": "Two-phase separator", "material": "Carbon steel", "num_units": 1, "purchased_cost": 15444, "cost_year": 2023},
+    {"name": "Filter", "process_type": "Fluids", "category": "Filters", "type": "Sand filter", "material": "Carbon steel", "num_units": 1, "purchased_cost": 723608.7, "cost_year": 2023}
+  ],
+  "plant": {
+    "plant_name": "Heat pump",
+    "process_type": "Fluids",
+    "country": "Netherlands",
+    "region": "",
+    "currency": "USD",
+    "exchange_rate": 1.0,
+    "interest_rate": 0.05,
+    "project_lifetime": 30,
+    "plant_utilization": 0.83,
+    "tax_rate": 0.0,
+    "working_capital": null,
+    "depreciation": null,
+    "operators_per_shift": null,
+    "operators_hired": 3,
+    "operator_hourly_rate": {"rate": 31, "std": 10, "min": 20, "max": 50},
+    "working_weeks_per_year": 49,
+    "working_shifts_per_week": 5,
+    "operating_shifts_per_day": 3,
+    "variable_opex_inputs": {
+      "electricity": {"consumption": 88022.4, "price": 0.083, "std": 0.025, "min": 0.01, "max": 3}
+    },
+    "plant_products": {
+      "heat": {"production": 601440, "price": 0.06, "std": 0.02, "min": 0.04, "max": 0.08}
+    },
+    "fc": null,
+    "fp": null,
+    "additional_capex_years": null,
+    "additional_capex_cost": null
+  }
+}

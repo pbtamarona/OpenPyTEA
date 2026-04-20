@@ -1,0 +1,55 @@
+{
+  "id": "h2_methane_pyrolysis",
+  "title": "Hydrogen Production - Methane Pyrolysis",
+  "description": "50,000 kg/day H2 via methane pyrolysis with carbon co-product (Case Study 1)",
+  "equipment": [
+    {"name": "COMP-1", "param": 205, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, centrifugal", "material": "Carbon steel"},
+    {"name": "COMP-2", "param": 2993, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, centrifugal", "material": "Carbon steel"},
+    {"name": "COMP-3", "param": 363, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, centrifugal", "material": "Carbon steel"},
+    {"name": "MTR-1", "param": 227.78, "process_type": "Electrical", "category": "Motors & generators", "type": "Totally enclosed motor", "material": "Carbon steel"},
+    {"name": "MTR-2", "param": 3325.56, "process_type": "Electrical", "category": "Motors & generators", "type": "Totally enclosed motor", "material": "Carbon steel"},
+    {"name": "MTR-3", "param": 403.33, "process_type": "Electrical", "category": "Motors & generators", "type": "Totally enclosed motor", "material": "Carbon steel"},
+    {"name": "HX-1", "param": 28.37, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "316 stainless steel"},
+    {"name": "COOLER-1", "param": 41.85, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "Carbon steel"},
+    {"name": "COOLER-2", "param": 26.21, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "Carbon steel"},
+    {"name": "REACTOR", "param": 147.26, "process_type": "Mixed", "category": "Reactors", "type": "Indirect fluidized-bed", "material": "316 stainless steel"},
+    {"name": "FURNACE", "param": 22608, "process_type": "Fluids", "category": "Boilers, heaters, & furnaces", "type": "Pyrolysis furnace", "material": "316 stainless steel"},
+    {"name": "CYCLONE", "param": 36.70, "process_type": "Mixed", "category": "Dust collectors", "type": "Gas multi-cyclone", "material": "316 stainless steel"},
+    {"name": "PSA", "param": 1017.98, "process_type": "Fluids", "category": "Gas separation", "type": "Pressure-swing adsorber", "material": "Carbon steel"}
+  ],
+  "plant": {
+    "plant_name": "Methane Pyrolysis",
+    "process_type": "Mixed",
+    "country": "United States",
+    "region": "Gulf Coast",
+    "currency": "USD",
+    "exchange_rate": 1.0,
+    "interest_rate": 0.09,
+    "project_lifetime": 20,
+    "plant_utilization": 0.95,
+    "tax_rate": 0.0,
+    "working_capital": null,
+    "depreciation": null,
+    "operators_per_shift": null,
+    "operators_hired": null,
+    "operator_hourly_rate": {"rate": 38.11, "std": 10, "min": 25, "max": 50},
+    "working_weeks_per_year": 49,
+    "working_shifts_per_week": 5,
+    "operating_shifts_per_day": 3,
+    "variable_opex_inputs": {
+      "electricity": {"consumption": 47556.67, "price": 0.05, "std": 0.025, "min": 0.01, "max": 3},
+      "methane_feed": {"consumption": 285216, "price": 0.5, "std": 0.1, "min": 0, "max": 5},
+      "cooling_water": {"consumption": 637305.84, "price": 0.00024592, "std": 0.0001, "min": 0.00001, "max": 0.0004},
+      "CO2_tax": {"consumption": 248568, "price": 0.072, "std": 0.02, "min": 0, "max": 0.15},
+      "carbon_disposal_fee": {"consumption": 73200, "price": 0.5, "std": 0.25, "min": 0, "max": 1}
+    },
+    "plant_products": {
+      "hydrogen": {"production": 50000},
+      "carbon": {"production": 73200, "price": 1, "std": 0.25, "min": 0, "max": 3}
+    },
+    "fc": null,
+    "fp": null,
+    "additional_capex_years": null,
+    "additional_capex_cost": null
+  }
+}

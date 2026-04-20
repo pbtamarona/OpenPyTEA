@@ -1,0 +1,54 @@
+{
+  "id": "h2_smr",
+  "title": "Hydrogen Production - Steam Methane Reforming",
+  "description": "50,000 kg/day H2 via SMR with WGS and PSA purification (Case Study 1)",
+  "equipment": [
+    {"name": "COMP-1", "param": 945, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, centrifugal", "material": "Carbon steel"},
+    {"name": "COMP-2", "param": 491, "process_type": "Fluids", "category": "Compressors, fans, & blowers", "type": "Compressor, centrifugal", "material": "Carbon steel"},
+    {"name": "MTR-1", "param": 1050, "process_type": "Electrical", "category": "Motors & generators", "type": "Totally enclosed motor", "material": "Carbon steel"},
+    {"name": "MTR-2", "param": 546.67, "process_type": "Electrical", "category": "Motors & generators", "type": "Totally enclosed motor", "material": "Carbon steel"},
+    {"name": "HX-1", "param": 31.87, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "304 stainless steel"},
+    {"name": "HX-2", "param": 22.74, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "304 stainless steel"},
+    {"name": "HX-3", "param": 107.19, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "304 stainless steel"},
+    {"name": "COOLER", "param": 191.47, "process_type": "Fluids", "category": "Heat Exchangers", "type": "U-tube shell & tube", "material": "Carbon steel"},
+    {"name": "SMR-REACTOR", "param": 160, "process_type": "Fluids", "category": "Reactors", "type": "Tubular fixed bed", "material": "304 stainless steel"},
+    {"name": "WGS-HT-REACTOR", "param": 376.54, "process_type": "Fluids", "category": "Reactors", "type": "Tubular fixed bed", "material": "304 stainless steel"},
+    {"name": "WGS-LT-REACTOR", "param": 3822.92, "process_type": "Fluids", "category": "Reactors", "type": "Tubular fixed bed", "material": "304 stainless steel"},
+    {"name": "FURNACE", "param": 33.26, "process_type": "Fluids", "category": "Boilers, heaters, & furnaces", "type": "Furnace, cylindrical", "material": "304 stainless steel"},
+    {"name": "PUMP", "param": 5.16, "process_type": "Fluids", "category": "Pumps", "type": "Single-stage centrifugal", "material": "Carbon steel"},
+    {"name": "PSA", "param": 1023.49, "process_type": "Fluids", "category": "Gas separation", "type": "Pressure-swing adsorber", "material": "Carbon steel"}
+  ],
+  "plant": {
+    "plant_name": "Steam Reforming",
+    "process_type": "Fluids",
+    "country": "United States",
+    "region": "Gulf Coast",
+    "currency": "USD",
+    "exchange_rate": 1.0,
+    "interest_rate": 0.09,
+    "project_lifetime": 20,
+    "plant_utilization": 0.95,
+    "tax_rate": 0.0,
+    "working_capital": null,
+    "depreciation": null,
+    "operators_per_shift": null,
+    "operators_hired": null,
+    "operator_hourly_rate": {"rate": 38.11, "std": 10, "min": 25, "max": 50},
+    "working_weeks_per_year": 49,
+    "working_shifts_per_week": 5,
+    "operating_shifts_per_day": 3,
+    "variable_opex_inputs": {
+      "electricity": {"consumption": 37272, "price": 0.05, "std": 0.025, "min": 0.01, "max": 3},
+      "methane_feed": {"consumption": 217536, "price": 0.5, "std": 0.1, "min": 0, "max": 5},
+      "cooling_water": {"consumption": 485345.6, "price": 0.00024592, "std": 0.0001, "min": 0.00001, "max": 0.0004},
+      "CO2_tax": {"consumption": 602991.36, "price": 0.072, "std": 0.02, "min": 0, "max": 0.15}
+    },
+    "plant_products": {
+      "hydrogen": {"production": 50000}
+    },
+    "fc": null,
+    "fp": null,
+    "additional_capex_years": null,
+    "additional_capex_cost": null
+  }
+}

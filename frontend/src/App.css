@@ -1,0 +1,409 @@
+/* ===== CSS Custom Properties (Theme) ===== */
+:root {
+  --bg: #f5f7fa;
+  --text: #1a1a2e;
+  --text-secondary: #495057;
+  --text-muted: #868e96;
+  --header-bg: #1a1a2e;
+  --card-bg: #fff;
+  --card-shadow: 0 1px 4px rgba(0,0,0,.08);
+  --border: #e9ecef;
+  --input-border: #dee2e6;
+  --input-bg: #fff;
+  --th-bg: #f8f9fa;
+  --hover-bg: #f0f4ff;
+  --error-bg: #fee2e2;
+  --error-text: #991b1b;
+  --modal-bg: #fff;
+  --modal-shadow: 0 20px 60px rgba(0,0,0,.2);
+  --dropdown-bg: #fff;
+  --dropdown-shadow: 0 10px 40px rgba(0,0,0,.2);
+  --overlay-bg: rgba(0,0,0,.4);
+  --accent: #4361ee;
+  --accent-hover: #3a56d4;
+  --chart-grid: #e9ecef;
+}
+
+[data-theme="dark"] {
+  --bg: #0f1117;
+  --text: #e1e4e8;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --header-bg: #161822;
+  --card-bg: #1c1e2a;
+  --card-shadow: 0 1px 4px rgba(0,0,0,.3);
+  --border: #2d3042;
+  --input-border: #363a4e;
+  --input-bg: #232536;
+  --th-bg: #1e2030;
+  --hover-bg: rgba(67,97,238,.12);
+  --error-bg: #3b1c1c;
+  --error-text: #f87171;
+  --modal-bg: #1c1e2a;
+  --modal-shadow: 0 20px 60px rgba(0,0,0,.5);
+  --dropdown-bg: #1c1e2a;
+  --dropdown-shadow: 0 10px 40px rgba(0,0,0,.5);
+  --overlay-bg: rgba(0,0,0,.6);
+  --accent: #5b7cfa;
+  --accent-hover: #4a6aef;
+  --chart-grid: #2d3042;
+}
+
+/* ===== Base ===== */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: var(--header-bg);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+
+.header h1 {
+  font-size: 20px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.tab {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #adb5bd;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 6px;
+  transition: all .15s;
+}
+
+.tab:hover { background: rgba(255,255,255,.1); color: #fff; }
+.tab.active { background: var(--accent); color: #fff; }
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-primary {
+  padding: 8px 20px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background .15s;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-secondary {
+  padding: 6px 14px;
+  border: 1px solid rgba(255,255,255,.3);
+  background: transparent;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.btn-secondary:hover { background: rgba(255,255,255,.1); }
+
+.btn-danger {
+  padding: 4px 10px;
+  border: none;
+  background: #e63946;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.btn-danger:hover { background: #c1121f; }
+
+/* Theme toggle */
+.btn-theme {
+  padding: 6px 10px;
+  border: 1px solid rgba(255,255,255,.2);
+  background: transparent;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  transition: background .15s;
+}
+.btn-theme:hover { background: rgba(255,255,255,.1); }
+
+.error-bar {
+  padding: 10px 24px;
+  background: var(--error-bg);
+  color: var(--error-text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.error-bar button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--error-text);
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  box-shadow: var(--card-shadow);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.card h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.card h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th, td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  background: var(--th-bg);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+td.number { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Forms */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+
+.form-group input, .form-group select {
+  padding: 8px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .15s;
+  background: var(--input-bg);
+  color: var(--text);
+}
+
+.form-group input:focus, .form-group select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(67,97,238,.15);
+}
+
+/* Metric cards */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: #fff;
+  padding: 16px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.metric-card .label { font-size: 12px; opacity: .8; text-transform: uppercase; }
+.metric-card .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: var(--modal-bg);
+  border-radius: 12px;
+  padding: 24px;
+  width: 560px;
+  max-width: 95vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--modal-shadow);
+  color: var(--text);
+}
+
+.modal h2 { margin: 0 0 20px; font-size: 18px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+
+/* Dynamic list editor */
+.list-editor { margin-bottom: 16px; }
+.list-editor-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+.list-editor-row .form-group { flex: 1; }
+
+/* Loading spinner */
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Chart section */
+.chart-section {
+  margin-top: 20px;
+}
+
+/* Examples dropdown */
+.examples-dropdown {
+  position: relative;
+}
+
+.btn-examples {
+  padding: 6px 14px;
+  border: 1px solid #06d6a0;
+  background: rgba(6, 214, 160, .15);
+  color: #06d6a0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all .15s;
+}
+.btn-examples:hover { background: rgba(6, 214, 160, .25); }
+
+.dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--dropdown-bg);
+  border-radius: 10px;
+  box-shadow: var(--dropdown-shadow);
+  min-width: 340px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 50;
+  padding: 6px;
+}
+
+.dropdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background .1s;
+}
+.dropdown-item:hover { background: var(--hover-bg); }
+
+.dropdown-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.dropdown-item-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* Inline table inputs (Plant Config page) */
+td input[type="number"] {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
