@@ -10,6 +10,15 @@ import {
 
 const METRICS = ["LCOP", "NPV", "IRR", "ROI", "PBT"];
 
+const cleanLatex = (s: string) =>
+  s.replace(/\$\\cdot\$/g, "·").replace(/\$\^-1\$/g, "⁻¹").replace(/\\%/g, "%").replace(/\$.*?\$/g, "").replace(/\\/g, "");
+
+const formatParam = (p: string) => {
+  const last = p.split(".").pop() ?? p;
+  const label = last.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
+  return p.includes(".") ? `${label} price` : label;
+};
+
 interface Props {
   setError: (e: string | null) => void;
 }
@@ -69,12 +78,18 @@ export default function AnalysisPage({ setError }: Props) {
   };
 
   // Sensitivity chart data
+  const sensYValues = sensResult?.curves[0]?.y ?? [];
+  const sensMaxAbs = sensYValues.length ? Math.max(...sensYValues.map(Math.abs)) : 0;
+  const sensScale = sensMaxAbs >= 1e6 ? 1e6 : 1;
   const sensChartData = sensResult
     ? sensResult.curves[0]?.x.map((x, i) => ({
         x,
-        y: sensResult.curves[0]?.y[i] ?? 0,
+        y: (sensResult.curves[0]?.y[i] ?? 0) / sensScale,
       }))
     : [];
+  const sensYLabel = sensResult
+    ? (sensScale === 1e6 ? cleanLatex(sensResult.ylabel).replace("/ [", "/ [million ") : cleanLatex(sensResult.ylabel))
+    : "";
 
   // Tornado chart data — bars are deltas from base_value; x-axis ticks are offset to show actual values
   const tornMaxDelta = tornResult
@@ -95,16 +110,9 @@ export default function AnalysisPage({ setError }: Props) {
 
   const tornBase = tornResult ? tornResult.base_value / tornScale : 0;
 
-  const tornXLabel = (() => {
-    if (!tornResult) return "";
-    const raw = tornResult.xlabel
-      .replace(/\$\\cdot\$/g, "·")
-      .replace(/\$\^-1\$/g, "⁻¹")
-      .replace(/\\%/g, "%")
-      .replace(/\$.*?\$/g, "")
-      .replace(/\\/g, "");
-    return tornScale === 1e6 ? raw.replace("/ [", "/ [million ") : raw;
-  })();
+  const tornXLabel = tornResult
+    ? (tornScale === 1e6 ? cleanLatex(tornResult.xlabel).replace("/ [", "/ [million ") : cleanLatex(tornResult.xlabel))
+    : "";
 
   return (
     <div>
@@ -115,7 +123,7 @@ export default function AnalysisPage({ setError }: Props) {
           <div className="form-group">
             <label>Parameter</label>
             <select value={sensParam} onChange={(e) => setSensParam(e.target.value)}>
-              {parameters.map((p) => <option key={p} value={p}>{p}</option>)}
+              {parameters.map((p) => <option key={p} value={p}>{formatParam(p)}</option>)}
             </select>
           </div>
           <div className="form-group">
@@ -138,16 +146,25 @@ export default function AnalysisPage({ setError }: Props) {
         </button>
 
         {sensResult && sensChartData.length > 0 && (
-          <div className="chart-section" style={{ height: 350, marginTop: 20 }}>
-            <ResponsiveContainer>
-              <LineChart data={sensChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="x" label={{ value: sensResult.xlabel.replace(/\$.*?\$/g, "").replace(/\\/g, ""), position: "bottom" }} />
-                <YAxis label={{ value: sensResult.metric, angle: -90, position: "insideLeft" }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="y" stroke="#4361ee" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div style={{ position: "relative", height: 380, marginTop: 20 }}>
+            <div style={{ position: "absolute", left: 0, top: 0, bottom: 50, width: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ transform: "rotate(-90deg)", whiteSpace: "nowrap", fontWeight: "bold", fontSize: 14, color: "#666" }}>{sensYLabel}</span>
+            </div>
+            <div style={{ position: "absolute", left: 24, right: 0, top: 0, bottom: 0 }}>
+              <ResponsiveContainer>
+                <LineChart data={sensChartData} margin={{ left: 10, bottom: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="x" tickFormatter={(v) => parseFloat(v.toFixed(4)).toString()} label={{ value: cleanLatex(sensResult.xlabel), position: "insideBottom", offset: -20, style: { fontWeight: "bold", fontSize: 14, fill: "#666" } }} />
+                  <YAxis width={60} />
+                  <Tooltip
+                    labelFormatter={(v) => `x: ${typeof v === "number" ? v.toFixed(2) : parseFloat(String(v)).toFixed(2)} %`}
+                    formatter={(v) => { const unit = sensYLabel.match(/\[(.+)\]/)?.[1] ?? ""; const val = typeof v === "number" ? v.toFixed(sensMetric === "IRR" ? 3 : 2) : v; return [`${val}${unit ? ` ${unit}` : ""}`, "y"]; }}
+                    labelStyle={{ color: "#000" }}
+                  />
+                  <Line type="monotone" dataKey="y" stroke="#4361ee" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         )}
       </div>
