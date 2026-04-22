@@ -88,12 +88,28 @@
   color: #adb5bd;
   cursor: pointer;
   font-size: 14px;
-  border-radius: 6px;
+  border-radius: 6px 6px 0 0;
   transition: all .15s;
+  position: relative;
 }
 
-.tab:hover { background: rgba(255,255,255,.1); color: #fff; }
-.tab.active { background: var(--accent); color: #fff; }
+.tab::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: all .2s ease;
+  transform: translateX(-50%);
+}
+
+.tab:hover { color: #fff; }
+.tab:hover::after { width: 50%; }
+.tab.active { color: #fff; }
+.tab.active::after { width: 80%; height: 3px; background: #fff; }
 
 .header-actions {
   display: flex;
@@ -177,6 +193,10 @@
   box-sizing: border-box;
 }
 
+.main > * { animation: fadeIn .25s ease; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
 /* Cards */
 .card {
   background: var(--card-bg);
@@ -221,6 +241,9 @@ th {
 }
 
 td.number { text-align: right; font-variant-numeric: tabular-nums; }
+
+tbody tr { transition: background .1s; }
+tbody tr:hover { background: var(--hover-bg); }
 
 /* Forms */
 .form-grid {
