@@ -42,18 +42,30 @@ def save_project():
     return project
 
 
+MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
+MAX_EQUIPMENT = 500
+
+
 @router.post("/load", response_model=LoadResponse)
 async def load_project(file: UploadFile = File(...)):
     """Load a project from an uploaded JSON file."""
     try:
-        content = await file.read()
+        content = await file.read(MAX_UPLOAD_SIZE + 1)
+        if len(content) > MAX_UPLOAD_SIZE:
+            raise HTTPException(status_code=413, detail="File too large (max 5 MB)")
         data = json.loads(content)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid JSON: {e}")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON file")
 
     # Restore equipment
+    equipment_data = data.get("equipment", [])
+    if len(equipment_data) > MAX_EQUIPMENT:
+        raise HTTPException(status_code=400, detail=f"Too many equipment items (max {MAX_EQUIPMENT})")
+
     state.equipment_list = []
-    for entry in data.get("equipment", []):
+    for entry in equipment_data:
         try:
             eq = Equipment(
                 name=entry["name"],
@@ -68,10 +80,10 @@ async def load_project(file: UploadFile = File(...)):
                 target_year=entry.get("target_year", 2024),
             )
             state.equipment_list.append(eq)
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=400,
-                detail=f"Error loading equipment '{entry.get('name', '?')}': {e}",
+                detail=f"Invalid equipment entry '{entry.get('name', '?')}'",
             )
 
     # Restore plant config
@@ -102,9 +114,11 @@ def list_examples():
 @router.post("/examples/{example_id}", response_model=LoadExampleResponse)
 def load_example(example_id: str):
     """Load an example preset into the session."""
-    preset_file = PRESETS_DIR / f"{example_id}.json"
+    preset_file = (PRESETS_DIR / f"{example_id}.json").resolve()
+    if not str(preset_file).startswith(str(PRESETS_DIR.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid example ID")
     if not preset_file.exists():
-        raise HTTPException(status_code=404, detail=f"Example '{example_id}' not found")
+        raise HTTPException(status_code=404, detail="Example not found")
 
     data = json.loads(preset_file.read_text())
 
@@ -125,10 +139,10 @@ def load_example(example_id: str):
                 target_year=entry.get("target_year", 2024),
             )
             state.equipment_list.append(eq)
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=400,
-                detail=f"Error loading equipment '{entry.get('name', '?')}': {e}",
+                detail=f"Invalid equipment entry '{entry.get('name', '?')}'",
             )
 
     # Restore plant config

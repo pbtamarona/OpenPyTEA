@@ -42,8 +42,8 @@ def run_sensitivity(data: SensitivityIn):
             metric=data.metric,
             additional_capex=data.additional_capex,
         )
-    except (ValueError, KeyError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except (ValueError, KeyError):
+        raise HTTPException(status_code=400, detail="Sensitivity analysis failed — check parameter name and configuration")
     return to_jsonable(result)
 
 
@@ -57,8 +57,8 @@ def run_tornado(data: TornadoIn):
             metric=data.metric,
             additional_capex=data.additional_capex,
         )
-    except (ValueError, KeyError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except (ValueError, KeyError):
+        raise HTTPException(status_code=400, detail="Tornado analysis failed — check configuration")
     return to_jsonable(result)
 
 
@@ -72,8 +72,8 @@ def run_monte_carlo(data: MonteCarloIn):
             batch_size=data.batch_size,
             additional_capex=data.additional_capex,
         )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Monte Carlo analysis failed — check configuration")
 
     state.mc_results = result
 

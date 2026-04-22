@@ -26,17 +26,17 @@ class LoadExampleResponse(BaseModel):
 
 
 class EquipmentIn(BaseModel):
-    name: str
-    param: float | None = None
+    name: str = Field(..., min_length=1, max_length=255)
+    param: float | None = Field(default=None, ge=0, le=1e12)
     process_type: str = "Fluids"
-    category: str = ""
-    type: str | None = None
+    category: str = Field(default="", max_length=255)
+    type: str | None = Field(default=None, max_length=255)
     material: str = "Carbon steel"
-    num_units: int | None = None
-    purchased_cost: float | None = None
-    cost_year: int | None = None
+    num_units: int | None = Field(default=None, ge=1, le=10000)
+    purchased_cost: float | None = Field(default=None, ge=0, le=1e12)
+    cost_year: int | None = Field(default=None, ge=1900, le=2100)
     cost_func: str | None = None
-    target_year: int = 2024
+    target_year: int = Field(default=2024, ge=1900, le=2100)
 
 
 class EquipmentOut(BaseModel):
@@ -175,21 +175,21 @@ class CalculationResults(BaseModel):
 
 class SensitivityIn(BaseModel):
     parameter: str
-    plus_minus_value: float = 0.2
-    n_points: int = 21
+    plus_minus_value: float = Field(default=0.2, gt=0, le=10)
+    n_points: int = Field(default=21, ge=3, le=1000)
     metric: str = "LCOP"
     additional_capex: bool = False
 
 
 class TornadoIn(BaseModel):
-    plus_minus_value: float = 0.2
+    plus_minus_value: float = Field(default=0.2, gt=0, le=10)
     metric: str = "LCOP"
     additional_capex: bool = False
 
 
 class MonteCarloIn(BaseModel):
-    num_samples: int = 50000
-    batch_size: int = 1000
+    num_samples: int = Field(default=50000, ge=100, le=5_000_000)
+    batch_size: int = Field(default=1000, ge=10, le=100_000)
     additional_capex: bool = False
 
 
