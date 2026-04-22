@@ -6,10 +6,11 @@ import AnalysisPage from "./pages/AnalysisPage";
 import MonteCarloPage from "./pages/MonteCarloPage";
 import { saveProject, loadProject, getExamples, loadExample } from "./api/client";
 import type { ExamplePreset } from "./api/client";
-import type { CalculationResults } from "./types";
+import ComparePage from "./pages/ComparePage";
+import type { CalculationResults, ComparedPlant } from "./types";
 import "./App.css";
 
-const TABS = ["Equipment", "Plant Config", "Results", "Analysis", "Monte Carlo"] as const;
+const TABS = ["Equipment", "Plant Config", "Results", "Analysis", "Monte Carlo", "Compare"] as const;
 
 function App() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Equipment");
@@ -23,7 +24,19 @@ function App() {
     if (saved) return saved === "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
+  const [comparedPlants, setComparedPlants] = useState<ComparedPlant[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const addToComparison = (name: string, currency: string, r: CalculationResults) => {
+    setComparedPlants((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), name, currency, results: r },
+    ]);
+  };
+
+  const removeFromComparison = (id: string) => {
+    setComparedPlants((prev) => prev.filter((p) => p.id !== id));
+  };
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
@@ -121,9 +134,17 @@ function App() {
       <main className="main">
         {tab === "Equipment" && <EquipmentPage key={refreshKey} setError={setError} />}
         {tab === "Plant Config" && <PlantConfigPage key={refreshKey} setError={setError} />}
-        {tab === "Results" && <ResultsPage results={results} setResults={setResults} setError={setError} />}
+        {tab === "Results" && <ResultsPage results={results} setResults={setResults} setError={setError} onAddToComparison={addToComparison} />}
         {tab === "Analysis" && <AnalysisPage setError={setError} />}
         {tab === "Monte Carlo" && <MonteCarloPage setError={setError} />}
+        {tab === "Compare" && (
+          <ComparePage
+            plants={comparedPlants}
+            onRemove={removeFromComparison}
+            onImport={(plant) => setComparedPlants((prev) => [...prev, plant])}
+            setError={setError}
+          />
+        )}
       </main>
     </div>
   );

@@ -10,10 +10,12 @@ interface Props {
   results: CalculationResults | null;
   setResults: (r: CalculationResults | null) => void;
   setError: (e: string | null) => void;
+  onAddToComparison: (name: string, currency: string, r: CalculationResults) => void;
 }
 
-export default function ResultsPage({ results, setResults, setError }: Props) {
+export default function ResultsPage({ results, setResults, setError, onAddToComparison }: Props) {
   const [loading, setLoading] = useState(false);
+  const [addedFeedback, setAddedFeedback] = useState(false);
   const [plantConfig, setPlantConfig] = useState<PlantConfig | null>(null);
 
   useEffect(() => {
@@ -103,8 +105,24 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <div />
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 16 }}>
+        <button
+          className="btn-secondary"
+          style={{ border: "1px solid var(--accent)", color: "var(--accent)" }}
+          onClick={() => {
+            if (results) {
+              onAddToComparison(
+                plantConfig?.plant_name || "Untitled Plant",
+                plantConfig?.currency || "USD",
+                results
+              );
+              setAddedFeedback(true);
+              setTimeout(() => setAddedFeedback(false), 2000);
+            }
+          }}
+        >
+          {addedFeedback ? "Added!" : "+ Add to Comparison"}
+        </button>
         <button className="btn-primary" onClick={calculate} disabled={loading}>
           {loading && <span className="spinner" />}Recalculate
         </button>

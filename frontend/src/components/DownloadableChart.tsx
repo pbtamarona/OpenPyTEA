@@ -8,27 +8,38 @@ interface Props {
 }
 
 export default function DownloadableChart({ filename = "chart", children, height, style }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   const download = useCallback(() => {
-    const svg = containerRef.current?.querySelector(".recharts-wrapper svg") as SVGSVGElement | null;
+    if (!chartRef.current) return;
+
+    // Get all SVGs inside the chart area (button is outside this div)
+    const svgs = chartRef.current.querySelectorAll("svg");
+    let svg: SVGSVGElement | null = null;
+    let maxArea = 0;
+    svgs.forEach((s) => {
+      const r = s.getBoundingClientRect();
+      if (r.width * r.height > maxArea) {
+        maxArea = r.width * r.height;
+        svg = s as SVGSVGElement;
+      }
+    });
     if (!svg) return;
 
-    const clone = svg.cloneNode(true) as SVGSVGElement;
-    const w = svg.getBoundingClientRect().width;
-    const h = svg.getBoundingClientRect().height;
+    const clone = (svg as SVGSVGElement).cloneNode(true) as SVGSVGElement;
+    const w = (svg as SVGSVGElement).getBoundingClientRect().width;
+    const h = (svg as SVGSVGElement).getBoundingClientRect().height;
     clone.setAttribute("width", String(w));
     clone.setAttribute("height", String(h));
     clone.setAttribute("viewBox", `0 0 ${w} ${h}`);
 
     // Deep-inline all computed styles so the PNG looks identical to the screen
-    const allSource = svg.querySelectorAll("*");
+    const allSource = (svg as SVGSVGElement).querySelectorAll("*");
     const allTarget = clone.querySelectorAll("*");
     allSource.forEach((srcEl, i) => {
       const tgtEl = allTarget[i] as HTMLElement | undefined;
       if (!tgtEl) return;
       const cs = window.getComputedStyle(srcEl);
-      // Copy every property that matters for SVG rendering
       const props = [
         "fill", "stroke", "stroke-width", "stroke-dasharray", "stroke-opacity",
         "fill-opacity", "opacity",
@@ -44,7 +55,6 @@ export default function DownloadableChart({ filename = "chart", children, height
           tgtEl.style.setProperty(p, v);
         }
       }
-      // Always copy these even if "default-looking"
       for (const p of ["fill", "stroke", "font-size", "font-family", "font-weight", "text-anchor", "dominant-baseline", "transform"]) {
         const v = cs.getPropertyValue(p);
         if (v) tgtEl.style.setProperty(p, v);
@@ -82,7 +92,7 @@ export default function DownloadableChart({ filename = "chart", children, height
   }, [filename]);
 
   return (
-    <div ref={containerRef} style={{ position: "relative", height, ...style }}>
+    <div style={{ position: "relative", height, ...style }}>
       <button
         onClick={download}
         title="Download as PNG"
@@ -94,13 +104,11 @@ export default function DownloadableChart({ filename = "chart", children, height
         onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
         onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.4"; }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
+        &#11015;
       </button>
-      {children}
+      <div ref={chartRef} style={{ width: "100%", height: "100%" }}>
+        {children}
+      </div>
     </div>
   );
 }

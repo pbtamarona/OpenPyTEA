@@ -198,7 +198,7 @@ export default function AnalysisPage({ setError }: Props) {
                 <YAxis type="category" dataKey="label" width={150} tick={{ fontSize: 12, fontWeight: "bold" }} />
                 <Tooltip formatter={(v) => { const unit = tornXLabel.match(/\[(.+)\]/)?.[1] ?? ""; const actual = typeof v === "number" ? v + tornBase : v; const val = typeof actual === "number" ? actual.toFixed(tornMetric === "IRR" ? 3 : 2) : actual; return (unit && tornMetric !== "IRR") ? `${val} ${unit}` : val; }} labelStyle={{ fontWeight: "bold", color: "#000" }} />
                 <Legend verticalAlign="bottom" align="right" content={() => (
-                  <div style={{ display: "flex", gap: 16, justifyContent: "flex-end", fontSize: 12, color: "#ccc" }}>
+                  <div style={{ display: "flex", gap: 16, justifyContent: "flex-end", fontSize: 12, color: "var(--text-secondary)" }}>
                     {[{ color: "#4361ee", label: `-${tornPM * 100}%` }, { color: "#e63946", label: `+${tornPM * 100}%` }].map(({ color, label }) => (
                       <span key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                         <span style={{ width: 12, height: 12, background: color, display: "inline-block" }} />

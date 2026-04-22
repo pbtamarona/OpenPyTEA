@@ -124,6 +124,13 @@ export interface MCMetricStats {
   histogram: MCHistogram;
 }
 
+export interface ComparedPlant {
+  id: string;
+  name: string;
+  currency: string;
+  results: CalculationResults;
+}
+
 export interface MonteCarloResult {
   name: string;
   num_samples: number;
