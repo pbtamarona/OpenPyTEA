@@ -4,6 +4,7 @@ import type { MonteCarloResult } from "../types";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
+import DownloadableChart from "../components/DownloadableChart";
 
 interface Props {
   setError: (e: string | null) => void;
@@ -102,12 +103,12 @@ export default function MonteCarloPage({ setError }: Props) {
                 <p style={{ fontSize: 13, color: "#868e96" }}>
                   Mean: {fmt(stats.mean)} | Std: {fmt(stats.std)} | 90% CI: [{fmt(stats.p5)}, {fmt(stats.p95)}]
                 </p>
-                <div style={{ height: 300, marginTop: 12 }}>
+                <DownloadableChart filename={`mc_${name}`} height={320} style={{ marginTop: 12 }}>
                   <ResponsiveContainer>
-                    <BarChart data={histData}>
+                    <BarChart data={histData} margin={{ bottom: 30, left: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="bin" tickFormatter={(v: number) => v.toFixed(1)} />
-                      <YAxis />
+                      <XAxis dataKey="bin" tickFormatter={(v: number) => v.toFixed(2)} label={{ value: name, position: "insideBottom", offset: -16, style: { fontSize: 12, fill: "#666" } }} />
+                      <YAxis label={{ value: "Frequency", angle: -90, position: "insideLeft", offset: 4, style: { fontSize: 12, fill: "#666" } }} />
                       <Tooltip
                         formatter={(v) => Number(v).toLocaleString()}
                         labelFormatter={(v) => `Value: ${Number(v).toFixed(2)}`}
@@ -115,7 +116,7 @@ export default function MonteCarloPage({ setError }: Props) {
                       <Bar dataKey="count" fill="#4361ee" radius={[2, 2, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
-                </div>
+                </DownloadableChart>
               </div>
             );
           })}

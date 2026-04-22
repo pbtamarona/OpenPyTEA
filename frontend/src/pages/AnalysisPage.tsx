@@ -7,6 +7,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, ReferenceLine, Cell, Legend,
 } from "recharts";
+import DownloadableChart from "../components/DownloadableChart";
 
 const METRICS = ["LCOP", "NPV", "IRR", "ROI", "PBT"];
 
@@ -146,7 +147,7 @@ export default function AnalysisPage({ setError }: Props) {
         </button>
 
         {sensResult && sensChartData.length > 0 && (
-          <div style={{ position: "relative", height: 380, marginTop: 20 }}>
+          <DownloadableChart filename={`sensitivity_${sensParam}`} height={380} style={{ marginTop: 20 }}>
             <div style={{ position: "absolute", left: 0, top: 0, bottom: 50, width: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ transform: "rotate(-90deg)", whiteSpace: "nowrap", fontWeight: "bold", fontSize: 14, color: "#666" }}>{sensYLabel}</span>
             </div>
@@ -165,7 +166,7 @@ export default function AnalysisPage({ setError }: Props) {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </DownloadableChart>
         )}
       </div>
 
@@ -189,7 +190,7 @@ export default function AnalysisPage({ setError }: Props) {
         </button>
 
         {tornResult && tornChartData.length > 0 && (
-          <div className="chart-section" style={{ height: Math.max(300, tornChartData.length * 30 + 120), marginTop: 20 }}>
+          <DownloadableChart filename="tornado" height={Math.max(300, tornChartData.length * 30 + 120)} style={{ marginTop: 20 }}>
             <ResponsiveContainer>
               <BarChart data={tornChartData} layout="vertical" margin={{ left: 160, bottom: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -215,7 +216,7 @@ export default function AnalysisPage({ setError }: Props) {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </DownloadableChart>
         )}
       </div>
     </div>

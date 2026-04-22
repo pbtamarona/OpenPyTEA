@@ -262,7 +262,7 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
 /* Metric cards */
 .metrics-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -273,10 +273,11 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
   padding: 16px;
   border-radius: 10px;
   text-align: center;
+  min-width: 0;
 }
 
 .metric-card .label { font-size: 12px; opacity: .8; text-transform: uppercase; }
-.metric-card .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+.metric-card .value { font-size: 20px; font-weight: 700; margin-top: 4px; word-break: break-word; }
 
 /* Modal overlay */
 .modal-overlay {

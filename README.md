@@ -116,6 +116,7 @@ OpenPyTEA includes an optional web-based graphical interface for users who prefe
 - **Results** — run calculations and view metric cards, cost breakdown charts, and cash flow tables
 - **Analysis** — one-way sensitivity plots and tornado diagrams
 - **Monte Carlo** — uncertainty analysis with histogram distributions and summary statistics
+- **Downloadable charts** — all plots include a download button to export as standalone PNG images with full axis labels
 - **Examples** — built-in presets from the case study notebooks for quick demonstration
 
 ### Running the GUI

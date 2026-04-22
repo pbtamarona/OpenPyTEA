@@ -4,6 +4,7 @@ import type { CalculationResults, PlantConfig } from "../types";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
+import DownloadableChart from "../components/DownloadableChart";
 
 interface Props {
   results: CalculationResults | null;
@@ -138,16 +139,16 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
             </tbody>
           </table>
           {capexData.length > 0 && (
-            <div style={{ flex: 1, minWidth: 200, height: capexData.length * 34.3 + 30 }}>
+            <DownloadableChart filename="capital_costs" height={capexData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={capexData} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
-                  <XAxis type="number" tickFormatter={(v: number) => (v / 1e6).toFixed(0) + "M"} tick={{ fontSize: 11 }} domain={[0, Math.max(...capexData.map(d => d.value)) * 1.1]} />
-                  <YAxis type="category" dataKey="name" width={0} tick={false} axisLine={false} tickLine={false} />
+                <BarChart data={capexData} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 30, left: 8 }}>
+                  <XAxis type="number" tickFormatter={(v: number) => (v / 1e6).toFixed(0) + "M"} tick={{ fontSize: 11 }} domain={[0, Math.max(...capexData.map(d => d.value)) * 1.1]} label={{ value: `Cost (${currency})`, position: "insideBottom", offset: -16, style: { fontSize: 12, fill: "#666" } }} />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={(v) => fmt(Number(v))} />
                   <Bar dataKey="value" fill="#4361ee" radius={[0, 4, 4, 0]} barSize={14} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </DownloadableChart>
           )}
         </div>
       </div>
@@ -165,16 +166,16 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
             </tbody>
           </table>
           {fixedOpexData.length > 0 && (
-            <div style={{ flex: 1, minWidth: 200, height: fixedOpexData.length * 34.3 + 30 }}>
+            <DownloadableChart filename="fixed_opex" height={fixedOpexData.length * 30 + 60} style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={fixedOpexData} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
-                  <XAxis type="number" tickFormatter={(v: number) => (v / 1e3).toFixed(0) + "k"} tick={{ fontSize: 11 }} domain={[0, Math.max(...fixedOpexData.map(d => d.value)) * 1.1]} />
-                  <YAxis type="category" dataKey="name" width={0} tick={false} axisLine={false} tickLine={false} />
+                <BarChart data={fixedOpexData} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 30, left: 8 }}>
+                  <XAxis type="number" tickFormatter={(v: number) => (v / 1e3).toFixed(0) + "k"} tick={{ fontSize: 11 }} domain={[0, Math.max(...fixedOpexData.map(d => d.value)) * 1.1]} label={{ value: `Cost (${currency})`, position: "insideBottom", offset: -16, style: { fontSize: 12, fill: "#666" } }} />
+                  <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 10, textTransform: "capitalize" } as object} />
                   <Tooltip formatter={(v) => fmt(Number(v))} />
                   <Bar dataKey="value" fill="#f72585" radius={[0, 4, 4, 0]} barSize={14} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </DownloadableChart>
           )}
         </div>
       </div>
@@ -192,16 +193,16 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
                 <tr style={{ fontWeight: 700 }}><td style={{ paddingRight: 12 }}>Total</td><td className="number">{fmt(results.variable_opex.total)}</td></tr>
               </tbody>
             </table>
-            <div style={{ flex: 1, minWidth: 200, height: varOpexData.length * 34.3 + 30 }}>
+            <DownloadableChart filename="variable_opex" height={varOpexData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={varOpexData} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
-                  <XAxis type="number" tickFormatter={(v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 11 }} domain={[0, Math.max(...varOpexData.map(d => d.value)) * 1.1]} />
-                  <YAxis type="category" dataKey="name" width={0} tick={false} axisLine={false} tickLine={false} />
+                <BarChart data={varOpexData} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 30, left: 8 }}>
+                  <XAxis type="number" tickFormatter={(v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 11 }} domain={[0, Math.max(...varOpexData.map(d => d.value)) * 1.1]} label={{ value: `Annual cost (${currency})`, position: "insideBottom", offset: -16, style: { fontSize: 12, fill: "#666" } }} />
+                  <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={(v) => fmt(Number(v))} />
                   <Bar dataKey="value" fill="#7209b7" radius={[0, 4, 4, 0]} barSize={14} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </DownloadableChart>
           </div>
         </div>
       )}
@@ -220,16 +221,16 @@ export default function ResultsPage({ results, setResults, setError }: Props) {
               </tbody>
             </table>
             {revenueData.length > 0 && (
-              <div style={{ flex: 1, minWidth: 200, height: revenueData.length * 34.3 + 30 }}>
+              <DownloadableChart filename="revenue" height={revenueData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={revenueData} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
-                    <XAxis type="number" tickFormatter={(v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 11 }} domain={[0, Math.max(...revenueData.map(d => d.value)) * 1.1]} />
-                    <YAxis type="category" dataKey="name" width={0} tick={false} axisLine={false} tickLine={false} />
+                  <BarChart data={revenueData} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 30, left: 8 }}>
+                    <XAxis type="number" tickFormatter={(v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 11 }} domain={[0, Math.max(...revenueData.map(d => d.value)) * 1.1]} label={{ value: `Annual revenue (${currency})`, position: "insideBottom", offset: -16, style: { fontSize: 12, fill: "#666" } }} />
+                    <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
                     <Tooltip formatter={(v) => fmt(Number(v))} />
                     <Bar dataKey="value" fill="#4cc9f0" radius={[0, 4, 4, 0]} barSize={14} />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+              </DownloadableChart>
             )}
           </div>
         </div>

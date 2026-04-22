@@ -31,6 +31,8 @@ frontend/
   src/
     api/client.ts     # Typed fetch wrapper — one function per API endpoint
     types/index.ts    # TypeScript interfaces mirroring backend schemas
+    components/
+      DownloadableChart.tsx  # Reusable wrapper that adds PNG export to any Recharts chart
     pages/
       EquipmentPage   # Equipment table + add/edit modal with cost DB category/type picker
       PlantConfigPage # Forms: general, financial, labor, products, variable OPEX
@@ -120,21 +122,23 @@ frontend/
 ### ResultsPage
 - "Run Calculations" button (or "Recalculate" if results exist)
 - Metric cards row: Levelized Cost, NPV, IRR, ROI, Payback Time
-- Capital costs: table + vertical bar chart (ISBL, OSBL, D&E, Contingency)
-- Fixed OPEX: table + horizontal bar chart (14 line items)
-- Variable OPEX: table + bar chart
-- Revenue breakdown table
-- Cash flow table: year-by-year with CAPEX, Revenue, Costs, Gross Profit, Tax, Cash Flow
+- Capital costs: table + horizontal bar chart with labeled axes (component names + currency)
+- Fixed OPEX: table + horizontal bar chart with labeled axes
+- Variable OPEX: table + bar chart with labeled axes
+- Revenue breakdown: table + bar chart with labeled axes
+- Cash flow table: year-by-year with CAPEX, Revenue, Costs, Depreciation, Gross Profit, Tax, Cash Flow, NPV
+- All charts include a download button (arrow icon, top-right) to export as standalone PNG with full axis labels
 
 ### AnalysisPage
 - **Sensitivity section**: parameter dropdown, +/- variation, points, metric selector. Line chart showing metric vs % change.
 - **Tornado section**: +/- variation, metric selector. Horizontal bar chart with low (blue) / high (red) deviations from baseline.
 - Parameters list is fetched from `/sensitivity/parameters` (includes top-level + variable_opex + products)
+- Both charts downloadable as PNG
 
 ### MonteCarloPage
 - Config: num_samples (default 50k), batch_size
 - Summary stats table per metric: mean, std, p5, p25, median, p75, p95, min, max
-- Histogram chart per metric (from pre-binned server data)
+- Histogram chart per metric with labeled axes (metric name + frequency), downloadable as PNG
 - Input distributions summary table
 
 ## Key Design Decisions
@@ -175,7 +179,7 @@ frontend/
 - No input validation feedback on the frontend forms (relies on backend 400 errors)
 - Cash flow table assumes scenario index 0 (the library supports multi-scenario arrays)
 - The cost DB category dropdown shows raw CSV keys — could benefit from nicer formatting
-- No chart export/download functionality
+- ~~No chart export/download functionality~~ (implemented — all charts downloadable as PNG)
 - ~~No dark mode~~ (implemented)
 
 ## How to Run
