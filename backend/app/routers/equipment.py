@@ -53,8 +53,8 @@ def list_equipment():
 def add_equipment(data: EquipmentIn):
     try:
         eq = _make_equipment(data)
-    except (KeyError, ValueError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except (KeyError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid equipment parameters")
     state.equipment_list.append(eq)
     return _eq_to_out(len(state.equipment_list) - 1, eq)
 
@@ -65,8 +65,8 @@ def update_equipment(index: int, data: EquipmentIn):
         raise HTTPException(status_code=404, detail="Equipment not found")
     try:
         eq = _make_equipment(data)
-    except (KeyError, ValueError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except (KeyError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid equipment parameters")
     state.equipment_list[index] = eq
     return _eq_to_out(index, eq)
 
