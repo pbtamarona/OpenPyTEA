@@ -1,4 +1,4 @@
-cff-version: 1.2.0
+cff-version: 2.0.0        
 message: "If you use OpenPyTEA, please cite it as below."
 title: "OpenPyTEA: An open-source Python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
 abstract: >
@@ -15,7 +15,7 @@ authors:
   - given-names: "Mahinder"
     family-names: "Ramdin"
     email: "M.Ramdin@tudelft.nl"
-version: "1.0.0"
+version: "2.0.0"
 license: "MIT"
 repository-code: "https://github.com/pbtamarona/OpenPyTEA"
 url: "https://github.com/pbtamarona/OpenPyTEA"
@@ -36,5 +36,5 @@ preferred-citation:
     - given-names: "Mahinder"
       family-names: "Ramdin"
   url: "https://github.com/pbtamarona/OpenPyTEA"
-  year: "2025"
-  version: "1.0.0"
+  year: "2026"
+  version: "2.0.0"
