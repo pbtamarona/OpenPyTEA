@@ -96,7 +96,7 @@ frontend/                   # React + TypeScript web GUI
 
 pyproject.toml
 README.md
-
+```
 ---
 
 ## 🏗️ Software Architecture
@@ -329,7 +329,7 @@ Or if you prefer to cite manually, you may use:
   title        = {OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation},
   year         = {2025},
   url          = {\url{https://github.com/pbtamarona/OpenPyTEA}},
-  version      = {1.2.0},
+  version      = {2.0.0},
   note         = {Accessed: YYYY-MM-DD}
 }
 ```
