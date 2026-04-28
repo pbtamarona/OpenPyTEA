@@ -45,8 +45,8 @@ def calculate():
         plant = Plant(config)
         plant.calculate_all()
         state.plant = plant
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Calculation failed — check equipment and plant configuration")
 
     results = _extract_results(plant)
     state.results = results
