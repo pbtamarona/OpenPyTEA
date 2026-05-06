@@ -173,12 +173,20 @@ class CalculationResults(BaseModel):
 # ── Analysis inputs ───────────────────────────────────────────────
 
 
+class PlantInput(BaseModel):
+    """Raw payload from a saved-project JSON, used to rehydrate a Plant for analysis."""
+    name: str | None = None
+    equipment: list[dict]
+    plant: dict
+
+
 class SensitivityIn(BaseModel):
     parameter: str
     plus_minus_value: float = Field(default=0.2, gt=0, le=10)
     n_points: int = Field(default=21, ge=3, le=1000)
     metric: str = "LCOP"
     additional_capex: bool = False
+    extra_plants: list[PlantInput] = Field(default_factory=list, max_length=8)
 
 
 class TornadoIn(BaseModel):
@@ -191,6 +199,7 @@ class MonteCarloIn(BaseModel):
     num_samples: int = Field(default=50000, ge=100, le=5_000_000)
     batch_size: int = Field(default=1000, ge=10, le=100_000)
     additional_capex: bool = False
+    extra_plants: list[PlantInput] = Field(default_factory=list, max_length=8)
 
 
 # ── Analysis results ──────────────────────────────────────────────
@@ -254,3 +263,7 @@ class MonteCarloResult(BaseModel):
     currency: str
     metrics: dict[str, MCMetricStats]
     inputs: dict[str, MCInputStats]
+
+
+class MonteCarloMultiResult(BaseModel):
+    plants: list[MonteCarloResult]

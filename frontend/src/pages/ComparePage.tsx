@@ -60,11 +60,14 @@ export default function ComparePage({ plants, onRemove, onImport, setError }: Pr
           setError("JSON file does not contain calculation results. Run calculations before saving.");
           return;
         }
+        const name = data.plant?.plant_name || file.name.replace(/\.json$/, "");
+        const hasSource = Array.isArray(data.equipment) && data.equipment.length > 0 && data.plant;
         onImport({
           id: crypto.randomUUID(),
-          name: data.plant?.plant_name || file.name.replace(/\.json$/, ""),
+          name,
           currency: data.plant?.currency || "USD",
           results: data.results as CalculationResults,
+          source: hasSource ? { name, equipment: data.equipment, plant: data.plant } : undefined,
         });
       } catch {
         setError("Failed to parse JSON file");

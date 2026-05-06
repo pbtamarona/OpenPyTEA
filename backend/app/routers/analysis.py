@@ -6,9 +6,12 @@ from fastapi import APIRouter, HTTPException
 from openpytea.analysis import sensitivity_data, tornado_data, monte_carlo
 
 from app import state
+from app.plant_factory import build_plant
 from app.schemas import (
     SensitivityIn, TornadoIn, MonteCarloIn,
-    SensitivityResult, TornadoResult, MonteCarloResult,
+    SensitivityResult, TornadoResult,
+    MonteCarloMultiResult,
+    PlantInput,
 )
 from app.util import to_jsonable
 
@@ -19,6 +22,11 @@ def _require_plant():
     if state.plant is None:
         raise HTTPException(status_code=400, detail="Run calculations first")
     return state.plant
+
+
+def _rehydrate_extras(extras: list[PlantInput]):
+    """Build Plant objects from saved-JSON-shaped payloads."""
+    return [build_plant(p.equipment, p.plant) for p in extras]
 
 
 @router.get("/sensitivity/parameters", response_model=list[str])
@@ -33,17 +41,18 @@ def get_sensitivity_parameters():
 @router.post("/sensitivity", response_model=SensitivityResult)
 def run_sensitivity(data: SensitivityIn):
     plant = _require_plant()
+    plants = [plant] + _rehydrate_extras(data.extra_plants)
     try:
         result = sensitivity_data(
-            plant,
+            plants,
             parameter=data.parameter,
             plus_minus_value=data.plus_minus_value,
             n_points=data.n_points,
             metric=data.metric,
             additional_capex=data.additional_capex,
         )
-    except (ValueError, KeyError):
-        raise HTTPException(status_code=400, detail="Sensitivity analysis failed — check parameter name and configuration")
+    except (ValueError, KeyError) as e:
+        raise HTTPException(status_code=400, detail=f"Sensitivity analysis failed: {e}")
     return to_jsonable(result)
 
 
@@ -62,22 +71,8 @@ def run_tornado(data: TornadoIn):
     return to_jsonable(result)
 
 
-@router.post("/monte-carlo", response_model=MonteCarloResult)
-def run_monte_carlo(data: MonteCarloIn):
-    plant = _require_plant()
-    try:
-        result = monte_carlo(
-            plant,
-            num_samples=data.num_samples,
-            batch_size=data.batch_size,
-            additional_capex=data.additional_capex,
-        )
-    except Exception:
-        raise HTTPException(status_code=400, detail="Monte Carlo analysis failed — check configuration")
-
-    state.mc_results = result
-
-    # Summarize for JSON response (don't send million-element arrays)
+def _summarize_mc(result: dict) -> dict:
+    """Histogram + percentile summary of one monte_carlo() result."""
     summary = {
         "name": result["name"],
         "num_samples": result["num_samples"],
@@ -126,3 +121,35 @@ def run_monte_carlo(data: MonteCarloIn):
         }
 
     return summary
+
+
+def _run_mc_for_plant(plant, num_samples: int, batch_size: int, additional_capex: bool) -> dict:
+    try:
+        result = monte_carlo(
+            plant,
+            num_samples=num_samples,
+            batch_size=batch_size,
+            additional_capex=additional_capex,
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Monte Carlo analysis failed for plant '{getattr(plant, 'name', '?')}' — check configuration",
+        )
+    return _summarize_mc(result)
+
+
+@router.post("/monte-carlo", response_model=MonteCarloMultiResult)
+def run_monte_carlo(data: MonteCarloIn):
+    plant = _require_plant()
+    plants = [plant] + _rehydrate_extras(data.extra_plants)
+
+    summaries: list[dict] = []
+    for p in plants:
+        summary = _run_mc_for_plant(p, data.num_samples, data.batch_size, data.additional_capex)
+        summaries.append(summary)
+
+    # Cache only the active-plant raw result for any future single-plant use.
+    state.mc_results = summaries[0] if summaries else None
+
+    return {"plants": summaries}

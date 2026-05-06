@@ -89,7 +89,7 @@ frontend/                   # React + TypeScript web GUI
 ├── src/
 │   ├── api/client.ts       # Typed API client
 │   ├── types/index.ts      # TypeScript interfaces
-│   ├── pages/              # Equipment, Plant Config, Results, Analysis, Monte Carlo
+│   ├── pages/              # Equipment, Plant Config, Results, Analysis, Monte Carlo, Compare
 │   ├── App.tsx             # Tab navigation + examples dropdown
 │   └── App.css             # Styling
 └── package.json
@@ -114,8 +114,9 @@ OpenPyTEA includes an optional web-based graphical interface for users who prefe
 - **Equipment** — add, edit, and remove equipment with cost database lookup
 - **Plant Config** — configure location, financial parameters, labor, products, and variable OPEX
 - **Results** — run calculations and view metric cards, cost breakdown charts, and cash flow tables
-- **Analysis** — one-way sensitivity plots and tornado diagrams
-- **Monte Carlo** — uncertainty analysis with histogram distributions and summary statistics
+- **Analysis** — sensitivity plots and tornado diagrams. Sensitivity supports a **multi-panel grid** (different parameter and metric per panel, e.g. NPV vs. interest rate, ROI vs. electricity price, all in one figure) and **multi-plant overlay** (curves for every plant added on the Compare tab share the same axes for direct comparison)
+- **Monte Carlo** — uncertainty analysis with histogram distributions, fitted normal curves, and summary statistics. **Multi-plant overlay** shows distributions for several plants on the same axes, mirroring `plot_multiple_monte_carlo` from the library
+- **Compare** — side-by-side comparison of saved plants (CAPEX/OPEX breakdown bars, key metric bars). Plants imported here are also reused as the overlay set on the Analysis and Monte Carlo tabs
 - **Downloadable charts** — all plots include a download button to export as standalone PNG images with full axis labels
 - **Examples** — built-in presets from the case study notebooks for quick demonstration
 

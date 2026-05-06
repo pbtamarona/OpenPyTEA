@@ -7,7 +7,7 @@ import MonteCarloPage from "./pages/MonteCarloPage";
 import { saveProject, loadProject, getExamples, loadExample } from "./api/client";
 import type { ExamplePreset } from "./api/client";
 import ComparePage from "./pages/ComparePage";
-import type { CalculationResults, ComparedPlant } from "./types";
+import type { CalculationResults, ComparedPlant, PlantInput } from "./types";
 import "./App.css";
 
 const TABS = ["Equipment", "Plant Config", "Results", "Analysis", "Monte Carlo", "Compare"] as const;
@@ -27,10 +27,23 @@ function App() {
   const [comparedPlants, setComparedPlants] = useState<ComparedPlant[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const addToComparison = (name: string, currency: string, r: CalculationResults) => {
+  const addToComparison = async (name: string, currency: string, r: CalculationResults) => {
+    let source: PlantInput | undefined;
+    try {
+      const data = (await saveProject()) as { equipment?: unknown[]; plant?: unknown };
+      if (Array.isArray(data.equipment) && data.equipment.length > 0 && data.plant) {
+        source = {
+          name,
+          equipment: data.equipment as Record<string, unknown>[],
+          plant: data.plant as Record<string, unknown>,
+        };
+      }
+    } catch {
+      // non-fatal — plant just won't be available for analysis overlays
+    }
     setComparedPlants((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name, currency, results: r },
+      { id: crypto.randomUUID(), name, currency, results: r, source },
     ]);
   };
 
@@ -135,8 +148,8 @@ function App() {
         {tab === "Equipment" && <EquipmentPage key={refreshKey} setError={setError} />}
         {tab === "Plant Config" && <PlantConfigPage key={refreshKey} setError={setError} />}
         {tab === "Results" && <ResultsPage results={results} setResults={setResults} setError={setError} onAddToComparison={addToComparison} />}
-        {tab === "Analysis" && <AnalysisPage setError={setError} />}
-        {tab === "Monte Carlo" && <MonteCarloPage setError={setError} />}
+        {tab === "Analysis" && <AnalysisPage setError={setError} comparedPlants={comparedPlants} />}
+        {tab === "Monte Carlo" && <MonteCarloPage setError={setError} comparedPlants={comparedPlants} />}
         {tab === "Compare" && (
           <ComparePage
             plants={comparedPlants}

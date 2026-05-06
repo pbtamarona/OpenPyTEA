@@ -1,6 +1,7 @@
 import type {
   EquipmentItem, EquipmentInput, CostDBEntry, PlantConfig,
-  CalculationResults, SensitivityResult, TornadoResult, MonteCarloResult,
+  CalculationResults, SensitivityResult, TornadoResult,
+  MonteCarloMultiResult, PlantInput,
 } from "../types";
 
 const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
@@ -41,12 +42,17 @@ export const runCalculations = () =>
 
 // Analysis
 export const getSensitivityParameters = () => request<string[]>("/analysis/sensitivity/parameters");
-export const runSensitivity = (params: { parameter: string; plus_minus_value: number; n_points: number; metric: string; additional_capex: boolean }) =>
+export const runSensitivity = (params: {
+  parameter: string; plus_minus_value: number; n_points: number; metric: string;
+  additional_capex: boolean; extra_plants?: PlantInput[];
+}) =>
   request<SensitivityResult>("/analysis/sensitivity", { method: "POST", body: JSON.stringify(params) });
 export const runTornado = (params: { plus_minus_value: number; metric: string; additional_capex: boolean }) =>
   request<TornadoResult>("/analysis/tornado", { method: "POST", body: JSON.stringify(params) });
-export const runMonteCarlo = (params: { num_samples: number; batch_size: number; additional_capex: boolean }) =>
-  request<MonteCarloResult>("/analysis/monte-carlo", { method: "POST", body: JSON.stringify(params) });
+export const runMonteCarlo = (params: {
+  num_samples: number; batch_size: number; additional_capex: boolean; extra_plants?: PlantInput[];
+}) =>
+  request<MonteCarloMultiResult>("/analysis/monte-carlo", { method: "POST", body: JSON.stringify(params) });
 
 // Project I/O
 export const saveProject = () => request<unknown>("/project/save", { method: "POST" });

@@ -124,11 +124,18 @@ export interface MCMetricStats {
   histogram: MCHistogram;
 }
 
+export interface PlantInput {
+  name?: string;
+  equipment: Record<string, unknown>[];
+  plant: Record<string, unknown>;
+}
+
 export interface ComparedPlant {
   id: string;
   name: string;
   currency: string;
   results: CalculationResults;
+  source?: PlantInput;
 }
 
 export interface MonteCarloResult {
@@ -137,4 +144,8 @@ export interface MonteCarloResult {
   currency: string;
   metrics: Record<string, MCMetricStats>;
   inputs: Record<string, { mean: number; std: number; min: number; max: number; histogram: MCHistogram }>;
+}
+
+export interface MonteCarloMultiResult {
+  plants: MonteCarloResult[];
 }
