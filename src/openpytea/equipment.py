@@ -288,6 +288,22 @@ class Equipment:
         Default is None (auto-resolved).
     target_year : int, optional
         Target year for inflation adjustment. Default is 2024.
+    erection_factor : float | None, optional
+        Erection factor override. Default is None (use process_type table).
+    piping_factor : float | None, optional
+        Piping factor override. Default is None (use process_type table).
+    instrumentation_factor : float | None, optional
+        Instrumentation & controls factor override. Default is None.
+    electrical_factor : float | None, optional
+        Electrical factor override. Default is None (use process_type table).
+    civil_factor : float | None, optional
+        Civil factor override. Default is None (use process_type table).
+    structural_factor : float | None, optional
+        Structural steel factor override. Default is None (use process_type table).
+    lagging_factor : float | None, optional
+        Lagging & painting factor override. Default is None (use process_type table).
+    material_factor : float | None, optional
+        Material factor override. Default is None (use material table).
 
     Methods
     -------
@@ -387,10 +403,16 @@ class Equipment:
         num_units: int | None = None,
         purchased_cost: float | None = None,
         cost_year: int | None = None,
-        cost_func: (
-            str | None
-        ) = None,  # explicit correlation key
+        cost_func: str | None = None,
         target_year: int = 2024,
+        erection_factor: float | None = None,
+        piping_factor: float | None = None,
+        instrumentation_factor: float | None = None,
+        electrical_factor: float | None = None,
+        civil_factor: float | None = None,
+        structural_factor: float | None = None,
+        lagging_factor: float | None = None,
+        material_factor: float | None = None,
     ):
 
         self.name = name
@@ -407,9 +429,48 @@ class Equipment:
         )
         self.target_year = target_year
         self._cost_func = cost_func
-        self._db = (
-            CostCorrelationDB()
-        )  # always loads from the fixed CSV file
+        self._db = CostCorrelationDB()
+
+        valid_process_types = list(self.process_factors.keys())
+        if process_type not in self.process_factors:
+            raise ValueError(
+                f"Invalid process_type '{process_type}'. "
+                f"Valid options are: {valid_process_types}"
+            )
+        valid_materials = list(self.material_factors.keys())
+        if material not in self.material_factors:
+            raise ValueError(
+                f"Invalid material '{material}'. "
+                f"Valid options are: {valid_materials}"
+            )
+
+        _pf = self.process_factors[process_type]
+        self.erection_factor = (
+            erection_factor if erection_factor is not None else _pf["fer"]
+        )
+        self.piping_factor          = (
+            piping_factor          if piping_factor          is not None else _pf["fp"]
+        )
+        self.instrumentation_factor = (
+            instrumentation_factor if instrumentation_factor is not None else _pf["fi"]
+        )
+        self.electrical_factor      = (
+            electrical_factor      if electrical_factor      is not None else _pf["fel"]
+        )
+        self.civil_factor           = (
+            civil_factor           if civil_factor           is not None else _pf["fc"]
+        )
+        self.structural_factor      = (
+            structural_factor      if structural_factor      is not None else _pf["fs"]
+        )
+        self.lagging_factor         = (
+            lagging_factor         if lagging_factor         is not None else _pf["fl"]
+        )
+        self.material_factor = (
+            material_factor
+            if material_factor is not None
+            else self.material_factors[material]
+        )
 
         if purchased_cost is not None:
             self.purchased_cost = purchased_cost
@@ -456,29 +517,15 @@ class Equipment:
         )
 
     def calculate_direct_cost(self) -> float:
-
-        if self.process_type not in self.process_factors:
-            raise ValueError(
-                f"Process type not found: {self.process_type}"
-            )
-
-        if self.material not in self.material_factors:
-            raise ValueError(
-                f"Material not found: {self.material}"
-            )
-
-        factors = self.process_factors[self.process_type]
-        fm = self.material_factors[self.material]
-
         self.direct_cost = self.purchased_cost * (
-            (1 + factors["fp"]) * fm
+            (1 + self.piping_factor) * self.material_factor
             + (
-                factors["fer"]
-                + factors["fel"]
-                + factors["fi"]
-                + factors["fc"]
-                + factors["fs"]
-                + factors["fl"]
+                self.erection_factor
+                + self.electrical_factor
+                + self.instrumentation_factor
+                + self.civil_factor
+                + self.structural_factor
+                + self.lagging_factor
             )
         )
         return self.direct_cost
