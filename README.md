@@ -107,7 +107,7 @@ Software architecture and data flow of **OpenPyTEA**, illustrating the progressi
 
 ---
 
-## 🖥️ Web GUI
+## 🖥️ Web GUI (**work in progress**)
 
 OpenPyTEA includes an optional web-based graphical interface for users who prefer a visual workflow over Python scripting. The GUI provides the full TEA workflow through a tabbed browser interface:
 

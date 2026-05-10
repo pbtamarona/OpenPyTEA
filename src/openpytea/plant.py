@@ -38,6 +38,19 @@ class Plant:
             working_capital (float or None): Working capital requirement.
                                                 Auto-calculated if None.
             depreciation (dict or None): Depreciation method configuration.
+        Cash Flow Profiles:
+            capex_ramp (list or None): Fraction of fixed capital spent in each
+                construction year. Must be a 1-D list of non-negative numbers
+                that sum to 1.0. Length must be less than project_lifetime.
+                Working capital is drawn in the final construction year and
+                released at the end of the project.
+                Default: [0.3, 0.6, 0.1] (3-year build).
+            production_ramp (list or None): Nameplate capacity utilisation
+                fraction for each project year (0–1). Values must be between
+                0 and 1. If shorter than project_lifetime the remaining years
+                are set to 1.0 (full capacity). Length must not exceed
+                project_lifetime.
+                Default: [0, 0, 0.4, 0.8] (full capacity from year 4 on).
         Capital Cost Factors:
             loc_factor (float or None): Location factor applied to ISBL.
                                         Overrides country/region lookup when
@@ -287,6 +300,10 @@ class Plant:
 
         self.fc = configuration.get("fc", None)
         self.fp = configuration.get("fp", None)
+        self.capex_ramp = configuration.get("capex_ramp", None)
+        self.production_ramp = configuration.get(
+            "production_ramp", None
+        )
         self.loc_factor = configuration.get("loc_factor", None)
         self.fixed_opex_factors = configuration.get(
             "fixed_opex_factors", {}
@@ -379,8 +396,38 @@ class Plant:
             "additional_capex_cost",
             self.additional_capex_cost,
         )
+        self.fc = configuration.get("fc", self.fc)
+        self.fp = configuration.get("fp", self.fp)
+        self.loc_factor = configuration.get(
+            "loc_factor", self.loc_factor
+        )
+        self.osbl_factor = configuration.get(
+            "osbl_factor", self.osbl_factor
+        )
+        self.de_factor = configuration.get(
+            "de_factor", self.de_factor
+        )
+        self.contingency_factor = configuration.get(
+            "contingency_factor", self.contingency_factor
+        )
+        self.capex_ramp = configuration.get(
+            "capex_ramp", self.capex_ramp
+        )
+        self.production_ramp = configuration.get(
+            "production_ramp", self.production_ramp
+        )
+        if "fixed_opex_factors" in configuration:
+            self.fixed_opex_factors = {
+                **self.fixed_opex_factors,
+                **configuration["fixed_opex_factors"],
+            }
+        if "fixed_opex_components" in configuration:
+            self.fixed_opex_components = {
+                **self.fixed_opex_components,
+                **configuration["fixed_opex_components"],
+            }
 
-        # NEW: allow updating depreciation block
+        # allow updating depreciation block
         if "depreciation" in configuration:
             self.depreciation = configuration[
                 "depreciation"
@@ -1065,12 +1112,77 @@ class Plant:
         cash_flow = np.zeros(shape)
         prod_array = np.zeros(shape)
 
-        # --- CAPEX profile (30/60/10) + WC draw/release ---
-        for yr, frac in zip([0, 1, 2], [0.3, 0.6, 0.1]):
+        # --- Resolve and validate CAPEX ramp ---
+        if self.capex_ramp is not None:
+            try:
+                capex_ramp = np.asarray(
+                    self.capex_ramp, dtype=float
+                )
+            except (TypeError, ValueError):
+                raise ValueError(
+                    "capex_ramp must be a list or array of numbers."
+                )
+            if capex_ramp.ndim != 1 or len(capex_ramp) == 0:
+                raise ValueError(
+                    "capex_ramp must be a non-empty 1-D list or array."
+                )
+            if np.any(capex_ramp < 0):
+                raise ValueError(
+                    "All values in capex_ramp must be >= 0."
+                )
+            if not np.isclose(capex_ramp.sum(), 1.0, atol=1e-6):
+                raise ValueError(
+                    "capex_ramp must sum to 1.0 "
+                    f"(got {capex_ramp.sum():.6f})."
+                )
+            if len(capex_ramp) >= n_years:
+                raise ValueError(
+                    f"capex_ramp has {len(capex_ramp)} entries but "
+                    f"project_lifetime is only {n_years}; at least 1 "
+                    "year must remain for production."
+                )
+        else:
+            capex_ramp = np.array([0.3, 0.6, 0.1])
+
+        # --- Resolve and validate production ramp ---
+        if self.production_ramp is not None:
+            try:
+                prod_ramp = np.asarray(
+                    self.production_ramp, dtype=float
+                )
+            except (TypeError, ValueError):
+                raise ValueError(
+                    "production_ramp must be a list or array of numbers."
+                )
+            if prod_ramp.ndim != 1 or len(prod_ramp) == 0:
+                raise ValueError(
+                    "production_ramp must be a non-empty 1-D list "
+                    "or array."
+                )
+            if np.any(prod_ramp < 0) or np.any(prod_ramp > 1):
+                raise ValueError(
+                    "All values in production_ramp must be between "
+                    "0 and 1."
+                )
+            if len(prod_ramp) > n_years:
+                raise ValueError(
+                    f"production_ramp has {len(prod_ramp)} entries "
+                    f"but project_lifetime is only {n_years}."
+                )
+        else:
+            prod_ramp = np.array([0, 0, 0.4, 0.8])
+
+        ramp = np.concatenate(
+            (prod_ramp, np.ones(max(0, n_years - len(prod_ramp))))
+        )[:n_years]
+
+        # --- CAPEX profile + WC draw/release ---
+        for yr, frac in enumerate(capex_ramp):
             if yr < n_years:
                 capex[:, yr] += fixed_capital * frac
-        if 2 < n_years:
-            capex[:, 2] += self.working_capital
+        wc_year = len(capex_ramp) - 1
+        if wc_year < n_years:
+            capex[:, wc_year] += self.working_capital
         capex[:, -1] -= self.working_capital
 
         # --- Add additional CAPEX at specified years ---
@@ -1126,10 +1238,6 @@ class Plant:
         nameplate = (
             self.daily_prod * 365.0 * self.plant_utilization
         )
-        ramp = np.concatenate(
-            ([0, 0, 0.4, 0.8], np.ones(max(0, n_years - 4)))
-        )
-        ramp = ramp[:n_years]
 
         # --- Revenue & cost arrays ---
         for yr in range(n_years):
@@ -1165,9 +1273,8 @@ class Plant:
         dep_cfg = getattr(self, "depreciation", None)
         for i in range(n_samples):
             capex_dict = {
-                0: 0.3 * fixed_capital[i],
-                1: 0.6 * fixed_capital[i],
-                2: 0.1 * fixed_capital[i],
+                yr: frac * fixed_capital[i]
+                for yr, frac in enumerate(capex_ramp)
             }
             depreciation[i, : lifetime[i]] = (
                 build_depreciation_array(
