@@ -38,6 +38,20 @@ class Plant:
             working_capital (float or None): Working capital requirement.
                                                 Auto-calculated if None.
             depreciation (dict or None): Depreciation method configuration.
+        Capital Cost Factors:
+            loc_factor (float or None): Location factor applied to ISBL.
+                                        Overrides country/region lookup when
+                                        set. Default: None.
+            osbl_factor (float or None): OSBL as a fraction of ISBL.
+                                         Overrides processTypes default when
+                                         set. Default: None.
+            de_factor (float or None): Design & engineering as a fraction of
+                                        ISBL+OSBL. Overrides processTypes
+                                        default when set. Default: None.
+            contingency_factor (float or None): Contingency as a fraction of
+                                                ISBL+OSBL. Overrides
+                                                processTypes default when set.
+                                                Default: None.
         Labor & Operations:
             operators_per_shift (int or None): Manual input or auto-calculated.
             operators_hired (int or None): Total operators needed;
@@ -54,6 +68,37 @@ class Plant:
                                     (production rate, price).
             fc (float): Fixed capital cost multiplier for installed costs.
             fp (float): Fixed OPEX cost multiplier.
+        Fixed OPEX Customisation:
+            fixed_opex_factors (dict): Override the multipliers used to
+                calculate individual fixed OPEX components. Any subset of keys
+                may be supplied; omitted keys fall back to defaults.
+                Keys and defaults:
+                    "supervision"           – 0.25 × operating_labor_costs
+                    "direct_salary_overhead"– 0.50 × (labor + supervision)
+                    "laboratory_charges"    – 0.10 × operating_labor_costs
+                    "maintenance"           – 0.05 × ISBL
+                    "taxes_insurance"       – 0.015 × ISBL
+                    "rent_of_land"          – 0.015 × (ISBL + OSBL)
+                    "environmental_charges" – 0.01  × (ISBL + OSBL)
+                    "operating_supplies"    – 0.009 × ISBL
+                    "general_plant_overhead"– 0.65  × (labor + supervision
+                                                        + direct_salary_overhead)
+                    "working_capital"       – 0.15 × fixed_capital
+                    "patents_royalties"     – 0.02 × cash cost of production
+                    "distribution_selling"  – 0.02 × cash cost of production
+                    "rnd"                   – 0.03 × cash cost of production
+            fixed_opex_components (dict): Override the computed cost value of
+                individual fixed OPEX components directly. Takes precedence
+                over fixed_opex_factors for the same component. Downstream
+                components that depend on an overridden value use the
+                overridden value in their own calculation.
+                Keys match attribute names:
+                    "supervision_costs", "direct_salary_overhead",
+                    "laboratory_charges", "maintenance_costs",
+                    "taxes_insurance_costs", "rent_of_land_costs",
+                    "environmental_charges", "operating_supplies",
+                    "general_plant_overhead", "patents_royalties",
+                    "distribution_selling_costs", "RnD_costs"
         Additional Capex:
             additional_capex_years (array): Years when additional capex occurs.
             additional_capex_cost (array): Corresponding capex amounts.
@@ -242,6 +287,16 @@ class Plant:
 
         self.fc = configuration.get("fc", None)
         self.fp = configuration.get("fp", None)
+        self.loc_factor = configuration.get("loc_factor", None)
+        self.fixed_opex_factors = configuration.get(
+            "fixed_opex_factors", {}
+        )
+        self.fixed_opex_components = configuration.get(
+            "fixed_opex_components", {}
+        )
+        self.osbl_factor = configuration.get("osbl_factor", None)
+        self.de_factor = configuration.get("de_factor", None)
+        self.contingency_factor = configuration.get("contingency_factor", None)
 
         self.monte_carlo_inputs = None
         self.monte_carlo_metrics = None
@@ -427,6 +482,9 @@ class Plant:
 
         def location_factors() -> float:
 
+            if self.loc_factor is not None:
+                return self.loc_factor
+
             if self.country not in self.locFactors:
                 raise ValueError(
                     f"Country not found: {self.country}. "
@@ -489,9 +547,16 @@ class Plant:
             )
 
         params = self.processTypes[self.process_type]
-        self.osbl = params["OS"] * self.isbl
-        self.dne = params["DE"] * (self.isbl + self.osbl)
-        self.contigency = params["X"] * (
+        os_factor = self.osbl_factor if self.osbl_factor is not None else params["OS"]
+        de_factor = self.de_factor if self.de_factor is not None else params["DE"]
+        x_factor = (
+            self.contingency_factor
+            if self.contingency_factor is not None
+            else params["X"]
+        )
+        self.osbl = os_factor * self.isbl
+        self.dne = de_factor * (self.isbl + self.osbl)
+        self.contigency = x_factor * (
             self.isbl + self.osbl
         )
         self.fixed_capital = (
@@ -756,29 +821,66 @@ class Plant:
         self.calculate_fixed_capital(fc=self.fc)
         self.calculate_variable_opex()
         self.calculate_operating_labor()
-        self.supervision_costs = (
-            0.25 * self.operating_labor_costs
+
+        _defaults = {
+            "supervision": 0.25,
+            "direct_salary_overhead": 0.5,
+            "laboratory_charges": 0.10,
+            "maintenance": 0.05,
+            "taxes_insurance": 0.015,
+            "rent_of_land": 0.015,
+            "environmental_charges": 0.01,
+            "operating_supplies": 0.009,
+            "general_plant_overhead": 0.65,
+            "working_capital": 0.15,
+            "patents_royalties": 0.02,
+            "distribution_selling": 0.02,
+            "rnd": 0.03,
+        }
+        f = {**_defaults, **self.fixed_opex_factors}
+        c = self.fixed_opex_components
+
+        self.supervision_costs = c.get(
+            "supervision_costs",
+            f["supervision"] * self.operating_labor_costs,
         )
-        self.direct_salary_overhead = 0.5 * (
-            self.operating_labor_costs
-            + self.supervision_costs
+        self.direct_salary_overhead = c.get(
+            "direct_salary_overhead",
+            f["direct_salary_overhead"] * (
+                self.operating_labor_costs + self.supervision_costs
+            ),
         )
-        self.laboratory_charges = (
-            0.10 * self.operating_labor_costs
+        self.laboratory_charges = c.get(
+            "laboratory_charges",
+            f["laboratory_charges"] * self.operating_labor_costs,
         )
-        self.maintenance_costs = 0.05 * self.isbl
-        self.taxes_insurance_costs = 0.015 * self.isbl
-        self.rent_of_land_costs = 0.015 * (
-            self.isbl + self.osbl
+        self.maintenance_costs = c.get(
+            "maintenance_costs",
+            f["maintenance"] * self.isbl,
         )
-        self.environmental_charges = 0.01 * (
-            self.isbl + self.osbl
+        self.taxes_insurance_costs = c.get(
+            "taxes_insurance_costs",
+            f["taxes_insurance"] * self.isbl,
         )
-        self.operating_supplies = 0.009 * self.isbl
-        self.general_plant_overhead = 0.65 * (
-            self.operating_labor_costs
-            + self.supervision_costs
-            + self.direct_salary_overhead
+        self.rent_of_land_costs = c.get(
+            "rent_of_land_costs",
+            f["rent_of_land"] * (self.isbl + self.osbl),
+        )
+        self.environmental_charges = c.get(
+            "environmental_charges",
+            f["environmental_charges"] * (self.isbl + self.osbl),
+        )
+        self.operating_supplies = c.get(
+            "operating_supplies",
+            f["operating_supplies"] * self.isbl,
+        )
+        self.general_plant_overhead = c.get(
+            "general_plant_overhead",
+            f["general_plant_overhead"] * (
+                self.operating_labor_costs
+                + self.supervision_costs
+                + self.direct_salary_overhead
+            ),
         )
 
         if self.working_capital is not None:
@@ -786,7 +888,7 @@ class Plant:
                 self.working_capital * self.interest_rate
             )
         else:
-            self.working_capital = 0.15 * self.fixed_capital
+            self.working_capital = f["working_capital"] * self.fixed_capital
             self.interest_working_capital = (
                 self.working_capital * self.interest_rate
             )
@@ -805,18 +907,28 @@ class Plant:
             + self.interest_working_capital
         )
 
+        cash_cost_markup = (
+            f["patents_royalties"]
+            + f["distribution_selling"]
+            + f["rnd"]
+        )
         cash_cost_of_production = (
             self.variable_production_costs
             + self.fixed_production_costs
-        ) / (1 - 0.07)
+        ) / (1 - cash_cost_markup)
 
-        self.patents_royalties = (
-            0.02 * cash_cost_of_production
+        self.patents_royalties = c.get(
+            "patents_royalties",
+            f["patents_royalties"] * cash_cost_of_production,
         )
-        self.distribution_selling_costs = (
-            0.02 * cash_cost_of_production
+        self.distribution_selling_costs = c.get(
+            "distribution_selling_costs",
+            f["distribution_selling"] * cash_cost_of_production,
         )
-        self.RnD_costs = 0.03 * cash_cost_of_production
+        self.RnD_costs = c.get(
+            "RnD_costs",
+            f["rnd"] * cash_cost_of_production,
+        )
 
         self.fixed_production_costs += (
             self.patents_royalties
