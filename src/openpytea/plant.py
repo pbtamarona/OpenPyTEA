@@ -116,8 +116,22 @@ class Plant:
             additional_capex_years (array): Years when additional capex occurs.
             additional_capex_cost (array): Corresponding capex amounts.
         Monte Carlo:
-            monte_carlo_inputs (dict or None): Stochastic input distributions.
-            monte_carlo_metrics (dict or None): Distribution results.
+            project_uncertainties (dict): Per-parameter uncertainty settings
+                for Monte Carlo simulation. Each key maps to a sub-dict with
+                optional fields ``std``, ``min``, and ``max``. Omitting a key
+                uses the built-in default distribution. Setting ``std=0``
+                disables sampling for that parameter (default for
+                plant_utilization and tax_rate). Supported keys:
+                    "fixed_capital_factor" – std=0.3,  min=0.25, max=1.75
+                    "fixed_opex_factor"    – std=0.3,  min=0.25, max=1.75
+                    "project_lifetime"     – std=5,    min/max auto (±2σ, ≥5)
+                    "interest_rate"        – std=0.03, min/max auto (±2σ, ≥0.02)
+                    "plant_utilization"    – std=0     (fixed unless overridden)
+                    "tax_rate"             – std=0     (fixed unless overridden)
+            monte_carlo_inputs (dict or None): Stochastic input distributions
+                populated after running monte_carlo().
+            monte_carlo_metrics (dict or None): Distribution results populated
+                after running monte_carlo().
     Methods:
         __init__(configuration: dict):
             Initialize plant with configuration dictionary.
@@ -291,6 +305,10 @@ class Plant:
         self.operator_hourly_rate = configuration.get(
             "operator_hourly_rate", {}
         )
+        self.project_uncertainties = configuration.get(
+            "project_uncertainties", {}
+        )
+        _validate_project_uncertainties(self.project_uncertainties)
         self.variable_opex_inputs = configuration.get(
             "variable_opex_inputs", {}
         )
@@ -499,6 +517,25 @@ class Plant:
                 self.config["operator_hourly_rate"],
                 configuration["operator_hourly_rate"],
             )
+
+        if "project_uncertainties" in configuration:
+            if (
+                not hasattr(self, "project_uncertainties")
+                or self.project_uncertainties is None
+            ):
+                self.project_uncertainties = {}
+            recursive_update(
+                self.project_uncertainties,
+                configuration["project_uncertainties"],
+            )
+
+            if "project_uncertainties" not in self.config:
+                self.config["project_uncertainties"] = {}
+            recursive_update(
+                self.config["project_uncertainties"],
+                configuration["project_uncertainties"],
+            )
+            _validate_project_uncertainties(self.project_uncertainties)
 
     def calculate_purchased_cost(self, print_results=False):
 
@@ -2103,6 +2140,92 @@ class DepreciationConfig:
     service_start_year: int = (
         2  # year index when asset is placed in service
     )
+
+
+_UNCERTAINTY_KEYS = {
+    "fixed_capital_factor",
+    "fixed_opex_factor",
+    "project_lifetime",
+    "interest_rate",
+    "plant_utilization",
+    "tax_rate",
+}
+_UNCERTAINTY_SUB_KEYS = {"std", "min", "max"}
+# Parameters whose values must stay within [0, 1]
+_UNIT_INTERVAL_PARAMS = {"plant_utilization", "tax_rate"}
+
+
+def _validate_project_uncertainties(cfg: dict) -> None:
+    if not cfg:
+        return
+    if not isinstance(cfg, dict):
+        raise TypeError(
+            "'project_uncertainties' must be a dict, "
+            f"got {type(cfg).__name__}."
+        )
+    unknown = set(cfg) - _UNCERTAINTY_KEYS
+    if unknown:
+        raise ValueError(
+            f"Unknown key(s) in 'project_uncertainties': {sorted(unknown)}. "
+            f"Valid keys: {sorted(_UNCERTAINTY_KEYS)}."
+        )
+    for param, sub in cfg.items():
+        if not isinstance(sub, dict):
+            raise TypeError(
+                f"'project_uncertainties['{param}']' must be a dict, "
+                f"got {type(sub).__name__}."
+            )
+        unknown_sub = set(sub) - _UNCERTAINTY_SUB_KEYS
+        if unknown_sub:
+            raise ValueError(
+                f"Unknown key(s) in 'project_uncertainties['{param}']': "
+                f"{sorted(unknown_sub)}. "
+                f"Valid keys: {sorted(_UNCERTAINTY_SUB_KEYS)}."
+            )
+        for key, val in sub.items():
+            if not isinstance(val, (int, float)):
+                raise TypeError(
+                    f"'project_uncertainties['{param}']['{key}']' must be "
+                    f"a number, got {type(val).__name__}."
+                )
+        if "std" in sub and sub["std"] < 0:
+            raise ValueError(
+                f"'project_uncertainties['{param}']['std']' must be ≥ 0, "
+                f"got {sub['std']}."
+            )
+        if "min" in sub and "max" in sub and sub["min"] >= sub["max"]:
+            raise ValueError(
+                f"'project_uncertainties['{param}']': "
+                f"'min' ({sub['min']}) must be less than 'max' ({sub['max']})."
+            )
+        if param in ("fixed_capital_factor", "fixed_opex_factor"):
+            for bound in ("min", "max"):
+                if bound in sub and sub[bound] <= 0:
+                    raise ValueError(
+                        f"'project_uncertainties['{param}']['{bound}']' "
+                        f"must be > 0, got {sub[bound]}."
+                    )
+        if param == "interest_rate":
+            for bound in ("min", "max"):
+                if bound in sub and sub[bound] <= 0:
+                    raise ValueError(
+                        f"'project_uncertainties['interest_rate']['{bound}']' "
+                        f"must be > 0, got {sub[bound]}."
+                    )
+        if param == "project_lifetime":
+            for bound in ("min", "max"):
+                if bound in sub and sub[bound] < 1:
+                    raise ValueError(
+                        f"'project_uncertainties['project_lifetime']"
+                        f"['{bound}']' must be ≥ 1, got {sub[bound]}."
+                    )
+        if param in _UNIT_INTERVAL_PARAMS:
+            for bound in ("min", "max"):
+                if bound in sub and not (0 <= sub[bound] <= 1):
+                    raise ValueError(
+                        f"'project_uncertainties['{param}']['{bound}']' "
+                        f"must be between 0 and 1, got {sub[bound]}."
+                    )
 
 
 def _normalize_dep_config(
