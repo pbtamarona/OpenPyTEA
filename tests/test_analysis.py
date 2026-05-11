@@ -52,33 +52,16 @@ def test_tornado_data(test_plant):
 
 
 def test_monte_carlo_data(test_plant):
-    test_plant.monte_carlo_inputs = {
-        "interest_rate": {
-            "mean": 0.08,
-            "std": 0.01,
-            "min": 0.05,
-            "max": 0.10,
-        },
-        "variable_opex_inputs": {
-            "electricity": {
-                "price": {
-                    "mean": 0.08,
-                    "std": 0.01,
-                    "min": 0.05,
-                    "max": 0.12,
-                }
-            }
-        },
-        "plant_products": {
-            "hydrogen": {
-                "price": {
-                    "mean": 5.0,
-                    "std": 0.5,
-                    "min": 4.0,
-                    "max": 6.0,
-                }
-            }
-        },
+    # Configure price uncertainty directly on the plant attributes (new API)
+    test_plant.variable_opex_inputs["electricity"].update(
+        {"std": 0.01, "min": 0.05, "max": 0.12}
+    )
+    test_plant.plant_products["hydrogen"].update(
+        {"std": 0.5, "min": 4.0, "max": 6.0}
+    )
+    # Scalar parameter uncertainty via project_uncertainties
+    test_plant.project_uncertainties = {
+        "interest_rate": {"std": 0.01, "min": 0.05, "max": 0.10},
     }
 
     result = monte_carlo(
@@ -96,3 +79,35 @@ def test_monte_carlo_data(test_plant):
     assert "PBT" in result["metrics"]
     assert "LCOP" in result["metrics"]
     assert len(result["metrics"]["NPV"]) == 1000
+    # Inputs dict should contain the sampled parameters
+    assert "Interest rate" in result["inputs"]
+    assert "Electricity price" in result["inputs"]
+    assert "Hydrogen product price" in result["inputs"]
+
+
+def test_monte_carlo_utilization_tax_uncertainty(test_plant):
+    # plant_utilization and tax_rate only appear in inputs when std > 0
+    test_plant.project_uncertainties = {
+        "plant_utilization": {"std": 0.05, "min": 0.7, "max": 1.0},
+        "tax_rate": {"std": 0.02, "min": 0.15, "max": 0.35},
+    }
+
+    result = monte_carlo(test_plant, num_samples=200, batch_size=200)
+
+    assert "Plant utilization" in result["inputs"]
+    assert "Tax rate" in result["inputs"]
+    assert len(result["inputs"]["Plant utilization"]) == 200
+    assert len(result["inputs"]["Tax rate"]) == 200
+
+
+def test_monte_carlo_no_price_variation(test_plant):
+    # When no std is set on variable_opex or products, MC still runs via
+    # default distributions for scalar params (project_lifetime, etc.)
+    result = monte_carlo(test_plant, num_samples=100, batch_size=100)
+
+    assert "LCOP" in result["metrics"]
+    assert "NPV" in result["metrics"]
+    assert len(result["metrics"]["LCOP"]) == 100
+    # plant_utilization and tax_rate should NOT be in inputs by default
+    assert "Plant utilization" not in result["inputs"]
+    assert "Tax rate" not in result["inputs"]
