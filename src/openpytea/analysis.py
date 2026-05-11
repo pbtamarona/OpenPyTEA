@@ -630,54 +630,76 @@ def monte_carlo(plant,
                 batch_size: int = 1000,
                 additional_capex: bool = False):
     """
-    This function conducts a probabilistic analysis of a plant's economic
-    performance by sampling from distributions of various input parameters
-    and computing multiple economic metrics across the samples. The simulation
-    processes samples in batches to optimize memory usage while maintaining
-    computational efficiency.
-        configuration attributes initialized. The plant will be deep copied
-        internally to preserve the original state.
-        Must be divisible by batch_size for optimal performance.
-        Reduces memory usage by processing samples in chunks rather than
-        all at once. Smaller batches use less memory but may be slower.
-        calculations. Default is False. Only applies when product prices
-        are available.
+    Probabilistic analysis of a plant's economic performance by sampling
+    input parameters from truncated normal distributions and computing
+    economic metrics across all samples. Samples are processed in batches
+    to manage memory.
+
+    Parameters
+    ----------
+    plant : Plant
+        A fully configured Plant instance. Baseline economic calculations
+        are run internally before sampling begins. The original plant is not
+        modified; results are stored on it after the simulation completes.
+    num_samples : int, optional
+        Total number of Monte Carlo samples. Default is 1_000_000.
+    batch_size : int, optional
+        Number of samples processed per batch. Smaller values reduce peak
+        memory at the cost of slightly more overhead. Default is 1000.
+    additional_capex : bool, optional
+        Include additional CAPEX in ROI and payback time calculations.
+        Only applies when product prices are available. Default is False.
+
+    Returns
+    -------
     dict
-        A dictionary containing the Monte Carlo simulation results with keys:
-        - "name" : str
-            Name of the analyzed plant.
-        - "metrics" : dict
-                (only populated if product prices available).
-                (only populated if product prices available).
-                (only populated if product prices available).
-        - "inputs" : dict
-            - Variable opex price samples for each item formatted as
-              "{Item} price"
-            - Product price samples for each product formatted as
-              "{Product} product price"
-        - "num_samples" : int
-            Number of samples generated in the simulation.
-        - "additional_capex" : bool
-            Whether additional CAPEX was included in calculations.
-        - "currency" : str
-            Currency symbol used in the plant's economic calculations.
-    - The plant object is deep copied to avoid modifying the original during
-      sampling. Results are stored back to the original plant as
-    - All input parameters are sampled from truncated normal distributions
-      with parameter-specific mean, standard deviation, and bounds.
-      are defined in the plant configuration.
-    - Progress is displayed via a progress bar showing batch processing status.
-    - Fixed capital and fixed opex factors use a standard distribution with
-      mean=1, std=0.3, bounds=[0.25, 1.75].
-    - Operator hourly rate is sampled from configurable
-    distribution parameters.
-    - Project lifetime and interest rate use 2-sigma bounds around baseline
-      values.
+        A dictionary with the following keys:
+
+        - ``"name"`` : str — plant name.
+        - ``"metrics"`` : dict — arrays of length *num_samples*:
+            - ``"LCOP"`` — levelized cost of production (always populated).
+            - ``"NPV"`` — net present value (requires product prices).
+            - ``"ROI"`` — return on investment (requires product prices).
+            - ``"PBT"`` — payback time (requires product prices).
+        - ``"inputs"`` : dict — sampled input arrays, always containing:
+            - ``"Fixed capital factor"``
+            - ``"Fixed opex factor"``
+            - ``"Operator hourly rate"``
+            - ``"Project lifetime"``
+            - ``"Interest rate"``
+            - ``"{Item} price"`` for each variable OPEX item.
+            - ``"{Product} product price"`` for each product.
+            And conditionally (when ``std > 0`` in ``project_uncertainties``):
+            - ``"Plant utilization"``
+            - ``"Tax rate"``
+        - ``"num_samples"`` : int — number of samples generated.
+        - ``"additional_capex"`` : bool — whether additional CAPEX was
+          included.
+        - ``"currency"`` : str — currency symbol.
+
+    Notes
+    -----
+    - Sampling distributions for fixed capital factor, fixed opex factor,
+      project lifetime, interest rate, plant utilization, and tax rate are
+      controlled by the plant's ``project_uncertainties`` configuration dict
+      (see Plant class docstring). Default std, min, and max values are used
+      when a parameter is absent from that dict.
+    - ``plant_utilization`` and ``tax_rate`` have a default ``std`` of 0 and
+      are only sampled when explicitly set to a positive value in
+      ``project_uncertainties``.
+    - Variable OPEX items and products are sampled using the ``std``,
+      ``min``, and ``max`` fields defined within each item's own config dict.
+    - The plant is deep-copied each batch to avoid mutating the original.
+      After the run, ``monte_carlo_metrics`` and ``monte_carlo_inputs`` are
+      written back to the original plant.
+    - Progress is shown via a tqdm progress bar over batches.
+
     Raises
     ------
     AttributeError
         If the plant object lacks required economic calculation methods or
         configuration attributes.
+
     Examples
     --------
     >>> results = monte_carlo(plant, num_samples=10000, batch_size=500)
@@ -702,7 +724,58 @@ def monte_carlo(plant,
         "PBT": np.zeros(num_samples),
     }
 
-    # ---- Allocate all input distributions (same as before) ----
+    # ---- Resolve project uncertainty parameters ----
+    pu = plant.project_uncertainties
+
+    fc_cfg  = pu.get("fixed_capital_factor", {})
+    fc_std  = fc_cfg.get("std", 0.3)
+    fc_min  = fc_cfg.get("min", 0.25)
+    fc_max  = fc_cfg.get("max", 1.75)
+
+    fo_cfg  = pu.get("fixed_opex_factor", {})
+    fo_std  = fo_cfg.get("std", 0.3)
+    fo_min  = fo_cfg.get("min", 0.25)
+    fo_max  = fo_cfg.get("max", 1.75)
+
+    lt_cfg  = pu.get("project_lifetime", {})
+    lt_std  = lt_cfg.get("std", 5)
+    lt_min  = lt_cfg.get("min", max(5, plant.project_lifetime - 2 * lt_std))
+    lt_max  = lt_cfg.get("max", plant.project_lifetime + 2 * lt_std)
+
+    ir_cfg  = pu.get("interest_rate", {})
+    ir_std  = ir_cfg.get("std", 0.03)
+    ir_min  = ir_cfg.get("min", max(0.02, plant.interest_rate - 2 * ir_std))
+    ir_max  = ir_cfg.get("max", plant.interest_rate + 2 * ir_std)
+
+    pu_util_cfg = pu.get("plant_utilization", {})
+    pu_util_std = pu_util_cfg.get("std", 0)
+    if pu_util_std > 0:
+        pu_util_mean = plant.plant_utilization
+        pu_util_min = pu_util_cfg.get(
+            "min", max(0.0, pu_util_mean - 2 * pu_util_std)
+        )
+        pu_util_max = pu_util_cfg.get(
+            "max", min(1.0, pu_util_mean + 2 * pu_util_std)
+        )
+        plant_utilizations = _truncated_normal_samples(
+            pu_util_mean, pu_util_std, pu_util_min, pu_util_max, num_samples
+        )
+    else:
+        plant_utilizations = None
+
+    tr_cfg = pu.get("tax_rate", {})
+    tr_std = tr_cfg.get("std", 0)
+    if tr_std > 0:
+        tr_mean = plant.tax_rate
+        tr_min = tr_cfg.get("min", max(0.0, tr_mean - 2 * tr_std))
+        tr_max = tr_cfg.get("max", min(1.0, tr_mean + 2 * tr_std))
+        tax_rates = _truncated_normal_samples(
+            tr_mean, tr_std, tr_min, tr_max, num_samples
+        )
+    else:
+        tax_rates = None
+
+    # ---- Allocate all input distributions ----
     op_cfg = plant.operator_hourly_rate
     op_mean = op_cfg.get("rate", 38.11)
     op_std = op_cfg.get("std", 20 / 2)
@@ -711,11 +784,11 @@ def monte_carlo(plant,
 
     # ---- Sample ALL inputs once ----
     fixed_capitals = _truncated_normal_samples(
-        1, 0.3, 0.25, 1.75, num_samples
+        1, fc_std, fc_min, fc_max, num_samples
     )
 
     fixed_opexs = _truncated_normal_samples(
-        1, 0.3, 0.25, 1.75, num_samples
+        1, fo_std, fo_min, fo_max, num_samples
     )
 
     operator_hourlys = _truncated_normal_samples(
@@ -723,19 +796,11 @@ def monte_carlo(plant,
     )
 
     project_lifetimes = _truncated_normal_samples(
-        plant.project_lifetime,
-        5,
-        max(5, plant.project_lifetime - 2 * 5),
-        plant.project_lifetime + 2 * 5,
-        num_samples,
+        plant.project_lifetime, lt_std, lt_min, lt_max, num_samples,
     )
 
     interests = _truncated_normal_samples(
-        plant.interest_rate,
-        0.03,
-        max(0.02, plant.interest_rate - 2 * 0.03),
-        plant.interest_rate + 2 * 0.03,
-        num_samples,
+        plant.interest_rate, ir_std, ir_min, ir_max, num_samples,
     )
 
     variable_opex_price_samples = {}
@@ -768,12 +833,15 @@ def monte_carlo(plant,
         # ---- Apply sampled inputs ----
         plant_copy.operator_hourly_rate["rate"] = operator_hourlys[start:end]
 
-        plant_copy.update_configuration(
-            {
-                "project_lifetime": project_lifetimes[start:end],
-                "interest_rate": interests[start:end],
-            }
-        )
+        scalar_updates = {
+            "project_lifetime": project_lifetimes[start:end],
+            "interest_rate": interests[start:end],
+        }
+        if plant_utilizations is not None:
+            scalar_updates["plant_utilization"] = plant_utilizations[start:end]
+        if tax_rates is not None:
+            scalar_updates["tax_rate"] = tax_rates[start:end]
+        plant_copy.update_configuration(scalar_updates)
 
         for item in plant.variable_opex_inputs:
             plant_copy.variable_opex_inputs[item]["price"] = (
@@ -814,6 +882,10 @@ def monte_carlo(plant,
         "Operator hourly rate": operator_hourlys,
         "Project lifetime": project_lifetimes,
         "Interest rate": interests,
+        **({} if plant_utilizations is None
+           else {"Plant utilization": plant_utilizations}),
+        **({} if tax_rates is None
+           else {"Tax rate": tax_rates}),
         **{
             f"{k.replace('_', ' ').title()} price": v
             for k, v in variable_opex_price_samples.items()
