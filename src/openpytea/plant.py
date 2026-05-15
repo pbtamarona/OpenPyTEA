@@ -921,8 +921,11 @@ class Plant:
             "distribution_selling": 0.02,
             "rnd": 0.03,
         }
-        f = {**_defaults, **self.fixed_opex_factors}
-        c = self.fixed_opex_components
+        f = {
+            **_defaults,
+            **{k: v for k, v in self.fixed_opex_factors.items() if v is not None},
+        }
+        c = {k: v for k, v in self.fixed_opex_components.items() if v is not None}
 
         self.supervision_costs = c.get(
             "supervision_costs",
@@ -1439,7 +1442,6 @@ class Plant:
                 print(
                     f"{year:4d} | {float(pv):15,.2f} | {float(npv):15,.2f}"
                 )
-            return
 
         if final_npv.size == 1:
             self.npv = float(final_npv[0])
