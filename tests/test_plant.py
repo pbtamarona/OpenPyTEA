@@ -95,13 +95,21 @@ def test_capital_cost_factor_overrides(test_plant):
     assert overridden != baseline
 
 
-def test_osbl_de_contingency_overrides(test_plant):
+def test_fixed_capital_factors_override(test_plant):
     baseline = test_plant.calculate_fixed_capital()
-    test_plant.osbl_factor = 0.1
-    test_plant.de_factor = 0.1
-    test_plant.contingency_factor = 0.05
+    test_plant.fixed_capital_factors = {
+        "osbl": 0.1,
+        "de": 0.1,
+        "contingency": 0.05,
+    }
     overridden = test_plant.calculate_fixed_capital()
     assert overridden != baseline
+
+
+def test_fixed_capital_components_override(test_plant):
+    test_plant.fixed_capital_components = {"osbl": 999_999}
+    test_plant.calculate_fixed_capital()
+    assert test_plant.osbl == 999_999
 
 
 def test_fixed_opex_factors_override(test_plant):

@@ -55,16 +55,19 @@ class Plant:
             loc_factor (float or None): Location factor applied to ISBL.
                                         Overrides country/region lookup when
                                         set. Default: None.
-            osbl_factor (float or None): OSBL as a fraction of ISBL.
-                                         Overrides processTypes default when
-                                         set. Default: None.
-            de_factor (float or None): Design & engineering as a fraction of
-                                        ISBL+OSBL. Overrides processTypes
-                                        default when set. Default: None.
-            contingency_factor (float or None): Contingency as a fraction of
-                                                ISBL+OSBL. Overrides
-                                                processTypes default when set.
-                                                Default: None.
+            fixed_capital_factors (dict): Override the multipliers used to
+                calculate individual fixed capital components. Any subset of
+                keys may be supplied; omitted keys fall back to processTypes
+                defaults.
+                Keys and defaults (process-type dependent):
+                    "osbl"        – fraction of ISBL       (e.g. 0.3 for Fluids)
+                    "de"          – fraction of ISBL+OSBL  (e.g. 0.3 for Fluids)
+                    "contingency" – fraction of ISBL+OSBL  (e.g. 0.1 for all types)
+            fixed_capital_components (dict): Override the computed cost value
+                of individual fixed capital components directly. Takes
+                precedence over fixed_capital_factors for the same component.
+                Keys match attribute names:
+                    "osbl", "dne", "contingency"
         Labor & Operations:
             operators_per_shift (int or None): Manual input or auto-calculated.
             operators_hired (int or None): Total operators needed;
@@ -329,9 +332,12 @@ class Plant:
         self.fixed_opex_components = configuration.get(
             "fixed_opex_components", {}
         )
-        self.osbl_factor = configuration.get("osbl_factor", None)
-        self.de_factor = configuration.get("de_factor", None)
-        self.contingency_factor = configuration.get("contingency_factor", None)
+        self.fixed_capital_factors = (
+            configuration.get("fixed_capital_factors") or {}
+        )
+        self.fixed_capital_components = (
+            configuration.get("fixed_capital_components") or {}
+        )
 
         self.monte_carlo_inputs = None
         self.monte_carlo_metrics = None
@@ -419,15 +425,16 @@ class Plant:
         self.loc_factor = configuration.get(
             "loc_factor", self.loc_factor
         )
-        self.osbl_factor = configuration.get(
-            "osbl_factor", self.osbl_factor
-        )
-        self.de_factor = configuration.get(
-            "de_factor", self.de_factor
-        )
-        self.contingency_factor = configuration.get(
-            "contingency_factor", self.contingency_factor
-        )
+        if "fixed_capital_factors" in configuration:
+            self.fixed_capital_factors = {
+                **self.fixed_capital_factors,
+                **configuration["fixed_capital_factors"],
+            }
+        if "fixed_capital_components" in configuration:
+            self.fixed_capital_components = {
+                **self.fixed_capital_components,
+                **configuration["fixed_capital_components"],
+            }
         self.capex_ramp = configuration.get(
             "capex_ramp", self.capex_ramp
         )
@@ -631,17 +638,18 @@ class Plant:
             )
 
         params = self.processTypes[self.process_type]
-        os_factor = self.osbl_factor if self.osbl_factor is not None else params["OS"]
-        de_factor = self.de_factor if self.de_factor is not None else params["DE"]
-        x_factor = (
-            self.contingency_factor
-            if self.contingency_factor is not None
-            else params["X"]
-        )
-        self.osbl = os_factor * self.isbl
-        self.dne = de_factor * (self.isbl + self.osbl)
-        self.contigency = x_factor * (
-            self.isbl + self.osbl
+        f = {
+            "osbl": params["OS"],
+            "de": params["DE"],
+            "contingency": params["X"],
+            **{k: v for k, v in self.fixed_capital_factors.items() if v is not None},
+        }
+        c = {k: v for k, v in self.fixed_capital_components.items() if v is not None}
+
+        self.osbl = c.get("osbl", f["osbl"] * self.isbl)
+        self.dne = c.get("dne", f["de"] * (self.isbl + self.osbl))
+        self.contigency = c.get(
+            "contingency", f["contingency"] * (self.isbl + self.osbl)
         )
         self.fixed_capital = (
             self.isbl
