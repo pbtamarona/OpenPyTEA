@@ -532,6 +532,18 @@ def plot_monte_carlo(
             label=stat_label,
         )
 
+    ax.set_xlabel(label)
+    ax.set_ylabel("Density")
+    ax.legend(
+            loc="best",
+            ncol=1,
+            fontsize=4,
+            frameon=True,
+            facecolor="white",
+            framealpha=0.6,
+            fancybox=True,
+        )
+
     if created_fig is not None and show:
         created_fig.tight_layout()
         plt.show()
