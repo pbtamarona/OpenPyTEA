@@ -411,26 +411,34 @@ def sensitivity_data(plants,
 
     # --- Shorthand resolution with ambiguity check ---
     short_to_full = {}
+    ambiguous_keys = set()
     for plant in plants:
         for k in plant.variable_opex_inputs:
             full = f"variable_opex_inputs.{k}"
             if k in short_to_full and short_to_full[k] != full:
-                raise ValueError(
-                    f"Ambiguous shorthand '{k}' across plants.\n"
-                    f"Seen both '{short_to_full[k]}' and '{full}'.\n"
-                    f"Please use full path."
-                )
-            short_to_full[k] = full
+                ambiguous_keys.add(k)
+            else:
+                short_to_full[k] = full
 
         for k in plant.plant_products:
             full = f"plant_products.{k}"
             if k in short_to_full and short_to_full[k] != full:
-                raise ValueError(
-                    f"Ambiguous shorthand '{k}' across plants.\n"
-                    f"Seen both '{short_to_full[k]}' and '{full}'.\n"
-                    f"Please use full path."
-                )
-            short_to_full[k] = full
+                ambiguous_keys.add(k)
+            else:
+                short_to_full[k] = full
+
+    if parameter in ambiguous_keys:
+        full_options = set()
+        for plant in plants:
+            if parameter in plant.variable_opex_inputs:
+                full_options.add(f"variable_opex_inputs.{parameter}")
+            if parameter in plant.plant_products:
+                full_options.add(f"plant_products.{parameter}")
+        raise ValueError(
+            f"Ambiguous shorthand '{parameter}'.\n"
+            f"Seen both {' and '.join(sorted(full_options))}.\n"
+            f"Please use full path."
+        )
 
     parameter = short_to_full.get(parameter, parameter)
 
