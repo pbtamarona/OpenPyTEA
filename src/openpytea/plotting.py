@@ -69,14 +69,10 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     currency = data["currency"]
     pct = data["pct"]
 
-    # --- NEW: sort components ---
-    # sum each component across all bars
-    component_totals = np.sum(values, axis=0)
-
     n_bars = len(values)
 
-    # get sorted indices (small -> large)
-    sorted_idx = np.argsort(component_totals)[::-1]
+    # sort by first plant's values so order is stable across all bars
+    sorted_idx = np.argsort(values[0])[::-1]
 
     # reorder labels and values
     labels_sorted = [labels[0][i] for i in sorted_idx]
@@ -132,6 +128,9 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
             linewidth=0.3,
         )
         bottoms += vals
+
+    max_height = max(np.sum(v) for v in values_sorted)
+    ax.set_ylim(0, max_height * 1.1)
 
     ax.set_xticks(x)
     ax.set_xticklabels(xlabels)
