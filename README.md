@@ -268,7 +268,9 @@ This workflow is demonstrated in `case_study_1_with_JSON.ipynb` in the example f
 
 ## ▶️ Tutorials
 
-Step-by-step tutorial videos covering the full OpenPyTEA workflow is available [here](https://pbtamarona.github.io/OpenPyTEA/).
+Step-by-step tutorial videos covering the full OpenPyTEA workflow is available [here](https://pbtamarona.github.io/OpenPyTEA/tutorial_videos/index.html).
+
+The notebooks used in the tutorials and the raw video files are available in the [tutorial_videos folder](https://pbtamarona.github.io/OpenPyTEA/tutorial_videos)
 
 ## 📘 Example Workflows
 
