@@ -266,6 +266,10 @@ Key functionalities include:
 
 This workflow is demonstrated in `case_study_1_with_JSON.ipynb` in the example folder.
 
+## ▶️ Tutorials
+
+Step-by-step tutorial videos covering the full OpenPyTEA workflow is available [here](https://pbtamarona.github.io/OpenPyTEA/).
+
 ## 📘 Example Workflows
 
 Example notebooks are available in the `examples/` folder, including:
