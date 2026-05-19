@@ -285,7 +285,7 @@ Step-by-step tutorial videos covering the full OpenPyTEA workflow are available 
 **Tutorial 03 - Performing Analysis**
 
 <a href="https://www.youtube.com/watch?v=o1zosMUZaDc" target="_blank">
-  <img src="https://img.youtube.com/vi/o1zosMUZaDc/0.jpg" width="320" alt="Tutorial 02 - Creating a Plant">
+  <img src="https://img.youtube.com/vi/o1zosMUZaDc/0.jpg" width="320" alt="Tutorial 03 - Performing Analysis">
 </a>
 
 The notebooks used in the tutorials and the raw video files are available in the [tutorial_videos folder](https://github.com/pbtamarona/OpenPyTEA/tree/main/tutorial_videos)
