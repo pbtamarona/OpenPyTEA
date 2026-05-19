@@ -268,7 +268,25 @@ This workflow is demonstrated in `case_study_1_with_JSON.ipynb` in the example f
 
 ## ▶️ Tutorials
 
-Step-by-step tutorial videos covering the full OpenPyTEA workflow is available [here](https://pbtamarona.github.io/OpenPyTEA/tutorial_videos/index.html).
+Step-by-step tutorial videos covering the full OpenPyTEA workflow are available here:
+
+**Tutorial 01 - Creating Equipment**
+
+<a href="https://www.youtube.com/watch?v=z-hspQh_wVE" target="_blank">
+  <img src="https://img.youtube.com/vi/z-hspQh_wVE/0.jpg" width="320" alt="Tutorial 01 - Creating Equipment">
+</a>
+
+**Tutorial 02 - Creating a Plant**
+
+<a href="https://www.youtube.com/watch?v=eoooa2gjCwE" target="_blank">
+  <img src="https://img.youtube.com/vi/eoooa2gjCwE/0.jpg" width="320" alt="Tutorial 02 - Creating a Plant">
+</a>
+
+**Tutorial 03 - Performing Analysis**
+
+<a href="https://www.youtube.com/watch?v=o1zosMUZaDc" target="_blank">
+  <img src="https://img.youtube.com/vi/o1zosMUZaDc/0.jpg" width="320" alt="Tutorial 02 - Creating a Plant">
+</a>
 
 The notebooks used in the tutorials and the raw video files are available in the [tutorial_videos folder](https://github.com/pbtamarona/OpenPyTEA/tree/main/tutorial_videos)
 
