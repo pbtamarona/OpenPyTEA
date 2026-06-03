@@ -1,0 +1,1480 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="openpytea.analysis" href="analysis.html"><link rel="prev" title="openpytea.equipment" href="equipment.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>openpytea.plant - OpenPyTEA</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-brand-primary: #2e7d32;
+  --color-brand-content: #2e7d32;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #66bb6a;
+  --color-brand-content: #66bb6a;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #66bb6a;
+  --color-brand-content: #66bb6a;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">OpenPyTEA</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  <span class="sidebar-brand-text">OpenPyTEA</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/equipment.html">Equipment Cost Estimation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/plant.html">Plant-Level TEA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/plotting.html">Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/io_workflow.html">JSON Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/equipment.html">Equipment Cost Estimation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/plant.html">Plant-Level TEA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/io_workflow.html">JSON Workflow</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="equipment.html">openpytea.equipment</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">openpytea.plant</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html">openpytea.analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html">openpytea.plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">openpytea.io</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="equipment.html">openpytea.equipment</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">openpytea.plant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">openpytea.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">openpytea.plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">openpytea.io</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">More</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gui.html">Web GUI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/api/plant.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-openpytea.plant">
+<span id="openpytea-plant"></span><h1>openpytea.plant<a class="headerlink" href="#module-openpytea.plant" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="openpytea.plant.Plant">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">openpytea.plant.</span></span><span class="sig-name descname"><span class="pre">Plant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Plant class for techno-economic analysis of industrial processing plants.
+This class models capital costs, operating expenses, revenue, and
+financial metrics for chemical/process plants. It supports multiple
+process types (Solids, Fluids, Mixed), geographic locations with regional
+cost factors, and comprehensive cash flow analysis.
+Attributes:</p>
+<blockquote>
+<div><dl>
+<dt>processTypes (dict): Cost multipliers for different process categories</dt><dd><p>(OS, DE, X).</p>
+</dd>
+<dt>locFactors (dict): Geographic location factors for capital cost</dt><dd><p>adjustments.</p>
+</dd>
+<dt>Configuration Parameters:</dt><dd><p>name (str): Plant name identifier.
+process_type (str): Type of process</p>
+<blockquote>
+<div><p>(“Solids”, “Fluids”, or “Mixed”).</p>
+</div></blockquote>
+<dl class="simple">
+<dt>country (str): Country location for cost factor lookup.</dt><dd><p>Default: “United States”.</p>
+</dd>
+</dl>
+<p>region (str): Regional area within country. Default: “Gulf Coast”.
+currency (str): Currency code (e.g., “USD”). Default: “USD”.
+exchange_rate (float): Conversion factor to base currency.</p>
+<blockquote>
+<div><p>Default: 1.0.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>interest_rate (float): Discount rate for NPV calculations.</dt><dd><p>Default: 0.09.</p>
+</dd>
+<dt>project_lifetime (int or array): Plant operating life in years.</dt><dd><p>Default: 20.</p>
+</dd>
+<dt>plant_utilization (float): Capacity utilization factor (0-1).</dt><dd><p>Default: 1.</p>
+</dd>
+</dl>
+<p>tax_rate (float): Corporate tax rate for cash flow. Default: 0.
+working_capital (float or None): Working capital requirement.</p>
+<blockquote>
+<div><p>Auto-calculated if None.</p>
+</div></blockquote>
+<p>depreciation (dict or None): Depreciation method configuration.</p>
+</dd>
+<dt>Cash Flow Profiles:</dt><dd><dl class="simple">
+<dt>capex_ramp (list or None): Fraction of fixed capital spent in each</dt><dd><p>construction year. Must be a 1-D list of non-negative numbers
+that sum to 1.0. Length must be less than project_lifetime.
+Working capital is drawn in the final construction year and
+released at the end of the project.
+Default: [0.3, 0.6, 0.1] (3-year build).</p>
+</dd>
+<dt>production_ramp (list or None): Nameplate capacity utilisation</dt><dd><p>fraction for each project year (0–1). Values must be between
+0 and 1. If shorter than project_lifetime the remaining years
+are set to 1.0 (full capacity). Length must not exceed
+project_lifetime.
+Default: [0, 0, 0.4, 0.8] (full capacity from year 4 on).</p>
+</dd>
+</dl>
+</dd>
+<dt>Capital Cost Factors:</dt><dd><dl>
+<dt>loc_factor (float or None): Location factor applied to ISBL.</dt><dd><p>Overrides country/region lookup when
+set. Default: None.</p>
+</dd>
+<dt>fixed_capital_factors (dict): Override the multipliers used to</dt><dd><p>calculate individual fixed capital components. Any subset of
+keys may be supplied; omitted keys fall back to processTypes
+defaults.
+Keys and defaults (process-type dependent):</p>
+<blockquote>
+<div><p>“osbl”        – fraction of ISBL       (e.g. 0.3 for Fluids)
+“de”          – fraction of ISBL+OSBL  (e.g. 0.3 for Fluids)
+“contingency” – fraction of ISBL+OSBL  (e.g. 0.1 for all types)</p>
+</div></blockquote>
+</dd>
+<dt>fixed_capital_components (dict): Override the computed cost value</dt><dd><p>of individual fixed capital components directly. Takes
+precedence over fixed_capital_factors for the same component.
+Keys match attribute names:</p>
+<blockquote>
+<div><p>“osbl”, “dne”, “contingency”</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd>
+<dt>Labor &amp; Operations:</dt><dd><p>operators_per_shift (int or None): Manual input or auto-calculated.
+operators_hired (int or None): Total operators needed;</p>
+<blockquote>
+<div><p>auto-calculated if None.</p>
+</div></blockquote>
+<p>operator_hourly_rate (dict or float): Wage rate for operators.
+working_weeks_per_year (int): Annual working weeks. Default: 49.
+working_shifts_per_week (int): Shifts per week. Default: 5.
+operating_shifts_per_day (int): Daily operating shifts. Default: 3.</p>
+</dd>
+<dt>Equipment &amp; Economics:</dt><dd><p>equipment_list (list): Equipment objects with cost data.
+variable_opex_inputs (dict): Variable operating cost inputs</p>
+<blockquote>
+<div><p>(consumption, price).</p>
+</div></blockquote>
+<dl class="simple">
+<dt>plant_products (dict): Product specifications</dt><dd><p>(production rate, price).</p>
+</dd>
+</dl>
+<p>fc (float): Fixed capital cost multiplier for installed costs.
+fp (float): Fixed OPEX cost multiplier.</p>
+</dd>
+<dt>Fixed OPEX Customisation:</dt><dd><dl>
+<dt>fixed_opex_factors (dict): Override the multipliers used to</dt><dd><p>calculate individual fixed OPEX components. Any subset of keys
+may be supplied; omitted keys fall back to defaults.
+Keys and defaults:</p>
+<blockquote>
+<div><p>“supervision”           – 0.25 × operating_labor_costs
+“direct_salary_overhead”– 0.50 × (labor + supervision)
+“laboratory_charges”    – 0.10 × operating_labor_costs
+“maintenance”           – 0.05 × ISBL
+“taxes_insurance”       – 0.015 × ISBL
+“rent_of_land”          – 0.015 × (ISBL + OSBL)
+“environmental_charges” – 0.01  × (ISBL + OSBL)
+“operating_supplies”    – 0.009 × ISBL
+“general_plant_overhead”– 0.65  × (labor + supervision</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>direct_salary_overhead)</p></li>
+</ul>
+</div></blockquote>
+<p>“working_capital”       – 0.15 × fixed_capital
+“patents_royalties”     – 0.02 × cash cost of production
+“distribution_selling”  – 0.02 × cash cost of production
+“rnd”                   – 0.03 × cash cost of production</p>
+</div></blockquote>
+</dd>
+<dt>fixed_opex_components (dict): Override the computed cost value of</dt><dd><p>individual fixed OPEX components directly. Takes precedence
+over fixed_opex_factors for the same component. Downstream
+components that depend on an overridden value use the
+overridden value in their own calculation.
+Keys match attribute names:</p>
+<blockquote>
+<div><p>“supervision_costs”, “direct_salary_overhead”,
+“laboratory_charges”, “maintenance_costs”,
+“taxes_insurance_costs”, “rent_of_land_costs”,
+“environmental_charges”, “operating_supplies”,
+“general_plant_overhead”, “patents_royalties”,
+“distribution_selling_costs”, “RnD_costs”</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd>
+<dt>Additional Capex:</dt><dd><p>additional_capex_years (array): Years when additional capex occurs.
+additional_capex_cost (array): Corresponding capex amounts.</p>
+</dd>
+<dt>Monte Carlo:</dt><dd><dl>
+<dt>project_uncertainties (dict): Per-parameter uncertainty settings</dt><dd><p>for Monte Carlo simulation. Each key maps to a sub-dict with
+optional fields <code class="docutils literal notranslate"><span class="pre">std</span></code>, <code class="docutils literal notranslate"><span class="pre">min</span></code>, and <code class="docutils literal notranslate"><span class="pre">max</span></code>. Omitting a key
+uses the built-in default distribution. Setting <code class="docutils literal notranslate"><span class="pre">std=0</span></code>
+disables sampling for that parameter (default for
+plant_utilization and tax_rate). Supported keys:</p>
+<blockquote>
+<div><p>“fixed_capital_factor” – std=0.3,  min=0.25, max=1.75
+“fixed_opex_factor”    – std=0.3,  min=0.25, max=1.75
+“project_lifetime”     – std=5,    min/max auto (±2σ, ≥5)
+“interest_rate”        – std=0.03, min/max auto (±2σ, ≥0.02)
+“plant_utilization”    – std=0     (fixed unless overridden)
+“tax_rate”             – std=0     (fixed unless overridden)</p>
+</div></blockquote>
+</dd>
+<dt>monte_carlo_inputs (dict or None): Stochastic input distributions</dt><dd><p>populated after running monte_carlo().</p>
+</dd>
+<dt>monte_carlo_metrics (dict or None): Distribution results populated</dt><dd><p>after running monte_carlo().</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+<dl>
+<dt>Methods:</dt><dd><dl>
+<dt>__init__(configuration: dict):</dt><dd><p>Initialize plant with configuration dictionary.</p>
+</dd>
+<dt>update_configuration(configuration: dict):</dt><dd><p>Update plant parameters while preserving nested structures.</p>
+</dd>
+<dt>calculate_purchased_cost(print_results: bool = False) -&gt; float:</dt><dd><p>Sum equipment purchase costs with exchange rate conversion.</p>
+</dd>
+<dt>calculate_isbl(fc: float = 1.0, print_results: bool = False) -&gt; float:</dt><dd><p>Calculate Inside Battery Limits cost (direct equipment costs
+adjusted for location).</p>
+</dd>
+<dt>calculate_fixed_capital(fc: float = None,</dt><dd><blockquote>
+<div><p>additional_capex: bool = False,
+print_results: bool = False) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate total fixed capital including ISBL, OSBL,
+design/engineering, and contingency.</p>
+</dd>
+<dt>calculate_variable_opex(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate annual variable operating costs (feedstock, utilities).</p>
+</dd>
+<dt>calculate_revenue(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate annual revenue from plant products.</p>
+</dd>
+<dt>calculate_operating_labor(no_fluid_process: int = None,</dt><dd><blockquote>
+<div><p>no_solid_process: int = None) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate total annual operating labor costs.</p>
+</dd>
+<dt>calculate_fixed_opex(fp: float = None,</dt><dd><blockquote>
+<div><p>print_results: bool = False) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate fixed operating expenses (maintenance, supervision,
+overhead, etc.).</p>
+</dd>
+<dt>calculate_cash_flow(print_results: bool = False) -&gt;</dt><dd><blockquote>
+<div><p>pd.DataFrame or None:</p>
+</div></blockquote>
+<p>Build year-by-year cash flow with CAPEX profile, revenue, costs,
+depreciation, taxes. Supports multiple scenarios if array inputs
+provided.</p>
+</dd>
+<dt>calculate_npv(print_results: bool = False) -&gt; float or np.ndarray:</dt><dd><p>Calculate Net Present Value of cash flows using interest_rate as
+discount rate.</p>
+</dd>
+<dt>calculate_levelized_cost(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate levelized cost ($/unit) over project lifetime.</p>
+</dd>
+<dt>calculate_payback_time(additional_capex: bool = False,</dt><dd><blockquote>
+<div><p>print_results: bool = False) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate years required to recover initial investment
+from cash flows.</p>
+</dd>
+<dt>calculate_roi(additional_capex: bool = False,</dt><dd><blockquote>
+<div><p>print_results: bool = False) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate Return on Investment percentage over project lifetime.</p>
+</dd>
+<dt>calculate_irr(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate Internal Rate of Return (discount rate where NPV = 0).</p>
+</dd>
+<dt>calculate_all(additional_capex: bool = False,</dt><dd><blockquote>
+<div><p>print_results: bool = False):</p>
+</div></blockquote>
+<p>Execute all financial calculations sequentially.</p>
+</dd>
+<dt>count_process_steps(equipments: list, target_process_types: set,</dt><dd><blockquote>
+<div><p>excluded_cats: set = None) -&gt; int:</p>
+</div></blockquote>
+<p>Count equipment units matching process type and category filters.</p>
+</dd>
+<dt>calculate_operators_per_shift(no_fluid_process: int = None,</dt><dd><blockquote>
+<div><p>no_solid_process: int = None) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate operators needed per shift using empirical correlation.</p>
+</dd>
+<dt>calculate_operators_hired(no_fluid_process: int = None,</dt><dd><blockquote>
+<div><p>no_solid_process: int = None) -&gt; int:</p>
+</div></blockquote>
+<p>Calculate total operators to hire accounting for
+working/operating schedule.</p>
+</dd>
+<dt>to_dict() -&gt; dict:</dt><dd><p>Serialize plant configuration and all calculated metrics
+to dictionary.</p>
+</dd>
+<dt>__str__() -&gt; str:</dt><dd><p>Return formatted string representation of all configuration
+parameters.</p>
+</dd>
+</dl>
+</dd>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s2">&quot;plant_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Example Plant&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;process_type&quot;</span><span class="p">:</span> <span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;country&quot;</span><span class="p">:</span> <span class="s2">&quot;United States&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;Gulf Coast&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;equipment&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">equipment_obj</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="s2">&quot;plant_products&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;product_A&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;production&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+<span class="go">                            &quot;price&quot;: 50}},</span>
+<span class="go">... }</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plant</span> <span class="o">=</span> <span class="n">Plant</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plant</span><span class="o">.</span><span class="n">calculate_all</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">npv</span> <span class="o">=</span> <span class="n">plant</span><span class="o">.</span><span class="n">calculate_npv</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>configuration</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.processTypes">
+<span class="sig-name descname"><span class="pre">processTypes</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'Fluids':</span> <span class="pre">{'DE':</span> <span class="pre">0.3,</span> <span class="pre">'OS':</span> <span class="pre">0.3,</span> <span class="pre">'X':</span> <span class="pre">0.1},</span> <span class="pre">'Mixed':</span> <span class="pre">{'DE':</span> <span class="pre">0.25,</span> <span class="pre">'OS':</span> <span class="pre">0.4,</span> <span class="pre">'X':</span> <span class="pre">0.1},</span> <span class="pre">'Solids':</span> <span class="pre">{'DE':</span> <span class="pre">0.2,</span> <span class="pre">'OS':</span> <span class="pre">0.4,</span> <span class="pre">'X':</span> <span class="pre">0.1}}</span></span><a class="headerlink" href="#openpytea.plant.Plant.processTypes" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.locFactors">
+<span class="sig-name descname"><span class="pre">locFactors</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'Australia':</span> <span class="pre">1.21,</span> <span class="pre">'Brazil':</span> <span class="pre">1.14,</span> <span class="pre">'Canada':</span> <span class="pre">{'Fort</span> <span class="pre">McMurray':</span> <span class="pre">1.6,</span> <span class="pre">'Ontario':</span> <span class="pre">1.0},</span> <span class="pre">'China':</span> <span class="pre">{'imported':</span> <span class="pre">1.12,</span> <span class="pre">'indigenous':</span> <span class="pre">0.61},</span> <span class="pre">'France':</span> <span class="pre">1.13,</span> <span class="pre">'Germany':</span> <span class="pre">1.11,</span> <span class="pre">'India':</span> <span class="pre">1.02,</span> <span class="pre">'Italy':</span> <span class="pre">1.14,</span> <span class="pre">'Japan':</span> <span class="pre">1.26,</span> <span class="pre">'Mexico':</span> <span class="pre">1.03,</span> <span class="pre">'Middle</span> <span class="pre">East':</span> <span class="pre">1.07,</span> <span class="pre">'Netherlands':</span> <span class="pre">1.19,</span> <span class="pre">'Russia':</span> <span class="pre">1.53,</span> <span class="pre">'Southeast</span> <span class="pre">Asia':</span> <span class="pre">1.12,</span> <span class="pre">'United</span> <span class="pre">Kingdom':</span> <span class="pre">1.02,</span> <span class="pre">'United</span> <span class="pre">States':</span> <span class="pre">{'East</span> <span class="pre">Coast':</span> <span class="pre">1.04,</span> <span class="pre">'Gulf</span> <span class="pre">Coast':</span> <span class="pre">1.0,</span> <span class="pre">'Midwest':</span> <span class="pre">1.02,</span> <span class="pre">'West</span> <span class="pre">Coast':</span> <span class="pre">1.07}}</span></span><a class="headerlink" href="#openpytea.plant.Plant.locFactors" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.update_configuration">
+<span class="sig-name descname"><span class="pre">update_configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.update_configuration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.update_configuration" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>configuration</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_purchased_cost">
+<span class="sig-name descname"><span class="pre">calculate_purchased_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_purchased_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_purchased_cost" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_isbl">
+<span class="sig-name descname"><span class="pre">calculate_isbl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_isbl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_isbl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_fixed_capital">
+<span class="sig-name descname"><span class="pre">calculate_fixed_capital</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_fixed_capital"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_fixed_capital" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_variable_opex">
+<span class="sig-name descname"><span class="pre">calculate_variable_opex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_variable_opex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_variable_opex" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_revenue">
+<span class="sig-name descname"><span class="pre">calculate_revenue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_revenue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_revenue" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.count_process_steps">
+<span class="sig-name descname"><span class="pre">count_process_steps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">equipments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_process_types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_cats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.count_process_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.count_process_steps" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_operators_per_shift">
+<span class="sig-name descname"><span class="pre">calculate_operators_per_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operators_per_shift"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_operators_per_shift" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_operators_hired">
+<span class="sig-name descname"><span class="pre">calculate_operators_hired</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operators_hired"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_operators_hired" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_operating_labor">
+<span class="sig-name descname"><span class="pre">calculate_operating_labor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operating_labor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_operating_labor" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_fixed_opex">
+<span class="sig-name descname"><span class="pre">calculate_fixed_opex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_fixed_opex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_fixed_opex" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_cash_flow">
+<span class="sig-name descname"><span class="pre">calculate_cash_flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_cash_flow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_cash_flow" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_npv">
+<span class="sig-name descname"><span class="pre">calculate_npv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_npv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_npv" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_levelized_cost">
+<span class="sig-name descname"><span class="pre">calculate_levelized_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_levelized_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_levelized_cost" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_payback_time">
+<span class="sig-name descname"><span class="pre">calculate_payback_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_payback_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_payback_time" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_roi">
+<span class="sig-name descname"><span class="pre">calculate_roi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_roi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_roi" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_irr">
+<span class="sig-name descname"><span class="pre">calculate_irr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_irr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_irr" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_all">
+<span class="sig-name descname"><span class="pre">calculate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_all" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="openpytea.plant.Plant.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.to_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="openpytea.plant.DepreciationConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">openpytea.plant.</span></span><span class="sig-name descname"><span class="pre">DepreciationConfig</span></span><a class="reference internal" href="../_modules/openpytea/plant.html#DepreciationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.DepreciationConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Configuration for asset depreciation calculations.</p>
+<p>This class defines the parameters needed to compute depreciation
+using various methods.</p>
+<dl>
+<dt>Attributes:</dt><dd><p>method (DepMethod): The depreciation method to use.
+Defaults to “straight_line”.
+Options: “straight_line”, “declining_balance”, “macrs”.
+life (Optional[int]): The useful life of the asset in years.</p>
+<blockquote>
+<div><p>Used by straight_line and declining_balance methods.
+Defaults to None.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>db_factor (float): The declining balance factor (multiplier).</dt><dd><p>Only used by the declining_balance method. Defaults to 2.0.</p>
+</dd>
+<dt>salvage_fraction (float): The salvage value as a fraction</dt><dd><p>of the initial cost.
+Used by straight_line and declining_balance methods.
+Defaults to 0.0.</p>
+</dd>
+<dt>macrs_class (int): The MACRS property class (1-20).</dt><dd><p>Only used by the macrs method. Defaults to 7.</p>
+</dd>
+<dt>convention (str): The depreciation convention for MACRS.</dt><dd><p>Only used by the macrs method. Defaults to “half_year”.</p>
+</dd>
+<dt>service_start_year (int): The year index (starting from 0)</dt><dd><p>when the asset is placed in service. Defaults to 2.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openpytea.plant.DepreciationConfig.method">
+<span class="sig-name descname"><span class="pre">method</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'straight_line'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'declining_balance'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'macrs'</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'straight_line'</span></span><a class="headerlink" href="#openpytea.plant.DepreciationConfig.method" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openpytea.plant.DepreciationConfig.life">
+<span class="sig-name descname"><span class="pre">life</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#openpytea.plant.DepreciationConfig.life" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openpytea.plant.DepreciationConfig.db_factor">
+<span class="sig-name descname"><span class="pre">db_factor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.0</span></span><a class="headerlink" href="#openpytea.plant.DepreciationConfig.db_factor" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openpytea.plant.DepreciationConfig.salvage_fraction">
+<span class="sig-name descname"><span class="pre">salvage_fraction</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></span><a class="headerlink" href="#openpytea.plant.DepreciationConfig.salvage_fraction" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openpytea.plant.DepreciationConfig.macrs_class">
+<span class="sig-name descname"><span class="pre">macrs_class</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></span><a class="headerlink" href="#openpytea.plant.DepreciationConfig.macrs_class" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openpytea.plant.DepreciationConfig.convention">
+<span class="sig-name descname"><span class="pre">convention</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'half_year'</span></span><a class="headerlink" href="#openpytea.plant.DepreciationConfig.convention" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="openpytea.plant.DepreciationConfig.service_start_year">
+<span class="sig-name descname"><span class="pre">service_start_year</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#openpytea.plant.DepreciationConfig.service_start_year" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openpytea.plant.build_depreciation_array">
+<span class="sig-prename descclassname"><span class="pre">openpytea.plant.</span></span><span class="sig-name descname"><span class="pre">build_depreciation_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_life</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capex_by_year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dep_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#build_depreciation_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.build_depreciation_array" title="Link to this definition">¶</a></dt>
+<dd><p>Build a depreciation schedule array over the project lifecycle.
+Calculates annual depreciation amounts for capital expenditures using the
+specified depreciation method. Supports multiple depreciation methods
+including straight-line,
+declining balance, and MACRS.
+:param project_life: The total duration of the project in years.
+:type project_life: <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>
+:param capex_by_year: Dictionary mapping year to capital expenditure amount for that year.
+:type capex_by_year: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict[int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float]</span></code>
+:param dep_cfg: Depreciation configuration dictionary containing method, life,</p>
+<blockquote>
+<div><p>salvage fraction, and method-specific parameters.
+If None, uses normalized default configuration.
+Default is None.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1D array of shape (project_life,) containing annual depreciation
+amounts. Values are floats representing depreciation in each year.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the depreciation method specified in dep_cfg is not one of the
+    supported methods: ‘straight_line’, ‘declining_balance’, or ‘macrs’.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>project_life</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>capex_by_year</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><em>Dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>]</em>)</p></li>
+<li><p><strong>dep_cfg</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optional[dict]</span></code>, <em>optional</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Capital expenditures are placed in service starting at the configured</dt><dd><p>service start year.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Depreciation schedules respect the project horizon after placement</dt><dd><p>in service.</p>
+</dd>
+</dl>
+</li>
+<li><p>Zero amounts and expired horizons are skipped without error.</p></li>
+</ul>
+</dd></dl>
+
+<p class="rubric">Classes</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="id0">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">openpytea.plant.</span></span><span class="sig-name descname"><span class="pre">Plant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Plant class for techno-economic analysis of industrial processing plants.
+This class models capital costs, operating expenses, revenue, and
+financial metrics for chemical/process plants. It supports multiple
+process types (Solids, Fluids, Mixed), geographic locations with regional
+cost factors, and comprehensive cash flow analysis.
+Attributes:</p>
+<blockquote>
+<div><dl>
+<dt>processTypes (dict): Cost multipliers for different process categories</dt><dd><p>(OS, DE, X).</p>
+</dd>
+<dt>locFactors (dict): Geographic location factors for capital cost</dt><dd><p>adjustments.</p>
+</dd>
+<dt>Configuration Parameters:</dt><dd><p>name (str): Plant name identifier.
+process_type (str): Type of process</p>
+<blockquote>
+<div><p>(“Solids”, “Fluids”, or “Mixed”).</p>
+</div></blockquote>
+<dl class="simple">
+<dt>country (str): Country location for cost factor lookup.</dt><dd><p>Default: “United States”.</p>
+</dd>
+</dl>
+<p>region (str): Regional area within country. Default: “Gulf Coast”.
+currency (str): Currency code (e.g., “USD”). Default: “USD”.
+exchange_rate (float): Conversion factor to base currency.</p>
+<blockquote>
+<div><p>Default: 1.0.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>interest_rate (float): Discount rate for NPV calculations.</dt><dd><p>Default: 0.09.</p>
+</dd>
+<dt>project_lifetime (int or array): Plant operating life in years.</dt><dd><p>Default: 20.</p>
+</dd>
+<dt>plant_utilization (float): Capacity utilization factor (0-1).</dt><dd><p>Default: 1.</p>
+</dd>
+</dl>
+<p>tax_rate (float): Corporate tax rate for cash flow. Default: 0.
+working_capital (float or None): Working capital requirement.</p>
+<blockquote>
+<div><p>Auto-calculated if None.</p>
+</div></blockquote>
+<p>depreciation (dict or None): Depreciation method configuration.</p>
+</dd>
+<dt>Cash Flow Profiles:</dt><dd><dl class="simple">
+<dt>capex_ramp (list or None): Fraction of fixed capital spent in each</dt><dd><p>construction year. Must be a 1-D list of non-negative numbers
+that sum to 1.0. Length must be less than project_lifetime.
+Working capital is drawn in the final construction year and
+released at the end of the project.
+Default: [0.3, 0.6, 0.1] (3-year build).</p>
+</dd>
+<dt>production_ramp (list or None): Nameplate capacity utilisation</dt><dd><p>fraction for each project year (0–1). Values must be between
+0 and 1. If shorter than project_lifetime the remaining years
+are set to 1.0 (full capacity). Length must not exceed
+project_lifetime.
+Default: [0, 0, 0.4, 0.8] (full capacity from year 4 on).</p>
+</dd>
+</dl>
+</dd>
+<dt>Capital Cost Factors:</dt><dd><dl>
+<dt>loc_factor (float or None): Location factor applied to ISBL.</dt><dd><p>Overrides country/region lookup when
+set. Default: None.</p>
+</dd>
+<dt>fixed_capital_factors (dict): Override the multipliers used to</dt><dd><p>calculate individual fixed capital components. Any subset of
+keys may be supplied; omitted keys fall back to processTypes
+defaults.
+Keys and defaults (process-type dependent):</p>
+<blockquote>
+<div><p>“osbl”        – fraction of ISBL       (e.g. 0.3 for Fluids)
+“de”          – fraction of ISBL+OSBL  (e.g. 0.3 for Fluids)
+“contingency” – fraction of ISBL+OSBL  (e.g. 0.1 for all types)</p>
+</div></blockquote>
+</dd>
+<dt>fixed_capital_components (dict): Override the computed cost value</dt><dd><p>of individual fixed capital components directly. Takes
+precedence over fixed_capital_factors for the same component.
+Keys match attribute names:</p>
+<blockquote>
+<div><p>“osbl”, “dne”, “contingency”</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd>
+<dt>Labor &amp; Operations:</dt><dd><p>operators_per_shift (int or None): Manual input or auto-calculated.
+operators_hired (int or None): Total operators needed;</p>
+<blockquote>
+<div><p>auto-calculated if None.</p>
+</div></blockquote>
+<p>operator_hourly_rate (dict or float): Wage rate for operators.
+working_weeks_per_year (int): Annual working weeks. Default: 49.
+working_shifts_per_week (int): Shifts per week. Default: 5.
+operating_shifts_per_day (int): Daily operating shifts. Default: 3.</p>
+</dd>
+<dt>Equipment &amp; Economics:</dt><dd><p>equipment_list (list): Equipment objects with cost data.
+variable_opex_inputs (dict): Variable operating cost inputs</p>
+<blockquote>
+<div><p>(consumption, price).</p>
+</div></blockquote>
+<dl class="simple">
+<dt>plant_products (dict): Product specifications</dt><dd><p>(production rate, price).</p>
+</dd>
+</dl>
+<p>fc (float): Fixed capital cost multiplier for installed costs.
+fp (float): Fixed OPEX cost multiplier.</p>
+</dd>
+<dt>Fixed OPEX Customisation:</dt><dd><dl>
+<dt>fixed_opex_factors (dict): Override the multipliers used to</dt><dd><p>calculate individual fixed OPEX components. Any subset of keys
+may be supplied; omitted keys fall back to defaults.
+Keys and defaults:</p>
+<blockquote>
+<div><p>“supervision”           – 0.25 × operating_labor_costs
+“direct_salary_overhead”– 0.50 × (labor + supervision)
+“laboratory_charges”    – 0.10 × operating_labor_costs
+“maintenance”           – 0.05 × ISBL
+“taxes_insurance”       – 0.015 × ISBL
+“rent_of_land”          – 0.015 × (ISBL + OSBL)
+“environmental_charges” – 0.01  × (ISBL + OSBL)
+“operating_supplies”    – 0.009 × ISBL
+“general_plant_overhead”– 0.65  × (labor + supervision</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>direct_salary_overhead)</p></li>
+</ul>
+</div></blockquote>
+<p>“working_capital”       – 0.15 × fixed_capital
+“patents_royalties”     – 0.02 × cash cost of production
+“distribution_selling”  – 0.02 × cash cost of production
+“rnd”                   – 0.03 × cash cost of production</p>
+</div></blockquote>
+</dd>
+<dt>fixed_opex_components (dict): Override the computed cost value of</dt><dd><p>individual fixed OPEX components directly. Takes precedence
+over fixed_opex_factors for the same component. Downstream
+components that depend on an overridden value use the
+overridden value in their own calculation.
+Keys match attribute names:</p>
+<blockquote>
+<div><p>“supervision_costs”, “direct_salary_overhead”,
+“laboratory_charges”, “maintenance_costs”,
+“taxes_insurance_costs”, “rent_of_land_costs”,
+“environmental_charges”, “operating_supplies”,
+“general_plant_overhead”, “patents_royalties”,
+“distribution_selling_costs”, “RnD_costs”</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd>
+<dt>Additional Capex:</dt><dd><p>additional_capex_years (array): Years when additional capex occurs.
+additional_capex_cost (array): Corresponding capex amounts.</p>
+</dd>
+<dt>Monte Carlo:</dt><dd><dl>
+<dt>project_uncertainties (dict): Per-parameter uncertainty settings</dt><dd><p>for Monte Carlo simulation. Each key maps to a sub-dict with
+optional fields <code class="docutils literal notranslate"><span class="pre">std</span></code>, <code class="docutils literal notranslate"><span class="pre">min</span></code>, and <code class="docutils literal notranslate"><span class="pre">max</span></code>. Omitting a key
+uses the built-in default distribution. Setting <code class="docutils literal notranslate"><span class="pre">std=0</span></code>
+disables sampling for that parameter (default for
+plant_utilization and tax_rate). Supported keys:</p>
+<blockquote>
+<div><p>“fixed_capital_factor” – std=0.3,  min=0.25, max=1.75
+“fixed_opex_factor”    – std=0.3,  min=0.25, max=1.75
+“project_lifetime”     – std=5,    min/max auto (±2σ, ≥5)
+“interest_rate”        – std=0.03, min/max auto (±2σ, ≥0.02)
+“plant_utilization”    – std=0     (fixed unless overridden)
+“tax_rate”             – std=0     (fixed unless overridden)</p>
+</div></blockquote>
+</dd>
+<dt>monte_carlo_inputs (dict or None): Stochastic input distributions</dt><dd><p>populated after running monte_carlo().</p>
+</dd>
+<dt>monte_carlo_metrics (dict or None): Distribution results populated</dt><dd><p>after running monte_carlo().</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+<dl>
+<dt>Methods:</dt><dd><dl>
+<dt>__init__(configuration: dict):</dt><dd><p>Initialize plant with configuration dictionary.</p>
+</dd>
+<dt>update_configuration(configuration: dict):</dt><dd><p>Update plant parameters while preserving nested structures.</p>
+</dd>
+<dt>calculate_purchased_cost(print_results: bool = False) -&gt; float:</dt><dd><p>Sum equipment purchase costs with exchange rate conversion.</p>
+</dd>
+<dt>calculate_isbl(fc: float = 1.0, print_results: bool = False) -&gt; float:</dt><dd><p>Calculate Inside Battery Limits cost (direct equipment costs
+adjusted for location).</p>
+</dd>
+<dt>calculate_fixed_capital(fc: float = None,</dt><dd><blockquote>
+<div><p>additional_capex: bool = False,
+print_results: bool = False) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate total fixed capital including ISBL, OSBL,
+design/engineering, and contingency.</p>
+</dd>
+<dt>calculate_variable_opex(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate annual variable operating costs (feedstock, utilities).</p>
+</dd>
+<dt>calculate_revenue(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate annual revenue from plant products.</p>
+</dd>
+<dt>calculate_operating_labor(no_fluid_process: int = None,</dt><dd><blockquote>
+<div><p>no_solid_process: int = None) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate total annual operating labor costs.</p>
+</dd>
+<dt>calculate_fixed_opex(fp: float = None,</dt><dd><blockquote>
+<div><p>print_results: bool = False) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate fixed operating expenses (maintenance, supervision,
+overhead, etc.).</p>
+</dd>
+<dt>calculate_cash_flow(print_results: bool = False) -&gt;</dt><dd><blockquote>
+<div><p>pd.DataFrame or None:</p>
+</div></blockquote>
+<p>Build year-by-year cash flow with CAPEX profile, revenue, costs,
+depreciation, taxes. Supports multiple scenarios if array inputs
+provided.</p>
+</dd>
+<dt>calculate_npv(print_results: bool = False) -&gt; float or np.ndarray:</dt><dd><p>Calculate Net Present Value of cash flows using interest_rate as
+discount rate.</p>
+</dd>
+<dt>calculate_levelized_cost(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate levelized cost ($/unit) over project lifetime.</p>
+</dd>
+<dt>calculate_payback_time(additional_capex: bool = False,</dt><dd><blockquote>
+<div><p>print_results: bool = False) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate years required to recover initial investment
+from cash flows.</p>
+</dd>
+<dt>calculate_roi(additional_capex: bool = False,</dt><dd><blockquote>
+<div><p>print_results: bool = False) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate Return on Investment percentage over project lifetime.</p>
+</dd>
+<dt>calculate_irr(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate Internal Rate of Return (discount rate where NPV = 0).</p>
+</dd>
+<dt>calculate_all(additional_capex: bool = False,</dt><dd><blockquote>
+<div><p>print_results: bool = False):</p>
+</div></blockquote>
+<p>Execute all financial calculations sequentially.</p>
+</dd>
+<dt>count_process_steps(equipments: list, target_process_types: set,</dt><dd><blockquote>
+<div><p>excluded_cats: set = None) -&gt; int:</p>
+</div></blockquote>
+<p>Count equipment units matching process type and category filters.</p>
+</dd>
+<dt>calculate_operators_per_shift(no_fluid_process: int = None,</dt><dd><blockquote>
+<div><p>no_solid_process: int = None) -&gt; float:</p>
+</div></blockquote>
+<p>Calculate operators needed per shift using empirical correlation.</p>
+</dd>
+<dt>calculate_operators_hired(no_fluid_process: int = None,</dt><dd><blockquote>
+<div><p>no_solid_process: int = None) -&gt; int:</p>
+</div></blockquote>
+<p>Calculate total operators to hire accounting for
+working/operating schedule.</p>
+</dd>
+<dt>to_dict() -&gt; dict:</dt><dd><p>Serialize plant configuration and all calculated metrics
+to dictionary.</p>
+</dd>
+<dt>__str__() -&gt; str:</dt><dd><p>Return formatted string representation of all configuration
+parameters.</p>
+</dd>
+</dl>
+</dd>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s2">&quot;plant_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Example Plant&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;process_type&quot;</span><span class="p">:</span> <span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;country&quot;</span><span class="p">:</span> <span class="s2">&quot;United States&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;Gulf Coast&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;equipment&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">equipment_obj</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="s2">&quot;plant_products&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;product_A&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;production&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+<span class="go">                            &quot;price&quot;: 50}},</span>
+<span class="go">... }</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plant</span> <span class="o">=</span> <span class="n">Plant</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plant</span><span class="o">.</span><span class="n">calculate_all</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">npv</span> <span class="o">=</span> <span class="n">plant</span><span class="o">.</span><span class="n">calculate_npv</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>configuration</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">processTypes</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'Fluids':</span> <span class="pre">{'DE':</span> <span class="pre">0.3,</span> <span class="pre">'OS':</span> <span class="pre">0.3,</span> <span class="pre">'X':</span> <span class="pre">0.1},</span> <span class="pre">'Mixed':</span> <span class="pre">{'DE':</span> <span class="pre">0.25,</span> <span class="pre">'OS':</span> <span class="pre">0.4,</span> <span class="pre">'X':</span> <span class="pre">0.1},</span> <span class="pre">'Solids':</span> <span class="pre">{'DE':</span> <span class="pre">0.2,</span> <span class="pre">'OS':</span> <span class="pre">0.4,</span> <span class="pre">'X':</span> <span class="pre">0.1}}</span></span><a class="headerlink" href="#id1" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">locFactors</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'Australia':</span> <span class="pre">1.21,</span> <span class="pre">'Brazil':</span> <span class="pre">1.14,</span> <span class="pre">'Canada':</span> <span class="pre">{'Fort</span> <span class="pre">McMurray':</span> <span class="pre">1.6,</span> <span class="pre">'Ontario':</span> <span class="pre">1.0},</span> <span class="pre">'China':</span> <span class="pre">{'imported':</span> <span class="pre">1.12,</span> <span class="pre">'indigenous':</span> <span class="pre">0.61},</span> <span class="pre">'France':</span> <span class="pre">1.13,</span> <span class="pre">'Germany':</span> <span class="pre">1.11,</span> <span class="pre">'India':</span> <span class="pre">1.02,</span> <span class="pre">'Italy':</span> <span class="pre">1.14,</span> <span class="pre">'Japan':</span> <span class="pre">1.26,</span> <span class="pre">'Mexico':</span> <span class="pre">1.03,</span> <span class="pre">'Middle</span> <span class="pre">East':</span> <span class="pre">1.07,</span> <span class="pre">'Netherlands':</span> <span class="pre">1.19,</span> <span class="pre">'Russia':</span> <span class="pre">1.53,</span> <span class="pre">'Southeast</span> <span class="pre">Asia':</span> <span class="pre">1.12,</span> <span class="pre">'United</span> <span class="pre">Kingdom':</span> <span class="pre">1.02,</span> <span class="pre">'United</span> <span class="pre">States':</span> <span class="pre">{'East</span> <span class="pre">Coast':</span> <span class="pre">1.04,</span> <span class="pre">'Gulf</span> <span class="pre">Coast':</span> <span class="pre">1.0,</span> <span class="pre">'Midwest':</span> <span class="pre">1.02,</span> <span class="pre">'West</span> <span class="pre">Coast':</span> <span class="pre">1.07}}</span></span><a class="headerlink" href="#id2" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">update_configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.update_configuration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>configuration</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">calculate_purchased_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_purchased_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">calculate_isbl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_isbl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id5" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">calculate_fixed_capital</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_fixed_capital"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">calculate_variable_opex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_variable_opex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id7" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">calculate_revenue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_revenue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id8" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">count_process_steps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">equipments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_process_types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_cats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.count_process_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id9" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-name descname"><span class="pre">calculate_operators_per_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operators_per_shift"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id10" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">calculate_operators_hired</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operators_hired"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id11" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">calculate_operating_labor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operating_labor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id12" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-name descname"><span class="pre">calculate_fixed_opex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_fixed_opex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id13" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-name descname"><span class="pre">calculate_cash_flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_cash_flow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id14" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-name descname"><span class="pre">calculate_npv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_npv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id15" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id16">
+<span class="sig-name descname"><span class="pre">calculate_levelized_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_levelized_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id16" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id17">
+<span class="sig-name descname"><span class="pre">calculate_payback_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_payback_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id17" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id18">
+<span class="sig-name descname"><span class="pre">calculate_roi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_roi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id18" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id19">
+<span class="sig-name descname"><span class="pre">calculate_irr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_irr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id19" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id20">
+<span class="sig-name descname"><span class="pre">calculate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id20" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id21">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id21" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="id22">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">openpytea.plant.</span></span><span class="sig-name descname"><span class="pre">DepreciationConfig</span></span><a class="reference internal" href="../_modules/openpytea/plant.html#DepreciationConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id22" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Configuration for asset depreciation calculations.</p>
+<p>This class defines the parameters needed to compute depreciation
+using various methods.</p>
+<dl>
+<dt>Attributes:</dt><dd><p>method (DepMethod): The depreciation method to use.
+Defaults to “straight_line”.
+Options: “straight_line”, “declining_balance”, “macrs”.
+life (Optional[int]): The useful life of the asset in years.</p>
+<blockquote>
+<div><p>Used by straight_line and declining_balance methods.
+Defaults to None.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>db_factor (float): The declining balance factor (multiplier).</dt><dd><p>Only used by the declining_balance method. Defaults to 2.0.</p>
+</dd>
+<dt>salvage_fraction (float): The salvage value as a fraction</dt><dd><p>of the initial cost.
+Used by straight_line and declining_balance methods.
+Defaults to 0.0.</p>
+</dd>
+<dt>macrs_class (int): The MACRS property class (1-20).</dt><dd><p>Only used by the macrs method. Defaults to 7.</p>
+</dd>
+<dt>convention (str): The depreciation convention for MACRS.</dt><dd><p>Only used by the macrs method. Defaults to “half_year”.</p>
+</dd>
+<dt>service_start_year (int): The year index (starting from 0)</dt><dd><p>when the asset is placed in service. Defaults to 2.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id23">
+<span class="sig-name descname"><span class="pre">method</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'straight_line'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'declining_balance'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'macrs'</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'straight_line'</span></span><a class="headerlink" href="#id23" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id24">
+<span class="sig-name descname"><span class="pre">life</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#id24" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id25">
+<span class="sig-name descname"><span class="pre">db_factor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.0</span></span><a class="headerlink" href="#id25" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id26">
+<span class="sig-name descname"><span class="pre">salvage_fraction</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></span><a class="headerlink" href="#id26" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id27">
+<span class="sig-name descname"><span class="pre">macrs_class</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></span><a class="headerlink" href="#id27" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id28">
+<span class="sig-name descname"><span class="pre">convention</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'half_year'</span></span><a class="headerlink" href="#id28" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id29">
+<span class="sig-name descname"><span class="pre">service_start_year</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#id29" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="analysis.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">openpytea.analysis</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="equipment.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">openpytea.equipment</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Panji B. Tamarona, Thijs J.H. Vlugt, Mahinder Ramdin
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">openpytea.plant</a><ul>
+<li><a class="reference internal" href="#openpytea.plant.Plant"><code class="docutils literal notranslate"><span class="pre">Plant</span></code></a><ul>
+<li><a class="reference internal" href="#openpytea.plant.Plant.processTypes"><code class="docutils literal notranslate"><span class="pre">Plant.processTypes</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.locFactors"><code class="docutils literal notranslate"><span class="pre">Plant.locFactors</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.update_configuration"><code class="docutils literal notranslate"><span class="pre">Plant.update_configuration()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_purchased_cost"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_purchased_cost()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_isbl"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_isbl()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_fixed_capital"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_fixed_capital()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_variable_opex"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_variable_opex()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_revenue"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_revenue()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.count_process_steps"><code class="docutils literal notranslate"><span class="pre">Plant.count_process_steps()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_operators_per_shift"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_operators_per_shift()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_operators_hired"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_operators_hired()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_operating_labor"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_operating_labor()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_fixed_opex"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_fixed_opex()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_cash_flow"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_cash_flow()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_npv"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_npv()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_levelized_cost"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_levelized_cost()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_payback_time"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_payback_time()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_roi"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_roi()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_irr"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_irr()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.calculate_all"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_all()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.Plant.to_dict"><code class="docutils literal notranslate"><span class="pre">Plant.to_dict()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#openpytea.plant.DepreciationConfig"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig</span></code></a><ul>
+<li><a class="reference internal" href="#openpytea.plant.DepreciationConfig.method"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.method</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.DepreciationConfig.life"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.life</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.DepreciationConfig.db_factor"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.db_factor</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.DepreciationConfig.salvage_fraction"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.salvage_fraction</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.DepreciationConfig.macrs_class"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.macrs_class</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.DepreciationConfig.convention"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.convention</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.plant.DepreciationConfig.service_start_year"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.service_start_year</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#openpytea.plant.build_depreciation_array"><code class="docutils literal notranslate"><span class="pre">build_depreciation_array()</span></code></a></li>
+<li><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">Plant</span></code></a><ul>
+<li><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">Plant.processTypes</span></code></a></li>
+<li><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">Plant.locFactors</span></code></a></li>
+<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">Plant.update_configuration()</span></code></a></li>
+<li><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_purchased_cost()</span></code></a></li>
+<li><a class="reference internal" href="#id5"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_isbl()</span></code></a></li>
+<li><a class="reference internal" href="#id6"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_fixed_capital()</span></code></a></li>
+<li><a class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_variable_opex()</span></code></a></li>
+<li><a class="reference internal" href="#id8"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_revenue()</span></code></a></li>
+<li><a class="reference internal" href="#id9"><code class="docutils literal notranslate"><span class="pre">Plant.count_process_steps()</span></code></a></li>
+<li><a class="reference internal" href="#id10"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_operators_per_shift()</span></code></a></li>
+<li><a class="reference internal" href="#id11"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_operators_hired()</span></code></a></li>
+<li><a class="reference internal" href="#id12"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_operating_labor()</span></code></a></li>
+<li><a class="reference internal" href="#id13"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_fixed_opex()</span></code></a></li>
+<li><a class="reference internal" href="#id14"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_cash_flow()</span></code></a></li>
+<li><a class="reference internal" href="#id15"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_npv()</span></code></a></li>
+<li><a class="reference internal" href="#id16"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_levelized_cost()</span></code></a></li>
+<li><a class="reference internal" href="#id17"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_payback_time()</span></code></a></li>
+<li><a class="reference internal" href="#id18"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_roi()</span></code></a></li>
+<li><a class="reference internal" href="#id19"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_irr()</span></code></a></li>
+<li><a class="reference internal" href="#id20"><code class="docutils literal notranslate"><span class="pre">Plant.calculate_all()</span></code></a></li>
+<li><a class="reference internal" href="#id21"><code class="docutils literal notranslate"><span class="pre">Plant.to_dict()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id22"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig</span></code></a><ul>
+<li><a class="reference internal" href="#id23"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.method</span></code></a></li>
+<li><a class="reference internal" href="#id24"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.life</span></code></a></li>
+<li><a class="reference internal" href="#id25"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.db_factor</span></code></a></li>
+<li><a class="reference internal" href="#id26"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.salvage_fraction</span></code></a></li>
+<li><a class="reference internal" href="#id27"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.macrs_class</span></code></a></li>
+<li><a class="reference internal" href="#id28"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.convention</span></code></a></li>
+<li><a class="reference internal" href="#id29"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig.service_start_year</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=1d3a154c"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=fd10adb8"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    </body>
+</html>
