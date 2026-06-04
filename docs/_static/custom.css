@@ -1,0 +1,66 @@
+/* OpenPyTEA documentation custom styles
+   Main palette: #538DFF (blue), #303030 (dark), #FFFFFF (white)
+*/
+
+/* ── Light mode ─────────────────────────────────────────────── */
+body[data-theme="light"],
+:root:not([data-theme="dark"]) {
+    --color-admonition-title-background--note: #EBF2FF;
+    --color-admonition-title--note: #538DFF;
+    --color-admonition-title-background--tip: #E8F5E9;
+    --color-admonition-title-background--warning: #FFF8E1;
+    --color-admonition-title-background--caution: #FFF3E0;
+    --color-admonition-title-background--danger: #FFEBEE;
+}
+
+/* Sidebar active link highlight */
+body[data-theme="light"] .sidebar-tree .current-page > .reference {
+    color: #538DFF;
+    font-weight: 600;
+}
+
+/* Code block styling */
+body[data-theme="light"] .highlight {
+    background: #F5F8FF;
+    border-left: 3px solid #538DFF;
+}
+
+/* ── Dark mode ───────────────────────────────────────────────── */
+body[data-theme="dark"] {
+    --color-admonition-title-background--note: #1A2A4A;
+    --color-admonition-title--note: #7AAAFF;
+    --color-admonition-title-background--tip: #1A2E1A;
+    --color-admonition-title-background--warning: #2E2A1A;
+    --color-admonition-title-background--caution: #2E2010;
+    --color-admonition-title-background--danger: #2E1A1A;
+}
+
+body[data-theme="dark"] .sidebar-tree .current-page > .reference {
+    color: #7AAAFF;
+    font-weight: 600;
+}
+
+body[data-theme="dark"] .highlight {
+    background: #1E2535;
+    border-left: 3px solid #538DFF;
+}
+
+/* ── Shared ──────────────────────────────────────────────────── */
+/* Inline code */
+code.literal {
+    color: #2B6AE0;
+    background: #EBF2FF;
+    border-radius: 3px;
+    padding: 0.1em 0.3em;
+}
+
+body[data-theme="dark"] code.literal {
+    color: #7AAAFF;
+    background: #1A2A4A;
+}
+
+/* API member headers */
+dt.sig {
+    border-left: 3px solid #538DFF;
+    padding-left: 0.5em;
+}

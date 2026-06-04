@@ -23,17 +23,42 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "furo"
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 
 html_theme_options = {
     "sidebar_hide_name": False,
     "navigation_with_keys": True,
     "light_css_variables": {
-        "color-brand-primary": "#2e7d32",
-        "color-brand-content": "#2e7d32",
+        "color-brand-primary": "#538DFF",
+        "color-brand-content": "#538DFF",
+        "color-background-primary": "#FFFFFF",
+        "color-background-secondary": "#F0F4FF",
+        "color-background-border": "#D6E4FF",
+        "color-foreground-primary": "#303030",
+        "color-foreground-secondary": "#555555",
+        "color-foreground-muted": "#777777",
+        "color-foreground-border": "#DDDDDD",
+        "color-highlight-on-target": "#EBF2FF",
+        "color-link": "#538DFF",
+        "color-link--hover": "#2B6AE0",
+        "color-link-underline": "#99BDFF",
+        "color-link-underline--hover": "#538DFF",
     },
     "dark_css_variables": {
-        "color-brand-primary": "#66bb6a",
-        "color-brand-content": "#66bb6a",
+        "color-brand-primary": "#538DFF",
+        "color-brand-content": "#7AAAFF",
+        "color-background-primary": "#1C1C1C",
+        "color-background-secondary": "#262626",
+        "color-background-border": "#3A3A3A",
+        "color-foreground-primary": "#FFFFFF",
+        "color-foreground-secondary": "#CCCCCC",
+        "color-foreground-muted": "#999999",
+        "color-foreground-border": "#444444",
+        "color-highlight-on-target": "#1A2A4A",
+        "color-link": "#7AAAFF",
+        "color-link--hover": "#99BDFF",
+        "color-link-underline": "#3A5A99",
+        "color-link-underline--hover": "#7AAAFF",
     },
 }
 
