@@ -26,11 +26,12 @@ html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_js_files = ["caption_links.js"]
+# html_logo = "_static/logo-blue.png"
 
 html_theme_options = {
     "sidebar_hide_name": True,
-    "light_logo": "OpenPyTEA-logo-black.png",
-    "dark_logo": "OpenPyTEA-logo.png",
+    "light_logo": "logo-black.png",
+    "dark_logo": "logo-white.png",
     "navigation_with_keys": True,
     "light_css_variables": {
         "color-brand-primary": "#538DFF",
