@@ -75,6 +75,101 @@
   white-space: nowrap;
 }
 
+.brand-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ===== Welcome / splash screen ===== */
+.welcome {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #0f1117 0%, #1a1a2e 100%);
+  color: #fff;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.welcome-card {
+  max-width: 640px;
+  width: 100%;
+  background: #1c1e2a;
+  border: 1px solid #2d3042;
+  border-radius: 16px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.5);
+  padding: 40px 48px;
+  text-align: center;
+  color: #fff;
+}
+
+.welcome-logo {
+  width: 180px;
+  height: auto;
+  margin: 0 auto 16px;
+  display: block;
+}
+
+.welcome-title {
+  font-size: 32px;
+  margin: 0 0 8px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+.welcome-subtitle {
+  font-size: 15px;
+  color: #c0c4d0;
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+
+.welcome-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  text-align: left;
+}
+
+.welcome-features li {
+  position: relative;
+  padding: 10px 0 10px 24px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #c0c4d0;
+  border-bottom: 1px solid #2d3042;
+}
+
+.welcome-features li:last-child { border-bottom: none; }
+
+.welcome-features li::before {
+  content: "›";
+  position: absolute;
+  left: 4px;
+  top: 9px;
+  color: #5b7cfa;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.welcome-features strong { color: #fff; }
+
+.welcome-hint {
+  font-size: 13px;
+  color: #8a8fa3;
+  margin: 0 0 24px;
+}
+
+.welcome-cta {
+  padding: 12px 32px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .tabs {
   display: flex;
   gap: 4px;

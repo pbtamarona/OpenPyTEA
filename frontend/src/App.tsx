@@ -7,6 +7,7 @@ import MonteCarloPage from "./pages/MonteCarloPage";
 import { saveProject, loadProject, getExamples, loadExample } from "./api/client";
 import type { ExamplePreset } from "./api/client";
 import ComparePage from "./pages/ComparePage";
+import WelcomePage from "./pages/WelcomePage";
 import type { CalculationResults, ComparedPlant, PlantInput } from "./types";
 import "./App.css";
 
@@ -25,6 +26,7 @@ function App() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
   const [comparedPlants, setComparedPlants] = useState<ComparedPlant[]>([]);
+  const [showWelcome, setShowWelcome] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const addToComparison = async (name: string, currency: string, r: CalculationResults) => {
@@ -57,10 +59,12 @@ function App() {
   }, [dark]);
 
   useEffect(() => {
+    if (showWelcome) return;
     getExamples().then(setExamples).catch((e: unknown) => {
-      setError(e instanceof Error ? e.message : "Failed to load examples");
+      // non-critical — examples just won't appear in the dropdown
+      console.warn("Examples fetch failed:", e);
     });
-  }, []);
+  }, [showWelcome]);
 
   const handleSave = async () => {
     try {
@@ -105,10 +109,14 @@ function App() {
     }
   };
 
+  if (showWelcome) {
+    return <WelcomePage onContinue={() => setShowWelcome(false)} />;
+  }
+
   return (
     <div className="app">
       <header className="header">
-        <h1>OpenPyTEA</h1>
+        <img src="/logo.png" alt="OpenPyTEA" className="brand-logo" />
         <nav className="tabs">
           {TABS.map((t) => (
             <button key={t} className={tab === t ? "tab active" : "tab"} onClick={() => setTab(t)}>
