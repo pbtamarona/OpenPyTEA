@@ -1,4 +1,4 @@
-OpenPyTEA
+Open-Source Techno-Economic Assessment Python-Toolkit
 =========
 
 .. image:: https://img.shields.io/pypi/v/OpenPyTEA.svg
@@ -14,7 +14,7 @@ OpenPyTEA
 
 |
 
-**OpenPyTEA**  An open-source python toolkit for techno-economic assessment
+**OpenPyTEA:**  An open-source python toolkit for techno-economic assessment
 of chemical process plants and energy systems with economic sensitivity
 and uncertainty evaluation. It bridges process simulation tools —
 which provide mass and energy balances — with rigorous economic evaluation,
