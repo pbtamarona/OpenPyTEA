@@ -1,0 +1,873 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="openpytea.plotting" href="plotting.html"><link rel="prev" title="openpytea.plant" href="plant.html">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo.png" as="image">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>openpytea.analysis - OpenPyTEA</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=3437e138" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #538DFF;
+  --color-background-primary: #FFFFFF;
+  --color-background-secondary: #F0F4FF;
+  --color-background-border: #D6E4FF;
+  --color-foreground-primary: #303030;
+  --color-foreground-secondary: #555555;
+  --color-foreground-muted: #777777;
+  --color-foreground-border: #DDDDDD;
+  --color-highlight-on-target: #EBF2FF;
+  --color-link: #538DFF;
+  --color-link--hover: #2B6AE0;
+  --color-link-underline: #99BDFF;
+  --color-link-underline--hover: #538DFF;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #7AAAFF;
+  --color-background-primary: #1C1C1C;
+  --color-background-secondary: #262626;
+  --color-background-border: #3A3A3A;
+  --color-foreground-primary: #FFFFFF;
+  --color-foreground-secondary: #CCCCCC;
+  --color-foreground-muted: #999999;
+  --color-foreground-border: #444444;
+  --color-highlight-on-target: #1A2A4A;
+  --color-link: #7AAAFF;
+  --color-link--hover: #99BDFF;
+  --color-link-underline: #3A5A99;
+  --color-link-underline--hover: #7AAAFF;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #7AAAFF;
+  --color-background-primary: #1C1C1C;
+  --color-background-secondary: #262626;
+  --color-background-border: #3A3A3A;
+  --color-foreground-primary: #FFFFFF;
+  --color-foreground-secondary: #CCCCCC;
+  --color-foreground-muted: #999999;
+  --color-foreground-border: #444444;
+  --color-highlight-on-target: #1A2A4A;
+  --color-link: #7AAAFF;
+  --color-link--hover: #99BDFF;
+  --color-link-underline: #3A5A99;
+  --color-link-underline--hover: #7AAAFF;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">OpenPyTEA</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
+  
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/equipment.html">Equipment Cost Estimation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/plant.html">Plant-Level TEA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/analysis.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/io_workflow.html">JSON Workflow</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="equipment.html">openpytea.equipment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plant.html">openpytea.plant</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">openpytea.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">openpytea.plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">openpytea.io</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">More</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gui.html">Web GUI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citation.html">Citation &amp; License</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/api/analysis.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-openpytea.analysis">
+<span id="openpytea-analysis"></span><h1>openpytea.analysis<a class="headerlink" href="#module-openpytea.analysis" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="openpytea.analysis.direct_costs_data">
+<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">direct_costs_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#direct_costs_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.direct_costs_data" title="Link to this definition">¶</a></dt>
+<dd><p>Extract and organize direct cost data from one or more plants.
+This function aggregates direct cost information from equipment lists
+across one or more plants and prepares the data for visualization as
+a bar chart.
+:param plants: A single plant object or a list of plant objects from which to extract</p>
+<blockquote>
+<div><p>direct cost data.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>pct</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – If True, return direct costs as percentages of the total. If False
+(default), return absolute cost values.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing structured data for bar chart visualization,
+including:
+- Component costs keyed by equipment name
+- Plant names as x-axis labels
+- Currency symbol
+- Chart title and formatting information</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If plants list is empty, USD currency symbol is used as default</p></li>
+<li><p>Currency is automatically extracted from the first plant in the list</p></li>
+<li><p>Each equipment’s direct cost is converted to float for numerical</p></li>
+</ul>
+<p>operations</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">plant1</span> <span class="o">=</span> <span class="n">Plant</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Plant A&quot;</span><span class="p">,</span> <span class="n">currency</span><span class="o">=</span><span class="s2">&quot;$&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">direct_costs_data</span><span class="p">(</span><span class="n">plant1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">direct_costs_data</span><span class="p">([</span><span class="n">plant1</span><span class="p">,</span> <span class="n">plant2</span><span class="p">],</span> <span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openpytea.analysis.fixed_capital_data">
+<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">fixed_capital_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#fixed_capital_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.fixed_capital_data" title="Link to this definition">¶</a></dt>
+<dd><p>Generate fixed capital expenditure data for one or more plants.
+This function calculates and aggregates the fixed capital costs for given
+plants, breaking down costs into components (ISBL, OSBL,
+Design &amp; Engineering, and Contingency). Optionally includes additional
+CAPEX costs if available.
+Args:</p>
+<blockquote>
+<div><p>plants (Plant or list[Plant]): A single plant object or list of plant
+objects to generate fixed capital data for.
+additional_capex (bool, optional):
+If True, includes additional CAPEX costs</p>
+<blockquote>
+<div><p>from the plant’s <cite>additional_capex_cost</cite> attribute.
+Defaults to False.</p>
+</div></blockquote>
+<p>pct (bool, optional): If True, returns data as percentages
+of total CAPEX.</p>
+<blockquote>
+<div><p>If False, returns absolute values. Defaults to False.</p>
+</div></blockquote>
+</div></blockquote>
+<dl>
+<dt>Returns:</dt><dd><dl>
+<dt>dict: A dictionary containing structured bar chart data with keys:</dt><dd><ul class="simple">
+<li><p>“components”: List of dictionaries with CAPEX component</p></li>
+</ul>
+<p>breakdowns
+- “labels”: List of plant names (x-axis labels)
+- “title”: Chart title (“Fixed CAPEX”)
+- “currency”: Currency symbol or code
+- “percentage”: Boolean indicating if values are percentages</p>
+</dd>
+</dl>
+</dd>
+<dt>Raises:</dt><dd><p>AttributeError: If plant objects lack required attributes (isbl, osbl,
+dne, etc.).</p>
+</dd>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">plants</span> <span class="o">=</span> <span class="p">[</span><span class="n">plant1</span><span class="p">,</span> <span class="n">plant2</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">fixed_capital_data</span><span class="p">(</span><span class="n">plants</span><span class="p">,</span> <span class="n">additional_capex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pct</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Returns fixed CAPEX breakdown for both plants with additional</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># costs in absolute values</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openpytea.analysis.variable_opex_data">
+<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">variable_opex_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#variable_opex_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.variable_opex_data" title="Link to this definition">¶</a></dt>
+<dd><p>Extract variable operational expenditure (OPEX) data from ‘
+one or more plants. This function processes plant objects to compile their
+variable OPEX components and returns formatted data suitable for
+visualization. It handles multiple cost definition formats and supports
+currency representation.
+Args:</p>
+<blockquote>
+<div><p>plants (Plant or list[Plant]): A single plant object
+or list of plant objects from which to extract variable OPEX data.
+pct (bool, optional): If True, display values as percentages.
+Default is False.</p>
+</div></blockquote>
+<dl>
+<dt>Returns:</dt><dd><p>dict: A dictionary containing structured data for visualization,
+including:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Components breakdown for each plant</p></li>
+<li><p>X-axis labels (plant names)</p></li>
+<li><p>Title: “Annual variable OPEX”</p></li>
+<li><p>Currency symbol or format</p></li>
+<li><p>Data formatted as percentages if pct=True</p></li>
+</ul>
+</div></blockquote>
+</dd>
+<dt>Notes:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>Cost values are determined from (in priority order):</dt><dd><ol class="arabic simple">
+<li><p>“annual_cost” field</p></li>
+<li><p>“cost” field</p></li>
+<li><p>“consumption” * “price” calculation</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><p>If none of these fields exist, the component is skipped.</p></li>
+<li><p>Component names are formatted via _make_label() function.</p></li>
+<li><p>Currency is extracted from the first plant,</p></li>
+</ul>
+<p>defaulting to “$” if no plants provided.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openpytea.analysis.fixed_opex_data">
+<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">fixed_opex_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#fixed_opex_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.fixed_opex_data" title="Link to this definition">¶</a></dt>
+<dd><p>Generate fixed operating expenditure (OPEX) data for one or more plants.
+This function calculates and aggregates the fixed OPEX components for the
+given plants, including operating labor, supervision, maintenance, taxes,
+insurance, and other operational costs.
+:param plants: A single Plant object or a list of Plant objects for which to</p>
+<blockquote>
+<div><p>calculate fixed OPEX data.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>pct</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – If True, return OPEX data as percentages. If False (default),
+return absolute values.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing structured bar chart data with OPEX components
+and plant names.
+The structure includes:
+- Component costs (Operating labor, Supervision, Maintenance, etc.)
+- Plant names as x-axis labels
+- Currency information
+- Annual fixed OPEX totals</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function calculates the following fixed OPEX components:
+- Operating labor
+- Supervision
+- Direct salary overhead
+- Laboratory charges
+- Maintenance
+- Taxes &amp; insurance
+- Rent of land
+- Environmental charges
+- Operating supplies
+- General plant overhead
+- Interest on working capital
+- Patents &amp; royalties
+- Distribution &amp; selling
+- Research &amp; Development (R&amp;D)</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">fixed_opex_data</span><span class="p">(</span><span class="n">plant1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">fixed_opex_data</span><span class="p">([</span><span class="n">plant1</span><span class="p">,</span> <span class="n">plant2</span><span class="p">],</span> <span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openpytea.analysis.sensitivity_data">
+<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">sensitivity_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plus_minus_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">21</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LCOP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#sensitivity_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.sensitivity_data" title="Link to this definition">¶</a></dt>
+<dd><p>Perform sensitivity analysis on one or more plants by varying a parameter.
+This function computes how a specified metric (e.g., LCOP) changes as a
+parameter is varied by a given percentage range. It supports both top-level
+parameters (capital, opex, etc.) and nested parameters (variable costs,
+product prices, etc.).
+:param plants: One or more Plant objects to analyze. If a single plant is provided,</p>
+<blockquote>
+<div><p>it is converted to a list.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – <p>The parameter to vary. Can be specified as:
+- A top-level key: “fixed_capital”, “fixed_opex”, “project_lifetime”,</p>
+<blockquote>
+<div><p>”interest_rate”, or “operator_hourly_rate”</p>
+</div></blockquote>
+<ul>
+<li><p>A nested key: “variable_opex_inputs.{key}” or “plant_products.{key}”</p></li>
+<li><p>A shorthand: “{key}” (resolved to full path if unambiguous)</p></li>
+</ul>
+</p></li>
+<li><p><strong>plus_minus_value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The fraction (0-1) to vary the parameter by in both directions.
+For example, 0.2 varies from -20% to +20%.</p></li>
+<li><p><strong>n_points</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Number of points along the variation range. Default is 21.</p></li>
+<li><p><strong>metric</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – The metric to compute. Default is “LCOP”.
+Will be converted to uppercase.</p></li>
+<li><p><strong>label</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – Custom label for the y-axis. If None, a default label is generated
+based on the metric and plant currency.</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Whether to include additional capital expenditure in calculations.
+Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A dictionary containing:
+- “curves” : list of dict</p>
+<blockquote>
+<div><p>List of results for each plant, each containing:
+- “plant” : str</p>
+<blockquote>
+<div><p>Plant name or identifier</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>”x”<span class="classifier">ndarray</span></dt><dd><p>Percentage changes along the variation range</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>”y”<span class="classifier">ndarray or list</span></dt><dd><p>Metric values corresponding to each point</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>”baseline”<span class="classifier">float</span></dt><dd><p>Metric value at the baseline (0% variation)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>”xlabel”<span class="classifier">str</span></dt><dd><p>Label for the x-axis (parameter name with % unit)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>”ylabel”<span class="classifier">str</span></dt><dd><p>Label for the y-axis (metric name and unit)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>”parameter”<span class="classifier">str</span></dt><dd><p>Full parameter name that was varied</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>”metric”<span class="classifier">str</span></dt><dd><p>Metric that was computed (uppercase)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If parameter is ambiguous across plants or unrecognized.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For “fixed_capital” and “fixed_opex”,</p></li>
+</ul>
+<p>the original value is assumed to be 1.0
+- If a parameter does not exist for a particular plant,
+a flat baseline curve is returned
+- Shorthand parameters are resolved from full nested keys
+(e.g., “CO2” -&gt; “variable_opex_inputs.CO2”)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openpytea.analysis.tornado_data">
+<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">tornado_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plus_minus_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LCOP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#tornado_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.tornado_data" title="Link to this definition">¶</a></dt>
+<dd><p>Generate tornado plot data for sensitivity analysis (no plotting).
+This function performs a sensitivity analysis on a plant model by varying
+key parameters and calculating their impact on a specified metric.
+The results are sorted by total effect magnitude to facilitate tornado
+plot visualization.
+:param plant: The plant object containing model parameters and configuration.
+:type plant: <code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code>
+:param plus_minus_value: The percentage or absolute value to vary each parameter by</p>
+<blockquote>
+<div><p>(e.g., 0.1 for ±10%).</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>metric</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – The metric to analyze. Default is “LCOP” (Levelized Cost of Power).
+Common metrics: “LCOP”, “LCOH”, “IRR”, “NPV”.</p></li>
+<li><p><strong>label</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – Custom label for the metric on the x-axis. If None, uses default label
+based on currency and metric type.</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Whether to include additional capital expenditure in calculations.
+Default is False.</p></li>
+<li><p><strong>dict</strong> – <p>Dictionary containing tornado plot data with keys:
+- factors : list[str]</p>
+<blockquote>
+<div><p>Sorted list of parameter names by
+sensitivity magnitude (ascending).</p>
+</div></blockquote>
+<ul>
+<li><dl class="simple">
+<dt>lows<span class="classifier">np.ndarray</span></dt><dd><p>Metric values when each factor is reduced
+(sorted by effect size).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>highs<span class="classifier">np.ndarray</span></dt><dd><p>Metric values when each factor is increased
+(sorted by effect size).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>base_value<span class="classifier">float</span></dt><dd><p>Metric value with baseline parameters.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>labels<span class="classifier">list[str]</span></dt><dd><p>Display labels for each factor (sorted by effect size).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>plus_minus_value<span class="classifier">float</span></dt><dd><p>The sensitivity variation used.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>metric<span class="classifier">str</span></dt><dd><p>The analyzed metric in uppercase.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>xlabel<span class="classifier">str</span></dt><dd><p>Label for the x-axis.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tornado_data</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">factors</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">[</span><span class="s2">&quot;factors&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lows</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">[</span><span class="s2">&quot;lows&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">highs</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">[</span><span class="s2">&quot;highs&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openpytea.analysis.monte_carlo">
+<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">monte_carlo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#monte_carlo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.monte_carlo" title="Link to this definition">¶</a></dt>
+<dd><p>Probabilistic analysis of a plant’s economic performance by sampling
+input parameters from truncated normal distributions and computing
+economic metrics across all samples. Samples are processed in batches
+to manage memory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plant</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code>) – A fully configured Plant instance. Baseline economic calculations
+are run internally before sampling begins. The original plant is not
+modified; results are stored on it after the simulation completes.</p></li>
+<li><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Total number of Monte Carlo samples. Default is 1_000_000.</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Number of samples processed per batch. Smaller values reduce peak
+memory at the cost of slightly more overhead. Default is 1000.</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Include additional CAPEX in ROI and payback time calculations.
+Only applies when product prices are available. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A dictionary with the following keys:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;name&quot;</span></code> : str — plant name.</p></li>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;metrics&quot;</span></code><span class="classifier">dict — arrays of length <em>num_samples</em>:</span></dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;LCOP&quot;</span></code> — levelized cost of production (always populated).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;NPV&quot;</span></code> — net present value (requires product prices).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;ROI&quot;</span></code> — return on investment (requires product prices).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;PBT&quot;</span></code> — payback time (requires product prices).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;inputs&quot;</span></code><span class="classifier">dict — sampled input arrays, always containing:</span></dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;Fixed</span> <span class="pre">capital</span> <span class="pre">factor&quot;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;Fixed</span> <span class="pre">opex</span> <span class="pre">factor&quot;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;Operator</span> <span class="pre">hourly</span> <span class="pre">rate&quot;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;Project</span> <span class="pre">lifetime&quot;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;Interest</span> <span class="pre">rate&quot;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;{Item}</span> <span class="pre">price&quot;</span></code> for each variable OPEX item.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;{Product}</span> <span class="pre">product</span> <span class="pre">price&quot;</span></code> for each product.</p></li>
+</ul>
+<p>And conditionally (when <code class="docutils literal notranslate"><span class="pre">std</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> in <code class="docutils literal notranslate"><span class="pre">project_uncertainties</span></code>):
+- <code class="docutils literal notranslate"><span class="pre">&quot;Plant</span> <span class="pre">utilization&quot;</span></code>
+- <code class="docutils literal notranslate"><span class="pre">&quot;Tax</span> <span class="pre">rate&quot;</span></code></p>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;num_samples&quot;</span></code> : int — number of samples generated.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;additional_capex&quot;</span></code> : bool — whether additional CAPEX was
+included.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;currency&quot;</span></code> : str — currency symbol.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Sampling distributions for fixed capital factor, fixed opex factor,
+project lifetime, interest rate, plant utilization, and tax rate are
+controlled by the plant’s <code class="docutils literal notranslate"><span class="pre">project_uncertainties</span></code> configuration dict
+(see Plant class docstring). Default std, min, and max values are used
+when a parameter is absent from that dict.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plant_utilization</span></code> and <code class="docutils literal notranslate"><span class="pre">tax_rate</span></code> have a default <code class="docutils literal notranslate"><span class="pre">std</span></code> of 0 and
+are only sampled when explicitly set to a positive value in
+<code class="docutils literal notranslate"><span class="pre">project_uncertainties</span></code>.</p></li>
+<li><p>Variable OPEX items and products are sampled using the <code class="docutils literal notranslate"><span class="pre">std</span></code>,
+<code class="docutils literal notranslate"><span class="pre">min</span></code>, and <code class="docutils literal notranslate"><span class="pre">max</span></code> fields defined within each item’s own config dict.</p></li>
+<li><p>The plant is deep-copied each batch to avoid mutating the original.
+After the run, <code class="docutils literal notranslate"><span class="pre">monte_carlo_metrics</span></code> and <code class="docutils literal notranslate"><span class="pre">monte_carlo_inputs</span></code> are
+written back to the original plant.</p></li>
+<li><p>Progress is shown via a tqdm progress bar over batches.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.14)"><strong>AttributeError</strong></a> – If the plant object lacks required economic calculation methods or
+    configuration attributes.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lcop_values</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;metrics&#39;</span><span class="p">][</span><span class="s1">&#39;LCOP&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">roi_values</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;metrics&#39;</span><span class="p">][</span><span class="s1">&#39;ROI&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="plotting.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">openpytea.plotting</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="plant.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">openpytea.plant</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Panji B. Tamarona, Thijs J.H. Vlugt, Mahinder Ramdin
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">openpytea.analysis</a><ul>
+<li><a class="reference internal" href="#openpytea.analysis.direct_costs_data"><code class="docutils literal notranslate"><span class="pre">direct_costs_data()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.analysis.fixed_capital_data"><code class="docutils literal notranslate"><span class="pre">fixed_capital_data()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.analysis.variable_opex_data"><code class="docutils literal notranslate"><span class="pre">variable_opex_data()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.analysis.fixed_opex_data"><code class="docutils literal notranslate"><span class="pre">fixed_opex_data()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.analysis.sensitivity_data"><code class="docutils literal notranslate"><span class="pre">sensitivity_data()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.analysis.tornado_data"><code class="docutils literal notranslate"><span class="pre">tornado_data()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.analysis.monte_carlo"><code class="docutils literal notranslate"><span class="pre">monte_carlo()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=1d3a154c"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=fd10adb8"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/caption_links.js?v=2098cfba"></script>
+    </body>
+</html>

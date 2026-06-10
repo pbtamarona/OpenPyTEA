@@ -1,0 +1,745 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Plotting" href="plotting.html"><link rel="prev" title="Plant-Level TEA" href="plant.html">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo.png" as="image">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Analysis - OpenPyTEA</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=3437e138" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #538DFF;
+  --color-background-primary: #FFFFFF;
+  --color-background-secondary: #F0F4FF;
+  --color-background-border: #D6E4FF;
+  --color-foreground-primary: #303030;
+  --color-foreground-secondary: #555555;
+  --color-foreground-muted: #777777;
+  --color-foreground-border: #DDDDDD;
+  --color-highlight-on-target: #EBF2FF;
+  --color-link: #538DFF;
+  --color-link--hover: #2B6AE0;
+  --color-link-underline: #99BDFF;
+  --color-link-underline--hover: #538DFF;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #7AAAFF;
+  --color-background-primary: #1C1C1C;
+  --color-background-secondary: #262626;
+  --color-background-border: #3A3A3A;
+  --color-foreground-primary: #FFFFFF;
+  --color-foreground-secondary: #CCCCCC;
+  --color-foreground-muted: #999999;
+  --color-foreground-border: #444444;
+  --color-highlight-on-target: #1A2A4A;
+  --color-link: #7AAAFF;
+  --color-link--hover: #99BDFF;
+  --color-link-underline: #3A5A99;
+  --color-link-underline--hover: #7AAAFF;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #7AAAFF;
+  --color-background-primary: #1C1C1C;
+  --color-background-secondary: #262626;
+  --color-background-border: #3A3A3A;
+  --color-foreground-primary: #FFFFFF;
+  --color-foreground-secondary: #CCCCCC;
+  --color-foreground-muted: #999999;
+  --color-foreground-border: #444444;
+  --color-highlight-on-target: #1A2A4A;
+  --color-link: #7AAAFF;
+  --color-link--hover: #99BDFF;
+  --color-link-underline: #3A5A99;
+  --color-link-underline--hover: #7AAAFF;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">OpenPyTEA</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
+  
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/plotting.html">openpytea.plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/io.html">openpytea.io</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">More</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gui.html">Web GUI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citation.html">Citation &amp; License</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/user_guide/analysis.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="analysis">
+<h1>Analysis<a class="headerlink" href="#analysis" title="Link to this heading">¶</a></h1>
+<p>The <a class="reference internal" href="../api/analysis.html#module-openpytea.analysis" title="openpytea.analysis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.analysis</span></code></a> module provides tools for understanding cost
+structure and how uncertain inputs affect financial outcomes:</p>
+<ul class="simple">
+<li><p><strong>Cost breakdowns</strong> — prepare equipment-level and plant-level CAPEX/OPEX data</p></li>
+<li><p><strong>One-way sensitivity</strong> — vary one parameter across a range and observe the metric</p></li>
+<li><p><strong>Tornado diagram</strong> — rank all parameters by their ±impact on a single metric</p></li>
+<li><p><strong>Monte Carlo simulation</strong> — propagate all uncertainties simultaneously</p></li>
+</ul>
+<p>All analysis functions accept a configured and calculated
+<a class="reference internal" href="../api/plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a> object. Visualization of the results is
+handled separately by <a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a>.</p>
+<p>To see the outputs of all code examples below, refer to the
+<a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">walkthrough notebook</a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">direct_costs_data</span><span class="p">,</span> <span class="n">fixed_capital_data</span><span class="p">,</span>
+    <span class="n">fixed_opex_data</span><span class="p">,</span> <span class="n">variable_opex_data</span><span class="p">,</span>
+    <span class="n">sensitivity_data</span><span class="p">,</span> <span class="n">tornado_data</span><span class="p">,</span> <span class="n">monte_carlo</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<section id="capex-and-opex-breakdowns">
+<h2>CAPEX and OPEX breakdowns<a class="headerlink" href="#capex-and-opex-breakdowns" title="Link to this heading">¶</a></h2>
+<p>Cost breakdowns are produced in two steps: the analysis functions prepare
+structured data, and the plotting functions render it. This separation lets
+you reuse the data in custom visualizations or export it directly.</p>
+<p>The four data-preparation functions and their outputs:</p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 65.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Function</p></th>
+<th class="head"><p>Output</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">direct_costs_data(plants)</span></code></p></td>
+<td><p>Equipment-level purchased and direct costs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_capital_data(plants)</span></code></p></td>
+<td><p>ISBL, OSBL, D&amp;E, contingency (and optional additional CAPEX).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_opex_data(plants)</span></code></p></td>
+<td><p>Each fixed OPEX component (absolute or as % of total).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">variable_opex_data(plants)</span></code></p></td>
+<td><p>Each variable OPEX item.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Basic usage (single plant):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Equipment-level CAPEX</span>
+<span class="n">direct_costs</span> <span class="o">=</span> <span class="n">direct_costs_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
+
+<span class="c1"># Fixed capital breakdown (include additional CAPEX events)</span>
+<span class="n">fixed_capital</span> <span class="o">=</span> <span class="n">fixed_capital_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">additional_capex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Fixed OPEX as percentage of total</span>
+<span class="n">fixed_opex</span> <span class="o">=</span> <span class="n">fixed_opex_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Variable OPEX by item</span>
+<span class="n">variable_opex</span> <span class="o">=</span> <span class="n">variable_opex_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Pass the returned data to <code class="docutils literal notranslate"><span class="pre">plot_stacked_bar()</span></code> to visualize it — see
+<a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a> for details.</p>
+<section id="comparing-multiple-plants">
+<h3>Comparing multiple plants<a class="headerlink" href="#comparing-multiple-plants" title="Link to this heading">¶</a></h3>
+<p>Pass a list of <a class="reference internal" href="../api/plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a> objects to compare two or
+more configurations side-by-side:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="n">plant_b</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">plant</span><span class="p">)</span>
+<span class="n">plant_b</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;plant_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Scenario B&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;variable_opex_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;electricity&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">0.9e6</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">})</span>
+<span class="n">plant_b</span><span class="o">.</span><span class="n">calculate_all</span><span class="p">()</span>
+
+<span class="n">variable_opex</span> <span class="o">=</span> <span class="n">variable_opex_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="p">[</span><span class="n">plant</span><span class="p">,</span> <span class="n">plant_b</span><span class="p">])</span>
+<span class="c1"># pass to plot_stacked_bar() for a side-by-side chart</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="one-way-sensitivity-analysis">
+<h2>One-way sensitivity analysis<a class="headerlink" href="#one-way-sensitivity-analysis" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../api/analysis.html#openpytea.analysis.sensitivity_data" title="openpytea.analysis.sensitivity_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">sensitivity_data()</span></code></a> varies a single parameter over
+a symmetric range while holding everything else constant, then records the
+selected metric at each point.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Default metric is LCOP; vary electricity price ±50 %</span>
+<span class="n">sens</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Specify metric and label explicitly</span>
+<span class="n">npv_sens</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span>
+    <span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span>
+    <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;methanol&quot;</span><span class="p">,</span>       <span class="c1"># product price</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;NPV&quot;</span><span class="p">,</span>
+    <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Project A — NPV [USD]&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">parameter</span></code> can be any of:</p>
+<ul class="simple">
+<li><p>A key from <code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code> — varies that item’s <em>price</em></p></li>
+<li><p>A key from <code class="docutils literal notranslate"><span class="pre">plant_products</span></code> — varies that product’s <em>price</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;fixed_capital&quot;</span></code> — scales total installed CAPEX</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;fixed_opex&quot;</span></code> — scales total fixed OPEX</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;interest_rate&quot;</span></code> — discount rate</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;project_lifetime&quot;</span></code> — project duration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;operator_hourly_rate&quot;</span></code> — labor wage</p></li>
+</ul>
+<p>Supported <code class="docutils literal notranslate"><span class="pre">metric</span></code> values:</p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Value</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;LCOP&quot;</span></code></p></td>
+<td><p>Levelized cost of the primary product (default).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;NPV&quot;</span></code></p></td>
+<td><p>Net Present Value.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;IRR&quot;</span></code></p></td>
+<td><p>Internal Rate of Return.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;ROI&quot;</span></code></p></td>
+<td><p>Return on Investment.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;PBT&quot;</span></code></p></td>
+<td><p>Simple payback time in years.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>For metrics that depend on revenue (NPV, ROI, IRR, PBT), product prices are
+included in the evaluation automatically.</p>
+<p>Comparing multiple plants:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pbt_comparison</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span>
+    <span class="n">plants</span><span class="o">=</span><span class="p">[</span><span class="n">plant</span><span class="p">,</span> <span class="n">plant_b</span><span class="p">],</span>
+    <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;PBT&quot;</span><span class="p">,</span>
+    <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">additional_capex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>   <span class="c1"># account for mid-project CAPEX events</span>
+    <span class="n">n_points</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Pass the result to <code class="docutils literal notranslate"><span class="pre">plot_sensitivity()</span></code> — see <a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a>.</p>
+</section>
+<section id="tornado-diagram">
+<h2>Tornado diagram<a class="headerlink" href="#tornado-diagram" title="Link to this heading">¶</a></h2>
+<p>A tornado diagram evaluates every variable-cost driver and financial
+parameter independently at ±``plus_minus_value``, then ranks them by
+impact on the chosen metric.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">tornado_data</span>
+
+<span class="c1"># Default metric is LCOP</span>
+<span class="n">td</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span><span class="n">plant</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Profit-oriented metric — product prices are included automatically</span>
+<span class="n">td_roi</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span><span class="n">plant</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;ROI&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Pass <code class="docutils literal notranslate"><span class="pre">td</span></code> to <code class="docutils literal notranslate"><span class="pre">plot_tornado()</span></code> — see <a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a>.</p>
+</section>
+<section id="monte-carlo-simulation">
+<h2>Monte Carlo simulation<a class="headerlink" href="#monte-carlo-simulation" title="Link to this heading">¶</a></h2>
+<p>Monte Carlo assigns probability distributions to all uncertain inputs and
+evaluates the plant thousands or millions of times, producing a distribution
+of outcomes for each financial metric.</p>
+<section id="configuring-input-uncertainties">
+<h3>Configuring input uncertainties<a class="headerlink" href="#configuring-input-uncertainties" title="Link to this heading">¶</a></h3>
+<p><strong>Variable OPEX and product price uncertainties</strong> are defined inline in the
+existing <code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code> and <code class="docutils literal notranslate"><span class="pre">plant_products</span></code> configuration keys
+by adding <code class="docutils literal notranslate"><span class="pre">std</span></code>, <code class="docutils literal notranslate"><span class="pre">min</span></code>, and <code class="docutils literal notranslate"><span class="pre">max</span></code> fields to each item:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;plant_products&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;methanol&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;production&quot;</span><span class="p">:</span> <span class="mi">150_000</span><span class="p">,</span>
+            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">1.75</span><span class="p">,</span>
+            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span>    <span class="c1"># standard deviation</span>
+            <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">1.25</span><span class="p">,</span>    <span class="c1"># lower truncation bound</span>
+            <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">2.25</span><span class="p">,</span>    <span class="c1"># upper truncation bound</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;operator_hourly_rate&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;rate&quot;</span><span class="p">:</span> <span class="mf">38.11</span><span class="p">,</span>
+        <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span>
+        <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">,</span>
+        <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">60.0</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;variable_opex_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;electricity&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">1.4e6</span><span class="p">,</span>
+            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">,</span>
+            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.035</span><span class="p">,</span>
+            <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.025</span><span class="p">,</span>
+            <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">0.175</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;natural_gas&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">1.0e5</span><span class="p">,</span>
+            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">,</span>
+            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.03</span><span class="p">,</span>
+            <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span>
+            <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p><strong>Project-level financial uncertainties</strong> are set through the
+<code class="docutils literal notranslate"><span class="pre">project_uncertainties</span></code> key:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;project_uncertainties&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;fixed_capital_factor&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.30</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">1.75</span><span class="p">},</span>
+        <span class="s2">&quot;fixed_opex_factor&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.30</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">1.75</span><span class="p">},</span>
+        <span class="s2">&quot;project_lifetime&quot;</span><span class="p">:</span>     <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>     <span class="c1"># min/max auto-derived</span>
+        <span class="s2">&quot;interest_rate&quot;</span><span class="p">:</span>        <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.03</span><span class="p">},</span>  <span class="c1"># min/max auto-derived</span>
+        <span class="s2">&quot;plant_utilization&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">},</span>  <span class="c1"># opt-in; default std=0</span>
+        <span class="s2">&quot;tax_rate&quot;</span><span class="p">:</span>             <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">},</span>  <span class="c1"># opt-in; default std=0</span>
+    <span class="p">}</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p>The first four keys are <strong>active by default</strong>. <code class="docutils literal notranslate"><span class="pre">plant_utilization</span></code> and
+<code class="docutils literal notranslate"><span class="pre">tax_rate</span></code> require an explicit <code class="docutils literal notranslate"><span class="pre">std</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> to be sampled. When <code class="docutils literal notranslate"><span class="pre">min</span></code>/
+<code class="docutils literal notranslate"><span class="pre">max</span></code> are omitted they are derived as ±2 × std around the plant baseline.
+Set <code class="docutils literal notranslate"><span class="pre">std=0</span></code> for any key to disable it.</p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 50.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Default std</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_capital_factor</span></code></p></td>
+<td><p>Multiplicative factor on total installed CAPEX.</p></td>
+<td><p>0.30 (30%)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_opex_factor</span></code></p></td>
+<td><p>Multiplicative factor on annual fixed OPEX.</p></td>
+<td><p>0.30 (30%)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">project_lifetime</span></code></p></td>
+<td><p>Economic project life (years).</p></td>
+<td><p>5 years</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">interest_rate</span></code></p></td>
+<td><p>Discount / financing rate.</p></td>
+<td><p>0.03 (3 pp)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">plant_utilization</span></code></p></td>
+<td><p>Yearly fraction of operating time.</p></td>
+<td><p>0 (opt-in)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tax_rate</span></code></p></td>
+<td><p>Corporate tax rate.</p></td>
+<td><p>0 (opt-in)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="running-the-simulation">
+<h3>Running the simulation<a class="headerlink" href="#running-the-simulation" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span>
+
+<span class="n">mc_results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">plant</span><span class="p">,</span>
+    <span class="n">num_samples</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span>   <span class="c1"># increase for accuracy, decrease for speed</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>       <span class="c1"># adjust to available memory</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Results are stored on the <code class="docutils literal notranslate"><span class="pre">Plant</span></code> object and returned as a dict keyed by
+metric name. Each entry contains the raw sample array:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Access results</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mc_results</span><span class="p">[</span><span class="s2">&quot;LCOP&quot;</span><span class="p">])</span>    <span class="c1"># array of LCOP samples</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mc_results</span><span class="p">[</span><span class="s2">&quot;NPV&quot;</span><span class="p">])</span>     <span class="c1"># array of NPV samples</span>
+<span class="c1"># Available keys: &quot;LCOP&quot;, &quot;NPV&quot;, &quot;IRR&quot;, &quot;ROI&quot;, &quot;PBT&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="visualizing-results">
+<h3>Visualizing results<a class="headerlink" href="#visualizing-results" title="Link to this heading">¶</a></h3>
+<p>Pass the plant (or <code class="docutils literal notranslate"><span class="pre">mc_results</span></code>) to the plotting functions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_monte_carlo</span><span class="p">,</span> <span class="n">plot_monte_carlo_inputs</span>
+
+<span class="c1"># Distribution of the LCOP</span>
+<span class="n">plot_monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1"># Verify input distributions (useful for checking std/min/max settings)</span>
+<span class="n">plot_monte_carlo_inputs</span><span class="p">(</span><span class="n">mc_results</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a> for full plotting options.</p>
+</section>
+<section id="comparing-multiple-plants-under-uncertainty">
+<h3>Comparing multiple plants under uncertainty<a class="headerlink" href="#comparing-multiple-plants-under-uncertainty" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_multiple_monte_carlo</span>
+
+<span class="n">mc_b</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant_b</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10_000</span><span class="p">)</span>
+
+<span class="n">plot_multiple_monte_carlo</span><span class="p">(</span>
+    <span class="n">data_list</span><span class="o">=</span><span class="p">[</span><span class="n">plant</span><span class="p">,</span> <span class="n">plant_b</span><span class="p">],</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span>
+    <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="see-also">
+<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../api/analysis.html#module-openpytea.analysis" title="openpytea.analysis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.analysis</span></code></a> — full API reference</p></li>
+<li><p><a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a> — visualization options</p></li>
+<li><p><a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">Walkthrough notebook</a> — end-to-end worked example</p></li>
+</ul>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="plotting.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Plotting</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="plant.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Plant-Level TEA</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Panji B. Tamarona, Thijs J.H. Vlugt, Mahinder Ramdin
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Analysis</a><ul>
+<li><a class="reference internal" href="#capex-and-opex-breakdowns">CAPEX and OPEX breakdowns</a><ul>
+<li><a class="reference internal" href="#comparing-multiple-plants">Comparing multiple plants</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#one-way-sensitivity-analysis">One-way sensitivity analysis</a></li>
+<li><a class="reference internal" href="#tornado-diagram">Tornado diagram</a></li>
+<li><a class="reference internal" href="#monte-carlo-simulation">Monte Carlo simulation</a><ul>
+<li><a class="reference internal" href="#configuring-input-uncertainties">Configuring input uncertainties</a></li>
+<li><a class="reference internal" href="#running-the-simulation">Running the simulation</a></li>
+<li><a class="reference internal" href="#visualizing-results">Visualizing results</a></li>
+<li><a class="reference internal" href="#comparing-multiple-plants-under-uncertainty">Comparing multiple plants under uncertainty</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=1d3a154c"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=fd10adb8"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/caption_links.js?v=2098cfba"></script>
+    </body>
+</html>

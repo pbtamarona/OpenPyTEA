@@ -78,7 +78,7 @@ def _default_metric_label(currency: str, metric: str) -> str:
     'Payback time / [years]'
     """
     metric = metric.upper()
-    if metric == "LCOP":
+    if metric == "LCOP" or metric == "levelized_cost":
         return rf"Levelized cost / [{currency}$\cdot$unit$^{-1}$]"
     elif metric == "ROI":
         return r"Return on investment / [\%]"

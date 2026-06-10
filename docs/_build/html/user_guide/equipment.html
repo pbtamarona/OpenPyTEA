@@ -1,0 +1,909 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Plant-Level TEA" href="plant.html"><link rel="prev" title="Quick Start" href="../quickstart.html">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo.png" as="image">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Equipment Cost Estimation - OpenPyTEA</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=3437e138" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #538DFF;
+  --color-background-primary: #FFFFFF;
+  --color-background-secondary: #F0F4FF;
+  --color-background-border: #D6E4FF;
+  --color-foreground-primary: #303030;
+  --color-foreground-secondary: #555555;
+  --color-foreground-muted: #777777;
+  --color-foreground-border: #DDDDDD;
+  --color-highlight-on-target: #EBF2FF;
+  --color-link: #538DFF;
+  --color-link--hover: #2B6AE0;
+  --color-link-underline: #99BDFF;
+  --color-link-underline--hover: #538DFF;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #7AAAFF;
+  --color-background-primary: #1C1C1C;
+  --color-background-secondary: #262626;
+  --color-background-border: #3A3A3A;
+  --color-foreground-primary: #FFFFFF;
+  --color-foreground-secondary: #CCCCCC;
+  --color-foreground-muted: #999999;
+  --color-foreground-border: #444444;
+  --color-highlight-on-target: #1A2A4A;
+  --color-link: #7AAAFF;
+  --color-link--hover: #99BDFF;
+  --color-link-underline: #3A5A99;
+  --color-link-underline--hover: #7AAAFF;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #7AAAFF;
+  --color-background-primary: #1C1C1C;
+  --color-background-secondary: #262626;
+  --color-background-border: #3A3A3A;
+  --color-foreground-primary: #FFFFFF;
+  --color-foreground-secondary: #CCCCCC;
+  --color-foreground-muted: #999999;
+  --color-foreground-border: #444444;
+  --color-highlight-on-target: #1A2A4A;
+  --color-link: #7AAAFF;
+  --color-link--hover: #99BDFF;
+  --color-link-underline: #3A5A99;
+  --color-link-underline--hover: #7AAAFF;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">OpenPyTEA</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
+  
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Equipment Cost Estimation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/plotting.html">openpytea.plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/io.html">openpytea.io</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">More</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gui.html">Web GUI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citation.html">Citation &amp; License</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/user_guide/equipment.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="equipment-cost-estimation">
+<h1>Equipment Cost Estimation<a class="headerlink" href="#equipment-cost-estimation" title="Link to this heading">¶</a></h1>
+<p>The <a class="reference internal" href="../api/equipment.html#module-openpytea.equipment" title="openpytea.equipment"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.equipment</span></code></a> module estimates purchased and installed costs
+for individual process units using published cost correlations, automatic CEPCI
+inflation adjustment, and process/material installation factors.</p>
+<section id="how-costs-are-estimated">
+<h2>How costs are estimated<a class="headerlink" href="#how-costs-are-estimated" title="Link to this heading">¶</a></h2>
+<section id="purchased-cost-correlations">
+<h3>Purchased cost correlations<a class="headerlink" href="#purchased-cost-correlations" title="Link to this heading">¶</a></h3>
+<p>Two correlation forms are supported:</p>
+<p><strong>Power-law</strong></p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[C_p = a + b \cdot S^n\]</div>
+</div>
+<p><strong>Quadratic log-log</strong></p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\log_{10} C_p = K_1 + K_2 \log_{10} S + K_3 \left(\log_{10} S\right)^2\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(S\)</span> is the equipment size parameter (e.g., shaft power in kW,
+heat transfer area in m²) and <span class="math notranslate nohighlight">\(C_p\)</span> is the purchased cost in the
+correlation’s reference year (USD).</p>
+<p>All correlations and their coefficients are stored in
+<a class="reference download internal" download="" href="../_downloads/31b5d5c42012f34eb9c85ee1a7322127/cost_correlations.csv"><code class="xref download docutils literal notranslate"><span class="pre">cost_correlations.csv</span></code></a>.</p>
+<p><strong>OpenPyTEA does not require a database match.</strong> You can bypass the built-in
+correlations entirely and supply your own <code class="docutils literal notranslate"><span class="pre">purchased_cost</span></code> directly — for
+vendor quotes, proprietary data, or equipment types not yet in the database.
+See Example 3 below.</p>
+</section>
+<section id="cepci-inflation-adjustment">
+<h3>CEPCI inflation adjustment<a class="headerlink" href="#cepci-inflation-adjustment" title="Link to this heading">¶</a></h3>
+<p>Purchased costs are inflated from the correlation’s reference year to the
+target year using the Chemical Engineering Plant Cost Index (CEPCI):</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[C_{\text{target}} = C_{\text{ref}} \times
+\frac{\text{CEPCI}_{\text{target}}}{\text{CEPCI}_{\text{ref}}}\]</div>
+</div>
+<p>Historical CEPCI values are bundled with the package in
+<a class="reference download internal" download="" href="../_downloads/8fc1792ebcfac4c213390644422632bb/cepci_values.csv"><code class="xref download docutils literal notranslate"><span class="pre">cepci_values.csv</span></code></a>.
+The default target year is 2024.</p>
+<p>The bundled values are sourced from the
+<a class="reference external" href="https://www.training.itservices.manchester.ac.uk/public/gced/CEPCI.html?reactors/CEPCI/index.html">University of Manchester CEPCI table</a>
+(accessed 7 April 2026). <strong>Users are encouraged to verify these values and,
+if more recent or detailed data are available, replace them by editing
+``cepci_values.csv`` directly before running their analysis.</strong></p>
+</section>
+<section id="direct-installed-cost">
+<h3>Direct (installed) cost<a class="headerlink" href="#direct-installed-cost" title="Link to this heading">¶</a></h3>
+<p>The direct cost adds installation contributions on top of the purchased cost:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[C_D = C_p \left[
+    (1 + f_p) \cdot f_m
+    + \left( f_{er} + f_{el} + f_i + f_c + f_s + f_l \right)
+\right]\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(f_m\)</span> is the material factor and <span class="math notranslate nohighlight">\(f_p\)</span>, <span class="math notranslate nohighlight">\(f_{er}\)</span>,
+<span class="math notranslate nohighlight">\(f_{el}\)</span>, <span class="math notranslate nohighlight">\(f_i\)</span>, <span class="math notranslate nohighlight">\(f_c\)</span>, <span class="math notranslate nohighlight">\(f_s\)</span>, <span class="math notranslate nohighlight">\(f_l\)</span> are the
+piping, erection, electrical, instrumentation, civil, structural, and lagging
+factors respectively. Default installation factor values depend on the <code class="docutils literal notranslate"><span class="pre">process_type</span></code>
+(see <a class="reference internal" href="#process-factors"><span class="std std-ref">Process installation factors</span></a> below). <strong>All factors can be overridden per equipment
+item via constructor keyword arguments</strong> — see Example 8 for details.</p>
+<p><em>Source: Towler &amp; Sinnott (2022)</em></p>
+</section>
+</section>
+<section id="the-equipment-class">
+<h2>The <code class="docutils literal notranslate"><span class="pre">Equipment</span></code> class<a class="headerlink" href="#the-equipment-class" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">Equipment</span>
+</pre></div>
+</div>
+<p>Each <a class="reference internal" href="../api/equipment.html#id15" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> object represents one piece of
+process equipment. On construction it automatically:</p>
+<ol class="arabic simple">
+<li><p>Looks up the matching cost correlation from <code class="docutils literal notranslate"><span class="pre">cost_correlations.csv</span></code>.</p></li>
+<li><p>Computes the purchased cost, with automatic parallelization if the size
+parameter exceeds the correlation’s upper bound.</p></li>
+<li><p>Inflates the cost to the target year using CEPCI.</p></li>
+<li><p>Applies process and material factors to produce the direct (installed) cost.</p></li>
+</ol>
+<section id="constructor-parameters">
+<h3>Constructor parameters<a class="headerlink" href="#constructor-parameters" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28.0%" />
+<col style="width: 12.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>str</p></td>
+<td><p>Identifier for this equipment item (used in plots and reports).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">param</span></code></p></td>
+<td><p>float</p></td>
+<td><p>Size/capacity parameter. Units depend on the equipment type —
+check <code class="docutils literal notranslate"><span class="pre">cost_correlations.csv</span></code>. Ignored when <code class="docutils literal notranslate"><span class="pre">purchased_cost</span></code>
+is given.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">process_type</span></code></p></td>
+<td><p>str</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;Solids&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Fluids&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Mixed&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;Electrical&quot;</span></code> —
+controls default installation factor values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">category</span></code></p></td>
+<td><p>str</p></td>
+<td><p>Equipment category — must match a row in <code class="docutils literal notranslate"><span class="pre">cost_correlations.csv</span></code>
+(case-insensitive).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">type</span></code></p></td>
+<td><p>str or None</p></td>
+<td><p>Equipment sub-type within the category. Required when a category
+has multiple types.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">material</span></code></p></td>
+<td><p>str</p></td>
+<td><p>Construction material — controls the material factor <span class="math notranslate nohighlight">\(f_m\)</span>.
+Default: <code class="docutils literal notranslate"><span class="pre">&quot;Carbon</span> <span class="pre">steel&quot;</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">target_year</span></code></p></td>
+<td><p>int</p></td>
+<td><p>Year to inflate costs to. Default: <code class="docutils literal notranslate"><span class="pre">2024</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">purchased_cost</span></code></p></td>
+<td><p>float or None</p></td>
+<td><p>Supply your own purchased cost and bypass the correlation entirely.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cost_year</span></code></p></td>
+<td><p>int or None</p></td>
+<td><p>Reference year of a manually supplied <code class="docutils literal notranslate"><span class="pre">purchased_cost</span></code>. If given,
+CEPCI inflation is applied from this year to <code class="docutils literal notranslate"><span class="pre">target_year</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cost_func</span></code></p></td>
+<td><p>str or None</p></td>
+<td><p>Explicit correlation key (the <code class="docutils literal notranslate"><span class="pre">key</span></code> column in the CSV). Use this
+to select a specific correlation when multiple exist for the same
+category/type.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">num_units</span></code></p></td>
+<td><p>int or None</p></td>
+<td><p>Override the number of parallel units. By default this is set
+automatically by the parallelization logic.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">piping_factor</span></code>, <code class="docutils literal notranslate"><span class="pre">erection_factor</span></code>, … <code class="docutils literal notranslate"><span class="pre">lagging_factor</span></code></p></td>
+<td><p>float or None</p></td>
+<td><p>Per-factor overrides. <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the <code class="docutils literal notranslate"><span class="pre">process_type</span></code> default.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">material_factor</span></code></p></td>
+<td><p>float or None</p></td>
+<td><p>Override the material factor. <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the material table.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="usage-examples">
+<h2>Usage examples<a class="headerlink" href="#usage-examples" title="Link to this heading">¶</a></h2>
+<p>The examples below show the main ways to create <code class="docutils literal notranslate"><span class="pre">Equipment</span></code> objects.
+To see the printed outputs of each code cell, refer to the
+<a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">walkthrough notebook</a>.</p>
+<section id="example-1-standard-usage">
+<h3>Example 1 — Standard usage<a class="headerlink" href="#example-1-standard-usage" title="Link to this heading">¶</a></h3>
+<p>Define a heat exchanger using a correlation from the database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">Equipment</span>
+
+<span class="n">hx</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;HX-101&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>                       <span class="c1"># heat transfer area in m²</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Heat exchangers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Floating head&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;316 stainless steel&quot;</span><span class="p">,</span>
+    <span class="n">target_year</span><span class="o">=</span><span class="mi">2024</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">hx</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Purchased cost : $</span><span class="si">{</span><span class="n">hx</span><span class="o">.</span><span class="n">purchased_cost</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Direct cost    : $</span><span class="si">{</span><span class="n">hx</span><span class="o">.</span><span class="n">direct_cost</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-2-selecting-a-specific-correlation-key">
+<h3>Example 2 — Selecting a specific correlation key<a class="headerlink" href="#example-2-selecting-a-specific-correlation-key" title="Link to this heading">¶</a></h3>
+<p>When multiple correlations cover the same equipment type (e.g., compressors
+from different studies), use <code class="docutils literal notranslate"><span class="pre">cost_func</span></code> to pin the exact database key:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">comp</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;COMP-01&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>                         <span class="c1"># net electric power, MW</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Compressors, fans, &amp; blowers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Compressor, centrifugal&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>
+    <span class="n">cost_func</span><span class="o">=</span><span class="s2">&quot;co2_compressor_manzolini_2011&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-3-manually-specified-purchased-cost">
+<h3>Example 3 — Manually specified purchased cost<a class="headerlink" href="#example-3-manually-specified-purchased-cost" title="Link to this heading">¶</a></h3>
+<p>Skip the correlation entirely and supply your own cost. If you also provide
+<code class="docutils literal notranslate"><span class="pre">cost_year</span></code>, CEPCI inflation to <code class="docutils literal notranslate"><span class="pre">target_year</span></code> is applied automatically:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dryer</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Rotary Dryer D-301&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>                         <span class="c1"># ignored when purchased_cost is set</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Solids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Dryers&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>
+    <span class="n">purchased_cost</span><span class="o">=</span><span class="mi">1_500_000</span><span class="p">,</span>        <span class="c1"># vendor quote in 2021 USD</span>
+    <span class="n">cost_year</span><span class="o">=</span><span class="mi">2021</span><span class="p">,</span>                  <span class="c1"># inflated to target_year=2024</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dryer</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-4-automatic-parallelization">
+<h3>Example 4 — Automatic parallelization<a class="headerlink" href="#example-4-automatic-parallelization" title="Link to this heading">¶</a></h3>
+<p>When <code class="docutils literal notranslate"><span class="pre">param</span></code> exceeds the correlation’s upper capacity limit, the module
+splits the load into the minimum number of equal parallel units:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The centrifugal compressor correlation is valid up to 30 000 kW.</span>
+<span class="c1"># Requesting 50 000 kW triggers automatic splitting into 2 units.</span>
+<span class="n">large_comp</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;COMP-LARGE&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">50_000</span><span class="p">,</span>                    <span class="c1"># driver power in kW</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Compressors, fans, &amp; blowers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Compressor, centrifugal&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">large_comp</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of parallel units: </span><span class="si">{</span><span class="n">large_comp</span><span class="o">.</span><span class="n">num_units</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-5-inflation-to-a-custom-target-year">
+<h3>Example 5 — Inflation to a custom target year<a class="headerlink" href="#example-5-inflation-to-a-custom-target-year" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">hx_2020</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;HX-102&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Heat exchangers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Floating head&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;316 stainless steel&quot;</span><span class="p">,</span>
+    <span class="n">target_year</span><span class="o">=</span><span class="mi">2020</span><span class="p">,</span>                <span class="c1"># inflate to 2020 instead of 2024</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">hx_2020</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-6-fixing-the-number-of-units-manually">
+<h3>Example 6 — Fixing the number of units manually<a class="headerlink" href="#example-6-fixing-the-number-of-units-manually" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fridge</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Refrigerator R-201&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Utilities&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Packaged mechanical refrigerator&quot;</span><span class="p">,</span>
+    <span class="n">num_units</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>                     <span class="c1"># bypass auto-parallelization</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">fridge</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-7-comparing-materials">
+<h3>Example 7 — Comparing materials<a class="headerlink" href="#example-7-comparing-materials" title="Link to this heading">¶</a></h3>
+<p>The material factor <span class="math notranslate nohighlight">\(f_m\)</span> multiplies the installed cost. Here the same
+agitator is costed in carbon steel versus Hastelloy C:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mixer_cs</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Agitator M-101&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Agitators, blenders, &amp; mixers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Propeller mixer&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>         <span class="c1"># fm = 1.00</span>
+<span class="p">)</span>
+
+<span class="n">mixer_alloy</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Agitator M-101 (Hastelloy)&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Agitators, blenders, &amp; mixers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Propeller mixer&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Hastelloy C&quot;</span><span class="p">,</span>          <span class="c1"># fm = 1.55</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Carbon steel direct cost : $</span><span class="si">{</span><span class="n">mixer_cs</span><span class="o">.</span><span class="n">direct_cost</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hastelloy C direct cost  : $</span><span class="si">{</span><span class="n">mixer_alloy</span><span class="o">.</span><span class="n">direct_cost</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-8-overriding-installation-factors">
+<h3>Example 8 — Overriding installation factors<a class="headerlink" href="#example-8-overriding-installation-factors" title="Link to this heading">¶</a></h3>
+<p>Individual installation factors can be overridden without affecting the rest.
+The class attributes <code class="docutils literal notranslate"><span class="pre">process_factors</span></code> and <code class="docutils literal notranslate"><span class="pre">material_factors</span></code> show all
+defaults:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Inspect defaults first</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Equipment</span><span class="o">.</span><span class="n">process_factors</span><span class="p">[</span><span class="s2">&quot;Fluids&quot;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Equipment</span><span class="o">.</span><span class="n">material_factors</span><span class="p">[</span><span class="s2">&quot;316 stainless steel&quot;</span><span class="p">])</span>
+
+<span class="n">reactor</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Reactor R-101&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Reactors&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Glass-lined agitated&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;316 stainless steel&quot;</span><span class="p">,</span>
+    <span class="n">piping_factor</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>              <span class="c1"># override default 0.80</span>
+    <span class="n">material_factor</span><span class="o">=</span><span class="mf">1.4</span><span class="p">,</span>             <span class="c1"># override default 1.30</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;piping_factor   : </span><span class="si">{</span><span class="n">reactor</span><span class="o">.</span><span class="n">piping_factor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;material_factor : </span><span class="si">{</span><span class="n">reactor</span><span class="o">.</span><span class="n">material_factor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="listing-available-equipment">
+<h2>Listing available equipment<a class="headerlink" href="#listing-available-equipment" title="Link to this heading">¶</a></h2>
+<p>Print all categories and types in the built-in database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.equipment</span><span class="w"> </span><span class="kn">import</span> <span class="n">CostCorrelationDB</span><span class="p">,</span> <span class="n">COST_DB_DF</span>
+
+<span class="n">db</span> <span class="o">=</span> <span class="n">CostCorrelationDB</span><span class="p">(</span><span class="n">COST_DB_DF</span><span class="p">)</span>
+
+<span class="c1"># All unique categories</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;category&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+
+<span class="c1"># All types and metadata for a specific category</span>
+<span class="n">mask</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;category&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;heat exchangers&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;form&quot;</span><span class="p">,</span> <span class="s2">&quot;cost_year&quot;</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>You can also download the full database:
+<a class="reference download internal" download="" href="../_downloads/31b5d5c42012f34eb9c85ee1a7322127/cost_correlations.csv"><code class="xref download docutils literal notranslate"><span class="pre">cost_correlations.csv</span></code></a></p>
+</section>
+<section id="available-materials">
+<span id="materials"></span><h2>Available materials<a class="headerlink" href="#available-materials" title="Link to this heading">¶</a></h2>
+<p>The table below lists the valid <code class="docutils literal notranslate"><span class="pre">material</span></code> strings and their factors
+<span class="math notranslate nohighlight">\(f_m\)</span>. Costs are relative to carbon steel (= 1.0).</p>
+<p><em>Source: Towler &amp; Sinnott (2022)</em></p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 73.3%" />
+<col style="width: 26.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Material</p></th>
+<th class="head"><p>Factor <span class="math notranslate nohighlight">\(f_m\)</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Carbon</span> <span class="pre">steel&quot;</span></code></p></td>
+<td><p>1.00</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Aluminum&quot;</span></code></p></td>
+<td><p>1.07</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Bronze&quot;</span></code></p></td>
+<td><p>1.07</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Cast</span> <span class="pre">steel&quot;</span></code></p></td>
+<td><p>1.10</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;304</span> <span class="pre">stainless</span> <span class="pre">steel&quot;</span></code></p></td>
+<td><p>1.30</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;316</span> <span class="pre">stainless</span> <span class="pre">steel&quot;</span></code></p></td>
+<td><p>1.30</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;321</span> <span class="pre">stainless</span> <span class="pre">steel&quot;</span></code></p></td>
+<td><p>1.50</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Hastelloy</span> <span class="pre">C&quot;</span></code></p></td>
+<td><p>1.55</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Monel&quot;</span></code></p></td>
+<td><p>1.65</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Nickel&quot;</span></code></p></td>
+<td><p>1.70</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Inconel&quot;</span></code></p></td>
+<td><p>1.70</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="process-installation-factors">
+<span id="process-factors"></span><h2>Process installation factors<a class="headerlink" href="#process-installation-factors" title="Link to this heading">¶</a></h2>
+<p>Default installation factors by <code class="docutils literal notranslate"><span class="pre">process_type</span></code>. Any factor can be
+overridden per equipment item via the corresponding constructor keyword
+(e.g., <code class="docutils literal notranslate"><span class="pre">piping_factor=0.95</span></code>).</p>
+<p><em>Source: Towler &amp; Sinnott (2022)</em></p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 36.4%" />
+<col style="width: 15.9%" />
+<col style="width: 15.9%" />
+<col style="width: 15.9%" />
+<col style="width: 15.9%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Factor</p></th>
+<th class="head"><p>Solids</p></th>
+<th class="head"><p>Fluids</p></th>
+<th class="head"><p>Mixed</p></th>
+<th class="head"><p>Electrical</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Erection <span class="math notranslate nohighlight">\((f_{er})\)</span></p></td>
+<td><p>0.60</p></td>
+<td><p>0.30</p></td>
+<td><p>0.50</p></td>
+<td><p>0.40</p></td>
+</tr>
+<tr class="row-odd"><td><p>Piping <span class="math notranslate nohighlight">\((f_p)\)</span></p></td>
+<td><p>0.20</p></td>
+<td><p>0.80</p></td>
+<td><p>0.60</p></td>
+<td><p>0.10</p></td>
+</tr>
+<tr class="row-even"><td><p>Instrumentation <span class="math notranslate nohighlight">\((f_i)\)</span></p></td>
+<td><p>0.20</p></td>
+<td><p>0.30</p></td>
+<td><p>0.30</p></td>
+<td><p>0.70</p></td>
+</tr>
+<tr class="row-odd"><td><p>Electrical <span class="math notranslate nohighlight">\((f_{el})\)</span></p></td>
+<td><p>0.15</p></td>
+<td><p>0.20</p></td>
+<td><p>0.20</p></td>
+<td><p>0.70</p></td>
+</tr>
+<tr class="row-even"><td><p>Civil <span class="math notranslate nohighlight">\((f_c)\)</span></p></td>
+<td><p>0.20</p></td>
+<td><p>0.30</p></td>
+<td><p>0.30</p></td>
+<td><p>0.20</p></td>
+</tr>
+<tr class="row-odd"><td><p>Structural steel <span class="math notranslate nohighlight">\((f_s)\)</span></p></td>
+<td><p>0.10</p></td>
+<td><p>0.20</p></td>
+<td><p>0.20</p></td>
+<td><p>0.10</p></td>
+</tr>
+<tr class="row-even"><td><p>Lagging &amp; painting <span class="math notranslate nohighlight">\((f_l)\)</span></p></td>
+<td><p>0.05</p></td>
+<td><p>0.10</p></td>
+<td><p>0.10</p></td>
+<td><p>0.10</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="standalone-inflation-adjustment">
+<h2>Standalone inflation adjustment<a class="headerlink" href="#standalone-inflation-adjustment" title="Link to this heading">¶</a></h2>
+<p>The <a class="reference internal" href="../api/equipment.html#id6" title="openpytea.equipment.inflation_adjustment"><code class="xref py py-func docutils literal notranslate"><span class="pre">inflation_adjustment()</span></code></a> function can be used
+independently to convert any cost between years:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">inflation_adjustment</span>
+
+<span class="c1"># Convert a $500 000 cost quoted in 2015 to 2024 USD</span>
+<span class="n">adjusted</span> <span class="o">=</span> <span class="n">inflation_adjustment</span><span class="p">(</span><span class="mi">500_000</span><span class="p">,</span> <span class="n">cost_year</span><span class="o">=</span><span class="mi">2015</span><span class="p">,</span> <span class="n">target_year</span><span class="o">=</span><span class="mi">2024</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;2015 cost: $500,000  →  2024 cost: $</span><span class="si">{</span><span class="n">adjusted</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="see-also">
+<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../api/equipment.html#id15" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> — full API reference</p></li>
+<li><p><a class="reference internal" href="../api/equipment.html#id7" title="openpytea.equipment.CostCorrelationDB"><code class="xref py py-class docutils literal notranslate"><span class="pre">CostCorrelationDB</span></code></a> — database interface</p></li>
+<li><p><a class="reference internal" href="../api/equipment.html#id6" title="openpytea.equipment.inflation_adjustment"><code class="xref py py-func docutils literal notranslate"><span class="pre">inflation_adjustment()</span></code></a> — CEPCI utility</p></li>
+<li><p><a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">Walkthrough notebook</a> — end-to-end worked example</p></li>
+</ul>
+</section>
+<section id="references">
+<span id="equip-references"></span><h2>References<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Towler, G.; Sinnott, R. <em>Chemical Engineering Design</em>, 3rd ed.;
+Elsevier, 2022. <a class="reference external" href="https://doi.org/10.1016/C2019-0-02025-0">https://doi.org/10.1016/C2019-0-02025-0</a></p></li>
+</ul>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="plant.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Plant-Level TEA</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="../quickstart.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Quick Start</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Panji B. Tamarona, Thijs J.H. Vlugt, Mahinder Ramdin
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Equipment Cost Estimation</a><ul>
+<li><a class="reference internal" href="#how-costs-are-estimated">How costs are estimated</a><ul>
+<li><a class="reference internal" href="#purchased-cost-correlations">Purchased cost correlations</a></li>
+<li><a class="reference internal" href="#cepci-inflation-adjustment">CEPCI inflation adjustment</a></li>
+<li><a class="reference internal" href="#direct-installed-cost">Direct (installed) cost</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#the-equipment-class">The <code class="docutils literal notranslate"><span class="pre">Equipment</span></code> class</a><ul>
+<li><a class="reference internal" href="#constructor-parameters">Constructor parameters</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#usage-examples">Usage examples</a><ul>
+<li><a class="reference internal" href="#example-1-standard-usage">Example 1 — Standard usage</a></li>
+<li><a class="reference internal" href="#example-2-selecting-a-specific-correlation-key">Example 2 — Selecting a specific correlation key</a></li>
+<li><a class="reference internal" href="#example-3-manually-specified-purchased-cost">Example 3 — Manually specified purchased cost</a></li>
+<li><a class="reference internal" href="#example-4-automatic-parallelization">Example 4 — Automatic parallelization</a></li>
+<li><a class="reference internal" href="#example-5-inflation-to-a-custom-target-year">Example 5 — Inflation to a custom target year</a></li>
+<li><a class="reference internal" href="#example-6-fixing-the-number-of-units-manually">Example 6 — Fixing the number of units manually</a></li>
+<li><a class="reference internal" href="#example-7-comparing-materials">Example 7 — Comparing materials</a></li>
+<li><a class="reference internal" href="#example-8-overriding-installation-factors">Example 8 — Overriding installation factors</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#listing-available-equipment">Listing available equipment</a></li>
+<li><a class="reference internal" href="#available-materials">Available materials</a></li>
+<li><a class="reference internal" href="#process-installation-factors">Process installation factors</a></li>
+<li><a class="reference internal" href="#standalone-inflation-adjustment">Standalone inflation adjustment</a></li>
+<li><a class="reference internal" href="#see-also">See also</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=1d3a154c"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=fd10adb8"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/caption_links.js?v=2098cfba"></script>
+    </body>
+</html>
