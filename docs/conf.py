@@ -26,6 +26,7 @@ html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_js_files = ["caption_links.js"]
+html_favicon = "_static/logo-opt.png"
 # html_logo = "_static/logo-blue.png"
 
 html_theme_options = {
