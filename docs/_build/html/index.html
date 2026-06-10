@@ -4,6 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Installation" href="installation.html">
+        <link rel="prefetch" href="_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="_static/OpenPyTEA-logo.png" as="image">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>OpenPyTEA</title>
@@ -12,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=3437e138" />
     
     
 
@@ -226,8 +228,11 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">OpenPyTEA</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -242,30 +247,14 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="user_guide/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/equipment.html">Equipment Cost Estimation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plotting.html">Plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html">JSON Workflow</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="user_guide/equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user_guide/plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/analysis.html">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user_guide/plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user_guide/io_workflow.html">JSON Workflow</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/equipment.html">openpytea.equipment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plant.html">openpytea.plant</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/analysis.html">openpytea.analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plotting.html">openpytea.plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html">openpytea.io</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="api/equipment.html">openpytea.equipment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/plant.html">openpytea.plant</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/analysis.html">openpytea.analysis</a></li>
@@ -275,8 +264,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -325,11 +316,14 @@
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<p><strong>OpenPyTEA</strong> (Open-source Python Toolkit for Economic Assessment) is a
-comprehensive Python library for techno-economic assessment (TEA) of chemical
-and energy systems. It bridges process simulation tools — which provide mass
-and energy balances — with rigorous economic evaluation, covering capital
-expenditure (CAPEX), operating expenses (OPEX), and key financial metrics.</p>
+<p><strong>OpenPyTEA</strong>  An open-source python toolkit for techno-economic assessment
+of chemical process plants and energy systems with economic sensitivity
+and uncertainty evaluation. It bridges process simulation tools —
+which provide mass and energy balances — with rigorous economic evaluation,
+covering capital expenditure (CAPEX), operating expenses (OPEX), and key
+financial metrics.
+Source code, issue tracker, and contributions:
+<a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA">github.com/pbtamarona/OpenPyTEA</a>.</p>
 <div class="sd-container-fluid sd-sphinx-override sd-m-0 docutils">
 <div class="sd-row sd-row-cols-2 sd-row-cols-xs-2 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-2 sd-g-3 sd-g-xs-3 sd-g-sm-3 sd-g-md-3 sd-g-lg-3 docutils">
 <div class="sd-col sd-d-flex-row docutils">
@@ -373,7 +367,8 @@ expenditure (CAPEX), operating expenses (OPEX), and key financial metrics.</p>
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
 <svg version="1.1" width="1.0em" height="1.0em" class="sd-octicon sd-octicon-beaker" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 5.782V2.5h-.25a.75.75 0 0 1 0-1.5h6.5a.75.75 0 0 1 0 1.5H11v3.282l3.666 5.76C15.619 13.04 14.543 15 12.767 15H3.233c-1.776 0-2.852-1.96-1.899-3.458Zm-2.4 6.565a.75.75 0 0 0 .633 1.153h9.534a.75.75 0 0 0 .633-1.153L12.225 10.5h-8.45ZM9.5 2.5h-3V6c0 .143-.04.283-.117.403L4.73 9h6.54L9.617 6.403A.746.746 0 0 1 9.5 6Z"></path></svg> Examples</div>
-<p class="sd-card-text">Hydrogen, geothermal, and other case-study notebooks.</p>
+<p class="sd-card-text">Worked Jupyter notebooks covering hydrogen, geothermal, and other
+case studies with full TEA workflows.</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="examples.html"><span class="doc">Examples &amp; Case Studies</span></a></div>
 </div>
@@ -381,8 +376,19 @@ expenditure (CAPEX), operating expenses (OPEX), and key financial metrics.</p>
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
+<svg version="1.1" width="1.0em" height="1.0em" class="sd-octicon sd-octicon-video" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 3.75C0 2.784.784 2 1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25Zm1.75-.25a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25Z"></path><path d="M6 10.559V5.442a.25.25 0 0 1 .379-.215l4.264 2.559a.25.25 0 0 1 0 .428l-4.264 2.559A.25.25 0 0 1 6 10.559Z"></path></svg> Tutorials</div>
+<p class="sd-card-text">Walkthrough notebook and step-by-step video tutorials covering the
+full OpenPyTEA workflow.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="tutorials.html"><span class="doc">Tutorials</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
 <svg version="1.1" width="1.0em" height="1.0em" class="sd-octicon sd-octicon-browser" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25ZM14.5 6h-13v7.25c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25Zm-6-3.5v2h6V2.75a.25.25 0 0 0-.25-.25ZM5 2.5v2h2v-2Zm-3.25 0a.25.25 0 0 0-.25.25V4.5h2v-2Z"></path></svg> Web GUI</div>
-<p class="sd-card-text">Run TEA interactively without writing code.</p>
+<p class="sd-card-text">Run TEA interactively without writing code. <strong>Still in active development
+— not all features are available yet.</strong></p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="gui.html"><span class="doc">Web GUI</span></a></div>
 </div>
@@ -393,13 +399,12 @@ expenditure (CAPEX), operating expenses (OPEX), and key financial metrics.</p>
 <ul class="simple">
 <li><p><strong>Modular architecture</strong> — equipment costing, plant economics, and analysis are cleanly separated</p></li>
 <li><p><strong>Transparent methodology</strong> — every formula is open and documented</p></li>
-<li><p><strong>Rich financial metrics</strong> — NPV, IRR, ROI, levelized cost, payback time, and full cash-flow tables</p></li>
+<li><p><strong>Extensive financial metrics</strong> — NPV, IRR, ROI, levelized cost, payback time, and full cash-flow tables</p></li>
 <li><p><strong>Multiple depreciation methods</strong> — straight-line, declining-balance, MACRS</p></li>
 <li><p><strong>Sensitivity &amp; uncertainty</strong> — one-way sensitivity, tornado diagrams, Monte Carlo simulation</p></li>
-<li><p><strong>Geographic flexibility</strong> — location cost factors for 17 countries and regions</p></li>
+<li><p><strong>Interactive web GUI</strong> — React + FastAPI front-end for no-code analysis <em>(work in progress)*</em></p></li>
 <li><p><strong>Reproducible workflows</strong> — JSON-based configuration files and result export</p></li>
-<li><p><strong>Interactive web GUI</strong> — React + FastAPI front-end for no-code analysis</p></li>
-<li><p><strong>Education-friendly</strong> — designed for university TEA courses</p></li>
+<li><p><strong>Research-oriented design</strong> — easy integration with other frameworks (optimization, LCA, etc.)</p></li>
 </ul>
 </section>
 <section id="contents">
@@ -414,135 +419,31 @@ expenditure (CAPEX), operating expenses (OPEX), and key financial metrics.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/index.html">User Guide</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/equipment.html">Equipment Cost Estimation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plotting.html">Plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html">JSON Workflow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/index.html#overview-of-the-workflow">Overview of the workflow</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/equipment.html">Equipment Cost Estimation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/equipment.html#how-costs-are-estimated">How costs are estimated</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/equipment.html#the-equipment-class">The <code class="docutils literal notranslate"><span class="pre">Equipment</span></code> class</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/equipment.html#equipment-parallelization">Equipment parallelization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/equipment.html#inflation-adjustment-utility">Inflation adjustment utility</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/equipment.html#process-factors">Process factors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/equipment.html#see-also">See also</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/plant.html">Plant-Level TEA</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html#creating-a-plant">Creating a <code class="docutils literal notranslate"><span class="pre">Plant</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html#configuration-parameters">Configuration parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html#capital-cost-structure">Capital cost structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html#operating-cost-structure">Operating cost structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html#location-factors">Location factors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html#cash-flow-and-financial-metrics">Cash flow and financial metrics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html#scenario-analysis">Scenario analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html#see-also">See also</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/analysis.html#one-way-sensitivity-analysis">One-way sensitivity analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/analysis.html#tornado-diagram">Tornado diagram</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/analysis.html#monte-carlo-simulation">Monte Carlo simulation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/analysis.html#see-also">See also</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/plotting.html">Plotting</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plotting.html#cost-breakdown-charts">Cost breakdown charts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plotting.html#sensitivity-plots">Sensitivity plots</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plotting.html#tornado-diagrams">Tornado diagrams</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plotting.html#monte-carlo-histograms">Monte Carlo histograms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plotting.html#saving-figures">Saving figures</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plotting.html#customizing-style">Customizing style</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plotting.html#see-also">See also</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/io_workflow.html">JSON Workflow</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html#why-use-json-configs">Why use JSON configs?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html#file-structure">File structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html#equipment-json"><code class="docutils literal notranslate"><span class="pre">equipment.json</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html#plant-json"><code class="docutils literal notranslate"><span class="pre">plant.json</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html#analysis-json"><code class="docutils literal notranslate"><span class="pre">analysis.json</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html#running-a-study">Running a study</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html#individual-loaders">Individual loaders</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html#exporting-results">Exporting results</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html#see-also">See also</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/equipment.html">Equipment Cost Estimation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/plant.html">Plant-Level TEA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/analysis.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/plotting.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/io_workflow.html">JSON Workflow</a></li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/equipment.html">openpytea.equipment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plant.html">openpytea.plant</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/analysis.html">openpytea.analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plotting.html">openpytea.plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html">openpytea.io</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-overview">Module overview</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/equipment.html">openpytea.equipment</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/equipment.html#openpytea.equipment.inflation_adjustment"><code class="docutils literal notranslate"><span class="pre">inflation_adjustment()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/equipment.html#openpytea.equipment.CostCorrelationDB"><code class="docutils literal notranslate"><span class="pre">CostCorrelationDB</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/equipment.html#openpytea.equipment.Equipment"><code class="docutils literal notranslate"><span class="pre">Equipment</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/equipment.html#id6"><code class="docutils literal notranslate"><span class="pre">inflation_adjustment()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/equipment.html#id7"><code class="docutils literal notranslate"><span class="pre">CostCorrelationDB</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/equipment.html#id15"><code class="docutils literal notranslate"><span class="pre">Equipment</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/plant.html">openpytea.plant</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/plant.html#openpytea.plant.Plant"><code class="docutils literal notranslate"><span class="pre">Plant</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plant.html#openpytea.plant.DepreciationConfig"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plant.html#openpytea.plant.build_depreciation_array"><code class="docutils literal notranslate"><span class="pre">build_depreciation_array()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plant.html#id0"><code class="docutils literal notranslate"><span class="pre">Plant</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plant.html#id22"><code class="docutils literal notranslate"><span class="pre">DepreciationConfig</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/analysis.html">openpytea.analysis</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/analysis.html#openpytea.analysis.direct_costs_data"><code class="docutils literal notranslate"><span class="pre">direct_costs_data()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/analysis.html#openpytea.analysis.fixed_capital_data"><code class="docutils literal notranslate"><span class="pre">fixed_capital_data()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/analysis.html#openpytea.analysis.variable_opex_data"><code class="docutils literal notranslate"><span class="pre">variable_opex_data()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/analysis.html#openpytea.analysis.fixed_opex_data"><code class="docutils literal notranslate"><span class="pre">fixed_opex_data()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/analysis.html#openpytea.analysis.sensitivity_data"><code class="docutils literal notranslate"><span class="pre">sensitivity_data()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/analysis.html#openpytea.analysis.tornado_data"><code class="docutils literal notranslate"><span class="pre">tornado_data()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/analysis.html#openpytea.analysis.monte_carlo"><code class="docutils literal notranslate"><span class="pre">monte_carlo()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/plotting.html">openpytea.plotting</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/plotting.html#openpytea.plotting.plot_stacked_bar"><code class="docutils literal notranslate"><span class="pre">plot_stacked_bar()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plotting.html#openpytea.plotting.plot_sensitivity"><code class="docutils literal notranslate"><span class="pre">plot_sensitivity()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plotting.html#openpytea.plotting.plot_tornado"><code class="docutils literal notranslate"><span class="pre">plot_tornado()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plotting.html#openpytea.plotting.plot_monte_carlo"><code class="docutils literal notranslate"><span class="pre">plot_monte_carlo()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plotting.html#openpytea.plotting.plot_monte_carlo_inputs"><code class="docutils literal notranslate"><span class="pre">plot_monte_carlo_inputs()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plotting.html#openpytea.plotting.plot_multiple_monte_carlo"><code class="docutils literal notranslate"><span class="pre">plot_multiple_monte_carlo()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/io.html">openpytea.io</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html#openpytea.io.load_equipment_config"><code class="docutils literal notranslate"><span class="pre">load_equipment_config()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html#openpytea.io.load_plant_config"><code class="docutils literal notranslate"><span class="pre">load_plant_config()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html#openpytea.io.load_analysis_config"><code class="docutils literal notranslate"><span class="pre">load_analysis_config()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html#openpytea.io.load_results"><code class="docutils literal notranslate"><span class="pre">load_results()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html#openpytea.io.export_equipment_strings"><code class="docutils literal notranslate"><span class="pre">export_equipment_strings()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html#openpytea.io.export_equipment_results"><code class="docutils literal notranslate"><span class="pre">export_equipment_results()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html#openpytea.io.export_plant_results"><code class="docutils literal notranslate"><span class="pre">export_plant_results()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html#openpytea.io.run_equipment"><code class="docutils literal notranslate"><span class="pre">run_equipment()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html#openpytea.io.run_plant"><code class="docutils literal notranslate"><span class="pre">run_plant()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html#openpytea.io.run_tea"><code class="docutils literal notranslate"><span class="pre">run_tea()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="api/equipment.html">openpytea.equipment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/plant.html">openpytea.plant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/analysis.html">openpytea.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/plotting.html">openpytea.plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/io.html">openpytea.io</a></li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">Citation &amp; License</a></li>
 </ul>
 </div>
 </section>
@@ -616,5 +517,6 @@ expenditure (CAPEX), operating expenses (OPEX), and key financial metrics.</p>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=fd10adb8"></script>
     <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>

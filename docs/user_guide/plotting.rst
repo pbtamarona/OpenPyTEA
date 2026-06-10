@@ -4,7 +4,11 @@ Plotting
 The :mod:`openpytea.plotting` module wraps matplotlib to produce
 publication-quality figures using the `SciencePlots
 <https://github.com/garrettj403/SciencePlots>`_ style. All functions return
-a ``(fig, ax)`` tuple so you can further customize them before saving.
+a ``matplotlib.axes.Axes`` object so you can further customize the figure
+before saving.
+
+To see the outputs of all code examples below, refer to the
+`walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_.
 
 Cost breakdown charts
 ---------------------
@@ -14,124 +18,148 @@ helper functions in :mod:`openpytea.analysis`.
 
 .. code-block:: python
 
-   from openpytea import (
+   from openpytea.analysis import (
+       direct_costs_data,
        fixed_capital_data,
        fixed_opex_data,
        variable_opex_data,
-       plot_stacked_bar,
    )
+   from openpytea.plotting import plot_stacked_bar
+
+   # Equipment-level direct costs
+   equip_data = direct_costs_data(plants=plant)
+   ax = plot_stacked_bar(equip_data)
 
    # Capital cost breakdown (ISBL, OSBL, D&E, Contingency)
-   capex_data = fixed_capital_data(plant)
-   fig, ax = plot_stacked_bar(capex_data, title="Capital Cost Breakdown")
+   capex_data = fixed_capital_data(plants=plant)
+   ax = plot_stacked_bar(capex_data)
 
    # Fixed OPEX breakdown
-   fopex_data = fixed_opex_data(plant)
-   fig, ax = plot_stacked_bar(fopex_data, title="Fixed OPEX Breakdown")
+   fopex_data = fixed_opex_data(plants=plant)
+   ax = plot_stacked_bar(fopex_data)
 
    # Variable OPEX breakdown
-   vopex_data = variable_opex_data(plant)
-   fig, ax = plot_stacked_bar(vopex_data, title="Variable OPEX Breakdown")
-
-Equipment direct costs
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   from openpytea import direct_costs_data, plot_stacked_bar
-
-   equip_data = direct_costs_data(plant)
-   fig, ax = plot_stacked_bar(equip_data, title="Equipment Direct Costs")
+   vopex_data = variable_opex_data(plants=plant)
+   ax = plot_stacked_bar(vopex_data)
 
 Sensitivity plots
 -----------------
 
 .. code-block:: python
 
-   from openpytea import sensitivity_data, plot_sensitivity
+   from openpytea.analysis import sensitivity_data
+   from openpytea.plotting import plot_sensitivity
 
-   sens = sensitivity_data(plant, parameter="electricity", metric="npv")
-   fig, ax = plot_sensitivity(
-       sens,
-       xlabel="Electricity price variation",
-       ylabel="NPV (USD)",
-       figsize=(6, 4),
-   )
-   fig.savefig("sensitivity.pdf")
+   # Vary electricity price ±50 % and plot LCOP
+   sens = sensitivity_data(plants=plant, parameter="electricity", plus_minus_value=0.5)
+   ax = plot_sensitivity(sens)
 
-Multiple parameters on the same axes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ax.figure.savefig("sensitivity.pdf")
 
-Pass a dictionary mapping labels to ``sensitivity_data`` outputs:
+Axis labels and the legend are set automatically from the data returned by
+:func:`~openpytea.analysis.sensitivity_data`. Pass a custom ``figsize`` to
+resize the chart:
 
 .. code-block:: python
 
-   sens_dict = {
-       "Electricity": sensitivity_data(plant, "electricity", "npv"),
-       "CapEx factor": sensitivity_data(plant, "fixed_capital_factor", "npv"),
-   }
-   fig, ax = plot_sensitivity(sens_dict, ylabel="NPV (USD)")
+   ax = plot_sensitivity(sens, figsize=(5, 3))
+
+Comparing multiple plants
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pass a list of plants to :func:`~openpytea.analysis.sensitivity_data` to
+plot all curves on the same axes:
+
+.. code-block:: python
+
+   sens_multi = sensitivity_data(
+       plants=[plant, plant_b],
+       parameter="electricity",
+       metric="NPV",
+       plus_minus_value=0.5,
+   )
+   ax = plot_sensitivity(sens_multi)
 
 Tornado diagrams
 ----------------
 
 .. code-block:: python
 
-   from openpytea import tornado_data, plot_tornado
+   from openpytea.analysis import tornado_data
+   from openpytea.plotting import plot_tornado
 
-   t_data = tornado_data(plant, metric="levelized_cost", plus_minus_value=0.2)
-   fig, ax = plot_tornado(t_data, title="Tornado — LCOA")
-   fig.savefig("tornado.pdf")
+   # Default metric is LCOP
+   td = tornado_data(plant=plant, plus_minus_value=0.5)
+   ax = plot_tornado(td)
+
+   # Profit-oriented metric
+   td_roi = tornado_data(plant=plant, plus_minus_value=0.5, metric="ROI")
+   ax = plot_tornado(td_roi)
+
+   ax.figure.savefig("tornado.pdf")
 
 Monte Carlo histograms
 -----------------------
 
 .. code-block:: python
 
-   from openpytea import monte_carlo, plot_monte_carlo
+   from openpytea.analysis import monte_carlo
+   from openpytea.plotting import plot_monte_carlo
 
-   mc = monte_carlo(plant, n_samples=50_000)
+   mc_results = monte_carlo(plant, num_samples=1_000_000, batch_size=10_000)
 
-   # Single metric
-   fig, ax = plot_monte_carlo(mc, metric="levelized_cost")
+   # Distribution of the LCOP
+   ax = plot_monte_carlo(plant, metric="LCOP", bins=30)
 
-   # Multiple metrics in a grid
-   fig, axes = plot_monte_carlo(mc)   # defaults to all metrics
+   ax.figure.savefig("monte_carlo_lcop.pdf")
+
+Visualizing input distributions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use :func:`~openpytea.plotting.plot_monte_carlo_inputs` to verify that the
+``std``/``min``/``max`` settings produce the intended input distributions:
+
+.. code-block:: python
+
+   from openpytea.plotting import plot_monte_carlo_inputs
+
+   axes = plot_monte_carlo_inputs(mc_results, bins=40)
 
 Comparing scenarios
 ~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-   from openpytea import plot_multiple_monte_carlo
+   from openpytea.plotting import plot_multiple_monte_carlo
 
-   fig, ax = plot_multiple_monte_carlo(
-       [mc_scenario_a, mc_scenario_b],
-       labels=["Scenario A", "Scenario B"],
-       metric="npv",
+   mc_b = monte_carlo(plant_b, num_samples=1_000_000, batch_size=10_000)
+
+   ax = plot_multiple_monte_carlo(
+       data_list=[plant, plant_b],
+       metric="LCOP",
+       bins=30,
    )
 
 Saving figures
 --------------
 
-All functions return a ``(fig, ax)`` tuple. Use standard matplotlib methods
-to save:
+All functions return an ``Axes`` object. Access the parent figure via
+``ax.figure`` to save:
 
 .. code-block:: python
 
-   fig, ax = plot_stacked_bar(capex_data)
-   fig.savefig("capex.png", dpi=300, bbox_inches="tight")
-   fig.savefig("capex.pdf")          # vector format for publications
+   ax = plot_stacked_bar(capex_data)
+   ax.figure.savefig("capex.png", dpi=300, bbox_inches="tight")
+   ax.figure.savefig("capex.pdf")   # vector format for publications
 
-Customizing style
+Customizing axes
 -----------------
 
-Figures use the IEEE SciencePlots style by default. You can override any
-matplotlib settings after the call:
+You can modify the returned axes object with standard matplotlib calls:
 
 .. code-block:: python
 
-   fig, ax = plot_sensitivity(sens)
+   ax = plot_sensitivity(sens)
    ax.set_title("Custom title", fontsize=14)
    ax.set_xlim(-0.6, 0.6)
    ax.legend(loc="upper left")
@@ -141,3 +169,4 @@ See also
 
 * :mod:`openpytea.plotting` — full API reference
 * :mod:`openpytea.analysis` — data preparation functions
+* `Walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_ — end-to-end worked example

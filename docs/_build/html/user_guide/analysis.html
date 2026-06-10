@@ -4,15 +4,17 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Plotting" href="plotting.html"><link rel="prev" title="Plant-Level TEA" href="plant.html">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo.png" as="image">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>Sensitivity &amp; Uncertainty Analysis - OpenPyTEA</title>
+        <title>Analysis - OpenPyTEA</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=3437e138" />
     
     
 
@@ -226,8 +228,11 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">OpenPyTEA</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -242,30 +247,14 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
-<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Sensitivity &amp; Uncertainty Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plotting.html">Plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plotting.html">openpytea.plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/io.html">openpytea.io</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
@@ -275,8 +264,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -315,51 +306,132 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="sensitivity-uncertainty-analysis">
-<h1>Sensitivity &amp; Uncertainty Analysis<a class="headerlink" href="#sensitivity-uncertainty-analysis" title="Link to this heading">¶</a></h1>
-<p>The <a class="reference internal" href="../api/analysis.html#module-openpytea.analysis" title="openpytea.analysis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.analysis</span></code></a> module provides three tools for understanding
-how uncertain inputs affect financial outcomes:</p>
+          <section id="analysis">
+<h1>Analysis<a class="headerlink" href="#analysis" title="Link to this heading">¶</a></h1>
+<p>The <a class="reference internal" href="../api/analysis.html#module-openpytea.analysis" title="openpytea.analysis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.analysis</span></code></a> module provides tools for understanding cost
+structure and how uncertain inputs affect financial outcomes:</p>
 <ul class="simple">
-<li><p><strong>Sensitivity analysis</strong> — vary one parameter across a range and plot the metric</p></li>
-<li><p><strong>Tornado diagram</strong> — rank parameters by their ±impact on a single metric</p></li>
+<li><p><strong>Cost breakdowns</strong> — prepare equipment-level and plant-level CAPEX/OPEX data</p></li>
+<li><p><strong>One-way sensitivity</strong> — vary one parameter across a range and observe the metric</p></li>
+<li><p><strong>Tornado diagram</strong> — rank all parameters by their ±impact on a single metric</p></li>
 <li><p><strong>Monte Carlo simulation</strong> — propagate all uncertainties simultaneously</p></li>
 </ul>
 <p>All analysis functions accept a configured and calculated
-<a class="reference internal" href="../api/plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a> object.</p>
-<section id="one-way-sensitivity-analysis">
-<h2>One-way sensitivity analysis<a class="headerlink" href="#one-way-sensitivity-analysis" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">sensitivity_data</span><span class="p">,</span> <span class="n">plot_sensitivity</span>
-
-<span class="c1"># Compute sensitivity of the levelized cost to the electricity price (±50 %)</span>
-<span class="n">sens</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span>
-    <span class="n">plant</span><span class="p">,</span>
-    <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span>   <span class="c1"># key in variable_opex_inputs</span>
-    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;levelized_cost&quot;</span><span class="p">,</span>
-    <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>       <span class="c1"># ±50 %</span>
-    <span class="n">n_points</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span>
-    <span class="n">sens</span><span class="p">,</span>
-    <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Electricity price (USD/MWh)&quot;</span><span class="p">,</span>
-    <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;LCOA (USD/t NH₃)&quot;</span><span class="p">,</span>
+<a class="reference internal" href="../api/plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a> object. Visualization of the results is
+handled separately by <a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a>.</p>
+<p>To see the outputs of all code examples below, refer to the
+<a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">walkthrough notebook</a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">direct_costs_data</span><span class="p">,</span> <span class="n">fixed_capital_data</span><span class="p">,</span>
+    <span class="n">fixed_opex_data</span><span class="p">,</span> <span class="n">variable_opex_data</span><span class="p">,</span>
+    <span class="n">sensitivity_data</span><span class="p">,</span> <span class="n">tornado_data</span><span class="p">,</span> <span class="n">monte_carlo</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">parameter</span></code> argument accepts:</p>
-<ul class="simple">
-<li><p>A key from <code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code> — varies that input’s <em>price</em></p></li>
-<li><p>A key from <code class="docutils literal notranslate"><span class="pre">plant_products</span></code> — varies that product’s <em>price</em></p></li>
-<li><p>Any numeric attribute of the <a class="reference internal" href="../api/plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a> object
-(e.g., <code class="docutils literal notranslate"><span class="pre">&quot;interest_rate&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;plant_utilization&quot;</span></code>)</p></li>
-</ul>
-<section id="supported-metric-values">
-<h3>Supported <code class="docutils literal notranslate"><span class="pre">metric</span></code> values<a class="headerlink" href="#supported-metric-values" title="Link to this heading">¶</a></h3>
+<section id="capex-and-opex-breakdowns">
+<h2>CAPEX and OPEX breakdowns<a class="headerlink" href="#capex-and-opex-breakdowns" title="Link to this heading">¶</a></h2>
+<p>Cost breakdowns are produced in two steps: the analysis functions prepare
+structured data, and the plotting functions render it. This separation lets
+you reuse the data in custom visualizations or export it directly.</p>
+<p>The four data-preparation functions and their outputs:</p>
 <div class="table-wrapper colwidths-given docutils container">
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 30.0%" />
-<col style="width: 70.0%" />
+<col style="width: 35.0%" />
+<col style="width: 65.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Function</p></th>
+<th class="head"><p>Output</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">direct_costs_data(plants)</span></code></p></td>
+<td><p>Equipment-level purchased and direct costs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_capital_data(plants)</span></code></p></td>
+<td><p>ISBL, OSBL, D&amp;E, contingency (and optional additional CAPEX).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_opex_data(plants)</span></code></p></td>
+<td><p>Each fixed OPEX component (absolute or as % of total).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">variable_opex_data(plants)</span></code></p></td>
+<td><p>Each variable OPEX item.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Basic usage (single plant):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Equipment-level CAPEX</span>
+<span class="n">direct_costs</span> <span class="o">=</span> <span class="n">direct_costs_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
+
+<span class="c1"># Fixed capital breakdown (include additional CAPEX events)</span>
+<span class="n">fixed_capital</span> <span class="o">=</span> <span class="n">fixed_capital_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">additional_capex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Fixed OPEX as percentage of total</span>
+<span class="n">fixed_opex</span> <span class="o">=</span> <span class="n">fixed_opex_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Variable OPEX by item</span>
+<span class="n">variable_opex</span> <span class="o">=</span> <span class="n">variable_opex_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Pass the returned data to <code class="docutils literal notranslate"><span class="pre">plot_stacked_bar()</span></code> to visualize it — see
+<a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a> for details.</p>
+<section id="comparing-multiple-plants">
+<h3>Comparing multiple plants<a class="headerlink" href="#comparing-multiple-plants" title="Link to this heading">¶</a></h3>
+<p>Pass a list of <a class="reference internal" href="../api/plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a> objects to compare two or
+more configurations side-by-side:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="n">plant_b</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">plant</span><span class="p">)</span>
+<span class="n">plant_b</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;plant_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Scenario B&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;variable_opex_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;electricity&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">0.9e6</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">})</span>
+<span class="n">plant_b</span><span class="o">.</span><span class="n">calculate_all</span><span class="p">()</span>
+
+<span class="n">variable_opex</span> <span class="o">=</span> <span class="n">variable_opex_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="p">[</span><span class="n">plant</span><span class="p">,</span> <span class="n">plant_b</span><span class="p">])</span>
+<span class="c1"># pass to plot_stacked_bar() for a side-by-side chart</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="one-way-sensitivity-analysis">
+<h2>One-way sensitivity analysis<a class="headerlink" href="#one-way-sensitivity-analysis" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../api/analysis.html#openpytea.analysis.sensitivity_data" title="openpytea.analysis.sensitivity_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">sensitivity_data()</span></code></a> varies a single parameter over
+a symmetric range while holding everything else constant, then records the
+selected metric at each point.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Default metric is LCOP; vary electricity price ±50 %</span>
+<span class="n">sens</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Specify metric and label explicitly</span>
+<span class="n">npv_sens</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span>
+    <span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span>
+    <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;methanol&quot;</span><span class="p">,</span>       <span class="c1"># product price</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;NPV&quot;</span><span class="p">,</span>
+    <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Project A — NPV [USD]&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">parameter</span></code> can be any of:</p>
+<ul class="simple">
+<li><p>A key from <code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code> — varies that item’s <em>price</em></p></li>
+<li><p>A key from <code class="docutils literal notranslate"><span class="pre">plant_products</span></code> — varies that product’s <em>price</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;fixed_capital&quot;</span></code> — scales total installed CAPEX</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;fixed_opex&quot;</span></code> — scales total fixed OPEX</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;interest_rate&quot;</span></code> — discount rate</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;project_lifetime&quot;</span></code> — project duration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;operator_hourly_rate&quot;</span></code> — labor wage</p></li>
+</ul>
+<p>Supported <code class="docutils literal notranslate"><span class="pre">metric</span></code> values:</p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Value</p></th>
@@ -367,133 +439,204 @@ how uncertain inputs affect financial outcomes:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;levelized_cost&quot;</span></code></p></td>
-<td><p>Levelized cost of the primary product</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;LCOP&quot;</span></code></p></td>
+<td><p>Levelized cost of the primary product (default).</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;npv&quot;</span></code></p></td>
-<td><p>Net Present Value</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;NPV&quot;</span></code></p></td>
+<td><p>Net Present Value.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;irr&quot;</span></code></p></td>
-<td><p>Internal Rate of Return</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;IRR&quot;</span></code></p></td>
+<td><p>Internal Rate of Return.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;roi&quot;</span></code></p></td>
-<td><p>Return on Investment</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;ROI&quot;</span></code></p></td>
+<td><p>Return on Investment.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;payback_time&quot;</span></code></p></td>
-<td><p>Simple payback time in years</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;PBT&quot;</span></code></p></td>
+<td><p>Simple payback time in years.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>For metrics that depend on revenue (NPV, ROI, IRR, PBT), product prices are
+included in the evaluation automatically.</p>
+<p>Comparing multiple plants:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pbt_comparison</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span>
+    <span class="n">plants</span><span class="o">=</span><span class="p">[</span><span class="n">plant</span><span class="p">,</span> <span class="n">plant_b</span><span class="p">],</span>
+    <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;PBT&quot;</span><span class="p">,</span>
+    <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">additional_capex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>   <span class="c1"># account for mid-project CAPEX events</span>
+    <span class="n">n_points</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Pass the result to <code class="docutils literal notranslate"><span class="pre">plot_sensitivity()</span></code> — see <a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a>.</p>
+</section>
+<section id="tornado-diagram">
+<h2>Tornado diagram<a class="headerlink" href="#tornado-diagram" title="Link to this heading">¶</a></h2>
+<p>A tornado diagram evaluates every variable-cost driver and financial
+parameter independently at ±``plus_minus_value``, then ranks them by
+impact on the chosen metric.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">tornado_data</span>
+
+<span class="c1"># Default metric is LCOP</span>
+<span class="n">td</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span><span class="n">plant</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Profit-oriented metric — product prices are included automatically</span>
+<span class="n">td_roi</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span><span class="n">plant</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;ROI&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Pass <code class="docutils literal notranslate"><span class="pre">td</span></code> to <code class="docutils literal notranslate"><span class="pre">plot_tornado()</span></code> — see <a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a>.</p>
+</section>
+<section id="monte-carlo-simulation">
+<h2>Monte Carlo simulation<a class="headerlink" href="#monte-carlo-simulation" title="Link to this heading">¶</a></h2>
+<p>Monte Carlo assigns probability distributions to all uncertain inputs and
+evaluates the plant thousands or millions of times, producing a distribution
+of outcomes for each financial metric.</p>
+<section id="configuring-input-uncertainties">
+<h3>Configuring input uncertainties<a class="headerlink" href="#configuring-input-uncertainties" title="Link to this heading">¶</a></h3>
+<p><strong>Variable OPEX and product price uncertainties</strong> are defined inline in the
+existing <code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code> and <code class="docutils literal notranslate"><span class="pre">plant_products</span></code> configuration keys
+by adding <code class="docutils literal notranslate"><span class="pre">std</span></code>, <code class="docutils literal notranslate"><span class="pre">min</span></code>, and <code class="docutils literal notranslate"><span class="pre">max</span></code> fields to each item:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;plant_products&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;methanol&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;production&quot;</span><span class="p">:</span> <span class="mi">150_000</span><span class="p">,</span>
+            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">1.75</span><span class="p">,</span>
+            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span>    <span class="c1"># standard deviation</span>
+            <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">1.25</span><span class="p">,</span>    <span class="c1"># lower truncation bound</span>
+            <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">2.25</span><span class="p">,</span>    <span class="c1"># upper truncation bound</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;operator_hourly_rate&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;rate&quot;</span><span class="p">:</span> <span class="mf">38.11</span><span class="p">,</span>
+        <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span>
+        <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">,</span>
+        <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">60.0</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;variable_opex_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;electricity&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">1.4e6</span><span class="p">,</span>
+            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">,</span>
+            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.035</span><span class="p">,</span>
+            <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.025</span><span class="p">,</span>
+            <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">0.175</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;natural_gas&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">1.0e5</span><span class="p">,</span>
+            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">,</span>
+            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.03</span><span class="p">,</span>
+            <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span>
+            <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p><strong>Project-level financial uncertainties</strong> are set through the
+<code class="docutils literal notranslate"><span class="pre">project_uncertainties</span></code> key:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;project_uncertainties&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;fixed_capital_factor&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.30</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">1.75</span><span class="p">},</span>
+        <span class="s2">&quot;fixed_opex_factor&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.30</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">1.75</span><span class="p">},</span>
+        <span class="s2">&quot;project_lifetime&quot;</span><span class="p">:</span>     <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>     <span class="c1"># min/max auto-derived</span>
+        <span class="s2">&quot;interest_rate&quot;</span><span class="p">:</span>        <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.03</span><span class="p">},</span>  <span class="c1"># min/max auto-derived</span>
+        <span class="s2">&quot;plant_utilization&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">},</span>  <span class="c1"># opt-in; default std=0</span>
+        <span class="s2">&quot;tax_rate&quot;</span><span class="p">:</span>             <span class="p">{</span><span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">},</span>  <span class="c1"># opt-in; default std=0</span>
+    <span class="p">}</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p>The first four keys are <strong>active by default</strong>. <code class="docutils literal notranslate"><span class="pre">plant_utilization</span></code> and
+<code class="docutils literal notranslate"><span class="pre">tax_rate</span></code> require an explicit <code class="docutils literal notranslate"><span class="pre">std</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> to be sampled. When <code class="docutils literal notranslate"><span class="pre">min</span></code>/
+<code class="docutils literal notranslate"><span class="pre">max</span></code> are omitted they are derived as ±2 × std around the plant baseline.
+Set <code class="docutils literal notranslate"><span class="pre">std=0</span></code> for any key to disable it.</p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 50.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Default std</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_capital_factor</span></code></p></td>
+<td><p>Multiplicative factor on total installed CAPEX.</p></td>
+<td><p>0.30 (30%)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_opex_factor</span></code></p></td>
+<td><p>Multiplicative factor on annual fixed OPEX.</p></td>
+<td><p>0.30 (30%)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">project_lifetime</span></code></p></td>
+<td><p>Economic project life (years).</p></td>
+<td><p>5 years</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">interest_rate</span></code></p></td>
+<td><p>Discount / financing rate.</p></td>
+<td><p>0.03 (3 pp)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">plant_utilization</span></code></p></td>
+<td><p>Yearly fraction of operating time.</p></td>
+<td><p>0 (opt-in)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tax_rate</span></code></p></td>
+<td><p>Corporate tax rate.</p></td>
+<td><p>0 (opt-in)</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
-<section id="multiple-parameters-on-one-chart">
-<h3>Multiple parameters on one chart<a class="headerlink" href="#multiple-parameters-on-one-chart" title="Link to this heading">¶</a></h3>
-<p>Call <code class="docutils literal notranslate"><span class="pre">sensitivity_data</span></code> repeatedly and overlay the results:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;electricity&quot;</span><span class="p">:</span> <span class="s2">&quot;Electricity price&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;interest_rate&quot;</span><span class="p">:</span> <span class="s2">&quot;Discount rate&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;plant_utilization&quot;</span><span class="p">:</span> <span class="s2">&quot;Capacity utilization&quot;</span><span class="p">,</span>
-<span class="p">}</span>
-
-<span class="n">all_sens</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">label</span><span class="p">:</span> <span class="n">sensitivity_data</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="n">param</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;npv&quot;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-<span class="p">}</span>
-
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">all_sens</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;NPV (M USD)&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="tornado-diagram">
-<h2>Tornado diagram<a class="headerlink" href="#tornado-diagram" title="Link to this heading">¶</a></h2>
-<p>A tornado diagram shows the asymmetric impact of each parameter varying
-independently by a fixed percentage:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">tornado_data</span><span class="p">,</span> <span class="n">plot_tornado</span>
-
-<span class="n">tornado</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span>
-    <span class="n">plant</span><span class="p">,</span>
-    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;levelized_cost&quot;</span><span class="p">,</span>
-    <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>    <span class="c1"># ±20 %</span>
-<span class="p">)</span>
-
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_tornado</span><span class="p">(</span><span class="n">tornado</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Tornado — Levelized Cost of Ammonia&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Parameters are automatically ranked from most to least impactful, producing
-the characteristic “tornado” shape.</p>
-</section>
-<section id="monte-carlo-simulation">
-<h2>Monte Carlo simulation<a class="headerlink" href="#monte-carlo-simulation" title="Link to this heading">¶</a></h2>
-<p>Monte Carlo propagates uncertainty through the full economic model to yield
-probability distributions for each financial metric.</p>
-<section id="configuring-uncertainties">
-<h3>Configuring uncertainties<a class="headerlink" href="#configuring-uncertainties" title="Link to this heading">¶</a></h3>
-<p>Each uncertain input is described by a mean, standard deviation, and bounds:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
-    <span class="s2">&quot;project_uncertainties&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="c1"># Capital cost uncertainty (normal distribution, truncated)</span>
-        <span class="s2">&quot;fixed_capital_factor&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.30</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">1.75</span>
-        <span class="p">},</span>
-        <span class="c1"># Fixed OPEX uncertainty</span>
-        <span class="s2">&quot;fixed_opex_factor&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.30</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">1.70</span>
-        <span class="p">},</span>
-        <span class="c1"># Project lifetime uncertainty (years)</span>
-        <span class="s2">&quot;project_lifetime&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">40</span>
-        <span class="p">},</span>
-        <span class="c1"># Discount rate uncertainty</span>
-        <span class="s2">&quot;interest_rate&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="mf">0.03</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.03</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">0.20</span>
-        <span class="p">},</span>
-    <span class="p">}</span>
-<span class="p">})</span>
-</pre></div>
-</div>
-</section>
 <section id="running-the-simulation">
 <h3>Running the simulation<a class="headerlink" href="#running-the-simulation" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">plot_monte_carlo</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span>
 
-<span class="n">mc_results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">50_000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">5_000</span><span class="p">)</span>
-
-<span class="c1"># Inspect summary statistics</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">mc_results</span><span class="p">[</span><span class="s2">&quot;levelized_cost&quot;</span><span class="p">][</span><span class="s2">&quot;summary&quot;</span><span class="p">])</span>
-
-<span class="c1"># Plot distribution</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_monte_carlo</span><span class="p">(</span><span class="n">mc_results</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;levelized_cost&quot;</span><span class="p">)</span>
+<span class="n">mc_results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span>
+    <span class="n">plant</span><span class="p">,</span>
+    <span class="n">num_samples</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span>   <span class="c1"># increase for accuracy, decrease for speed</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>       <span class="c1"># adjust to available memory</span>
+<span class="p">)</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">mc_results</span></code> dictionary contains one entry per metric:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="s2">&quot;levelized_cost&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;samples&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>        <span class="c1"># raw samples</span>
-        <span class="s2">&quot;summary&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>
-            <span class="s2">&quot;p5&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s2">&quot;p25&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s2">&quot;median&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s2">&quot;p75&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s2">&quot;p95&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>
-            <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>
-        <span class="p">}</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;npv&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="o">...</span> <span class="p">},</span>
-    <span class="s2">&quot;irr&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="o">...</span> <span class="p">},</span>
-    <span class="o">...</span>
-<span class="p">}</span>
+<p>Results are stored on the <code class="docutils literal notranslate"><span class="pre">Plant</span></code> object and returned as a dict keyed by
+metric name. Each entry contains the raw sample array:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Access results</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mc_results</span><span class="p">[</span><span class="s2">&quot;LCOP&quot;</span><span class="p">])</span>    <span class="c1"># array of LCOP samples</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mc_results</span><span class="p">[</span><span class="s2">&quot;NPV&quot;</span><span class="p">])</span>     <span class="c1"># array of NPV samples</span>
+<span class="c1"># Available keys: &quot;LCOP&quot;, &quot;NPV&quot;, &quot;IRR&quot;, &quot;ROI&quot;, &quot;PBT&quot;</span>
 </pre></div>
 </div>
 </section>
-<section id="comparing-multiple-plants">
-<h3>Comparing multiple plants<a class="headerlink" href="#comparing-multiple-plants" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_multiple_monte_carlo</span>
+<section id="visualizing-results">
+<h3>Visualizing results<a class="headerlink" href="#visualizing-results" title="Link to this heading">¶</a></h3>
+<p>Pass the plant (or <code class="docutils literal notranslate"><span class="pre">mc_results</span></code>) to the plotting functions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_monte_carlo</span><span class="p">,</span> <span class="n">plot_monte_carlo_inputs</span>
 
-<span class="n">mc_smr</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant_smr</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">50_000</span><span class="p">)</span>
-<span class="n">mc_elec</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant_electrolysis</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">50_000</span><span class="p">)</span>
+<span class="c1"># Distribution of the LCOP</span>
+<span class="n">plot_monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_multiple_monte_carlo</span><span class="p">(</span>
-    <span class="p">[</span><span class="n">mc_smr</span><span class="p">,</span> <span class="n">mc_elec</span><span class="p">],</span>
-    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SMR&quot;</span><span class="p">,</span> <span class="s2">&quot;Electrolysis&quot;</span><span class="p">],</span>
-    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;levelized_cost&quot;</span><span class="p">,</span>
+<span class="c1"># Verify input distributions (useful for checking std/min/max settings)</span>
+<span class="n">plot_monte_carlo_inputs</span><span class="p">(</span><span class="n">mc_results</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a> for full plotting options.</p>
+</section>
+<section id="comparing-multiple-plants-under-uncertainty">
+<h3>Comparing multiple plants under uncertainty<a class="headerlink" href="#comparing-multiple-plants-under-uncertainty" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_multiple_monte_carlo</span>
+
+<span class="n">mc_b</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant_b</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10_000</span><span class="p">)</span>
+
+<span class="n">plot_multiple_monte_carlo</span><span class="p">(</span>
+    <span class="n">data_list</span><span class="o">=</span><span class="p">[</span><span class="n">plant</span><span class="p">,</span> <span class="n">plant_b</span><span class="p">],</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span>
+    <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -504,6 +647,7 @@ probability distributions for each financial metric.</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/analysis.html#module-openpytea.analysis" title="openpytea.analysis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.analysis</span></code></a> — full API reference</p></li>
 <li><p><a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a> — visualization options</p></li>
+<li><p><a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">Walkthrough notebook</a> — end-to-end worked example</p></li>
 </ul>
 </section>
 </section>
@@ -563,17 +707,18 @@ probability distributions for each financial metric.</p>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Sensitivity &amp; Uncertainty Analysis</a><ul>
-<li><a class="reference internal" href="#one-way-sensitivity-analysis">One-way sensitivity analysis</a><ul>
-<li><a class="reference internal" href="#supported-metric-values">Supported <code class="docutils literal notranslate"><span class="pre">metric</span></code> values</a></li>
-<li><a class="reference internal" href="#multiple-parameters-on-one-chart">Multiple parameters on one chart</a></li>
+<li><a class="reference internal" href="#">Analysis</a><ul>
+<li><a class="reference internal" href="#capex-and-opex-breakdowns">CAPEX and OPEX breakdowns</a><ul>
+<li><a class="reference internal" href="#comparing-multiple-plants">Comparing multiple plants</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#one-way-sensitivity-analysis">One-way sensitivity analysis</a></li>
 <li><a class="reference internal" href="#tornado-diagram">Tornado diagram</a></li>
 <li><a class="reference internal" href="#monte-carlo-simulation">Monte Carlo simulation</a><ul>
-<li><a class="reference internal" href="#configuring-uncertainties">Configuring uncertainties</a></li>
+<li><a class="reference internal" href="#configuring-input-uncertainties">Configuring input uncertainties</a></li>
 <li><a class="reference internal" href="#running-the-simulation">Running the simulation</a></li>
-<li><a class="reference internal" href="#comparing-multiple-plants">Comparing multiple plants</a></li>
+<li><a class="reference internal" href="#visualizing-results">Visualizing results</a></li>
+<li><a class="reference internal" href="#comparing-multiple-plants-under-uncertainty">Comparing multiple plants under uncertainty</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#see-also">See also</a></li>
@@ -595,5 +740,6 @@ probability distributions for each financial metric.</p>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=fd10adb8"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>

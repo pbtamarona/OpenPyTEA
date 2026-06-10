@@ -4,6 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Quick Start" href="quickstart.html"><link rel="prev" title="OpenPyTEA" href="index.html">
+        <link rel="prefetch" href="_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="_static/OpenPyTEA-logo.png" as="image">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>Installation - OpenPyTEA</title>
@@ -12,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=3437e138" />
     
     
 
@@ -226,8 +228,11 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">OpenPyTEA</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -242,30 +247,14 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="user_guide/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/equipment.html">Equipment Cost Estimation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/plotting.html">Plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide/io_workflow.html">JSON Workflow</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="user_guide/equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user_guide/plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/analysis.html">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user_guide/plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user_guide/io_workflow.html">JSON Workflow</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/equipment.html">openpytea.equipment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plant.html">openpytea.plant</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/analysis.html">openpytea.analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/plotting.html">openpytea.plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/io.html">openpytea.io</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="api/equipment.html">openpytea.equipment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/plant.html">openpytea.plant</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/analysis.html">openpytea.analysis</a></li>
@@ -275,8 +264,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -323,42 +314,27 @@
 </section>
 <section id="install-from-pypi">
 <h2>Install from PyPI<a class="headerlink" href="#install-from-pypi" title="Link to this heading">¶</a></h2>
-<p>The recommended way to install OpenPyTEA is from PyPI:</p>
-<div class="sd-tab-set docutils">
-<input checked="checked" id="sd-tab-item-0" name="sd-tab-set-0" type="radio">
-<label class="sd-tab-label" for="sd-tab-item-0">
-pip</label><div class="sd-tab-content docutils">
+<p>The recommended way to install OpenPyTEA is via <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>OpenPyTEA
 </pre></div>
 </div>
-</div>
-<input id="sd-tab-item-1" name="sd-tab-set-0" type="radio">
-<label class="sd-tab-label" for="sd-tab-item-1">
-uv (recommended)</label><div class="sd-tab-content docutils">
-<p><a class="reference external" href="https://github.com/astral-sh/uv">uv</a> is a fast Python package manager.
-Install it first, then:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>OpenPyTEA
-</pre></div>
-</div>
-<p>Or add it as a project dependency:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>add<span class="w"> </span>OpenPyTEA
-</pre></div>
-</div>
-</div>
-</div>
 </section>
-<section id="install-from-source">
-<h2>Install from source<a class="headerlink" href="#install-from-source" title="Link to this heading">¶</a></h2>
-<p>To get the latest development version:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/PBTamarona/OpenPyTEA.git
-<span class="nb">cd</span><span class="w"> </span>OpenPyTEA
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
-</pre></div>
-</div>
-<p>Or with uv:</p>
+<section id="clone-from-source">
+<h2>Clone from source<a class="headerlink" href="#clone-from-source" title="Link to this heading">¶</a></h2>
+<p>To work with the notebooks or contribute to development, clone the repository.
+We recommend <a class="reference external" href="https://github.com/astral-sh/uv">uv</a> for this workflow — it
+locks the full environment so the virtual environment can be exactly reproduced:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/PBTamarona/OpenPyTEA.git
 <span class="nb">cd</span><span class="w"> </span>OpenPyTEA
 uv<span class="w"> </span>sync
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span></code> reads the lockfile and creates a <code class="docutils literal notranslate"><span class="pre">.venv</span></code> with all dependencies
+pinned, making it easy to share and replicate the environment across machines.</p>
+<p>If you prefer plain pip instead:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/PBTamarona/OpenPyTEA.git
+<span class="nb">cd</span><span class="w"> </span>OpenPyTEA
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
 </section>
@@ -422,10 +398,11 @@ pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot
 </pre></div>
 </div>
 </section>
-<section id="web-gui-optional">
-<h2>Web GUI (optional)<a class="headerlink" href="#web-gui-optional" title="Link to this heading">¶</a></h2>
+<section id="web-gui-work-in-progress">
+<h2>Web GUI (Work in progress)<a class="headerlink" href="#web-gui-work-in-progress" title="Link to this heading">¶</a></h2>
 <p>The interactive web GUI requires additional setup. See <a class="reference internal" href="gui.html"><span class="doc">Web GUI</span></a> for full
-instructions.</p>
+instructions. <strong>Please note, the GUI is still in active development and not
+all features are available yet.</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Backend (FastAPI)</span>
 <span class="nb">cd</span><span class="w"> </span>backend
 pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
@@ -498,11 +475,11 @@ npm<span class="w"> </span>run<span class="w"> </span>dev
 <li><a class="reference internal" href="#">Installation</a><ul>
 <li><a class="reference internal" href="#requirements">Requirements</a></li>
 <li><a class="reference internal" href="#install-from-pypi">Install from PyPI</a></li>
-<li><a class="reference internal" href="#install-from-source">Install from source</a></li>
+<li><a class="reference internal" href="#clone-from-source">Clone from source</a></li>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li><a class="reference internal" href="#optional-extras">Optional extras</a></li>
 <li><a class="reference internal" href="#verify-installation">Verify installation</a></li>
-<li><a class="reference internal" href="#web-gui-optional">Web GUI (optional)</a></li>
+<li><a class="reference internal" href="#web-gui-work-in-progress">Web GUI (Work in progress)</a></li>
 </ul>
 </li>
 </ul>
@@ -521,5 +498,6 @@ npm<span class="w"> </span>run<span class="w"> </span>dev
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=fd10adb8"></script>
     <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>

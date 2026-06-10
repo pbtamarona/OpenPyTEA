@@ -14,11 +14,14 @@ OpenPyTEA
 
 |
 
-**OpenPyTEA** (Open-source Python Toolkit for Economic Assessment) is a
-comprehensive Python library for techno-economic assessment (TEA) of chemical
-and energy systems. It bridges process simulation tools — which provide mass
-and energy balances — with rigorous economic evaluation, covering capital
-expenditure (CAPEX), operating expenses (OPEX), and key financial metrics.
+**OpenPyTEA**  An open-source python toolkit for techno-economic assessment
+of chemical process plants and energy systems with economic sensitivity
+and uncertainty evaluation. It bridges process simulation tools —
+which provide mass and energy balances — with rigorous economic evaluation,
+covering capital expenditure (CAPEX), operating expenses (OPEX), and key
+financial metrics.
+Source code, issue tracker, and contributions:
+`github.com/pbtamarona/OpenPyTEA <https://github.com/pbtamarona/OpenPyTEA>`_.
 
 .. grid:: 2
    :gutter: 3
@@ -52,26 +55,34 @@ expenditure (CAPEX), operating expenses (OPEX), and key financial metrics.
       :link: examples
       :link-type: doc
 
-      Hydrogen, geothermal, and other case-study notebooks.
+      Worked Jupyter notebooks covering hydrogen, geothermal, and other
+      case studies with full TEA workflows.
+
+   .. grid-item-card:: :octicon:`video` Tutorials
+      :link: tutorials
+      :link-type: doc
+
+      Walkthrough notebook and step-by-step video tutorials covering the
+      full OpenPyTEA workflow.
 
    .. grid-item-card:: :octicon:`browser` Web GUI
       :link: gui
       :link-type: doc
 
-      Run TEA interactively without writing code.
+      Run TEA interactively without writing code. **Still in active development
+      — not all features are available yet.**
 
 Key features
 ------------
 
 * **Modular architecture** — equipment costing, plant economics, and analysis are cleanly separated
 * **Transparent methodology** — every formula is open and documented
-* **Rich financial metrics** — NPV, IRR, ROI, levelized cost, payback time, and full cash-flow tables
+* **Extensive financial metrics** — NPV, IRR, ROI, levelized cost, payback time, and full cash-flow tables
 * **Multiple depreciation methods** — straight-line, declining-balance, MACRS
 * **Sensitivity & uncertainty** — one-way sensitivity, tornado diagrams, Monte Carlo simulation
-* **Geographic flexibility** — location cost factors for 17 countries and regions
+* **Interactive web GUI** — React + FastAPI front-end for no-code analysis *(work in progress)**
 * **Reproducible workflows** — JSON-based configuration files and result export
-* **Interactive web GUI** — React + FastAPI front-end for no-code analysis
-* **Education-friendly** — designed for university TEA courses
+* **Research-oriented design** — easy integration with other frameworks (optimization, LCA, etc.)
 
 Contents
 --------
@@ -84,10 +95,9 @@ Contents
    quickstart
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: User Guide
 
-   user_guide/index
    user_guide/equipment
    user_guide/plant
    user_guide/analysis
@@ -95,10 +105,9 @@ Contents
    user_guide/io_workflow
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: API Reference
 
-   api/index
    api/equipment
    api/plant
    api/analysis
@@ -110,5 +119,7 @@ Contents
    :caption: More
 
    examples
+   tutorials
    gui
    contributing
+   citation

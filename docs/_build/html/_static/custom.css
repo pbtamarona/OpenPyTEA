@@ -59,6 +59,21 @@ body[data-theme="dark"] code.literal {
     background: #1A2A4A;
 }
 
+/* Small-font table */
+table.small-table {
+    font-size: 0.78em;
+}
+
+/* Clickable sidebar captions */
+.sidebar-tree .caption-link {
+    color: inherit;
+    text-decoration: none;
+}
+.sidebar-tree .caption-link:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+}
+
 /* API member headers */
 dt.sig {
     border-left: 3px solid #538DFF;

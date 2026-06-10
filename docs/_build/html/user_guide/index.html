@@ -3,7 +3,9 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Equipment Cost Estimation" href="equipment.html"><link rel="prev" title="Quick Start" href="../quickstart.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo.png" as="image">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>User Guide - OpenPyTEA</title>
@@ -12,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=3437e138" />
     
     
 
@@ -226,8 +228,11 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">OpenPyTEA</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -241,31 +246,15 @@
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
-<ul class="current">
-<li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">User Guide</a><input aria-label="Toggle navigation of User Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plotting.html">Plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
-</ul>
-</li>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plotting.html">openpytea.plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/io.html">openpytea.io</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
@@ -275,8 +264,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -320,15 +311,23 @@
 <p>This section provides in-depth documentation for every feature of OpenPyTEA.
 Follow the pages in order for a structured introduction, or jump directly to
 the topic you need.</p>
+<section id="walkthrough-notebook">
+<h2>Walkthrough notebook<a class="headerlink" href="#walkthrough-notebook" title="Link to this heading">¶</a></h2>
+<p>The <a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">OpenPyTEA walkthrough notebook</a> is a
+self-contained Jupyter notebook that covers the full workflow end-to-end —
+equipment costing, plant configuration, financial calculations, sensitivity
+analysis, and result export — with live code, outputs, and explanatory text.
+It is the recommended starting point before reading the individual guide pages.</p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
 </ul>
 </div>
+</section>
 <section id="overview-of-the-workflow">
 <h2>Overview of the workflow<a class="headerlink" href="#overview-of-the-workflow" title="Link to this heading">¶</a></h2>
 <p>A typical OpenPyTEA study follows five steps:</p>
@@ -385,26 +384,8 @@ the topic you need.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="equipment.html">
-              <div class="page-info">
-                <div class="context">
-                  <span>Next</span>
-                </div>
-                <div class="title">Equipment Cost Estimation</div>
-              </div>
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-            </a>
-          <a class="prev-page" href="../quickstart.html">
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-              <div class="page-info">
-                <div class="context">
-                  <span>Previous</span>
-                </div>
-                
-                <div class="title">Quick Start</div>
-                
-              </div>
-            </a>
+          
+          
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -436,6 +417,7 @@ the topic you need.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">User Guide</a><ul>
+<li><a class="reference internal" href="#walkthrough-notebook">Walkthrough notebook</a></li>
 <li><a class="reference internal" href="#overview-of-the-workflow">Overview of the workflow</a></li>
 </ul>
 </li>
@@ -455,5 +437,6 @@ the topic you need.</p>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=fd10adb8"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>

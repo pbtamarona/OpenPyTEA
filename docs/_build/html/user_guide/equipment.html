@@ -3,7 +3,9 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Plant-Level TEA" href="plant.html"><link rel="prev" title="User Guide" href="index.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Plant-Level TEA" href="plant.html"><link rel="prev" title="Quick Start" href="../quickstart.html">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo.png" as="image">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>Equipment Cost Estimation - OpenPyTEA</title>
@@ -12,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=3437e138" />
     
     
 
@@ -226,8 +228,11 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">OpenPyTEA</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -242,30 +247,14 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
-<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Equipment Cost Estimation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plotting.html">Plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
-</ul>
-</li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plotting.html">openpytea.plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/io.html">openpytea.io</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
@@ -275,8 +264,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -317,58 +308,92 @@
         <article role="main" id="furo-main-content">
           <section id="equipment-cost-estimation">
 <h1>Equipment Cost Estimation<a class="headerlink" href="#equipment-cost-estimation" title="Link to this heading">¶</a></h1>
-<p>The <a class="reference internal" href="../api/equipment.html#module-openpytea.equipment" title="openpytea.equipment"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.equipment</span></code></a> module provides equipment-level capital cost
-estimation based on published cost correlations and CEPCI inflation adjustment.</p>
+<p>The <a class="reference internal" href="../api/equipment.html#module-openpytea.equipment" title="openpytea.equipment"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.equipment</span></code></a> module estimates purchased and installed costs
+for individual process units using published cost correlations, automatic CEPCI
+inflation adjustment, and process/material installation factors.</p>
 <section id="how-costs-are-estimated">
 <h2>How costs are estimated<a class="headerlink" href="#how-costs-are-estimated" title="Link to this heading">¶</a></h2>
-<p>OpenPyTEA uses <strong>power-law</strong> and <strong>quad log-log</strong> correlations of the form:</p>
+<section id="purchased-cost-correlations">
+<h3>Purchased cost correlations<a class="headerlink" href="#purchased-cost-correlations" title="Link to this heading">¶</a></h3>
+<p>Two correlation forms are supported:</p>
+<p><strong>Power-law</strong></p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
-\[C_p = a + b \cdot S^n \quad \text{(power-law)}\]</div>
+\[C_p = a + b \cdot S^n\]</div>
 </div>
+<p><strong>Quadratic log-log</strong></p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
-\[\log C_p = k_1 + k_2 \log S + k_3 (\log S)^2 \quad \text{(quad log-log)}\]</div>
+\[\log_{10} C_p = K_1 + K_2 \log_{10} S + K_3 \left(\log_{10} S\right)^2\]</div>
 </div>
-<p>where <span class="math notranslate nohighlight">\(S\)</span> is the equipment size parameter (e.g., power in kW, area in
-m²) and <span class="math notranslate nohighlight">\(C_p\)</span> is the purchased cost in the correlation’s reference year.</p>
-<p>Costs are then adjusted to the target year using the <strong>Chemical Engineering
-Plant Cost Index (CEPCI)</strong>:</p>
+<p>where <span class="math notranslate nohighlight">\(S\)</span> is the equipment size parameter (e.g., shaft power in kW,
+heat transfer area in m²) and <span class="math notranslate nohighlight">\(C_p\)</span> is the purchased cost in the
+correlation’s reference year (USD).</p>
+<p>All correlations and their coefficients are stored in
+<a class="reference download internal" download="" href="../_downloads/31b5d5c42012f34eb9c85ee1a7322127/cost_correlations.csv"><code class="xref download docutils literal notranslate"><span class="pre">cost_correlations.csv</span></code></a>.</p>
+<p><strong>OpenPyTEA does not require a database match.</strong> You can bypass the built-in
+correlations entirely and supply your own <code class="docutils literal notranslate"><span class="pre">purchased_cost</span></code> directly — for
+vendor quotes, proprietary data, or equipment types not yet in the database.
+See Example 3 below.</p>
+</section>
+<section id="cepci-inflation-adjustment">
+<h3>CEPCI inflation adjustment<a class="headerlink" href="#cepci-inflation-adjustment" title="Link to this heading">¶</a></h3>
+<p>Purchased costs are inflated from the correlation’s reference year to the
+target year using the Chemical Engineering Plant Cost Index (CEPCI):</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[C_{\text{target}} = C_{\text{ref}} \times
 \frac{\text{CEPCI}_{\text{target}}}{\text{CEPCI}_{\text{ref}}}\]</div>
 </div>
-<p>The purchased cost is subsequently scaled by <strong>process factors</strong> (piping,
-instrumentation, civil works, …) and a <strong>material factor</strong> to give the
-installed <em>direct cost</em>.</p>
+<p>Historical CEPCI values are bundled with the package in
+<a class="reference download internal" download="" href="../_downloads/8fc1792ebcfac4c213390644422632bb/cepci_values.csv"><code class="xref download docutils literal notranslate"><span class="pre">cepci_values.csv</span></code></a>.
+The default target year is 2024.</p>
+<p>The bundled values are sourced from the
+<a class="reference external" href="https://www.training.itservices.manchester.ac.uk/public/gced/CEPCI.html?reactors/CEPCI/index.html">University of Manchester CEPCI table</a>
+(accessed 7 April 2026). <strong>Users are encouraged to verify these values and,
+if more recent or detailed data are available, replace them by editing
+``cepci_values.csv`` directly before running their analysis.</strong></p>
+</section>
+<section id="direct-installed-cost">
+<h3>Direct (installed) cost<a class="headerlink" href="#direct-installed-cost" title="Link to this heading">¶</a></h3>
+<p>The direct cost adds installation contributions on top of the purchased cost:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[C_D = C_p \left[
+    (1 + f_p) \cdot f_m
+    + \left( f_{er} + f_{el} + f_i + f_c + f_s + f_l \right)
+\right]\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(f_m\)</span> is the material factor and <span class="math notranslate nohighlight">\(f_p\)</span>, <span class="math notranslate nohighlight">\(f_{er}\)</span>,
+<span class="math notranslate nohighlight">\(f_{el}\)</span>, <span class="math notranslate nohighlight">\(f_i\)</span>, <span class="math notranslate nohighlight">\(f_c\)</span>, <span class="math notranslate nohighlight">\(f_s\)</span>, <span class="math notranslate nohighlight">\(f_l\)</span> are the
+piping, erection, electrical, instrumentation, civil, structural, and lagging
+factors respectively. Default installation factor values depend on the <code class="docutils literal notranslate"><span class="pre">process_type</span></code>
+(see <a class="reference internal" href="#process-factors"><span class="std std-ref">Process installation factors</span></a> below). <strong>All factors can be overridden per equipment
+item via constructor keyword arguments</strong> — see Example 8 for details.</p>
+<p><em>Source: Towler &amp; Sinnott (2022)</em></p>
+</section>
 </section>
 <section id="the-equipment-class">
 <h2>The <code class="docutils literal notranslate"><span class="pre">Equipment</span></code> class<a class="headerlink" href="#the-equipment-class" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">Equipment</span>
-
-<span class="n">heat_exchanger</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;HX-01&quot;</span><span class="p">,</span>
-    <span class="n">param</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>                          <span class="c1"># heat transfer area in m²</span>
-    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
-    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Heat exchangers (Shell and tube)&quot;</span><span class="p">,</span>
-    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Fixed head&quot;</span><span class="p">,</span>
-    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Stainless steel 316&quot;</span><span class="p">,</span>
-    <span class="n">target_year</span><span class="o">=</span><span class="mi">2024</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="n">heat_exchanger</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Purchased cost : $</span><span class="si">{</span><span class="n">heat_exchanger</span><span class="o">.</span><span class="n">purchased_cost</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Direct cost    : $</span><span class="si">{</span><span class="n">heat_exchanger</span><span class="o">.</span><span class="n">direct_cost</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<section id="key-constructor-arguments">
-<h3>Key constructor arguments<a class="headerlink" href="#key-constructor-arguments" title="Link to this heading">¶</a></h3>
+<p>Each <a class="reference internal" href="../api/equipment.html#id15" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> object represents one piece of
+process equipment. On construction it automatically:</p>
+<ol class="arabic simple">
+<li><p>Looks up the matching cost correlation from <code class="docutils literal notranslate"><span class="pre">cost_correlations.csv</span></code>.</p></li>
+<li><p>Computes the purchased cost, with automatic parallelization if the size
+parameter exceeds the correlation’s upper bound.</p></li>
+<li><p>Inflates the cost to the target year using CEPCI.</p></li>
+<li><p>Applies process and material factors to produce the direct (installed) cost.</p></li>
+</ol>
+<section id="constructor-parameters">
+<h3>Constructor parameters<a class="headerlink" href="#constructor-parameters" title="Link to this heading">¶</a></h3>
 <div class="table-wrapper colwidths-given docutils container">
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 25.0%" />
-<col style="width: 15.0%" />
+<col style="width: 28.0%" />
+<col style="width: 12.0%" />
 <col style="width: 60.0%" />
 </colgroup>
 <thead>
@@ -380,152 +405,399 @@ installed <em>direct cost</em>.</p>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
 <td><p>str</p></td>
-<td><p>Identifier for the equipment item</p></td>
+<td><p>Identifier for this equipment item (used in plots and reports).</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">param</span></code></p></td>
 <td><p>float</p></td>
-<td><p>Size/capacity parameter (units depend on equipment type)</p></td>
+<td><p>Size/capacity parameter. Units depend on the equipment type —
+check <code class="docutils literal notranslate"><span class="pre">cost_correlations.csv</span></code>. Ignored when <code class="docutils literal notranslate"><span class="pre">purchased_cost</span></code>
+is given.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">process_type</span></code></p></td>
 <td><p>str</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">&quot;Solids&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Fluids&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;Mixed&quot;</span></code> — controls indirect cost factors</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;Solids&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Fluids&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Mixed&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;Electrical&quot;</span></code> —
+controls default installation factor values.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">category</span></code></p></td>
 <td><p>str</p></td>
-<td><p>Equipment category (must match the cost database)</p></td>
+<td><p>Equipment category — must match a row in <code class="docutils literal notranslate"><span class="pre">cost_correlations.csv</span></code>
+(case-insensitive).</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">type</span></code></p></td>
-<td><p>str</p></td>
-<td><p>Equipment sub-type within the category</p></td>
+<td><p>str or None</p></td>
+<td><p>Equipment sub-type within the category. Required when a category
+has multiple types.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">material</span></code></p></td>
 <td><p>str</p></td>
-<td><p>Construction material (affects the material factor)</p></td>
+<td><p>Construction material — controls the material factor <span class="math notranslate nohighlight">\(f_m\)</span>.
+Default: <code class="docutils literal notranslate"><span class="pre">&quot;Carbon</span> <span class="pre">steel&quot;</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">target_year</span></code></p></td>
 <td><p>int</p></td>
-<td><p>Year to inflate costs to (default: 2024)</p></td>
+<td><p>Year to inflate costs to. Default: <code class="docutils literal notranslate"><span class="pre">2024</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cost</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">purchased_cost</span></code></p></td>
 <td><p>float or None</p></td>
-<td><p>Override: supply a direct purchased cost instead of using a correlation</p></td>
+<td><p>Supply your own purchased cost and bypass the correlation entirely.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cost_year</span></code></p></td>
+<td><p>int or None</p></td>
+<td><p>Reference year of a manually supplied <code class="docutils literal notranslate"><span class="pre">purchased_cost</span></code>. If given,
+CEPCI inflation is applied from this year to <code class="docutils literal notranslate"><span class="pre">target_year</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cost_func</span></code></p></td>
+<td><p>str or None</p></td>
+<td><p>Explicit correlation key (the <code class="docutils literal notranslate"><span class="pre">key</span></code> column in the CSV). Use this
+to select a specific correlation when multiple exist for the same
+category/type.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">num_units</span></code></p></td>
+<td><p>int or None</p></td>
+<td><p>Override the number of parallel units. By default this is set
+automatically by the parallelization logic.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">piping_factor</span></code>, <code class="docutils literal notranslate"><span class="pre">erection_factor</span></code>, … <code class="docutils literal notranslate"><span class="pre">lagging_factor</span></code></p></td>
+<td><p>float or None</p></td>
+<td><p>Per-factor overrides. <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the <code class="docutils literal notranslate"><span class="pre">process_type</span></code> default.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">material_factor</span></code></p></td>
+<td><p>float or None</p></td>
+<td><p>Override the material factor. <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the material table.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
+</section>
+<section id="usage-examples">
+<h2>Usage examples<a class="headerlink" href="#usage-examples" title="Link to this heading">¶</a></h2>
+<p>The examples below show the main ways to create <code class="docutils literal notranslate"><span class="pre">Equipment</span></code> objects.
+To see the printed outputs of each code cell, refer to the
+<a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">walkthrough notebook</a>.</p>
+<section id="example-1-standard-usage">
+<h3>Example 1 — Standard usage<a class="headerlink" href="#example-1-standard-usage" title="Link to this heading">¶</a></h3>
+<p>Define a heat exchanger using a correlation from the database:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">Equipment</span>
+
+<span class="n">hx</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;HX-101&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>                       <span class="c1"># heat transfer area in m²</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Heat exchangers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Floating head&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;316 stainless steel&quot;</span><span class="p">,</span>
+    <span class="n">target_year</span><span class="o">=</span><span class="mi">2024</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">hx</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Purchased cost : $</span><span class="si">{</span><span class="n">hx</span><span class="o">.</span><span class="n">purchased_cost</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Direct cost    : $</span><span class="si">{</span><span class="n">hx</span><span class="o">.</span><span class="n">direct_cost</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-2-selecting-a-specific-correlation-key">
+<h3>Example 2 — Selecting a specific correlation key<a class="headerlink" href="#example-2-selecting-a-specific-correlation-key" title="Link to this heading">¶</a></h3>
+<p>When multiple correlations cover the same equipment type (e.g., compressors
+from different studies), use <code class="docutils literal notranslate"><span class="pre">cost_func</span></code> to pin the exact database key:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">comp</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;COMP-01&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>                         <span class="c1"># net electric power, MW</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Compressors, fans, &amp; blowers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Compressor, centrifugal&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>
+    <span class="n">cost_func</span><span class="o">=</span><span class="s2">&quot;co2_compressor_manzolini_2011&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-3-manually-specified-purchased-cost">
+<h3>Example 3 — Manually specified purchased cost<a class="headerlink" href="#example-3-manually-specified-purchased-cost" title="Link to this heading">¶</a></h3>
+<p>Skip the correlation entirely and supply your own cost. If you also provide
+<code class="docutils literal notranslate"><span class="pre">cost_year</span></code>, CEPCI inflation to <code class="docutils literal notranslate"><span class="pre">target_year</span></code> is applied automatically:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dryer</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Rotary Dryer D-301&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>                         <span class="c1"># ignored when purchased_cost is set</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Solids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Dryers&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>
+    <span class="n">purchased_cost</span><span class="o">=</span><span class="mi">1_500_000</span><span class="p">,</span>        <span class="c1"># vendor quote in 2021 USD</span>
+    <span class="n">cost_year</span><span class="o">=</span><span class="mi">2021</span><span class="p">,</span>                  <span class="c1"># inflated to target_year=2024</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">dryer</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-4-automatic-parallelization">
+<h3>Example 4 — Automatic parallelization<a class="headerlink" href="#example-4-automatic-parallelization" title="Link to this heading">¶</a></h3>
+<p>When <code class="docutils literal notranslate"><span class="pre">param</span></code> exceeds the correlation’s upper capacity limit, the module
+splits the load into the minimum number of equal parallel units:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The centrifugal compressor correlation is valid up to 30 000 kW.</span>
+<span class="c1"># Requesting 50 000 kW triggers automatic splitting into 2 units.</span>
+<span class="n">large_comp</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;COMP-LARGE&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">50_000</span><span class="p">,</span>                    <span class="c1"># driver power in kW</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Compressors, fans, &amp; blowers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Compressor, centrifugal&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">large_comp</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of parallel units: </span><span class="si">{</span><span class="n">large_comp</span><span class="o">.</span><span class="n">num_units</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-5-inflation-to-a-custom-target-year">
+<h3>Example 5 — Inflation to a custom target year<a class="headerlink" href="#example-5-inflation-to-a-custom-target-year" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">hx_2020</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;HX-102&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Heat exchangers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Floating head&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;316 stainless steel&quot;</span><span class="p">,</span>
+    <span class="n">target_year</span><span class="o">=</span><span class="mi">2020</span><span class="p">,</span>                <span class="c1"># inflate to 2020 instead of 2024</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">hx_2020</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-6-fixing-the-number-of-units-manually">
+<h3>Example 6 — Fixing the number of units manually<a class="headerlink" href="#example-6-fixing-the-number-of-units-manually" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fridge</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Refrigerator R-201&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Utilities&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Packaged mechanical refrigerator&quot;</span><span class="p">,</span>
+    <span class="n">num_units</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>                     <span class="c1"># bypass auto-parallelization</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">fridge</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-7-comparing-materials">
+<h3>Example 7 — Comparing materials<a class="headerlink" href="#example-7-comparing-materials" title="Link to this heading">¶</a></h3>
+<p>The material factor <span class="math notranslate nohighlight">\(f_m\)</span> multiplies the installed cost. Here the same
+agitator is costed in carbon steel versus Hastelloy C:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mixer_cs</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Agitator M-101&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Agitators, blenders, &amp; mixers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Propeller mixer&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>         <span class="c1"># fm = 1.00</span>
+<span class="p">)</span>
+
+<span class="n">mixer_alloy</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Agitator M-101 (Hastelloy)&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Agitators, blenders, &amp; mixers&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Propeller mixer&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Hastelloy C&quot;</span><span class="p">,</span>          <span class="c1"># fm = 1.55</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Carbon steel direct cost : $</span><span class="si">{</span><span class="n">mixer_cs</span><span class="o">.</span><span class="n">direct_cost</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hastelloy C direct cost  : $</span><span class="si">{</span><span class="n">mixer_alloy</span><span class="o">.</span><span class="n">direct_cost</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-8-overriding-installation-factors">
+<h3>Example 8 — Overriding installation factors<a class="headerlink" href="#example-8-overriding-installation-factors" title="Link to this heading">¶</a></h3>
+<p>Individual installation factors can be overridden without affecting the rest.
+The class attributes <code class="docutils literal notranslate"><span class="pre">process_factors</span></code> and <code class="docutils literal notranslate"><span class="pre">material_factors</span></code> show all
+defaults:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Inspect defaults first</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Equipment</span><span class="o">.</span><span class="n">process_factors</span><span class="p">[</span><span class="s2">&quot;Fluids&quot;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Equipment</span><span class="o">.</span><span class="n">material_factors</span><span class="p">[</span><span class="s2">&quot;316 stainless steel&quot;</span><span class="p">])</span>
+
+<span class="n">reactor</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Reactor R-101&quot;</span><span class="p">,</span>
+    <span class="n">param</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Reactors&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Glass-lined agitated&quot;</span><span class="p">,</span>
+    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;316 stainless steel&quot;</span><span class="p">,</span>
+    <span class="n">piping_factor</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>              <span class="c1"># override default 0.80</span>
+    <span class="n">material_factor</span><span class="o">=</span><span class="mf">1.4</span><span class="p">,</span>             <span class="c1"># override default 1.30</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;piping_factor   : </span><span class="si">{</span><span class="n">reactor</span><span class="o">.</span><span class="n">piping_factor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;material_factor : </span><span class="si">{</span><span class="n">reactor</span><span class="o">.</span><span class="n">material_factor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
 <section id="listing-available-equipment">
-<h3>Listing available equipment<a class="headerlink" href="#listing-available-equipment" title="Link to this heading">¶</a></h3>
+<h2>Listing available equipment<a class="headerlink" href="#listing-available-equipment" title="Link to this heading">¶</a></h2>
+<p>Print all categories and types in the built-in database:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.equipment</span><span class="w"> </span><span class="kn">import</span> <span class="n">CostCorrelationDB</span><span class="p">,</span> <span class="n">COST_DB_DF</span>
 
 <span class="n">db</span> <span class="o">=</span> <span class="n">CostCorrelationDB</span><span class="p">(</span><span class="n">COST_DB_DF</span><span class="p">)</span>
 
-<span class="c1"># Show all categories</span>
+<span class="c1"># All unique categories</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;category&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
 
-<span class="c1"># Show types within a category</span>
-<span class="n">mask</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;category&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Compressors (Centrifugal)&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+<span class="c1"># All types and metadata for a specific category</span>
+<span class="n">mask</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;category&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;heat exchangers&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;form&quot;</span><span class="p">,</span> <span class="s2">&quot;cost_year&quot;</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">]])</span>
 </pre></div>
 </div>
+<p>You can also download the full database:
+<a class="reference download internal" download="" href="../_downloads/31b5d5c42012f34eb9c85ee1a7322127/cost_correlations.csv"><code class="xref download docutils literal notranslate"><span class="pre">cost_correlations.csv</span></code></a></p>
 </section>
-<section id="materials">
-<h3>Materials<a class="headerlink" href="#materials" title="Link to this heading">¶</a></h3>
-<p>The following materials are available. Each carries a cost multiplier
-relative to carbon steel (= 1.0):</p>
+<section id="available-materials">
+<span id="materials"></span><h2>Available materials<a class="headerlink" href="#available-materials" title="Link to this heading">¶</a></h2>
+<p>The table below lists the valid <code class="docutils literal notranslate"><span class="pre">material</span></code> strings and their factors
+<span class="math notranslate nohighlight">\(f_m\)</span>. Costs are relative to carbon steel (= 1.0).</p>
+<p><em>Source: Towler &amp; Sinnott (2022)</em></p>
 <div class="table-wrapper colwidths-given docutils container">
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 71.4%" />
-<col style="width: 28.6%" />
+<col style="width: 73.3%" />
+<col style="width: 26.7%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Material</p></th>
-<th class="head"><p>Factor</p></th>
+<th class="head"><p>Factor <span class="math notranslate nohighlight">\(f_m\)</span></p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Carbon steel</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Carbon</span> <span class="pre">steel&quot;</span></code></p></td>
 <td><p>1.00</p></td>
 </tr>
-<tr class="row-odd"><td><p>Stainless steel 304</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Aluminum&quot;</span></code></p></td>
+<td><p>1.07</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Bronze&quot;</span></code></p></td>
+<td><p>1.07</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Cast</span> <span class="pre">steel&quot;</span></code></p></td>
+<td><p>1.10</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;304</span> <span class="pre">stainless</span> <span class="pre">steel&quot;</span></code></p></td>
 <td><p>1.30</p></td>
 </tr>
-<tr class="row-even"><td><p>Stainless steel 316</p></td>
-<td><p>1.45</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;316</span> <span class="pre">stainless</span> <span class="pre">steel&quot;</span></code></p></td>
+<td><p>1.30</p></td>
 </tr>
-<tr class="row-odd"><td><p>Carpenter 20 CB-3</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;321</span> <span class="pre">stainless</span> <span class="pre">steel&quot;</span></code></p></td>
+<td><p>1.50</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Hastelloy</span> <span class="pre">C&quot;</span></code></p></td>
 <td><p>1.55</p></td>
 </tr>
-<tr class="row-even"><td><p>Nickel 200</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Monel&quot;</span></code></p></td>
 <td><p>1.65</p></td>
 </tr>
-<tr class="row-odd"><td><p>Monel 400</p></td>
-<td><p>1.65</p></td>
-</tr>
-<tr class="row-even"><td><p>Inconel 600</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Nickel&quot;</span></code></p></td>
 <td><p>1.70</p></td>
 </tr>
-<tr class="row-odd"><td><p>Incoloy 825</p></td>
-<td><p>1.70</p></td>
-</tr>
-<tr class="row-even"><td><p>Titanium</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;Inconel&quot;</span></code></p></td>
 <td><p>1.70</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
-</section>
-<section id="equipment-parallelization">
-<h2>Equipment parallelization<a class="headerlink" href="#equipment-parallelization" title="Link to this heading">¶</a></h2>
-<p>When the size parameter exceeds the maximum capacity of a single unit, the
-<a class="reference internal" href="../api/equipment.html#id7" title="openpytea.equipment.CostCorrelationDB"><code class="xref py py-class docutils literal notranslate"><span class="pre">CostCorrelationDB</span></code></a> automatically determines the
-minimum number of parallel units and the adjusted capacity per unit:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A compressor needing 50 000 kW — may require multiple parallel units</span>
-<span class="n">large_comp</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;COMP-LARGE&quot;</span><span class="p">,</span>
-    <span class="n">param</span><span class="o">=</span><span class="mi">50_000</span><span class="p">,</span>
-    <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
-    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Compressors (Centrifugal)&quot;</span><span class="p">,</span>
-    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Centrifugal&quot;</span><span class="p">,</span>
-    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of units: </span><span class="si">{</span><span class="n">large_comp</span><span class="o">.</span><span class="n">num_units</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
+<section id="process-installation-factors">
+<span id="process-factors"></span><h2>Process installation factors<a class="headerlink" href="#process-installation-factors" title="Link to this heading">¶</a></h2>
+<p>Default installation factors by <code class="docutils literal notranslate"><span class="pre">process_type</span></code>. Any factor can be
+overridden per equipment item via the corresponding constructor keyword
+(e.g., <code class="docutils literal notranslate"><span class="pre">piping_factor=0.95</span></code>).</p>
+<p><em>Source: Towler &amp; Sinnott (2022)</em></p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 36.4%" />
+<col style="width: 15.9%" />
+<col style="width: 15.9%" />
+<col style="width: 15.9%" />
+<col style="width: 15.9%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Factor</p></th>
+<th class="head"><p>Solids</p></th>
+<th class="head"><p>Fluids</p></th>
+<th class="head"><p>Mixed</p></th>
+<th class="head"><p>Electrical</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Erection <span class="math notranslate nohighlight">\((f_{er})\)</span></p></td>
+<td><p>0.60</p></td>
+<td><p>0.30</p></td>
+<td><p>0.50</p></td>
+<td><p>0.40</p></td>
+</tr>
+<tr class="row-odd"><td><p>Piping <span class="math notranslate nohighlight">\((f_p)\)</span></p></td>
+<td><p>0.20</p></td>
+<td><p>0.80</p></td>
+<td><p>0.60</p></td>
+<td><p>0.10</p></td>
+</tr>
+<tr class="row-even"><td><p>Instrumentation <span class="math notranslate nohighlight">\((f_i)\)</span></p></td>
+<td><p>0.20</p></td>
+<td><p>0.30</p></td>
+<td><p>0.30</p></td>
+<td><p>0.70</p></td>
+</tr>
+<tr class="row-odd"><td><p>Electrical <span class="math notranslate nohighlight">\((f_{el})\)</span></p></td>
+<td><p>0.15</p></td>
+<td><p>0.20</p></td>
+<td><p>0.20</p></td>
+<td><p>0.70</p></td>
+</tr>
+<tr class="row-even"><td><p>Civil <span class="math notranslate nohighlight">\((f_c)\)</span></p></td>
+<td><p>0.20</p></td>
+<td><p>0.30</p></td>
+<td><p>0.30</p></td>
+<td><p>0.20</p></td>
+</tr>
+<tr class="row-odd"><td><p>Structural steel <span class="math notranslate nohighlight">\((f_s)\)</span></p></td>
+<td><p>0.10</p></td>
+<td><p>0.20</p></td>
+<td><p>0.20</p></td>
+<td><p>0.10</p></td>
+</tr>
+<tr class="row-even"><td><p>Lagging &amp; painting <span class="math notranslate nohighlight">\((f_l)\)</span></p></td>
+<td><p>0.05</p></td>
+<td><p>0.10</p></td>
+<td><p>0.10</p></td>
+<td><p>0.10</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </section>
-<section id="inflation-adjustment-utility">
-<h2>Inflation adjustment utility<a class="headerlink" href="#inflation-adjustment-utility" title="Link to this heading">¶</a></h2>
-<p>You can use the standalone function for quick inflation calculations:</p>
+<section id="standalone-inflation-adjustment">
+<h2>Standalone inflation adjustment<a class="headerlink" href="#standalone-inflation-adjustment" title="Link to this heading">¶</a></h2>
+<p>The <a class="reference internal" href="../api/equipment.html#id6" title="openpytea.equipment.inflation_adjustment"><code class="xref py py-func docutils literal notranslate"><span class="pre">inflation_adjustment()</span></code></a> function can be used
+independently to convert any cost between years:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">inflation_adjustment</span>
 
-<span class="c1"># Adjust a $500 000 cost from 2015 to 2024</span>
+<span class="c1"># Convert a $500 000 cost quoted in 2015 to 2024 USD</span>
 <span class="n">adjusted</span> <span class="o">=</span> <span class="n">inflation_adjustment</span><span class="p">(</span><span class="mi">500_000</span><span class="p">,</span> <span class="n">cost_year</span><span class="o">=</span><span class="mi">2015</span><span class="p">,</span> <span class="n">target_year</span><span class="o">=</span><span class="mi">2024</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adjusted cost: $</span><span class="si">{</span><span class="n">adjusted</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;2015 cost: $500,000  →  2024 cost: $</span><span class="si">{</span><span class="n">adjusted</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="process-factors">
-<h2>Process factors<a class="headerlink" href="#process-factors" title="Link to this heading">¶</a></h2>
-<p>The direct (installed) cost is computed from the purchased cost using
-additive process factors that depend on the <code class="docutils literal notranslate"><span class="pre">process_type</span></code>:</p>
-<div class="math-wrapper docutils container">
-<div class="math notranslate nohighlight">
-\[C_{\text{direct}} = C_p \cdot f_m \cdot
-(1 + f_{\text{er}} + f_p + f_i + f_{\text{el}} + f_c + f_s + f_l)\]</div>
-</div>
-<p>where <span class="math notranslate nohighlight">\(f_m\)</span> is the material factor and the <span class="math notranslate nohighlight">\(f_*\)</span> terms are
-erection, piping, instrumentation, electrical, civil, structural, and
-lagging factors respectively. Default values differ between
-<code class="docutils literal notranslate"><span class="pre">&quot;Solids&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Fluids&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;Mixed&quot;</span></code> process types.</p>
 </section>
 <section id="see-also">
 <h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/equipment.html#id15" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> — full API reference</p></li>
 <li><p><a class="reference internal" href="../api/equipment.html#id7" title="openpytea.equipment.CostCorrelationDB"><code class="xref py py-class docutils literal notranslate"><span class="pre">CostCorrelationDB</span></code></a> — database interface</p></li>
-<li><p><a class="reference internal" href="../api/equipment.html#id6" title="openpytea.equipment.inflation_adjustment"><code class="xref py py-func docutils literal notranslate"><span class="pre">inflation_adjustment()</span></code></a> — CEPCI adjustment</p></li>
+<li><p><a class="reference internal" href="../api/equipment.html#id6" title="openpytea.equipment.inflation_adjustment"><code class="xref py py-func docutils literal notranslate"><span class="pre">inflation_adjustment()</span></code></a> — CEPCI utility</p></li>
+<li><p><a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">Walkthrough notebook</a> — end-to-end worked example</p></li>
+</ul>
+</section>
+<section id="references">
+<span id="equip-references"></span><h2>References<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Towler, G.; Sinnott, R. <em>Chemical Engineering Design</em>, 3rd ed.;
+Elsevier, 2022. <a class="reference external" href="https://doi.org/10.1016/C2019-0-02025-0">https://doi.org/10.1016/C2019-0-02025-0</a></p></li>
 </ul>
 </section>
 </section>
@@ -544,14 +816,14 @@ lagging factors respectively. Default values differ between
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="index.html">
+          <a class="prev-page" href="../quickstart.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">User Guide</div>
+                <div class="title">Quick Start</div>
                 
               </div>
             </a>
@@ -586,17 +858,33 @@ lagging factors respectively. Default values differ between
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Equipment Cost Estimation</a><ul>
-<li><a class="reference internal" href="#how-costs-are-estimated">How costs are estimated</a></li>
-<li><a class="reference internal" href="#the-equipment-class">The <code class="docutils literal notranslate"><span class="pre">Equipment</span></code> class</a><ul>
-<li><a class="reference internal" href="#key-constructor-arguments">Key constructor arguments</a></li>
-<li><a class="reference internal" href="#listing-available-equipment">Listing available equipment</a></li>
-<li><a class="reference internal" href="#materials">Materials</a></li>
+<li><a class="reference internal" href="#how-costs-are-estimated">How costs are estimated</a><ul>
+<li><a class="reference internal" href="#purchased-cost-correlations">Purchased cost correlations</a></li>
+<li><a class="reference internal" href="#cepci-inflation-adjustment">CEPCI inflation adjustment</a></li>
+<li><a class="reference internal" href="#direct-installed-cost">Direct (installed) cost</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#equipment-parallelization">Equipment parallelization</a></li>
-<li><a class="reference internal" href="#inflation-adjustment-utility">Inflation adjustment utility</a></li>
-<li><a class="reference internal" href="#process-factors">Process factors</a></li>
+<li><a class="reference internal" href="#the-equipment-class">The <code class="docutils literal notranslate"><span class="pre">Equipment</span></code> class</a><ul>
+<li><a class="reference internal" href="#constructor-parameters">Constructor parameters</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#usage-examples">Usage examples</a><ul>
+<li><a class="reference internal" href="#example-1-standard-usage">Example 1 — Standard usage</a></li>
+<li><a class="reference internal" href="#example-2-selecting-a-specific-correlation-key">Example 2 — Selecting a specific correlation key</a></li>
+<li><a class="reference internal" href="#example-3-manually-specified-purchased-cost">Example 3 — Manually specified purchased cost</a></li>
+<li><a class="reference internal" href="#example-4-automatic-parallelization">Example 4 — Automatic parallelization</a></li>
+<li><a class="reference internal" href="#example-5-inflation-to-a-custom-target-year">Example 5 — Inflation to a custom target year</a></li>
+<li><a class="reference internal" href="#example-6-fixing-the-number-of-units-manually">Example 6 — Fixing the number of units manually</a></li>
+<li><a class="reference internal" href="#example-7-comparing-materials">Example 7 — Comparing materials</a></li>
+<li><a class="reference internal" href="#example-8-overriding-installation-factors">Example 8 — Overriding installation factors</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#listing-available-equipment">Listing available equipment</a></li>
+<li><a class="reference internal" href="#available-materials">Available materials</a></li>
+<li><a class="reference internal" href="#process-installation-factors">Process installation factors</a></li>
+<li><a class="reference internal" href="#standalone-inflation-adjustment">Standalone inflation adjustment</a></li>
 <li><a class="reference internal" href="#see-also">See also</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
 </ul>
@@ -616,5 +904,6 @@ lagging factors respectively. Default values differ between
     <script src="../_static/copybutton.js?v=fd10adb8"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>

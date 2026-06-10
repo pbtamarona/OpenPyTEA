@@ -9,49 +9,35 @@ OpenPyTEA requires **Python 3.10 or later**.
 Install from PyPI
 -----------------
 
-The recommended way to install OpenPyTEA is from PyPI:
-
-.. tab-set::
-
-   .. tab-item:: pip
-
-      .. code-block:: bash
-
-         pip install OpenPyTEA
-
-   .. tab-item:: uv (recommended)
-
-      `uv <https://github.com/astral-sh/uv>`_ is a fast Python package manager.
-      Install it first, then:
-
-      .. code-block:: bash
-
-         uv pip install OpenPyTEA
-
-      Or add it as a project dependency:
-
-      .. code-block:: bash
-
-         uv add OpenPyTEA
-
-Install from source
--------------------
-
-To get the latest development version:
+The recommended way to install OpenPyTEA is via ``pip``:
 
 .. code-block:: bash
 
-   git clone https://github.com/PBTamarona/OpenPyTEA.git
-   cd OpenPyTEA
-   pip install -e .
+   pip install OpenPyTEA
 
-Or with uv:
+Clone from source
+-----------------
+
+To work with the notebooks or contribute to development, clone the repository.
+We recommend `uv <https://github.com/astral-sh/uv>`_ for this workflow — it
+locks the full environment so the virtual environment can be exactly reproduced:
 
 .. code-block:: bash
 
    git clone https://github.com/PBTamarona/OpenPyTEA.git
    cd OpenPyTEA
    uv sync
+
+``uv sync`` reads the lockfile and creates a ``.venv`` with all dependencies
+pinned, making it easy to share and replicate the environment across machines.
+
+If you prefer plain pip instead:
+
+.. code-block:: bash
+
+   git clone https://github.com/PBTamarona/OpenPyTEA.git
+   cd OpenPyTEA
+   pip install -e .
 
 Dependencies
 ------------
@@ -100,11 +86,12 @@ Verify installation
    import openpytea
    print(openpytea.__version__)
 
-Web GUI (optional)
+Web GUI (Work in progress)
 ------------------
 
 The interactive web GUI requires additional setup. See :doc:`gui` for full
-instructions.
+instructions. **Please note, the GUI is still in active development and not 
+all features are available yet.**
 
 .. code-block:: bash
 

@@ -3,6 +3,8 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="prefetch" href="../../_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="../../_static/OpenPyTEA-logo.png" as="image">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>openpytea.io - OpenPyTEA</title>
@@ -11,6 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=a0178497" />
     
     
 
@@ -19,24 +22,60 @@
   body {
     --color-code-background: #f2f2f2;
   --color-code-foreground: #1e1e1e;
-  --color-brand-primary: #2e7d32;
-  --color-brand-content: #2e7d32;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #538DFF;
+  --color-background-primary: #FFFFFF;
+  --color-background-secondary: #F0F4FF;
+  --color-background-border: #D6E4FF;
+  --color-foreground-primary: #303030;
+  --color-foreground-secondary: #555555;
+  --color-foreground-muted: #777777;
+  --color-foreground-border: #DDDDDD;
+  --color-highlight-on-target: #EBF2FF;
+  --color-link: #538DFF;
+  --color-link--hover: #2B6AE0;
+  --color-link-underline: #99BDFF;
+  --color-link-underline--hover: #538DFF;
   
   }
   @media not print {
     body[data-theme="dark"] {
       --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-  --color-brand-primary: #66bb6a;
-  --color-brand-content: #66bb6a;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #7AAAFF;
+  --color-background-primary: #1C1C1C;
+  --color-background-secondary: #262626;
+  --color-background-border: #3A3A3A;
+  --color-foreground-primary: #FFFFFF;
+  --color-foreground-secondary: #CCCCCC;
+  --color-foreground-muted: #999999;
+  --color-foreground-border: #444444;
+  --color-highlight-on-target: #1A2A4A;
+  --color-link: #7AAAFF;
+  --color-link--hover: #99BDFF;
+  --color-link-underline: #3A5A99;
+  --color-link-underline--hover: #7AAAFF;
   
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
         --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-  --color-brand-primary: #66bb6a;
-  --color-brand-content: #66bb6a;
+  --color-brand-primary: #538DFF;
+  --color-brand-content: #7AAAFF;
+  --color-background-primary: #1C1C1C;
+  --color-background-secondary: #262626;
+  --color-background-border: #3A3A3A;
+  --color-foreground-primary: #FFFFFF;
+  --color-foreground-secondary: #CCCCCC;
+  --color-foreground-muted: #999999;
+  --color-foreground-border: #444444;
+  --color-highlight-on-target: #1A2A4A;
+  --color-link: #7AAAFF;
+  --color-link--hover: #99BDFF;
+  --color-link-underline: #3A5A99;
+  --color-link-underline--hover: #7AAAFF;
   
       }
     }
@@ -188,8 +227,11 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">OpenPyTEA</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -204,14 +246,6 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/equipment.html">Equipment Cost Estimation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/plotting.html">Plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../user_guide/io_workflow.html">JSON Workflow</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/plant.html">Plant-Level TEA</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
@@ -220,14 +254,6 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../api/equipment.html">openpytea.equipment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../api/plant.html">openpytea.plant</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../api/analysis.html">openpytea.analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../api/plotting.html">openpytea.plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../api/io.html">openpytea.io</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/equipment.html">openpytea.equipment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/plant.html">openpytea.plant</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/analysis.html">openpytea.analysis</a></li>

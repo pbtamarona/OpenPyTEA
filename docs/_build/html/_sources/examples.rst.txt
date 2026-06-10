@@ -1,7 +1,8 @@
 Examples & Case Studies
 ========================
 
-OpenPyTEA ships with three fully worked case studies in the ``examples/``
+OpenPyTEA ships with three fully worked case studies in the
+`examples/ <https://github.com/PBTamarona/OpenPyTEA/tree/main/examples>`_
 directory of the repository. Each is a self-contained Jupyter notebook that
 demonstrates the library's capabilities on a real-world engineering scenario.
 
@@ -18,7 +19,7 @@ Running the examples
 Case Study 1 — Hydrogen Production Pathways
 --------------------------------------------
 
-**File**: ``examples/case_study_1.ipynb``
+**File**: `examples/case_study_1.ipynb <https://github.com/PBTamarona/OpenPyTEA/blob/main/examples/case_study_1.ipynb>`_
 
 Compares the techno-economics of three hydrogen production routes:
 
@@ -35,7 +36,7 @@ Compares the techno-economics of three hydrogen production routes:
    * - Electrolysis
      - Water Electrolysis (green hydrogen)
 
-Location: **US Gulf Coast**. The notebook covers equipment selection, CAPEX
+The notebook covers equipment selection, CAPEX 
 and OPEX breakdowns, sensitivity to natural gas and electricity prices, and a
 side-by-side Monte Carlo comparison of the levelized cost of hydrogen (LCOH)
 across all three pathways.
@@ -44,6 +45,8 @@ Key topics demonstrated
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 * Creating multiple :class:`~openpytea.equipment.Equipment` objects per scenario
+* Using both cost correlations and direct supply quotes for equipment purchased costs
+* Modelling byproduct revenues and mid-project ``additional_capex`` for equipment replacement
 * Running the same analysis on three :class:`~openpytea.plant.Plant` instances
 * Using :func:`~openpytea.plotting.plot_multiple_monte_carlo` for cross-scenario comparison
 * Interpreting tornado diagrams to identify cost drivers
@@ -51,24 +54,25 @@ Key topics demonstrated
 Case Study 2 — Hydrogen Liquefaction Precooling
 -------------------------------------------------
 
-**File**: ``examples/case_study_2.ipynb``
+**File**: `examples/case_study_2.ipynb <https://github.com/PBTamarona/OpenPyTEA/blob/main/examples/case_study_2.ipynb>`_
 
-Techno-economic assessment of a **hydrogen liquefaction** plant with
-precooling train in the **Netherlands**, featuring 11 process equipment items.
+Techno-economic assessment of a **precooling process of hydrogen liquefaction**. This case study builds
+on the a multi-objective optimization study to minimize specific energy consumption and levelized cost 
+in mixed-refrigerant systems.
 
 Key topics demonstrated
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-* Handling large equipment lists with mixed categories (heat exchangers,
-  compressors, expanders, vessels)
-* European location factor application
-* Multi-year CAPEX ramp and production ramp-up
-* Sensitivity of the LCOH to the compressor electricity price
+* Integrating OpenPyTEA into an optimization workflow to evaluate techno-economic 
+trade-offs across candidate plant configurations (a stepping stone toward full process-optimization coupling)
+* Using breakdown charts to compare CAPEX and OPEX structure between plant configurations
+* Evaluating the impact of process design choices on both specific energy consumption and levelized cost
+* Copying and modifying an existing :class:`~openpytea.plant.Plant` instance to create a new scenario with different equipment and cost structure
 
 Case Study 3 — Geothermal Energy Systems
 -----------------------------------------
 
-**File**: ``examples/case_study_3.ipynb``
+**File**: `examples/case_study_3.ipynb <https://github.com/PBTamarona/OpenPyTEA/blob/main/examples/case_study_3.ipynb>`_
 
 Compares two geothermal applications:
 
@@ -89,22 +93,8 @@ Monte Carlo uncertainty analysis for both scenarios.
 Key topics demonstrated
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-* Long-lifetime project economics (30-year cash flows)
-* MACRS depreciation configuration
-* Levelized cost of heat (LCOH) vs. levelized cost of electricity (LCOE)
-* Geothermal resource uncertainty via Monte Carlo
+* Modelling pre-production CAPEX (geothermal site exploration and drilling) using the additional cost configuration
+* Configuring MACRS depreciation for long-lifetime assets
+* Comparing levelized cost of heat (LCOH) against levelized cost of electricity (LCOE) across scenarios
 
-Walkthrough notebook
----------------------
-
-**File**: ``walkthrough.ipynb`` (root of repository)
-
-A comprehensive introductory notebook covering every main feature of
-OpenPyTEA step by step — ideal for first-time users.
-
-Tutorial videos
----------------
-
-Video walkthroughs covering the Python API, the web GUI, and the JSON
-workflow are available on YouTube. See the `README
-<https://github.com/PBTamarona/OpenPyTEA#tutorials>`_ for links.
+For a step-by-step walkthrough of every main feature, see the :doc:`tutorials` page.

@@ -3,7 +3,9 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="API Reference" href="../api/index.html"><link rel="prev" title="Plotting" href="plotting.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="openpytea.equipment" href="../api/equipment.html"><link rel="prev" title="Plotting" href="plotting.html">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo.png" as="image">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>JSON Workflow - OpenPyTEA</title>
@@ -12,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=3437e138" />
     
     
 
@@ -226,8 +228,11 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">OpenPyTEA</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -242,30 +247,14 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
-<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plotting.html">Plotting</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">JSON Workflow</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">JSON Workflow</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plotting.html">openpytea.plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/io.html">openpytea.io</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
@@ -275,8 +264,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -321,49 +312,57 @@
 <strong>reproducible</strong>, <strong>shareable</strong>, and easy to version-control.
 The <a class="reference internal" href="../api/io.html#module-openpytea.io" title="openpytea.io"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.io</span></code></a> module handles loading configuration files and
 exporting results.</p>
-<section id="why-use-json-configs">
-<h2>Why use JSON configs?<a class="headerlink" href="#why-use-json-configs" title="Link to this heading">¶</a></h2>
+<p>Three high-level functions drive the workflow:</p>
 <ul class="simple">
-<li><p>Separate configuration from code — rerun the same study with different
-parameters without editing Python</p></li>
-<li><p>Store equipment databases, plant assumptions, and analysis settings in
-human-readable files</p></li>
-<li><p>Compatible with the web GUI’s save/load feature</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">run_equipment()</span></code> — reads an equipment configuration file and returns a
+list of <a class="reference internal" href="../api/equipment.html#id15" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> objects with all costs
+estimated, writing the results to an output JSON file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">run_plant()</span></code> — reads a plant configuration file, combines it with the
+equipment list, runs all calculations, and writes the plant results to an
+output JSON file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">run_tea()</span></code> — executes the full TEA pipeline (cost breakdowns, sensitivity
+analysis, Monte Carlo simulation) from three input files, writing results and
+optional plots to an output directory.</p></li>
 </ul>
-</section>
+<p>To see all examples below in action, refer to the
+<a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">walkthrough notebook</a>
+and the
+<a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/examples/case_study_1_with_JSON.ipynb">case study JSON notebook</a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_equipment</span><span class="p">,</span> <span class="n">run_plant</span><span class="p">,</span> <span class="n">run_tea</span><span class="p">,</span> <span class="n">load_results</span>
+</pre></div>
+</div>
 <section id="file-structure">
 <h2>File structure<a class="headerlink" href="#file-structure" title="Link to this heading">¶</a></h2>
-<p>A complete TEA study uses three JSON files:</p>
+<p>A complete TEA study uses three JSON input files:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>project/
 ├── equipment.json      # List of equipment items
 ├── plant.json          # Plant configuration and financial assumptions
-└── analysis.json       # Sensitivity/Monte Carlo settings
+└── analysis.json       # Analysis settings and output options
 </pre></div>
 </div>
 </section>
 <section id="equipment-json">
 <h2><code class="docutils literal notranslate"><span class="pre">equipment.json</span></code><a class="headerlink" href="#equipment-json" title="Link to this heading">¶</a></h2>
+<p>Each entry requires <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">process_type</span></code>, <code class="docutils literal notranslate"><span class="pre">category</span></code>, and either
+<code class="docutils literal notranslate"><span class="pre">param</span></code> (size/capacity parameter) or <code class="docutils literal notranslate"><span class="pre">purchased_cost</span></code> (manual override).
+All other fields are optional.</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2.1.0&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Ammonia plant equipment&quot;</span>
-<span class="w">  </span><span class="p">},</span>
 <span class="w">  </span><span class="nt">&quot;equipment&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;COMP-01&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;COMP-1&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;param&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">945</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">&quot;process_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Compressors (Centrifugal)&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Centrifugal&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;material&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;param&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5000</span>
+<span class="w">      </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Compressors, fans, &amp; blowers&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Compressor, centrifugal&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;material&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Carbon steel&quot;</span>
 <span class="w">    </span><span class="p">},</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;HX-01&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;HX-1&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;param&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">31.87</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">&quot;process_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Heat exchangers (Shell and tube)&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fixed head&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;material&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Stainless steel 316&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;param&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">250</span>
+<span class="w">      </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Heat Exchangers&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;U-tube shell &amp; tube&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;material&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Carbon steel&quot;</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
@@ -372,24 +371,51 @@ human-readable files</p></li>
 </section>
 <section id="plant-json">
 <h2><code class="docutils literal notranslate"><span class="pre">plant.json</span></code><a class="headerlink" href="#plant-json" title="Link to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">plant</span></code> object mirrors the configuration dict accepted by
+<a class="reference internal" href="../api/plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a>. Monte Carlo uncertainty fields (<code class="docutils literal notranslate"><span class="pre">std</span></code>,
+<code class="docutils literal notranslate"><span class="pre">min</span></code>, <code class="docutils literal notranslate"><span class="pre">max</span></code>) can be embedded directly in <code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code>,
+<code class="docutils literal notranslate"><span class="pre">plant_products</span></code>, and <code class="docutils literal notranslate"><span class="pre">operator_hourly_rate</span></code> — they are ignored when
+running plant-only calculations and activated automatically when
+<code class="docutils literal notranslate"><span class="pre">run_tea()</span></code> executes a Monte Carlo block.</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2.1.0&quot;</span>
-<span class="w">  </span><span class="p">},</span>
 <span class="w">  </span><span class="nt">&quot;plant&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;plant_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Green Ammonia Plant&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;plant_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Steam Reforming&quot;</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;process_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;country&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Netherlands&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;country&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;United States&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;region&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Gulf Coast&quot;</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;interest_rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.09</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;project_lifetime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;tax_rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.25</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;capex_ramp&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">],</span>
-<span class="w">    </span><span class="nt">&quot;production_ramp&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.8</span><span class="p">],</span>
-<span class="w">    </span><span class="nt">&quot;plant_products&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;ammonia&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;production&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">125000</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;price&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">500</span><span class="p">}</span>
+<span class="w">    </span><span class="nt">&quot;project_lifetime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;plant_utilization&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span><span class="p">,</span>
+
+<span class="w">    </span><span class="nt">&quot;operator_hourly_rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">38.11</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;std&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">50</span>
 <span class="w">    </span><span class="p">},</span>
+
+<span class="w">    </span><span class="nt">&quot;plant_products&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;hydrogen&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;production&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">50000</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;price&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">5.5</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+
 <span class="w">    </span><span class="nt">&quot;variable_opex_inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;electricity&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;consumption&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">110</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;price&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">75</span><span class="p">}</span>
+<span class="w">      </span><span class="nt">&quot;electricity&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;consumption&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">38293.44</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;price&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.05</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;std&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.03</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;methane_feed&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;consumption&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">219936</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;price&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;std&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.25</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<span class="w">      </span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
@@ -398,85 +424,166 @@ human-readable files</p></li>
 </section>
 <section id="analysis-json">
 <h2><code class="docutils literal notranslate"><span class="pre">analysis.json</span></code><a class="headerlink" href="#analysis-json" title="Link to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">analysis</span></code> block contains one sub-object per analysis type. Each must
+have <code class="docutils literal notranslate"><span class="pre">&quot;run&quot;:</span> <span class="pre">true</span></code> to be executed, plus an <code class="docutils literal notranslate"><span class="pre">&quot;args&quot;</span></code> dict that is passed
+directly to the corresponding Python function. The <code class="docutils literal notranslate"><span class="pre">output</span></code> block controls
+whether results and plots are saved, and in what format.</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;sensitivity&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;interest_rate&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;plant_utilization&quot;</span><span class="p">],</span>
-<span class="w">    </span><span class="nt">&quot;metric&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;levelized_cost&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;plus_minus_value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;n_points&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span>
-<span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;tornado&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;metric&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;npv&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;plus_minus_value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.2</span>
-<span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;monte_carlo&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;n_samples&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">50000</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;batch_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5000</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;uncertainties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;fixed_capital_factor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;std&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.30</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.25</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.75</span><span class="p">},</span>
-<span class="w">      </span><span class="nt">&quot;fixed_opex_factor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;std&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.25</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.30</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.70</span><span class="p">},</span>
-<span class="w">      </span><span class="nt">&quot;interest_rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;std&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.03</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.03</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.20</span><span class="p">}</span>
+<span class="w">  </span><span class="nt">&quot;analysis&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;direct_costs&quot;</span><span class="p">:</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;run&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;pct&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;fixed_capital&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;run&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;additional_capex&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;pct&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;fixed_opex&quot;</span><span class="p">:</span><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;run&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;pct&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;variable_opex&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;run&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;pct&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span>
+
+<span class="w">    </span><span class="nt">&quot;sensitivity&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;run&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;cases&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;methane_feed_lcop&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;parameter&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;methane_feed&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;plus_minus_value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;metric&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;LCOP&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;electricity_npv&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;parameter&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;plus_minus_value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;metric&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NPV&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">]</span>
+<span class="w">    </span><span class="p">},</span>
+
+<span class="w">    </span><span class="nt">&quot;tornado&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;run&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;plus_minus_value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;metric&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NPV&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+
+<span class="w">    </span><span class="nt">&quot;monte_carlo&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;run&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;num_samples&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000000</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;batch_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10000</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;metric&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;NPV&quot;</span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="nt">&quot;output&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;save_json&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;save_plots&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;plot_format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;dpi&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">600</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
+<p>The <code class="docutils literal notranslate"><span class="pre">&quot;metric&quot;</span></code> list under <code class="docutils literal notranslate"><span class="pre">monte_carlo</span></code> controls which metrics are
+rendered as histogram plots when <code class="docutils literal notranslate"><span class="pre">save_plots</span></code> is <code class="docutils literal notranslate"><span class="pre">true</span></code>. The <code class="docutils literal notranslate"><span class="pre">args</span></code>
+dict maps directly to <a class="reference internal" href="../api/analysis.html#openpytea.analysis.monte_carlo" title="openpytea.analysis.monte_carlo"><code class="xref py py-func docutils literal notranslate"><span class="pre">monte_carlo()</span></code></a> keyword
+arguments.</p>
 </section>
 <section id="running-a-study">
 <h2>Running a study<a class="headerlink" href="#running-a-study" title="Link to this heading">¶</a></h2>
-<p>Load all three files with the high-level <code class="docutils literal notranslate"><span class="pre">run_tea</span></code> function:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_tea</span>
-
-<span class="n">results</span> <span class="o">=</span> <span class="n">run_tea</span><span class="p">(</span>
-    <span class="n">equipment_json</span><span class="o">=</span><span class="s2">&quot;project/equipment.json&quot;</span><span class="p">,</span>
-    <span class="n">plant_json</span><span class="o">=</span><span class="s2">&quot;project/plant.json&quot;</span><span class="p">,</span>
-    <span class="n">analysis_json</span><span class="o">=</span><span class="s2">&quot;project/analysis.json&quot;</span><span class="p">,</span>
+<section id="equipment-i-o">
+<h3>Equipment I/O<a class="headerlink" href="#equipment-i-o" title="Link to this heading">¶</a></h3>
+<p><a class="reference internal" href="../api/io.html#openpytea.io.run_equipment" title="openpytea.io.run_equipment"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_equipment()</span></code></a> reads the equipment file, builds the
+<a class="reference internal" href="../api/equipment.html#id15" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> objects, and writes a results JSON:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">equipment_list</span> <span class="o">=</span> <span class="n">run_equipment</span><span class="p">(</span>
+    <span class="n">input_path</span><span class="o">=</span><span class="s2">&quot;project/equipment.json&quot;</span><span class="p">,</span>
+    <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;outputs/equipment_results.json&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;metrics&quot;</span><span class="p">])</span>          <span class="c1"># NPV, IRR, ROI, …</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;sensitivity&quot;</span><span class="p">])</span>      <span class="c1"># sensitivity curves</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;monte_carlo&quot;</span><span class="p">])</span>      <span class="c1"># MC summary statistics</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">equipment_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>   <span class="c1"># inspect a single Equipment object</span>
 </pre></div>
 </div>
 </section>
-<section id="individual-loaders">
-<h2>Individual loaders<a class="headerlink" href="#individual-loaders" title="Link to this heading">¶</a></h2>
-<p>Use individual functions when building workflows step by step:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.io</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">load_equipment_config</span><span class="p">,</span>
-    <span class="n">load_plant_config</span><span class="p">,</span>
-    <span class="n">run_equipment</span><span class="p">,</span>
-    <span class="n">run_plant</span><span class="p">,</span>
+<section id="plant-i-o">
+<h3>Plant I/O<a class="headerlink" href="#plant-i-o" title="Link to this heading">¶</a></h3>
+<p><a class="reference internal" href="../api/io.html#openpytea.io.run_plant" title="openpytea.io.run_plant"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_plant()</span></code></a> loads the plant configuration, attaches the
+equipment, runs all calculations, and writes a plant results JSON:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span> <span class="o">=</span> <span class="n">run_plant</span><span class="p">(</span>
+    <span class="n">plant_input_path</span><span class="o">=</span><span class="s2">&quot;project/plant.json&quot;</span><span class="p">,</span>
+    <span class="n">plant_output_path</span><span class="o">=</span><span class="s2">&quot;outputs/plant_results.json&quot;</span><span class="p">,</span>
+    <span class="n">equipment_input_path</span><span class="o">=</span><span class="s2">&quot;project/equipment.json&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="c1"># Load and compute equipment costs</span>
-<span class="n">equipment_list</span> <span class="o">=</span> <span class="n">run_equipment</span><span class="p">(</span><span class="s2">&quot;project/equipment.json&quot;</span><span class="p">)</span>
-
-<span class="c1"># Load plant config and attach equipment</span>
-<span class="n">plant</span> <span class="o">=</span> <span class="n">run_plant</span><span class="p">(</span><span class="s2">&quot;project/plant.json&quot;</span><span class="p">,</span> <span class="n">equipment</span><span class="o">=</span><span class="n">equipment_list</span><span class="p">)</span>
-<span class="n">plant</span><span class="o">.</span><span class="n">calculate_all</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you already have an <code class="docutils literal notranslate"><span class="pre">equipment_list</span></code> from a previous <code class="docutils literal notranslate"><span class="pre">run_equipment</span></code>
+call, pass it directly instead:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span> <span class="o">=</span> <span class="n">run_plant</span><span class="p">(</span>
+    <span class="n">plant_input_path</span><span class="o">=</span><span class="s2">&quot;project/plant.json&quot;</span><span class="p">,</span>
+    <span class="n">plant_output_path</span><span class="o">=</span><span class="s2">&quot;outputs/plant_results.json&quot;</span><span class="p">,</span>
+    <span class="n">equipment_list</span><span class="o">=</span><span class="n">equipment_list</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="exporting-results">
-<h2>Exporting results<a class="headerlink" href="#exporting-results" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">export_plant_results</span><span class="p">,</span> <span class="n">export_equipment_results</span>
-
-<span class="c1"># Save equipment cost summary</span>
-<span class="n">export_equipment_results</span><span class="p">(</span><span class="n">equipment_list</span><span class="p">,</span> <span class="s2">&quot;results/equipment_results.json&quot;</span><span class="p">)</span>
-
-<span class="c1"># Save full plant TEA results</span>
-<span class="n">export_plant_results</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="s2">&quot;results/plant_results.json&quot;</span><span class="p">)</span>
+<section id="full-tea-pipeline">
+<h3>Full TEA pipeline<a class="headerlink" href="#full-tea-pipeline" title="Link to this heading">¶</a></h3>
+<p><a class="reference internal" href="../api/io.html#openpytea.io.run_tea" title="openpytea.io.run_tea"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_tea()</span></code></a> orchestrates the complete workflow from the
+three input files and writes all results and plots to <code class="docutils literal notranslate"><span class="pre">output_dir</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">run_tea</span><span class="p">(</span>
+    <span class="n">equipment_input_path</span><span class="o">=</span><span class="s2">&quot;project/equipment.json&quot;</span><span class="p">,</span>
+    <span class="n">plant_input_path</span><span class="o">=</span><span class="s2">&quot;project/plant.json&quot;</span><span class="p">,</span>
+    <span class="n">analysis_input_path</span><span class="o">=</span><span class="s2">&quot;project/analysis.json&quot;</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;outputs/tea_results&quot;</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
-<p>The exported JSON includes timestamps, version metadata, cost breakdowns,
-and all computed financial metrics — suitable for archiving and sharing.</p>
+<p>The function returns a dict with keys for each analysis that was run:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>results[&quot;direct_costs&quot;]    # equipment-level cost breakdown
+results[&quot;fixed_capital&quot;]   # CAPEX breakdown
+results[&quot;fixed_opex&quot;]      # fixed OPEX breakdown
+results[&quot;variable_opex&quot;]   # variable OPEX breakdown
+results[&quot;sensitivity&quot;]     # dict of sensitivity cases
+results[&quot;tornado&quot;]         # tornado data
+results[&quot;monte_carlo&quot;]     # Monte Carlo results
+</pre></div>
+</div>
+</section>
+</section>
+<section id="loading-saved-results">
+<h2>Loading saved results<a class="headerlink" href="#loading-saved-results" title="Link to this heading">¶</a></h2>
+<p>Use <a class="reference internal" href="../api/io.html#openpytea.io.load_results" title="openpytea.io.load_results"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_results()</span></code></a> to reload a previously saved analysis
+results file for further analysis or visualization. The output file is named
+<code class="docutils literal notranslate"><span class="pre">{plant_name}_analysis_results.json</span></code> inside <code class="docutils literal notranslate"><span class="pre">output_dir</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">load_results</span><span class="p">(</span>
+    <span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;outputs/tea_results/Steam Reforming_analysis_results.json&quot;</span>
+<span class="p">)</span>
+
+<span class="n">mc</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;monte_carlo&quot;</span><span class="p">]</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_monte_carlo</span>
+<span class="n">plot_monte_carlo</span><span class="p">(</span><span class="n">mc</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="comparing-multiple-scenarios">
+<h2>Comparing multiple scenarios<a class="headerlink" href="#comparing-multiple-scenarios" title="Link to this heading">¶</a></h2>
+<p>Run <code class="docutils literal notranslate"><span class="pre">run_tea()</span></code> for each scenario and reload the Monte Carlo results to
+compare them on the same figure:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">run_tea</span><span class="p">(</span>
+    <span class="n">equipment_input_path</span><span class="o">=</span><span class="s2">&quot;project/smr_equipment.json&quot;</span><span class="p">,</span>
+    <span class="n">plant_input_path</span><span class="o">=</span><span class="s2">&quot;project/smr_plant.json&quot;</span><span class="p">,</span>
+    <span class="n">analysis_input_path</span><span class="o">=</span><span class="s2">&quot;project/analysis.json&quot;</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;outputs/smr_results&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">run_tea</span><span class="p">(</span>
+    <span class="n">equipment_input_path</span><span class="o">=</span><span class="s2">&quot;project/aec_equipment.json&quot;</span><span class="p">,</span>
+    <span class="n">plant_input_path</span><span class="o">=</span><span class="s2">&quot;project/aec_plant.json&quot;</span><span class="p">,</span>
+    <span class="n">analysis_input_path</span><span class="o">=</span><span class="s2">&quot;project/analysis.json&quot;</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;outputs/aec_results&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">smr_mc</span> <span class="o">=</span> <span class="n">load_results</span><span class="p">(</span><span class="s2">&quot;outputs/smr_results/Steam Reforming_analysis_results.json&quot;</span><span class="p">)[</span><span class="s2">&quot;monte_carlo&quot;</span><span class="p">]</span>
+<span class="n">aec_mc</span> <span class="o">=</span> <span class="n">load_results</span><span class="p">(</span><span class="s2">&quot;outputs/aec_results/Electrolysis_analysis_results.json&quot;</span><span class="p">)[</span><span class="s2">&quot;monte_carlo&quot;</span><span class="p">]</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_multiple_monte_carlo</span>
+<span class="n">plot_multiple_monte_carlo</span><span class="p">(</span><span class="n">data_list</span><span class="o">=</span><span class="p">[</span><span class="n">smr_mc</span><span class="p">,</span> <span class="n">aec_mc</span><span class="p">],</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="see-also">
 <h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/io.html#module-openpytea.io" title="openpytea.io"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.io</span></code></a> — full API reference</p></li>
-<li><p><a class="reference internal" href="../gui.html"><span class="doc">Web GUI</span></a> — web GUI save/load feature (same JSON format)</p></li>
+<li><p><a class="reference internal" href="analysis.html"><span class="doc">Analysis</span></a> — analysis functions used inside <code class="docutils literal notranslate"><span class="pre">run_tea()</span></code></p></li>
+<li><p><a class="reference internal" href="plotting.html"><span class="doc">Plotting</span></a> — visualization functions for loaded results</p></li>
+<li><p><a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">Walkthrough notebook</a> — end-to-end worked example</p></li>
 </ul>
 </section>
 </section>
@@ -486,12 +593,12 @@ and all computed financial metrics — suitable for archiving and sharing.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="../api/index.html">
+          <a class="next-page" href="../api/equipment.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">API Reference</div>
+                <div class="title">openpytea.equipment</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -537,14 +644,18 @@ and all computed financial metrics — suitable for archiving and sharing.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">JSON Workflow</a><ul>
-<li><a class="reference internal" href="#why-use-json-configs">Why use JSON configs?</a></li>
 <li><a class="reference internal" href="#file-structure">File structure</a></li>
 <li><a class="reference internal" href="#equipment-json"><code class="docutils literal notranslate"><span class="pre">equipment.json</span></code></a></li>
 <li><a class="reference internal" href="#plant-json"><code class="docutils literal notranslate"><span class="pre">plant.json</span></code></a></li>
 <li><a class="reference internal" href="#analysis-json"><code class="docutils literal notranslate"><span class="pre">analysis.json</span></code></a></li>
-<li><a class="reference internal" href="#running-a-study">Running a study</a></li>
-<li><a class="reference internal" href="#individual-loaders">Individual loaders</a></li>
-<li><a class="reference internal" href="#exporting-results">Exporting results</a></li>
+<li><a class="reference internal" href="#running-a-study">Running a study</a><ul>
+<li><a class="reference internal" href="#equipment-i-o">Equipment I/O</a></li>
+<li><a class="reference internal" href="#plant-i-o">Plant I/O</a></li>
+<li><a class="reference internal" href="#full-tea-pipeline">Full TEA pipeline</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#loading-saved-results">Loading saved results</a></li>
+<li><a class="reference internal" href="#comparing-multiple-scenarios">Comparing multiple scenarios</a></li>
 <li><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
 </li>
@@ -564,5 +675,6 @@ and all computed financial metrics — suitable for archiving and sharing.</p>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=fd10adb8"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>

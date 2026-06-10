@@ -1,9 +1,20 @@
+:orphan:
+
 User Guide
 ==========
 
 This section provides in-depth documentation for every feature of OpenPyTEA.
 Follow the pages in order for a structured introduction, or jump directly to
 the topic you need.
+
+Walkthrough notebook
+--------------------
+
+The `OpenPyTEA walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_ is a
+self-contained Jupyter notebook that covers the full workflow end-to-end —
+equipment costing, plant configuration, financial calculations, sensitivity
+analysis, and result export — with live code, outputs, and explanatory text.
+It is the recommended starting point before reading the individual guide pages.
 
 .. toctree::
    :maxdepth: 1

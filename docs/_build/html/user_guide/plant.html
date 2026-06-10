@@ -3,7 +3,9 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Sensitivity &amp; Uncertainty Analysis" href="analysis.html"><link rel="prev" title="Equipment Cost Estimation" href="equipment.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Analysis" href="analysis.html"><link rel="prev" title="Equipment Cost Estimation" href="equipment.html">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo.png" as="image">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>Plant-Level TEA - OpenPyTEA</title>
@@ -12,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=3437e138" />
     
     
 
@@ -226,8 +228,11 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">OpenPyTEA</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -242,30 +247,14 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
-<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Plant-Level TEA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plotting.html">Plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plotting.html">openpytea.plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/io.html">openpytea.io</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
@@ -275,8 +264,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -317,48 +308,110 @@
         <article role="main" id="furo-main-content">
           <section id="plant-level-tea">
 <h1>Plant-Level TEA<a class="headerlink" href="#plant-level-tea" title="Link to this heading">¶</a></h1>
-<p>The <a class="reference internal" href="../api/plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a> class is the core of OpenPyTEA. It takes
-a list of equipment objects and financial parameters, and computes the full
-capital and operating cost structure together with financial metrics.</p>
+<p>The <a class="reference internal" href="../api/plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a> class is the core of OpenPyTEA. It
+aggregates equipment objects and financial assumptions into a full
+techno-economic assessment, covering:</p>
+<ul class="simple">
+<li><p><strong>Fixed CAPEX</strong> (ISBL / OSBL / D&amp;E / Contingency) via process-type multipliers</p></li>
+<li><p><strong>Location-adjusted costs</strong> via country/region factors</p></li>
+<li><p><strong>Variable OPEX</strong> from itemized consumption and price data</p></li>
+<li><p><strong>Fixed OPEX</strong> including automatic labor estimation, maintenance, taxes, overheads, and working capital</p></li>
+<li><p><strong>Revenue</strong> for a main product and optional co-products</p></li>
+<li><p><strong>Cash flow, NPV, LCOP, payback time, ROI, IRR</strong> over the project lifetime</p></li>
+<li><p><strong>Scenario arrays</strong> — pass an array for any scalar parameter to evaluate multiple scenarios in one call</p></li>
+</ul>
+<p>To see the outputs of all code examples below, refer to the
+<a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">walkthrough notebook</a>.</p>
 <section id="creating-a-plant">
 <h2>Creating a <code class="docutils literal notranslate"><span class="pre">Plant</span></code><a class="headerlink" href="#creating-a-plant" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">Plant</span><span class="p">,</span> <span class="n">Equipment</span>
 
-<span class="c1"># Equipment list (one or more items)</span>
-<span class="n">pump</span> <span class="o">=</span> <span class="n">Equipment</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;P-01&quot;</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">process_type</span><span class="o">=</span><span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
-    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;Pumps (Centrifugal)&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;Single stage&quot;</span><span class="p">,</span>
-    <span class="n">material</span><span class="o">=</span><span class="s2">&quot;Carbon steel&quot;</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="c1"># Define equipment first (see Equipment guide)</span>
+<span class="c1"># hx, comp1, comp2 = Equipment(...)</span>
 
-<span class="n">plant</span> <span class="o">=</span> <span class="n">Plant</span><span class="p">({</span>
-    <span class="s2">&quot;plant_name&quot;</span><span class="p">:</span> <span class="s2">&quot;My Process Plant&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;process_type&quot;</span><span class="p">:</span> <span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;country&quot;</span><span class="p">:</span> <span class="s2">&quot;United States&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;Gulf Coast&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;currency&quot;</span><span class="p">:</span> <span class="s2">&quot;USD&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;equipment&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">pump</span><span class="p">],</span>
-    <span class="s2">&quot;interest_rate&quot;</span><span class="p">:</span> <span class="mf">0.09</span><span class="p">,</span>
-    <span class="s2">&quot;project_lifetime&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
-<span class="p">})</span>
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;plant_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Demo Plant&quot;</span><span class="p">,</span>                  <span class="c1"># used in plots</span>
+    <span class="c1"># Basic plant information</span>
+    <span class="s2">&quot;process_type&quot;</span><span class="p">:</span> <span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>                    <span class="c1"># &quot;Solids&quot; | &quot;Fluids&quot; | &quot;Mixed&quot;</span>
+    <span class="s2">&quot;country&quot;</span><span class="p">:</span> <span class="s2">&quot;United States&quot;</span><span class="p">,</span>                  <span class="c1"># optional, defaults to &quot;United States&quot;</span>
+    <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;Gulf Coast&quot;</span><span class="p">,</span>                      <span class="c1"># optional, defaults to &quot;Gulf Coast&quot;</span>
+    <span class="s2">&quot;currency&quot;</span><span class="p">:</span> <span class="s2">&quot;USD&quot;</span><span class="p">,</span>                           <span class="c1"># optional, defaults to &quot;USD&quot;</span>
+                                                 <span class="c1"># use \$ when using symbol to avoid syntax errors</span>
+    <span class="s2">&quot;exchange_rate&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>                        <span class="c1"># optional, defaults to 1.0</span>
+    <span class="s2">&quot;equipment&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">hx</span><span class="p">,</span> <span class="n">comp1</span><span class="p">,</span> <span class="n">comp2</span><span class="p">],</span>             <span class="c1"># list of Equipment objects</span>
+    <span class="s2">&quot;interest_rate&quot;</span><span class="p">:</span> <span class="mf">0.09</span><span class="p">,</span>                       <span class="c1"># optional, defaults to 0.09</span>
+    <span class="s2">&quot;project_lifetime&quot;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>                      <span class="c1"># int ≥ 3, optional, defaults to 20</span>
+    <span class="s2">&quot;plant_utilization&quot;</span><span class="p">:</span> <span class="mf">0.90</span><span class="p">,</span>                   <span class="c1"># 0–1, optional, defaults to 1</span>
+    <span class="s2">&quot;tax_rate&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span>                            <span class="c1"># 0–1, not used in LCOP, defaults to 0</span>
 
-<span class="n">plant</span><span class="o">.</span><span class="n">calculate_all</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># Operator labor</span>
+    <span class="s2">&quot;operator_hourly_rate&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;rate&quot;</span><span class="p">:</span> <span class="mi">35</span><span class="p">},</span>        <span class="c1"># USD/hr, optional, defaults to $38.11/hr</span>
+    <span class="s2">&quot;working_weeks_per_year&quot;</span><span class="p">:</span> <span class="mi">46</span><span class="p">,</span>                <span class="c1"># optional, defaults to 49</span>
+    <span class="s2">&quot;working_shifts_per_week&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>                <span class="c1"># optional, defaults to 5</span>
+
+    <span class="c1"># Products — first entry is the main product for LCOP calculations</span>
+    <span class="s2">&quot;plant_products&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;methanol&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;production&quot;</span><span class="p">:</span> <span class="mi">125_000</span><span class="p">,</span>               <span class="c1"># units/yr</span>
+            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">2.5</span><span class="p">,</span>                        <span class="c1"># USD/unit (not needed for LCOP)</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;hydrogen&quot;</span><span class="p">:</span> <span class="p">{</span>                            <span class="c1"># co-product</span>
+            <span class="s2">&quot;production&quot;</span><span class="p">:</span> <span class="mi">100_000</span><span class="p">,</span>
+            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+
+    <span class="c1"># Variable OPEX — consumables and utilities</span>
+    <span class="s2">&quot;variable_opex_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;electricity&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">2.2e6</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.08</span><span class="p">},</span>   <span class="c1"># units/yr, USD/unit</span>
+        <span class="s2">&quot;cooling_water&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">1.6e6</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.0007</span><span class="p">},</span>
+    <span class="p">},</span>
+
+    <span class="c1"># Additional CAPEX and OPEX</span>
+    <span class="s2">&quot;working_capital&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>                     <span class="c1"># USD; defaults to 15% of FCI</span>
+    <span class="s2">&quot;additional_capex_cost&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">500_000</span><span class="p">,</span> <span class="mi">200_000</span><span class="p">],</span> <span class="c1"># one-off CAPEX events during operation</span>
+    <span class="s2">&quot;additional_capex_years&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">15</span><span class="p">],</span>           <span class="c1"># years in which they occur</span>
+
+    <span class="c1"># Depreciation (optional; defaults to straight-line if omitted)</span>
+    <span class="s2">&quot;depreciation&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;macrs&quot;</span><span class="p">,</span>                       <span class="c1"># &quot;straight_line&quot; | &quot;declining_balance&quot; | &quot;macrs&quot;</span>
+        <span class="s2">&quot;macrs_class&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>                        <span class="c1"># 3, 5, 7, 10, 15, or 20</span>
+        <span class="s2">&quot;service_start_year&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>                 <span class="c1"># first operating year in the production ramp</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="n">demo_plant</span> <span class="o">=</span> <span class="n">Plant</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">demo_plant</span><span class="p">)</span>
+<span class="n">demo_plant</span><span class="o">.</span><span class="n">calculate_all</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="configuration-parameters">
-<h2>Configuration parameters<a class="headerlink" href="#configuration-parameters" title="Link to this heading">¶</a></h2>
-<section id="general">
-<h3>General<a class="headerlink" href="#general" title="Link to this heading">¶</a></h3>
+<section id="updating-configuration">
+<h2>Updating configuration<a class="headerlink" href="#updating-configuration" title="Link to this heading">¶</a></h2>
+<p>Any setting can be changed after construction without rebuilding the plant.
+Nested dictionaries (e.g., <code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code>, <code class="docutils literal notranslate"><span class="pre">plant_products</span></code>) are
+merged recursively, so unspecified sub-keys are preserved:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;interest_rate&quot;</span><span class="p">:</span> <span class="mf">0.08</span><span class="p">,</span>
+    <span class="s2">&quot;variable_opex_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;steam&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">4.0e5</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">})</span>
+<span class="n">plant</span><span class="o">.</span><span class="n">calculate_all</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="configuration-reference">
+<h2>Configuration reference<a class="headerlink" href="#configuration-reference" title="Link to this heading">¶</a></h2>
 <div class="table-wrapper colwidths-given docutils container">
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 30.0%" />
+<col style="width: 28.0%" />
 <col style="width: 15.0%" />
-<col style="width: 55.0%" />
+<col style="width: 57.0%" />
 </colgroup>
 <thead>
-<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
 <th class="head"><p>Default</p></th>
 <th class="head"><p>Description</p></th>
 </tr>
@@ -366,128 +419,139 @@ capital and operating cost structure together with financial metrics.</p>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">plant_name</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code></p></td>
-<td><p>Descriptive name of the plant</p></td>
+<td><p>Name used in plots and reports.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">process_type</span></code></p></td>
 <td><p>required</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">&quot;Solids&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Fluids&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;Mixed&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;Solids&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Fluids&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;Mixed&quot;</span></code> — sets default cost factors.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">country</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">&quot;United</span> <span class="pre">States&quot;</span></code></p></td>
-<td><p>Country for location cost factor lookup</p></td>
+<td><p>Country for location factor lookup.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">region</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">&quot;Gulf</span> <span class="pre">Coast&quot;</span></code></p></td>
-<td><p>Region within the country</p></td>
+<td><p>Region within the country (required for countries with regional factors).</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">currency</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">loc_factor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p>Direct location factor override. Bypasses <code class="docutils literal notranslate"><span class="pre">country</span></code>/<code class="docutils literal notranslate"><span class="pre">region</span></code> lookup.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">currency</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">&quot;USD&quot;</span></code></p></td>
-<td><p>Currency label (display only)</p></td>
+<td><p>Currency label for display. Use <code class="docutils literal notranslate"><span class="pre">\$</span></code> when using symbol to avoid RST syntax errors.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">exchange_rate</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">exchange_rate</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">1.0</span></code></p></td>
-<td><p>Multiplier to convert USD results to local currency</p></td>
+<td><p>Conversion from USD to <code class="docutils literal notranslate"><span class="pre">currency</span></code> (1 USD = <code class="docutils literal notranslate"><span class="pre">exchange_rate</span></code> × currency unit).</p></td>
 </tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="financial">
-<h3>Financial<a class="headerlink" href="#financial" title="Link to this heading">¶</a></h3>
-<div class="table-wrapper colwidths-given docutils container">
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 30.0%" />
-<col style="width: 15.0%" />
-<col style="width: 55.0%" />
-</colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Parameter</p></th>
-<th class="head"><p>Default</p></th>
-<th class="head"><p>Description</p></th>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">equipment</span></code></p></td>
+<td><p>required</p></td>
+<td><p>List of <a class="reference internal" href="../api/equipment.html#id15" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> objects.</p></td>
 </tr>
-</thead>
-<tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">interest_rate</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">0.09</span></code></p></td>
-<td><p>Discount / hurdle rate for NPV calculations</p></td>
+<td><p>Discount rate for NPV, capital recovery, and working-capital interest.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">project_lifetime</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">20</span></code></p></td>
-<td><p>Operating life in years (can be an array for scenario analysis)</p></td>
+<td><p>Project duration in years (integer ≥ 3). Accepts an array for scenario analysis.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">plant_utilization</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">1.0</span></code></p></td>
-<td><p>Annual capacity utilization factor (0–1)</p></td>
+<td><p>Annual capacity utilization (0–1). Scales production and variable OPEX.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tax_rate</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
-<td><p>Corporate income tax rate applied to cash flow</p></td>
+<td><p>Corporate income tax rate (0–1). Not applied to levelized cost calculations.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">working_capital</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
-<td><p>Working capital; auto-calculated as fraction of fixed capital if <code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p>Working capital in USD. Defaults to 0.15 × FCI when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">plant_products</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{}</span></code></p></td>
+<td><p>Products dict. First entry is the main product for LCOP; others are co-products.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{}</span></code></p></td>
+<td><p>Utilities and raw materials, each with <code class="docutils literal notranslate"><span class="pre">consumption</span></code> (units/yr) and <code class="docutils literal notranslate"><span class="pre">price</span></code> (USD/unit).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">operator_hourly_rate</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{&quot;rate&quot;:</span> <span class="pre">38.11}</span></code></p></td>
+<td><p>Operator wage in USD/hr.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">working_weeks_per_year</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">49</span></code></p></td>
+<td><p>Annual working weeks per operator.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">working_shifts_per_week</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">5</span></code></p></td>
+<td><p>Shifts per operator per week.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">operating_shifts_per_day</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">3</span></code></p></td>
+<td><p>Daily operating shifts (continuous plants typically run 3).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">operators_hired</span></code></p></td>
+<td><p>auto</p></td>
+<td><p>Total headcount. Computed automatically from process type; override to fix.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">operators_per_shift</span></code></p></td>
+<td><p>auto</p></td>
+<td><p>Operators per shift. Computed automatically; override to fix.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_capital_factors</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{}</span></code></p></td>
+<td><p>Per-key overrides for OSBL, D&amp;E, and contingency factors.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_capital_components</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{}</span></code></p></td>
+<td><p>Absolute cost overrides for any FCI component (takes precedence over factors).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_opex_factors</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{}</span></code></p></td>
+<td><p>Per-key factor overrides for fixed OPEX components.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fixed_opex_components</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{}</span></code></p></td>
+<td><p>Absolute cost overrides for any fixed OPEX component.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">capex_ramp</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[0.3,</span> <span class="pre">0.6,</span> <span class="pre">0.1]</span></code></p></td>
+<td><p>CAPEX spending fractions by construction year (must sum to 1.0).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">production_ramp</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">0,</span> <span class="pre">0.4,</span> <span class="pre">0.8]</span></code></p></td>
+<td><p>Capacity fractions by project year. Years beyond the list default to 1.0.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">depreciation</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{}</span></code></p></td>
+<td><p>Depreciation settings (method, life, etc.) — see <a class="reference internal" href="#depreciation"><span class="std std-ref">Depreciation</span></a>.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
-<section id="products-and-opex">
-<h3>Products and OPEX<a class="headerlink" href="#products-and-opex" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
-    <span class="s2">&quot;plant_products&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;hydrogen&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;production&quot;</span><span class="p">:</span> <span class="mi">10_000</span><span class="p">,</span>    <span class="c1"># t/yr</span>
-            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span>            <span class="c1"># USD/kg → set unit carefully</span>
-        <span class="p">},</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;variable_opex_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;electricity&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mi">55</span><span class="p">,</span>       <span class="c1"># GWh/yr</span>
-            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>             <span class="c1"># USD/MWh</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;natural gas&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>      <span class="c1"># GWh/yr (LHV)</span>
-            <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>             <span class="c1"># USD/MWh</span>
-        <span class="p">},</span>
-    <span class="p">},</span>
-<span class="p">})</span>
-</pre></div>
-</div>
-</section>
-</section>
 <section id="capital-cost-structure">
 <h2>Capital cost structure<a class="headerlink" href="#capital-cost-structure" title="Link to this heading">¶</a></h2>
-<p>The fixed capital investment (FCI) is built up from the equipment direct
-costs in four layers:</p>
+<p>The fixed capital investment (FCI) is assembled in four layers:</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
-\[\text{ISBL} = \text{loc\_factor} \times \sum C_{\text{direct}}\]</div>
+\[\text{FCI} = \text{ISBL} \times (1 + f_{\text{os}}) \times (1 + f_{\text{de}} + f_X) \times LF\]</div>
 </div>
-<div class="math-wrapper docutils container">
-<div class="math notranslate nohighlight">
-\[\text{OSBL} = f_{\text{os}} \times \text{ISBL}\]</div>
-</div>
-<div class="math-wrapper docutils container">
-<div class="math notranslate nohighlight">
-\[\text{D\&amp;E} = f_{\text{de}} \times (\text{ISBL} + \text{OSBL})\]</div>
-</div>
-<div class="math-wrapper docutils container">
-<div class="math notranslate nohighlight">
-\[\text{Contingency} = f_{\text{X}} \times (\text{ISBL} + \text{OSBL})\]</div>
-</div>
-<div class="math-wrapper docutils container">
-<div class="math notranslate nohighlight">
-\[\text{FCI} = \text{ISBL} + \text{OSBL} + \text{D\&amp;E} + \text{Contingency}\]</div>
-</div>
+<p>where <span class="math notranslate nohighlight">\(\text{ISBL}\)</span> is the sum of equipment direct costs, <span class="math notranslate nohighlight">\(f_{\text{os}}\)</span> is the
+OSBL factor, <span class="math notranslate nohighlight">\(f_{\text{de}}\)</span> is the design &amp; engineering factor, <span class="math notranslate nohighlight">\(f_X\)</span> is
+the contingency factor, and <span class="math notranslate nohighlight">\(LF\)</span> is the location factor.</p>
+<p><em>Source: Towler &amp; Sinnott (2022)</em></p>
 <p>Default factors by process type:</p>
 <div class="table-wrapper colwidths-given docutils container">
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 25.0%" />
-<col style="width: 25.0%" />
-<col style="width: 25.0%" />
-<col style="width: 25.0%" />
+<col style="width: 29.4%" />
+<col style="width: 23.5%" />
+<col style="width: 23.5%" />
+<col style="width: 23.5%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Factor</p></th>
@@ -497,17 +561,17 @@ costs in four layers:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>OSBL (<span class="math notranslate nohighlight">\(f_{\text{os}}\)</span>)</p></td>
+<tr class="row-even"><td><p>OSBL <span class="math notranslate nohighlight">\((f_{\text{os}})\)</span></p></td>
 <td><p>0.40</p></td>
 <td><p>0.30</p></td>
 <td><p>0.40</p></td>
 </tr>
-<tr class="row-odd"><td><p>D&amp;E (<span class="math notranslate nohighlight">\(f_{\text{de}}\)</span>)</p></td>
+<tr class="row-odd"><td><p>D&amp;E <span class="math notranslate nohighlight">\((f_{\text{de}})\)</span></p></td>
 <td><p>0.20</p></td>
 <td><p>0.30</p></td>
 <td><p>0.25</p></td>
 </tr>
-<tr class="row-even"><td><p>Contingency (<span class="math notranslate nohighlight">\(f_{\text{X}}\)</span>)</p></td>
+<tr class="row-even"><td><p>Contingency <span class="math notranslate nohighlight">\((f_X)\)</span></p></td>
 <td><p>0.10</p></td>
 <td><p>0.10</p></td>
 <td><p>0.10</p></td>
@@ -515,179 +579,340 @@ costs in four layers:</p>
 </tbody>
 </table>
 </div>
-<p>You can override any factor or component directly:</p>
+<p><em>Source: Towler &amp; Sinnott (2022)</em></p>
+<p>Override individual factors or set absolute component values:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
-    <span class="s2">&quot;fixed_capital_factors&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;osbl&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">},</span>        <span class="c1"># override factor</span>
-    <span class="s2">&quot;fixed_capital_components&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;contingency&quot;</span><span class="p">:</span> <span class="mf">5e6</span><span class="p">},</span>  <span class="c1"># set value directly</span>
+    <span class="s2">&quot;fixed_capital_factors&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;osbl&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span>              <span class="c1"># override factor (default 0.30 for Fluids)</span>
+        <span class="s2">&quot;de&quot;</span><span class="p">:</span> <span class="mf">0.35</span><span class="p">,</span>                <span class="c1"># override factor (default 0.30)</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;fixed_capital_components&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;contingency&quot;</span><span class="p">:</span> <span class="mi">15_000_000</span><span class="p">,</span> <span class="c1"># absolute value, overrides factor</span>
+    <span class="p">},</span>
 <span class="p">})</span>
+<span class="n">plant</span><span class="o">.</span><span class="n">calculate_fixed_capital</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="operating-cost-structure">
-<h2>Operating cost structure<a class="headerlink" href="#operating-cost-structure" title="Link to this heading">¶</a></h2>
-<section id="fixed-opex">
-<h3>Fixed OPEX<a class="headerlink" href="#fixed-opex" title="Link to this heading">¶</a></h3>
-<p>Fixed operating costs are calculated from empirical factors applied to the
-ISBL, FCI, and labor costs:</p>
-<div class="table-wrapper colwidths-given docutils container">
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 40.0%" />
-<col style="width: 60.0%" />
-</colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Component</p></th>
-<th class="head"><p>Default basis</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>Operating labor</p></td>
-<td><p>Empirical correlation (solid/fluid process units)</p></td>
-</tr>
-<tr class="row-odd"><td><p>Supervision</p></td>
-<td><p>0.25 × operating labor</p></td>
-</tr>
-<tr class="row-even"><td><p>Direct salary overhead</p></td>
-<td><p>0.50 × (labor + supervision)</p></td>
-</tr>
-<tr class="row-odd"><td><p>Laboratory charges</p></td>
-<td><p>0.10 × operating labor</p></td>
-</tr>
-<tr class="row-even"><td><p>Maintenance</p></td>
-<td><p>0.05 × ISBL</p></td>
-</tr>
-<tr class="row-odd"><td><p>Taxes &amp; insurance</p></td>
-<td><p>0.015 × ISBL</p></td>
-</tr>
-<tr class="row-even"><td><p>Rent of land</p></td>
-<td><p>0.015 × (ISBL + OSBL)</p></td>
-</tr>
-<tr class="row-odd"><td><p>Environmental charges</p></td>
-<td><p>0.010 × (ISBL + OSBL)</p></td>
-</tr>
-<tr class="row-even"><td><p>Operating supplies</p></td>
-<td><p>0.009 × ISBL</p></td>
-</tr>
-<tr class="row-odd"><td><p>General plant overhead</p></td>
-<td><p>0.65 × (labor + supervision + overhead)</p></td>
-</tr>
-<tr class="row-even"><td><p>Patents &amp; royalties</p></td>
-<td><p>0.020 × cash cost</p></td>
-</tr>
-<tr class="row-odd"><td><p>Distribution &amp; selling</p></td>
-<td><p>0.020 × cash cost</p></td>
-</tr>
-<tr class="row-even"><td><p>R&amp;D</p></td>
-<td><p>0.030 × cash cost</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p>Override individual fixed OPEX factors:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
-    <span class="s2">&quot;fixed_opex_factors&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;maintenance&quot;</span><span class="p">:</span> <span class="mf">0.03</span><span class="p">,</span>       <span class="c1"># lower maintenance fraction</span>
-        <span class="s2">&quot;taxes_insurance&quot;</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">,</span>
-    <span class="p">}</span>
-<span class="p">})</span>
+<p>Access individual components after calculation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ISBL        : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">isbl</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OSBL        : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">osbl</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;D&amp;E         : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">dne</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Contingency : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">contingency</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;FCI         : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">fci</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="variable-opex">
-<h3>Variable OPEX<a class="headerlink" href="#variable-opex" title="Link to this heading">¶</a></h3>
-<p>Variable costs are computed as:</p>
-<div class="math-wrapper docutils container">
-<div class="math notranslate nohighlight">
-\[C_{\text{var}} = \sum_i \text{consumption}_i \times \text{price}_i \times \text{utilization}\]</div>
-</div>
-</section>
-<section id="labor-modeling">
-<h3>Labor modeling<a class="headerlink" href="#labor-modeling" title="Link to this heading">¶</a></h3>
-<p>By default, operating labor is estimated from an empirical correlation based
-on the number of solid and fluid handling process steps. You can override
-this manually:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
-    <span class="s2">&quot;operators_per_shift&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
-    <span class="s2">&quot;operators_hired&quot;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>
-    <span class="s2">&quot;operator_hourly_rate&quot;</span><span class="p">:</span> <span class="mi">35</span><span class="p">,</span>       <span class="c1"># USD/hr</span>
-    <span class="s2">&quot;working_weeks_per_year&quot;</span><span class="p">:</span> <span class="mi">49</span><span class="p">,</span>
-    <span class="s2">&quot;working_shifts_per_week&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
-    <span class="s2">&quot;operating_shifts_per_day&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-<span class="p">})</span>
-</pre></div>
-</div>
-</section>
-</section>
 <section id="location-factors">
-<h2>Location factors<a class="headerlink" href="#location-factors" title="Link to this heading">¶</a></h2>
-<p>Location factors scale the ISBL to account for regional construction cost
-differences relative to the US Gulf Coast (factor = 1.00):</p>
+<h3>Location factors<a class="headerlink" href="#location-factors" title="Link to this heading">¶</a></h3>
+<p>Location factors scale the ISBL to reflect regional construction cost
+differences relative to the US Gulf Coast (LF = 1.00).</p>
+<p><em>Source: Towler &amp; Sinnott (2022)</em></p>
 <div class="table-wrapper colwidths-given docutils container">
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 40.0%" />
-<col style="width: 30.0%" />
-<col style="width: 30.0%" />
+<col style="width: 75.0%" />
+<col style="width: 25.0%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Country / Region</p></th>
-<th class="head"><p>Factor range</p></th>
-<th class="head"><p>Example</p></th>
+<th class="head"><p>Factor</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>United States (Gulf Coast)</p></td>
+<tr class="row-even"><td><p>United States — Gulf Coast</p></td>
 <td><p>1.00</p></td>
+</tr>
+<tr class="row-odd"><td><p>United States — East Coast</p></td>
+<td><p>1.04</p></td>
+</tr>
+<tr class="row-even"><td><p>United States — Midwest</p></td>
+<td><p>1.02</p></td>
+</tr>
+<tr class="row-odd"><td><p>United States — West Coast</p></td>
+<td><p>1.07</p></td>
+</tr>
+<tr class="row-even"><td><p>Canada — Ontario</p></td>
 <td><p>1.00</p></td>
 </tr>
-<tr class="row-odd"><td><p>United States (West Coast)</p></td>
-<td><p>1.07</p></td>
-<td><p>1.07</p></td>
+<tr class="row-odd"><td><p>Canada — Fort McMurray</p></td>
+<td><p>1.60</p></td>
 </tr>
-<tr class="row-even"><td><p>Netherlands</p></td>
-<td><p>1.20</p></td>
-<td><p>—</p></td>
+<tr class="row-even"><td><p>Mexico</p></td>
+<td><p>1.03</p></td>
 </tr>
-<tr class="row-odd"><td><p>Japan</p></td>
+<tr class="row-odd"><td><p>Brazil</p></td>
+<td><p>1.14</p></td>
+</tr>
+<tr class="row-even"><td><p>China — Imported</p></td>
+<td><p>1.12</p></td>
+</tr>
+<tr class="row-odd"><td><p>China — Indigenous</p></td>
+<td><p>0.61</p></td>
+</tr>
+<tr class="row-even"><td><p>Japan</p></td>
 <td><p>1.26</p></td>
-<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p>Southeast Asia</p></td>
+<td><p>1.12</p></td>
 </tr>
 <tr class="row-even"><td><p>Australia</p></td>
-<td><p>1.30</p></td>
-<td><p>—</p></td>
+<td><p>1.21</p></td>
 </tr>
 <tr class="row-odd"><td><p>India</p></td>
-<td><p>0.85</p></td>
-<td><p>—</p></td>
+<td><p>1.02</p></td>
+</tr>
+<tr class="row-even"><td><p>Middle East</p></td>
+<td><p>1.07</p></td>
+</tr>
+<tr class="row-odd"><td><p>France</p></td>
+<td><p>1.13</p></td>
+</tr>
+<tr class="row-even"><td><p>Germany</p></td>
+<td><p>1.11</p></td>
+</tr>
+<tr class="row-odd"><td><p>Italy</p></td>
+<td><p>1.14</p></td>
+</tr>
+<tr class="row-even"><td><p>Netherlands</p></td>
+<td><p>1.19</p></td>
+</tr>
+<tr class="row-odd"><td><p>Russia</p></td>
+<td><p>1.53</p></td>
+</tr>
+<tr class="row-even"><td><p>United Kingdom</p></td>
+<td><p>1.02</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>Set a custom location factor if your country is not listed:</p>
+<p>To use a country not in the table, set <code class="docutils literal notranslate"><span class="pre">loc_factor</span></code> directly:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span><span class="s2">&quot;loc_factor&quot;</span><span class="p">:</span> <span class="mf">1.15</span><span class="p">})</span>
 </pre></div>
 </div>
 </section>
-<section id="cash-flow-and-financial-metrics">
-<h2>Cash flow and financial metrics<a class="headerlink" href="#cash-flow-and-financial-metrics" title="Link to this heading">¶</a></h2>
-<section id="capex-and-production-ramp-up">
-<h3>CAPEX and production ramp-up<a class="headerlink" href="#capex-and-production-ramp-up" title="Link to this heading">¶</a></h3>
-<p>Use <code class="docutils literal notranslate"><span class="pre">capex_ramp</span></code> to distribute capital spending across construction years
-and <code class="docutils literal notranslate"><span class="pre">production_ramp</span></code> to ramp up production:</p>
+</section>
+<section id="fixed-opex">
+<h2>Fixed OPEX<a class="headerlink" href="#fixed-opex" title="Link to this heading">¶</a></h2>
+<p>Fixed operating costs do not vary with production rate. The table below
+lists every component, its default calculation basis, and the
+<code class="docutils literal notranslate"><span class="pre">fixed_opex_factors</span></code> key used to override its multiplier.</p>
+<p><em>Source: Turton et al. (2018)</em></p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 32.0%" />
+<col style="width: 38.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Component</p></th>
+<th class="head"><p>Default formula</p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">fixed_opex_factors</span></code> key</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Operating labor</p></td>
+<td><p>From shift schedule × hourly rate</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p>Supervision</p></td>
+<td><p>0.25 × operating labor</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;supervision&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Direct salary overhead</p></td>
+<td><p>0.50 × (labor + supervision)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;direct_salary_overhead&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Laboratory charges</p></td>
+<td><p>0.10 × operating labor</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;laboratory_charges&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Maintenance</p></td>
+<td><p>0.05 × ISBL</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;maintenance&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Taxes &amp; insurance</p></td>
+<td><p>0.015 × ISBL</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;taxes_insurance&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Rent of land</p></td>
+<td><p>0.015 × (ISBL + OSBL)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;rent_of_land&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Environmental charges</p></td>
+<td><p>0.010 × (ISBL + OSBL)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;environmental_charges&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Operating supplies</p></td>
+<td><p>0.009 × ISBL</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;operating_supplies&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>General plant overhead</p></td>
+<td><p>0.65 × (labor + supervision + overhead)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;general_plant_overhead&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Interest on working capital</p></td>
+<td><p>working capital × interest rate</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;working_capital&quot;</span></code> (default: 0.15 × FCI)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Patents &amp; royalties</p></td>
+<td><p>0.02 × cash cost of production*</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;patents_royalties&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Distribution &amp; selling</p></td>
+<td><p>0.02 × cash cost of production*</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;distribution_selling&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>R&amp;D</p></td>
+<td><p>0.03 × cash cost of production*</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;rnd&quot;</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>* Cash cost of production = (variable + fixed costs so far) / (1 − sum of the three rates above), ensuring these fractions are expressed consistently as a share of total cash cost.</p>
+<p>Override factors or fix absolute component values:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
-    <span class="c1"># 30 % in year 1, 60 % in year 2, 10 % in year 3</span>
-    <span class="s2">&quot;capex_ramp&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span>
-
-    <span class="c1"># 0 % in construction years 1–3, then 50 % → 80 % → 100 %</span>
-    <span class="s2">&quot;production_ramp&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">],</span>
+    <span class="s2">&quot;fixed_opex_factors&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;maintenance&quot;</span><span class="p">:</span> <span class="mf">0.06</span><span class="p">,</span>        <span class="c1"># 6% of ISBL instead of 5%</span>
+        <span class="s2">&quot;rent_of_land&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>       <span class="c1"># 1% instead of 1.5%</span>
+        <span class="s2">&quot;rnd&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>                 <span class="c1"># zero out R&amp;D</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;fixed_opex_components&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;supervision_costs&quot;</span><span class="p">:</span> <span class="mi">100_000</span><span class="p">,</span>  <span class="c1"># fixed value, overrides factor</span>
+    <span class="p">},</span>
 <span class="p">})</span>
+<span class="n">plant</span><span class="o">.</span><span class="n">calculate_fixed_opex</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Access components after calculation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Operating labor : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">operating_labor_costs</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Supervision     : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">supervision_costs</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Maintenance     : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">maintenance_costs</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="c1"># ... and so on</span>
+</pre></div>
+</div>
+<section id="labor-modeling">
+<h3>Labor modeling<a class="headerlink" href="#labor-modeling" title="Link to this heading">¶</a></h3>
+<p>Operating labor cost is calculated as:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[C_{\text{labor}} = N_{\text{hired}} \times H_{\text{year}} \times r\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(H_{\text{year}} = W_{\text{weeks}} \times W_{\text{shifts}} \times (24 / S_{\text{day}})\)</span> is
+the working hours per operator per year and <span class="math notranslate nohighlight">\(r\)</span> is the hourly rate (default <strong>$38.11/hr</strong>).</p>
+<p><strong>Operators per shift</strong> is estimated from the equipment list using an empirical correlation:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[N_{\text{shift}} = \sqrt{6.29 + 31.7 \cdot N_{\text{solid}}^2 + 0.23 \cdot N_{\text{fluid}}}\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(N_{\text{solid}}\)</span> and <span class="math notranslate nohighlight">\(N_{\text{fluid}}\)</span> are the numbers of solid-handling
+and fluid-handling process steps respectively (<span class="math notranslate nohighlight">\(N_{\text{solid}} \leq 2\)</span>).</p>
+<p><strong>Total operators hired</strong> accounts for the continuous plant schedule versus each operator’s
+working schedule:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[N_{\text{hired}} = \left\lceil N_{\text{shift}} \times
+\frac{365 \times S_{\text{day}}}{W_{\text{weeks}} \times W_{\text{shifts}}} \right\rceil\]</div>
+</div>
+<p><em>Source: Turton et al. (2018)</em></p>
+<p>Schedule parameters are set via <code class="docutils literal notranslate"><span class="pre">working_weeks_per_year</span></code> (default: 49),
+<code class="docutils literal notranslate"><span class="pre">working_shifts_per_week</span></code> (default: 5), and <code class="docutils literal notranslate"><span class="pre">operating_shifts_per_day</span></code> (default: 3).</p>
+<p>Any part of the labor calculation can be bypassed:</p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 45.0%" />
+<col style="width: 55.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Config key</p></th>
+<th class="head"><p>Effect</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">operator_hourly_rate:</span> <span class="pre">{&quot;rate&quot;:</span> <span class="pre">r}</span></code></p></td>
+<td><p>Sets the hourly wage rate.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">operators_per_shift</span></code></p></td>
+<td><p>Skips the empirical formula; uses this value directly.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">operators_hired</span></code></p></td>
+<td><p>Skips both formula and hired count; uses this value directly. Set to <code class="docutils literal notranslate"><span class="pre">None</span></code> to revert to auto.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">working_weeks_per_year</span></code>, <code class="docutils literal notranslate"><span class="pre">working_shifts_per_week</span></code>, <code class="docutils literal notranslate"><span class="pre">operating_shifts_per_day</span></code></p></td>
+<td><p>Adjust the shift schedule for both hired count and annual hours.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Print auto-calculated defaults first</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Operators per shift : </span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">calculate_operators_per_shift</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Operators hired     : </span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">calculate_operators_hired</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Override manually</span>
+<span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;operators_hired&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+    <span class="s2">&quot;working_weeks_per_year&quot;</span><span class="p">:</span> <span class="mi">46</span><span class="p">,</span>
+    <span class="s2">&quot;working_shifts_per_week&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s2">&quot;operating_shifts_per_day&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s2">&quot;operator_hourly_rate&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;rate&quot;</span><span class="p">:</span> <span class="mf">42.0</span><span class="p">},</span>
+<span class="p">})</span>
+<span class="n">plant</span><span class="o">.</span><span class="n">calculate_fixed_opex</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Operating labor costs : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">operating_labor_costs</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">/yr&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="financial-metrics">
-<h3>Financial metrics<a class="headerlink" href="#financial-metrics" title="Link to this heading">¶</a></h3>
-<p>After calling <a class="reference internal" href="../api/plant.html#id20" title="openpytea.plant.Plant.calculate_all"><code class="xref py py-meth docutils literal notranslate"><span class="pre">calculate_all()</span></code></a>, the following
-metrics are available:</p>
+</section>
+<section id="variable-opex">
+<h2>Variable OPEX<a class="headerlink" href="#variable-opex" title="Link to this heading">¶</a></h2>
+<p>Variable costs scale with production and are calculated as:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[C_{\text{var}} = \sum_i \text{consumption}_i \times \text{price}_i
+\times 365 \times \text{plant\_utilization}\]</div>
+</div>
+<p>Each entry in <code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code> needs a <code class="docutils literal notranslate"><span class="pre">consumption</span></code> (annual
+quantity in any consistent unit) and a <code class="docutils literal notranslate"><span class="pre">price</span></code> (USD per unit):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;variable_opex_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;electricity&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">1.4e6</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.075</span><span class="p">},</span>
+        <span class="s2">&quot;cooling_water&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">1.6e6</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.0007</span><span class="p">},</span>
+        <span class="s2">&quot;steam&quot;</span><span class="p">:</span>         <span class="p">{</span><span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">4.0e5</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">},</span>
+        <span class="s2">&quot;natural_gas&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;consumption&quot;</span><span class="p">:</span> <span class="mf">1.0e5</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.035</span><span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">})</span>
+<span class="n">plant</span><span class="o">.</span><span class="n">calculate_variable_opex</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="revenue">
+<h2>Revenue<a class="headerlink" href="#revenue" title="Link to this heading">¶</a></h2>
+<p>The first product in <code class="docutils literal notranslate"><span class="pre">plant_products</span></code> is the main product used for LCOP
+calculations. Additional products are treated as co-products and their
+revenue is credited against the main product cost.
+Annual revenue per product is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[R = \text{production} \times \text{price} \times 365 \times \text{plant\_utilization}\]</div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;plant_products&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;hydrogen&quot;</span><span class="p">:</span>  <span class="p">{</span><span class="s2">&quot;production&quot;</span><span class="p">:</span> <span class="mi">10_000</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">},</span>   <span class="c1"># main product</span>
+        <span class="s2">&quot;oxygen&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;production&quot;</span><span class="p">:</span> <span class="mi">80_000</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">},</span>  <span class="c1"># co-product</span>
+    <span class="p">},</span>
+<span class="p">})</span>
+<span class="n">plant</span><span class="o">.</span><span class="n">calculate_revenue</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="cash-flow">
+<h2>Cash flow<a class="headerlink" href="#cash-flow" title="Link to this heading">¶</a></h2>
+<p>The cash flow represents the net annual financial performance of the plant, combining revenues, operating costs, capital investments, taxes, and depreciation.
+It is generated by calling:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">calculate_cash_flow</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The method returns a styled DataFrame and, when <code class="docutils literal notranslate"><span class="pre">print_results=True</span></code>, displays the full year-by-year table. The table has the following columns (all monetary values in the plant’s currency):</p>
 <div class="table-wrapper colwidths-given docutils container">
 <table class="docutils align-default">
 <colgroup>
@@ -695,65 +920,268 @@ metrics are available:</p>
 <col style="width: 70.0%" />
 </colgroup>
 <thead>
-<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
 <th class="head"><p>Description</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">plant.npv</span></code></p></td>
-<td><p>Net Present Value (USD)</p></td>
+<tr class="row-even"><td><p>Year</p></td>
+<td><p>Project year (1 = first construction year).</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">plant.irr</span></code></p></td>
-<td><p>Internal Rate of Return (fraction)</p></td>
+<tr class="row-odd"><td><p>Capital cost</p></td>
+<td><p>CAPEX spending (positive during construction, negative when working capital is released at end of life).</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">plant.roi</span></code></p></td>
-<td><p>Return on Investment (fraction)</p></td>
+<tr class="row-even"><td><p>Revenue</p></td>
+<td><p>Annual product revenue, scaled by the production ramp.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">plant.payback_time</span></code></p></td>
-<td><p>Simple payback time (years)</p></td>
+<tr class="row-odd"><td><p>Cash cost</p></td>
+<td><p>Total annual OPEX (fixed + variable), scaled by the production ramp.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">plant.levelized_cost</span></code></p></td>
-<td><p>Levelized cost per unit of primary product</p></td>
+<tr class="row-even"><td><p>Gross profit</p></td>
+<td><p>Revenue − Cash cost.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">plant.cash_flow</span></code></p></td>
-<td><p>Year-by-year cash flow DataFrame</p></td>
+<tr class="row-odd"><td><p>Depreciation</p></td>
+<td><p>Annual depreciation charge for the selected method.</p></td>
+</tr>
+<tr class="row-even"><td><p>Taxable income</p></td>
+<td><p>Gross profit − Depreciation (from the previous year, due to one-year tax lag).</p></td>
+</tr>
+<tr class="row-odd"><td><p>Tax paid</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tax_rate</span></code> × previous year’s taxable income.</p></td>
+</tr>
+<tr class="row-even"><td><p>Cash flow</p></td>
+<td><p>Gross profit − Tax paid − Capital cost.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+<p>A representative output for a 20-year project (values in USD, abbreviated):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Year  Capital cost      Revenue      Cash cost    Gross profit  Depreciation  Taxable income    Tax paid     Cash flow
+   1   -15,000,000            0              0               0             0               0           0   -15,000,000
+   2   -30,000,000            0              0               0             0               0           0   -30,000,000
+   3    -5,000,000    8,000,000      4,500,000       3,500,000     2,500,000       1,000,000           0    -1,500,000
+   4             0   16,000,000      4,500,000      11,500,000     2,500,000       3,500,000     250,000    11,250,000
+   5             0   20,000,000      4,500,000      15,500,000     2,500,000      11,500,000     875,000    14,625,000
+ ...          ...          ...            ...             ...           ...             ...         ...           ...
+  20     5,000,000   20,000,000      4,500,000      15,500,000             0      15,500,000   3,875,000    16,625,000
+</pre></div>
+</div>
+<section id="capex-ramp">
+<h3>CAPEX ramp<a class="headerlink" href="#capex-ramp" title="Link to this heading">¶</a></h3>
+<p>Capital spending is spread across construction years. The default profile:</p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Year</p></th>
+<th class="head"><p>CAPEX fraction</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>30%</p></td>
+<td><p>Initial design and early procurement</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>60%</p></td>
+<td><p>Major equipment installation</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>10%</p></td>
+<td><p>Commissioning and start-up</p></td>
+</tr>
+<tr class="row-odd"><td><p>Final year</p></td>
+<td><p>—</p></td>
+<td><p>Working capital released (negative CAPEX)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Override with a list that sums to 1.0:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;capex_ramp&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span>  <span class="c1"># 4-year build</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="production-ramp">
+<h3>Production ramp<a class="headerlink" href="#production-ramp" title="Link to this heading">¶</a></h3>
+<p>Plant output ramps up gradually from zero. The default profile:</p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 36.4%" />
+<col style="width: 63.6%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Year</p></th>
+<th class="head"><p>Production level</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0–1</p></td>
+<td><p>0% (construction)</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>40%</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>80%</p></td>
+</tr>
+<tr class="row-odd"><td><p>4+</p></td>
+<td><p>100% (steady state)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Annual production in year <span class="math notranslate nohighlight">\(t\)</span>:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[Q_t = \text{daily\_production} \times 365 \times \text{plant\_utilization}
+\times \text{ramp\_factor}_t\]</div>
+</div>
+<p>Override with a list of capacity fractions (0–1). Years beyond the list
+default to 1.0:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
+    <span class="s2">&quot;production_ramp&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span>  <span class="c1"># slower 6-year ramp</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="cash-flow-formula">
+<h3>Cash flow formula<a class="headerlink" href="#cash-flow-formula" title="Link to this heading">¶</a></h3>
+<p>For each operating year <span class="math notranslate nohighlight">\(t\)</span>:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\text{Cash Flow}_t =
+\underbrace{(R_t - \text{OPEX}_t)}_{\text{Gross Profit}}
+- \text{Tax}_t - \text{CAPEX}_t\]</div>
+</div>
+<p>where tax in year <span class="math notranslate nohighlight">\(t\)</span> is based on taxable income from year
+<span class="math notranslate nohighlight">\(t-1\)</span> (one-year lag), and taxable income = Gross Profit − Depreciation.</p>
 </section>
 <section id="depreciation">
-<h3>Depreciation<a class="headerlink" href="#depreciation" title="Link to this heading">¶</a></h3>
-<p>Three depreciation methods are supported:</p>
+<span id="id1"></span><h3>Depreciation<a class="headerlink" href="#depreciation" title="Link to this heading">¶</a></h3>
+<p>Three methods are supported:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Straight-line</span>
 <span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
-    <span class="s2">&quot;depreciation&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;straight_line&quot;</span><span class="p">}</span>
+    <span class="s2">&quot;depreciation&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;straight_line&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;life&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+        <span class="s2">&quot;salvage_fraction&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="s2">&quot;service_start_year&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">}</span>
 <span class="p">})</span>
 
-<span class="c1"># Declining balance</span>
+<span class="c1"># Declining balance (200% DDB)</span>
 <span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
-    <span class="s2">&quot;depreciation&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;declining_balance&quot;</span><span class="p">,</span> <span class="s2">&quot;rate&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">}</span>
+    <span class="s2">&quot;depreciation&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;declining_balance&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;life&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="s2">&quot;db_factor&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span>           <span class="c1"># 2.0 = 200% DDB, 1.5 = 150% DB</span>
+        <span class="s2">&quot;salvage_fraction&quot;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">,</span>
+        <span class="s2">&quot;service_start_year&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">}</span>
 <span class="p">})</span>
 
-<span class="c1"># MACRS (US tax depreciation) — specify recovery period in years</span>
+<span class="c1"># MACRS (US tax depreciation)</span>
 <span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
-    <span class="s2">&quot;depreciation&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;macrs&quot;</span><span class="p">,</span> <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">}</span>
+    <span class="s2">&quot;depreciation&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;macrs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>                 <span class="c1"># recovery period in years</span>
+    <span class="p">}</span>
 <span class="p">})</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="financial-metrics">
+<h2>Financial metrics<a class="headerlink" href="#financial-metrics" title="Link to this heading">¶</a></h2>
+<p>Call <a class="reference internal" href="../api/plant.html#id20" title="openpytea.plant.Plant.calculate_all"><code class="xref py py-meth docutils literal notranslate"><span class="pre">calculate_all()</span></code></a> to compute everything
+at once, or run each method individually after
+<a class="reference internal" href="../api/plant.html#id14" title="openpytea.plant.Plant.calculate_cash_flow"><code class="xref py py-meth docutils literal notranslate"><span class="pre">calculate_cash_flow()</span></code></a>.</p>
+<section id="net-present-value-npv">
+<h3>Net Present Value (NPV)<a class="headerlink" href="#net-present-value-npv" title="Link to this heading">¶</a></h3>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[NPV = \sum_{t=1}^{t_p} \frac{\text{Cash Flow}_t}{(1 + i)^t}\]</div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">calculate_npv</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">plant</span><span class="o">.</span><span class="n">npv</span><span class="p">)</span>          <span class="c1"># scalar</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">plant</span><span class="o">.</span><span class="n">npv_array</span><span class="p">)</span>    <span class="c1"># cumulative NPV by year</span>
+</pre></div>
+</div>
+</section>
+<section id="levelized-cost-of-product-lcop">
+<h3>Levelized Cost of Product (LCOP)<a class="headerlink" href="#levelized-cost-of-product-lcop" title="Link to this heading">¶</a></h3>
+<p>Break-even selling price of the main product that sets NPV = 0:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[LCOP = \frac{
+    \sum_{t=1}^{t_p} \dfrac{CAPEX_t + OPEX_t - R^{\text{side}}_t}{(1+i)^t}
+}{
+    \sum_{t=1}^{t_p} \dfrac{Q_t}{(1+i)^t}
+}\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(R^{\text{side}}_t\)</span> is co-product revenue and <span class="math notranslate nohighlight">\(Q_t\)</span> is
+main-product production in year <span class="math notranslate nohighlight">\(t\)</span>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">calculate_levelized_cost</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">plant</span><span class="o">.</span><span class="n">levelized_cost</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="payback-time-pbt">
+<h3>Payback time (PBT)<a class="headerlink" href="#payback-time-pbt" title="Link to this heading">¶</a></h3>
+<p>First year when cumulative undiscounted cash flow ≥ 0:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[PBT = \frac{FCI}{\overline{CF}}\]</div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">calculate_payback_time</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">plant</span><span class="o">.</span><span class="n">payback_time</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="return-on-investment-roi">
+<h3>Return on Investment (ROI)<a class="headerlink" href="#return-on-investment-roi" title="Link to this heading">¶</a></h3>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[ROI = \frac{\sum_{t=1}^{t_p} \text{Net Profit}_t}{t_p \times (FCI + WC)}\]</div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">calculate_roi</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">plant</span><span class="o">.</span><span class="n">roi</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="internal-rate-of-return-irr">
+<h3>Internal Rate of Return (IRR)<a class="headerlink" href="#internal-rate-of-return-irr" title="Link to this heading">¶</a></h3>
+<p>Discount rate <span class="math notranslate nohighlight">\(r\)</span> that sets NPV = 0:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[0 = \sum_{t=1}^{t_p} \frac{CF_t}{(1 + r)^t}\]</div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plant</span><span class="o">.</span><span class="n">calculate_irr</span><span class="p">(</span><span class="n">print_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">plant</span><span class="o">.</span><span class="n">irr</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 </section>
 <section id="scenario-analysis">
 <h2>Scenario analysis<a class="headerlink" href="#scenario-analysis" title="Link to this heading">¶</a></h2>
-<p>Arrays can be passed for key financial parameters to evaluate multiple
-scenarios at once:</p>
+<p>Pass a NumPy array for any scalar parameter to evaluate multiple scenarios
+simultaneously. All financial metrics become arrays of the same length:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
     <span class="s2">&quot;interest_rate&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span>
 <span class="p">})</span>
 <span class="n">plant</span><span class="o">.</span><span class="n">calculate_all</span><span class="p">()</span>
-<span class="c1"># plant.npv, plant.irr, etc. are now arrays over the interest-rate sweep</span>
+<span class="c1"># plant.npv, plant.irr, plant.levelized_cost, etc. are now length-11 arrays</span>
 </pre></div>
 </div>
 </section>
@@ -761,7 +1189,18 @@ scenarios at once:</p>
 <h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a> — full API reference</p></li>
-<li><p><a class="reference internal" href="analysis.html"><span class="doc">Sensitivity &amp; Uncertainty Analysis</span></a> — sensitivity and Monte Carlo analysis</p></li>
+<li><p><a class="reference internal" href="analysis.html"><span class="doc">Analysis</span></a> — sensitivity and Monte Carlo analysis</p></li>
+<li><p><a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">Walkthrough notebook</a> — end-to-end worked example</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Towler, G.; Sinnott, R. <em>Chemical Engineering Design</em>, 3rd ed.;
+Elsevier, 2022. <a class="reference external" href="https://doi.org/10.1016/C2019-0-02025-0">https://doi.org/10.1016/C2019-0-02025-0</a></p></li>
+<li><p>Turton, R.; Shaeiwitz, J. A.; Bhattacharyya, D.; Whiting, W. B.
+<em>Analysis, Synthesis, and Design of Chemical Processes</em>, 5th ed.;
+Prentice Hall, 2018.</p></li>
 </ul>
 </section>
 </section>
@@ -776,7 +1215,7 @@ scenarios at once:</p>
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Sensitivity &amp; Uncertainty Analysis</div>
+                <div class="title">Analysis</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -823,28 +1262,36 @@ scenarios at once:</p>
             <ul>
 <li><a class="reference internal" href="#">Plant-Level TEA</a><ul>
 <li><a class="reference internal" href="#creating-a-plant">Creating a <code class="docutils literal notranslate"><span class="pre">Plant</span></code></a></li>
-<li><a class="reference internal" href="#configuration-parameters">Configuration parameters</a><ul>
-<li><a class="reference internal" href="#general">General</a></li>
-<li><a class="reference internal" href="#financial">Financial</a></li>
-<li><a class="reference internal" href="#products-and-opex">Products and OPEX</a></li>
+<li><a class="reference internal" href="#updating-configuration">Updating configuration</a></li>
+<li><a class="reference internal" href="#configuration-reference">Configuration reference</a></li>
+<li><a class="reference internal" href="#capital-cost-structure">Capital cost structure</a><ul>
+<li><a class="reference internal" href="#location-factors">Location factors</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#capital-cost-structure">Capital cost structure</a></li>
-<li><a class="reference internal" href="#operating-cost-structure">Operating cost structure</a><ul>
-<li><a class="reference internal" href="#fixed-opex">Fixed OPEX</a></li>
-<li><a class="reference internal" href="#variable-opex">Variable OPEX</a></li>
+<li><a class="reference internal" href="#fixed-opex">Fixed OPEX</a><ul>
 <li><a class="reference internal" href="#labor-modeling">Labor modeling</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#location-factors">Location factors</a></li>
-<li><a class="reference internal" href="#cash-flow-and-financial-metrics">Cash flow and financial metrics</a><ul>
-<li><a class="reference internal" href="#capex-and-production-ramp-up">CAPEX and production ramp-up</a></li>
-<li><a class="reference internal" href="#financial-metrics">Financial metrics</a></li>
+<li><a class="reference internal" href="#variable-opex">Variable OPEX</a></li>
+<li><a class="reference internal" href="#revenue">Revenue</a></li>
+<li><a class="reference internal" href="#cash-flow">Cash flow</a><ul>
+<li><a class="reference internal" href="#capex-ramp">CAPEX ramp</a></li>
+<li><a class="reference internal" href="#production-ramp">Production ramp</a></li>
+<li><a class="reference internal" href="#cash-flow-formula">Cash flow formula</a></li>
 <li><a class="reference internal" href="#depreciation">Depreciation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#financial-metrics">Financial metrics</a><ul>
+<li><a class="reference internal" href="#net-present-value-npv">Net Present Value (NPV)</a></li>
+<li><a class="reference internal" href="#levelized-cost-of-product-lcop">Levelized Cost of Product (LCOP)</a></li>
+<li><a class="reference internal" href="#payback-time-pbt">Payback time (PBT)</a></li>
+<li><a class="reference internal" href="#return-on-investment-roi">Return on Investment (ROI)</a></li>
+<li><a class="reference internal" href="#internal-rate-of-return-irr">Internal Rate of Return (IRR)</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#scenario-analysis">Scenario analysis</a></li>
 <li><a class="reference internal" href="#see-also">See also</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
 </ul>
@@ -864,5 +1311,6 @@ scenarios at once:</p>
     <script src="../_static/copybutton.js?v=fd10adb8"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>

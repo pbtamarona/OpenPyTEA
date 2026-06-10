@@ -3,7 +3,9 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="JSON Workflow" href="io_workflow.html"><link rel="prev" title="Sensitivity &amp; Uncertainty Analysis" href="analysis.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="JSON Workflow" href="io_workflow.html"><link rel="prev" title="Analysis" href="analysis.html">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo-black.png" as="image">
+        <link rel="prefetch" href="../_static/OpenPyTEA-logo.png" as="image">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>Plotting - OpenPyTEA</title>
@@ -12,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=3437e138" />
     
     
 
@@ -226,8 +228,11 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">OpenPyTEA</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -242,30 +247,14 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
-<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="io_workflow.html">JSON Workflow</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/plotting.html">openpytea.plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/io.html">openpytea.io</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../api/equipment.html">openpytea.equipment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/plant.html">openpytea.plant</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/analysis.html">openpytea.analysis</a></li>
@@ -275,8 +264,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -319,98 +310,123 @@
 <h1>Plotting<a class="headerlink" href="#plotting" title="Link to this heading">¶</a></h1>
 <p>The <a class="reference internal" href="../api/plotting.html#module-openpytea.plotting" title="openpytea.plotting"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.plotting</span></code></a> module wraps matplotlib to produce
 publication-quality figures using the <a class="reference external" href="https://github.com/garrettj403/SciencePlots">SciencePlots</a> style. All functions return
-a <code class="docutils literal notranslate"><span class="pre">(fig,</span> <span class="pre">ax)</span></code> tuple so you can further customize them before saving.</p>
+a <code class="docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code> object so you can further customize the figure
+before saving.</p>
+<p>To see the outputs of all code examples below, refer to the
+<a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">walkthrough notebook</a>.</p>
 <section id="cost-breakdown-charts">
 <h2>Cost breakdown charts<a class="headerlink" href="#cost-breakdown-charts" title="Link to this heading">¶</a></h2>
 <p>Stacked bar charts visualize cost structure data returned by the <code class="docutils literal notranslate"><span class="pre">*_data</span></code>
 helper functions in <a class="reference internal" href="../api/analysis.html#module-openpytea.analysis" title="openpytea.analysis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.analysis</span></code></a>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">direct_costs_data</span><span class="p">,</span>
     <span class="n">fixed_capital_data</span><span class="p">,</span>
     <span class="n">fixed_opex_data</span><span class="p">,</span>
     <span class="n">variable_opex_data</span><span class="p">,</span>
-    <span class="n">plot_stacked_bar</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_stacked_bar</span>
+
+<span class="c1"># Equipment-level direct costs</span>
+<span class="n">equip_data</span> <span class="o">=</span> <span class="n">direct_costs_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">equip_data</span><span class="p">)</span>
 
 <span class="c1"># Capital cost breakdown (ISBL, OSBL, D&amp;E, Contingency)</span>
-<span class="n">capex_data</span> <span class="o">=</span> <span class="n">fixed_capital_data</span><span class="p">(</span><span class="n">plant</span><span class="p">)</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">capex_data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Capital Cost Breakdown&quot;</span><span class="p">)</span>
+<span class="n">capex_data</span> <span class="o">=</span> <span class="n">fixed_capital_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">capex_data</span><span class="p">)</span>
 
 <span class="c1"># Fixed OPEX breakdown</span>
-<span class="n">fopex_data</span> <span class="o">=</span> <span class="n">fixed_opex_data</span><span class="p">(</span><span class="n">plant</span><span class="p">)</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">fopex_data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Fixed OPEX Breakdown&quot;</span><span class="p">)</span>
+<span class="n">fopex_data</span> <span class="o">=</span> <span class="n">fixed_opex_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">fopex_data</span><span class="p">)</span>
 
 <span class="c1"># Variable OPEX breakdown</span>
-<span class="n">vopex_data</span> <span class="o">=</span> <span class="n">variable_opex_data</span><span class="p">(</span><span class="n">plant</span><span class="p">)</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">vopex_data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Variable OPEX Breakdown&quot;</span><span class="p">)</span>
+<span class="n">vopex_data</span> <span class="o">=</span> <span class="n">variable_opex_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">vopex_data</span><span class="p">)</span>
 </pre></div>
 </div>
-<section id="equipment-direct-costs">
-<h3>Equipment direct costs<a class="headerlink" href="#equipment-direct-costs" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">direct_costs_data</span><span class="p">,</span> <span class="n">plot_stacked_bar</span>
-
-<span class="n">equip_data</span> <span class="o">=</span> <span class="n">direct_costs_data</span><span class="p">(</span><span class="n">plant</span><span class="p">)</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">equip_data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Equipment Direct Costs&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
 </section>
 <section id="sensitivity-plots">
 <h2>Sensitivity plots<a class="headerlink" href="#sensitivity-plots" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">sensitivity_data</span><span class="p">,</span> <span class="n">plot_sensitivity</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">sensitivity_data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_sensitivity</span>
 
-<span class="n">sens</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;npv&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span>
-    <span class="n">sens</span><span class="p">,</span>
-    <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Electricity price variation&quot;</span><span class="p">,</span>
-    <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;NPV (USD)&quot;</span><span class="p">,</span>
-    <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
-<span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;sensitivity.pdf&quot;</span><span class="p">)</span>
+<span class="c1"># Vary electricity price ±50 % and plot LCOP</span>
+<span class="n">sens</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;sensitivity.pdf&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<section id="multiple-parameters-on-the-same-axes">
-<h3>Multiple parameters on the same axes<a class="headerlink" href="#multiple-parameters-on-the-same-axes" title="Link to this heading">¶</a></h3>
-<p>Pass a dictionary mapping labels to <code class="docutils literal notranslate"><span class="pre">sensitivity_data</span></code> outputs:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sens_dict</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;Electricity&quot;</span><span class="p">:</span> <span class="n">sensitivity_data</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="s2">&quot;electricity&quot;</span><span class="p">,</span> <span class="s2">&quot;npv&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;CapEx factor&quot;</span><span class="p">:</span> <span class="n">sensitivity_data</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="s2">&quot;fixed_capital_factor&quot;</span><span class="p">,</span> <span class="s2">&quot;npv&quot;</span><span class="p">),</span>
-<span class="p">}</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens_dict</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;NPV (USD)&quot;</span><span class="p">)</span>
+<p>Axis labels and the legend are set automatically from the data returned by
+<a class="reference internal" href="../api/analysis.html#openpytea.analysis.sensitivity_data" title="openpytea.analysis.sensitivity_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">sensitivity_data()</span></code></a>. Pass a custom <code class="docutils literal notranslate"><span class="pre">figsize</span></code> to
+resize the chart:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<section id="comparing-multiple-plants">
+<h3>Comparing multiple plants<a class="headerlink" href="#comparing-multiple-plants" title="Link to this heading">¶</a></h3>
+<p>Pass a list of plants to <a class="reference internal" href="../api/analysis.html#openpytea.analysis.sensitivity_data" title="openpytea.analysis.sensitivity_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">sensitivity_data()</span></code></a> to
+plot all curves on the same axes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sens_multi</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span>
+    <span class="n">plants</span><span class="o">=</span><span class="p">[</span><span class="n">plant</span><span class="p">,</span> <span class="n">plant_b</span><span class="p">],</span>
+    <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;NPV&quot;</span><span class="p">,</span>
+    <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens_multi</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 </section>
 <section id="tornado-diagrams">
 <h2>Tornado diagrams<a class="headerlink" href="#tornado-diagrams" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">tornado_data</span><span class="p">,</span> <span class="n">plot_tornado</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">tornado_data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_tornado</span>
 
-<span class="n">t_data</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;levelized_cost&quot;</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_tornado</span><span class="p">(</span><span class="n">t_data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Tornado — LCOA&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;tornado.pdf&quot;</span><span class="p">)</span>
+<span class="c1"># Default metric is LCOP</span>
+<span class="n">td</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span><span class="n">plant</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_tornado</span><span class="p">(</span><span class="n">td</span><span class="p">)</span>
+
+<span class="c1"># Profit-oriented metric</span>
+<span class="n">td_roi</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span><span class="n">plant</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;ROI&quot;</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_tornado</span><span class="p">(</span><span class="n">td_roi</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;tornado.pdf&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
 <section id="monte-carlo-histograms">
 <h2>Monte Carlo histograms<a class="headerlink" href="#monte-carlo-histograms" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">plot_monte_carlo</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">monte_carlo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_monte_carlo</span>
 
-<span class="n">mc</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">50_000</span><span class="p">)</span>
+<span class="n">mc_results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10_000</span><span class="p">)</span>
 
-<span class="c1"># Single metric</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_monte_carlo</span><span class="p">(</span><span class="n">mc</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;levelized_cost&quot;</span><span class="p">)</span>
+<span class="c1"># Distribution of the LCOP</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
 
-<span class="c1"># Multiple metrics in a grid</span>
-<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plot_monte_carlo</span><span class="p">(</span><span class="n">mc</span><span class="p">)</span>   <span class="c1"># defaults to all metrics</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;monte_carlo_lcop.pdf&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<section id="visualizing-input-distributions">
+<h3>Visualizing input distributions<a class="headerlink" href="#visualizing-input-distributions" title="Link to this heading">¶</a></h3>
+<p>Use <a class="reference internal" href="../api/plotting.html#openpytea.plotting.plot_monte_carlo_inputs" title="openpytea.plotting.plot_monte_carlo_inputs"><code class="xref py py-func docutils literal notranslate"><span class="pre">plot_monte_carlo_inputs()</span></code></a> to verify that the
+<code class="docutils literal notranslate"><span class="pre">std</span></code>/<code class="docutils literal notranslate"><span class="pre">min</span></code>/<code class="docutils literal notranslate"><span class="pre">max</span></code> settings produce the intended input distributions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_monte_carlo_inputs</span>
+
+<span class="n">axes</span> <span class="o">=</span> <span class="n">plot_monte_carlo_inputs</span><span class="p">(</span><span class="n">mc_results</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="comparing-scenarios">
 <h3>Comparing scenarios<a class="headerlink" href="#comparing-scenarios" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_multiple_monte_carlo</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_multiple_monte_carlo</span>
 
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_multiple_monte_carlo</span><span class="p">(</span>
-    <span class="p">[</span><span class="n">mc_scenario_a</span><span class="p">,</span> <span class="n">mc_scenario_b</span><span class="p">],</span>
-    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Scenario A&quot;</span><span class="p">,</span> <span class="s2">&quot;Scenario B&quot;</span><span class="p">],</span>
-    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;npv&quot;</span><span class="p">,</span>
+<span class="n">mc_b</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant_b</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10_000</span><span class="p">)</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_multiple_monte_carlo</span><span class="p">(</span>
+    <span class="n">data_list</span><span class="o">=</span><span class="p">[</span><span class="n">plant</span><span class="p">,</span> <span class="n">plant_b</span><span class="p">],</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span>
+    <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -418,19 +434,18 @@ helper functions in <a class="reference internal" href="../api/analysis.html#mod
 </section>
 <section id="saving-figures">
 <h2>Saving figures<a class="headerlink" href="#saving-figures" title="Link to this heading">¶</a></h2>
-<p>All functions return a <code class="docutils literal notranslate"><span class="pre">(fig,</span> <span class="pre">ax)</span></code> tuple. Use standard matplotlib methods
-to save:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">capex_data</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;capex.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;capex.pdf&quot;</span><span class="p">)</span>          <span class="c1"># vector format for publications</span>
+<p>All functions return an <code class="docutils literal notranslate"><span class="pre">Axes</span></code> object. Access the parent figure via
+<code class="docutils literal notranslate"><span class="pre">ax.figure</span></code> to save:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">capex_data</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;capex.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;capex.pdf&quot;</span><span class="p">)</span>   <span class="c1"># vector format for publications</span>
 </pre></div>
 </div>
 </section>
-<section id="customizing-style">
-<h2>Customizing style<a class="headerlink" href="#customizing-style" title="Link to this heading">¶</a></h2>
-<p>Figures use the IEEE SciencePlots style by default. You can override any
-matplotlib settings after the call:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">)</span>
+<section id="customizing-axes">
+<h2>Customizing axes<a class="headerlink" href="#customizing-axes" title="Link to this heading">¶</a></h2>
+<p>You can modify the returned axes object with standard matplotlib calls:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Custom title&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper left&quot;</span><span class="p">)</span>
@@ -442,6 +457,7 @@ matplotlib settings after the call:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/plotting.html#module-openpytea.plotting" title="openpytea.plotting"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.plotting</span></code></a> — full API reference</p></li>
 <li><p><a class="reference internal" href="../api/analysis.html#module-openpytea.analysis" title="openpytea.analysis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.analysis</span></code></a> — data preparation functions</p></li>
+<li><p><a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">Walkthrough notebook</a> — end-to-end worked example</p></li>
 </ul>
 </section>
 </section>
@@ -467,7 +483,7 @@ matplotlib settings after the call:</p>
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Sensitivity &amp; Uncertainty Analysis</div>
+                <div class="title">Analysis</div>
                 
               </div>
             </a>
@@ -502,21 +518,19 @@ matplotlib settings after the call:</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Plotting</a><ul>
-<li><a class="reference internal" href="#cost-breakdown-charts">Cost breakdown charts</a><ul>
-<li><a class="reference internal" href="#equipment-direct-costs">Equipment direct costs</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#cost-breakdown-charts">Cost breakdown charts</a></li>
 <li><a class="reference internal" href="#sensitivity-plots">Sensitivity plots</a><ul>
-<li><a class="reference internal" href="#multiple-parameters-on-the-same-axes">Multiple parameters on the same axes</a></li>
+<li><a class="reference internal" href="#comparing-multiple-plants">Comparing multiple plants</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#tornado-diagrams">Tornado diagrams</a></li>
 <li><a class="reference internal" href="#monte-carlo-histograms">Monte Carlo histograms</a><ul>
+<li><a class="reference internal" href="#visualizing-input-distributions">Visualizing input distributions</a></li>
 <li><a class="reference internal" href="#comparing-scenarios">Comparing scenarios</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#saving-figures">Saving figures</a></li>
-<li><a class="reference internal" href="#customizing-style">Customizing style</a></li>
+<li><a class="reference internal" href="#customizing-axes">Customizing axes</a></li>
 <li><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
 </li>
@@ -536,5 +550,6 @@ matplotlib settings after the call:</p>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=fd10adb8"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>
