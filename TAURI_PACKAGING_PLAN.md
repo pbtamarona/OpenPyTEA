@@ -6,6 +6,30 @@ This document is a working plan / decision log, not a commitment. Re-read it sta
 
 ---
 
+## Progress (latest first)
+
+Work happens on branch `standalone-package` (see https://github.com/pbtamarona/OpenPyTEA/tree/standalone-package). The GUI work for users stays on `GUI-beta`; packaging experiments are isolated here so the working GUI never breaks.
+
+- **Step 3 — sidecar wiring** ✅ *done locally, demo-able end-to-end on macOS arm64.*  Commit `291743c`. Tauri shell spawns the PyInstaller backend with `--port 0`, scans its stdout for `OPENPYTEA_BACKEND_PORT=<n>`, exposes the URL to React via the `get_api_base` IPC command, and kills the child on app exit. Frontend `client.ts` polls the IPC on first request and falls back to `VITE_API_BASE_URL` outside Tauri so `start.sh` dev mode is unaffected. CORS for `tauri://localhost` not yet added (only matters for the prod build — Step 4).
+- **Step 2 — Tauri scaffold** ✅ *done.*  Commit `95fe5cd`. `frontend/src-tauri/` (Tauri 2.11, identifier `org.openpytea.app`, 1400×900 default / 1024×700 min). Rust shell compiles cleanly in ~40s. Confirmed: native window opens via `npm run tauri dev`.
+- **Step 1 — backend as PyInstaller binary** ✅ *done.*  Commit `7bda17c`. `dist/openpytea-backend/` is a 152 MB onedir bundle (CPython + numpy/scipy/pandas/matplotlib + openpytea + FastAPI + uvicorn). `backend/openpytea_backend.py` is the entrypoint with `--port 0` + `OPENPYTEA_BACKEND_PORT=<n>` marker. Built by `python scripts/build_sidecar.py` (includes a threaded smoke test that surfaces real crashes). Verified end-to-end on macOS arm64: health, equipment, examples, load preset, calculate all return HTTP 200.
+
+What works today (`npm run tauri dev` on macOS arm64, after `python scripts/build_sidecar.py`):
+- Native window, no browser tab. Welcome screen + dark mode + all six tabs render the same as `start.sh`.
+- Backend boots inside the app; matplotlib font-cache build adds ~30–60s on first launch, instant after.
+- Examples dropdown loads, presets calculate, results render in the GUI. End-to-end TEA without any Python on the host.
+
+Next steps in this branch:
+- **Step 4 — CI release pipeline** (GitHub Actions matrix: macOS arm64 + Intel, Windows, Linux). Each runner needs Python, Node, Rust, and runs `scripts/build_sidecar.py` followed by `npm run tauri build`. Produces `.dmg` / `.msi` / `.deb` / `.AppImage` as release assets on tag push.
+- **Step 5 — polish.** Real icon set (currently Tauri's placeholder), real productName / about strings, optional auto-updater, signed installer (Apple Developer ID + Windows EV cert — needs the decision below).
+
+Known follow-ups parked for later (none blocking):
+- Bundle size 152 MB. `openpytea/__init__.py` eagerly imports `plotting.py` → forces `matplotlib` + `scienceplots` into the backend even though the backend never plots. Lazy-importing `openpytea.plotting` (a small library-side PR) would shave ~30–50 MB.
+- Backend CORS list will need `tauri://localhost` (macOS/Linux) and `https://tauri.localhost` (Windows) added before `tauri build` ships.
+- Preset JSONs in `backend/app/presets/` are missing the `price` field on each product — pre-existing GUI-beta bug (revenue silently calculates to 0; tornado crashes on `KeyError: "price"`). Belongs on GUI-beta, not this branch.
+
+---
+
 ## Why Tauri (vs. the alternatives)
 
 | Option | Bundle | Startup | Effort | Notes |
@@ -117,20 +141,26 @@ Without signing:
 
 Each step produces a checkpoint you can stop at if priorities change.
 
-### Step 1 — Backend as a PyInstaller binary  *(1–2 days)*
+### Step 1 — Backend as a PyInstaller binary ✅ *done*
 Produce `openpytea-backend` (or `.exe`) that runs the FastAPI app standalone with no Python on the host. Validate the hardest assumption first.
 
 **Deliverable**: A binary you can double-click that starts uvicorn and serves the existing API. Useful on its own — could even ship as v0.1 of a standalone via the "PyInstaller fallback" path.
 
-### Step 2 — Tauri shell loading the frontend  *(~1 day)*
+**Shipped:** commit `7bda17c`. 152 MB onedir at `dist/openpytea-backend/`. Built via `python scripts/build_sidecar.py`.
+
+### Step 2 — Tauri shell loading the frontend ✅ *done*
 Initialize `src-tauri/`, configure it to load the static `frontend/dist/` build. No backend yet. Confirms icon, window, build pipeline.
 
 **Deliverable**: A window opens with the GUI but the API calls fail (no backend running). The plumbing is real.
 
-### Step 3 — Sidecar wiring  *(1–2 days)*
+**Shipped:** commit `95fe5cd`. Tauri 2.11, identifier `org.openpytea.app`. Verified `npm run tauri dev` opens the native window.
+
+### Step 3 — Sidecar wiring ✅ *done (macOS arm64)*
 Tauri spawns the PyInstaller binary as a sidecar process. Captures the port from stdout. Injects it into the webview. Cleanly shuts down on window close. Handles the case where the sidecar dies unexpectedly (show an error dialog instead of a blank window).
 
 **Deliverable**: Full app works end-to-end on your dev machine. Demo-able.
+
+**Shipped:** commit `291743c`. Demo-able end-to-end: load preset → calculate → results render, no host-side Python. Not yet verified on Windows / Linux (Step 4 territory). Graceful "sidecar died" UI is still on the polish list.
 
 ### Step 4 — CI release pipeline  *(2–3 days)*
 GitHub Actions matrix building the three OSes on tag push. Outputs `.dmg`, `.msi`, `.deb`, `.AppImage` as release assets. This is fiddly — caching the PyInstaller venvs, matplotlib backend exclusion lists, signing the macOS bundle if certs exist.
