@@ -1,7 +1,13 @@
 __pycache__
 venv/
+.venv/
 .python-version
 for_publication/
 *.egg-info/
 frontend/dist/
 CLAUDE.md
+
+# PyInstaller / standalone-package build artefacts
+build/
+dist/
+TAURI_PACKAGING_PLAN.md.bak
