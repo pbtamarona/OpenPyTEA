@@ -135,70 +135,6 @@ class Plant:
                 populated after running monte_carlo().
             monte_carlo_metrics (dict or None): Distribution results populated
                 after running monte_carlo().
-    Methods:
-        __init__(configuration: dict):
-            Initialize plant with configuration dictionary.
-        update_configuration(configuration: dict):
-            Update plant parameters while preserving nested structures.
-        calculate_purchased_cost(print_results: bool = False) -> float:
-            Sum equipment purchase costs with exchange rate conversion.
-        calculate_isbl(fc: float = 1.0, print_results: bool = False) -> float:
-            Calculate Inside Battery Limits cost (direct equipment costs
-            adjusted for location).
-        calculate_fixed_capital(fc: float = None,
-                                additional_capex: bool = False,
-                                print_results: bool = False) -> float:
-            Calculate total fixed capital including ISBL, OSBL,
-            design/engineering, and contingency.
-        calculate_variable_opex(print_results: bool = False) -> float:
-            Calculate annual variable operating costs (feedstock, utilities).
-        calculate_revenue(print_results: bool = False) -> float:
-            Calculate annual revenue from plant products.
-        calculate_operating_labor(no_fluid_process: int = None,
-                                 no_solid_process: int = None) -> float:
-            Calculate total annual operating labor costs.
-        calculate_fixed_opex(fp: float = None,
-                            print_results: bool = False) -> float:
-            Calculate fixed operating expenses (maintenance, supervision,
-            overhead, etc.).
-        calculate_cash_flow(print_results: bool = False) ->
-                            pd.DataFrame or None:
-            Build year-by-year cash flow with CAPEX profile, revenue, costs,
-            depreciation, taxes. Supports multiple scenarios if array inputs
-            provided.
-        calculate_npv(print_results: bool = False) -> float or np.ndarray:
-            Calculate Net Present Value of cash flows using interest_rate as
-            discount rate.
-        calculate_levelized_cost(print_results: bool = False) -> float:
-            Calculate levelized cost ($/unit) over project lifetime.
-        calculate_payback_time(additional_capex: bool = False,
-                              print_results: bool = False) -> float:
-            Calculate years required to recover initial investment
-            from cash flows.
-        calculate_roi(additional_capex: bool = False,
-                        print_results: bool = False) -> float:
-            Calculate Return on Investment percentage over project lifetime.
-        calculate_irr(print_results: bool = False) -> float:
-            Calculate Internal Rate of Return (discount rate where NPV = 0).
-        calculate_all(additional_capex: bool = False,
-                        print_results: bool = False):
-            Execute all financial calculations sequentially.
-        count_process_steps(equipments: list, target_process_types: set,
-                           excluded_cats: set = None) -> int:
-            Count equipment units matching process type and category filters.
-        calculate_operators_per_shift(no_fluid_process: int = None,
-                                     no_solid_process: int = None) -> float:
-            Calculate operators needed per shift using empirical correlation.
-        calculate_operators_hired(no_fluid_process: int = None,
-                                 no_solid_process: int = None) -> int:
-            Calculate total operators to hire accounting for
-            working/operating schedule.
-        to_dict() -> dict:
-            Serialize plant configuration and all calculated metrics
-            to dictionary.
-        __str__() -> str:
-            Return formatted string representation of all configuration
-            parameters.
     Example:
         >>> config = {
         ...     "plant_name": "Example Plant",
@@ -244,7 +180,7 @@ class Plant:
     }
 
     def __init__(self, configuration: dict):
-
+        """Initialize plant from a configuration dictionary."""
         # keep a copy of the original config so code can read from it later
         self.config = deepcopy(configuration)
 
@@ -343,7 +279,19 @@ class Plant:
         self.monte_carlo_metrics = None
 
     def update_configuration(self, configuration: dict):
+        """
+        Update plant parameters while preserving nested structures.
 
+        Top-level scalar keys overwrite existing values. Nested dicts
+        (``variable_opex_inputs``, ``plant_products``, ``operator_hourly_rate``,
+        ``project_uncertainties``, ``fixed_opex_factors``,
+        ``fixed_capital_factors``) are deep-merged rather than replaced.
+
+        Parameters
+        ----------
+        configuration : dict
+            Partial or full plant configuration. Only supplied keys are updated.
+        """
         # keep the stored config up to date
         if (
             not hasattr(self, "config")
@@ -545,7 +493,19 @@ class Plant:
             _validate_project_uncertainties(self.project_uncertainties)
 
     def calculate_purchased_cost(self, print_results=False):
+        """
+        Sum equipment purchased costs with exchange rate conversion.
 
+        Parameters
+        ----------
+        print_results : bool, optional
+            Print a per-equipment cost breakdown. Default is False.
+
+        Returns
+        -------
+        float
+            Total purchased cost in plant currency.
+        """
         self.purchased_cost = sum(
             equipment.purchased_cost
             for equipment in self.equipment_list
@@ -570,7 +530,30 @@ class Plant:
             return self.purchased_cost
 
     def calculate_isbl(self, fc=1.0, print_results=False):
+        """
+        Calculate Inside Battery Limits (ISBL) cost.
 
+        Sums direct equipment costs and applies the location factor and the
+        installed cost multiplier ``fc``.
+
+        Parameters
+        ----------
+        fc : float, optional
+            Installed cost multiplier. Default is 1.0.
+        print_results : bool, optional
+            Print a per-equipment cost breakdown. Default is False.
+
+        Returns
+        -------
+        float
+            ISBL cost in plant currency.
+
+        Raises
+        ------
+        ValueError
+            If the plant's country or region is not found in ``locFactors``
+            and no explicit ``loc_factor`` is set.
+        """
         def location_factors() -> float:
 
             if self.loc_factor is not None:
@@ -624,7 +607,32 @@ class Plant:
         additional_capex: bool = False,
         print_results=False,
     ):
+        """
+        Calculate total fixed capital investment.
 
+        Includes ISBL, OSBL, design & engineering, and contingency. Factors
+        can be overridden via ``fixed_capital_factors`` / ``fixed_capital_components``
+        set on the plant.
+
+        Parameters
+        ----------
+        fc : float or None, optional
+            Installed cost multiplier. Defaults to 1.0 if None.
+        additional_capex : bool, optional
+            Include additional CAPEX items in the printed summary. Default is False.
+        print_results : bool, optional
+            Print a cost breakdown. Default is False.
+
+        Returns
+        -------
+        float
+            Total fixed capital cost in plant currency.
+
+        Raises
+        ------
+        ValueError
+            If ``process_type`` is not one of the supported process types.
+        """
         if fc is None:
             self.fc = 1.0
         else:
@@ -708,6 +716,22 @@ class Plant:
             return self.fixed_capital
 
     def calculate_variable_opex(self, print_results=False):
+        """
+        Calculate annual variable operating costs.
+
+        Iterates over ``variable_opex_inputs`` and computes cost as
+        consumption × price × 365 × plant_utilization for each item.
+
+        Parameters
+        ----------
+        print_results : bool, optional
+            Print a per-item cost breakdown. Default is False.
+
+        Returns
+        -------
+        float
+            Total annual variable OPEX in plant currency.
+        """
         self.variable_production_costs = 0
         self.variable_opex_breakdown = {}
 
@@ -750,6 +774,22 @@ class Plant:
             return self.variable_production_costs
 
     def calculate_revenue(self, print_results=False):
+        """
+        Calculate annual revenue from plant products.
+
+        Iterates over ``plant_products`` and computes revenue as
+        production × price × 365 × plant_utilization for each product.
+
+        Parameters
+        ----------
+        print_results : bool, optional
+            Print a per-product revenue breakdown. Default is False.
+
+        Returns
+        -------
+        float
+            Total annual revenue in plant currency.
+        """
         self.revenue = 0
         self.revenue_breakdown = {}
 
@@ -799,6 +839,23 @@ class Plant:
         target_process_types,
         excluded_cats=None,
     ):
+        """
+        Count equipment units matching a set of process types.
+
+        Parameters
+        ----------
+        equipments : list
+            List of Equipment objects to scan.
+        target_process_types : set
+            Process type labels to match (e.g. ``{"Fluids", "Mixed"}``).
+        excluded_cats : set or None, optional
+            Equipment categories to skip. Default is None (no exclusions).
+
+        Returns
+        -------
+        int
+            Number of matching equipment units.
+        """
         if excluded_cats is None:
             excluded_cats = {}
         count = 0
@@ -814,6 +871,30 @@ class Plant:
     def calculate_operators_per_shift(
         self, no_fluid_process=None, no_solid_process=None
     ):
+        """
+        Calculate the number of operators required per shift.
+
+        Uses the empirical correlation from Turton et al. based on fluid and
+        solid process step counts. Returns ``operators_per_shift`` directly if
+        it was set manually on the plant.
+
+        Parameters
+        ----------
+        no_fluid_process : int or None, optional
+            Number of fluid/mixed process steps. Auto-counted if None.
+        no_solid_process : int or None, optional
+            Number of solid/mixed process steps (max 2). Auto-counted if None.
+
+        Returns
+        -------
+        float
+            Estimated operators per shift.
+
+        Raises
+        ------
+        ValueError
+            If ``no_solid_process`` exceeds 2.
+        """
         if self.operators_per_shift is not None:
             return self.operators_per_shift
         else:
@@ -846,6 +927,26 @@ class Plant:
     def calculate_operators_hired(
         self, no_fluid_process=None, no_solid_process=None
     ):
+        """
+        Calculate the total number of operators to hire.
+
+        Accounts for the ratio of operating shifts per year to working shifts
+        per year. Returns ``operators_hired`` directly if set manually.
+
+        Parameters
+        ----------
+        no_fluid_process : int or None, optional
+            Number of fluid/mixed process steps. Passed to
+            ``calculate_operators_per_shift`` if needed.
+        no_solid_process : int or None, optional
+            Number of solid/mixed process steps. Passed to
+            ``calculate_operators_per_shift`` if needed.
+
+        Returns
+        -------
+        int
+            Total operators to hire.
+        """
         if self.operators_hired is not None:
             return self.operators_hired
 
@@ -875,6 +976,21 @@ class Plant:
     def calculate_operating_labor(
         self, no_fluid_process=None, no_solid_process=None
     ):
+        """
+        Calculate total annual operating labor costs.
+
+        Parameters
+        ----------
+        no_fluid_process : int or None, optional
+            Number of fluid/mixed process steps. Auto-counted if None.
+        no_solid_process : int or None, optional
+            Number of solid/mixed process steps. Auto-counted if None.
+
+        Returns
+        -------
+        float
+            Annual operating labor cost in plant currency.
+        """
         operators_hired = self.calculate_operators_hired(
             no_fluid_process, no_solid_process
         )
@@ -905,6 +1021,28 @@ class Plant:
     def calculate_fixed_opex(
         self, fp=None, print_results=False
     ):
+        """
+        Calculate fixed operating expenses (OPEX).
+
+        Computes supervision, salary overhead, laboratory charges, maintenance,
+        taxes & insurance, rent, environmental charges, operating supplies,
+        general plant overhead, working capital interest, patents & royalties,
+        distribution & selling, and R&D costs. Factors and individual component
+        values can be overridden via ``fixed_opex_factors`` and
+        ``fixed_opex_components`` set on the plant.
+
+        Parameters
+        ----------
+        fp : float or None, optional
+            Fixed OPEX multiplier applied to the total. Defaults to 1.0 if None.
+        print_results : bool, optional
+            Print a full fixed OPEX breakdown. Default is False.
+
+        Returns
+        -------
+        float
+            Total annual fixed OPEX in plant currency.
+        """
         if fp is None:
             self.fp = 1.0
         else:
@@ -1106,7 +1244,33 @@ class Plant:
     def calculate_cash_flow(
         self, print_results: bool = False
     ):
+        """
+        Build a year-by-year cash flow table.
 
+        Applies the CAPEX ramp, production ramp, depreciation schedule,
+        and tax lag to produce annual capital cost, revenue, cash cost,
+        gross profit, depreciation, taxable income, tax paid, and net cash
+        flow arrays. Supports vectorised (Monte Carlo) inputs when
+        ``project_lifetime``, ``interest_rate``, etc. are arrays.
+
+        Parameters
+        ----------
+        print_results : bool, optional
+            Return a formatted ``pd.DataFrame.style`` for scalar scenarios.
+            Default is False.
+
+        Returns
+        -------
+        pd.DataFrame.style or None
+            Styled cash flow table when ``print_results=True`` and inputs are
+            scalar; None otherwise (results stored as instance arrays).
+
+        Raises
+        ------
+        ValueError
+            If ``project_lifetime < 3``, ``capex_ramp`` or
+            ``production_ramp`` are invalid, or no plant products are defined.
+        """
         # 0) Upstream calcs (capital, opex breakdowns)
         self.calculate_fixed_capital(fc=self.fc)
         self.calculate_variable_opex()
@@ -1386,6 +1550,30 @@ class Plant:
             return df.style.format(fmt)
 
     def calculate_npv(self, print_results: bool = False):
+        """
+        Calculate Net Present Value (NPV) of the project cash flows.
+
+        Discounts each year's cash flow at ``interest_rate`` and returns the
+        cumulative NPV at the end of the project lifetime. Supports vectorised
+        inputs for Monte Carlo scenarios.
+
+        Parameters
+        ----------
+        print_results : bool, optional
+            Print a year-by-year present value and cumulative NPV table.
+            Default is False.
+
+        Returns
+        -------
+        float or np.ndarray
+            Final NPV (scalar) or array of NPVs across scenarios.
+
+        Raises
+        ------
+        ValueError
+            If ``interest_rate`` is an array whose length does not match the
+            number of cash flow scenarios.
+        """
         self.calculate_fixed_capital(
             fc=1.0 if self.fc is None else self.fc
         )
@@ -1458,6 +1646,23 @@ class Plant:
         return final_npv
 
     def calculate_levelized_cost(self, print_results=False):
+        """
+        Calculate the levelized cost of production (LCOP).
+
+        Discounts capital costs, operating costs, and production over the
+        project lifetime at ``interest_rate``. Side-product revenues are
+        subtracted before dividing by discounted production.
+
+        Parameters
+        ----------
+        print_results : bool, optional
+            Print the mean levelized cost. Default is False.
+
+        Returns
+        -------
+        float or np.ndarray
+            Levelized cost per unit of main product (scalar or array).
+        """
         self.calculate_fixed_capital(
             fc=1.0 if self.fc is None else self.fc
         )
@@ -1532,6 +1737,24 @@ class Plant:
 
     def calculate_payback_time(self, additional_capex: bool = False,
                                print_results: bool = False):
+        """
+        Calculate simple payback time.
+
+        Divides total fixed capital (optionally including additional CAPEX) by
+        the mean annual cash flow across revenue-generating years.
+
+        Parameters
+        ----------
+        additional_capex : bool, optional
+            Include additional CAPEX in the total investment. Default is False.
+        print_results : bool, optional
+            Print the payback time. Default is False.
+
+        Returns
+        -------
+        float or np.ndarray
+            Payback time in years (``nan`` if no revenue-generating years exist).
+        """
         revenue = np.asarray(self.revenue_array, dtype=float)
         cash_flow = np.asarray(self.cash_flow, dtype=float)
 
@@ -1610,6 +1833,25 @@ class Plant:
 
     def calculate_roi(self, additional_capex: bool = False,
                       print_results: bool = False):
+        """
+        Calculate Return on Investment (ROI).
+
+        Computes total net profit over the project lifetime as a percentage of
+        total investment (fixed capital + working capital, optionally including
+        additional CAPEX), annualised by project lifetime.
+
+        Parameters
+        ----------
+        additional_capex : bool, optional
+            Include additional CAPEX in total investment. Default is False.
+        print_results : bool, optional
+            Print the ROI value. Default is False.
+
+        Returns
+        -------
+        float or np.ndarray
+            ROI as a percentage (scalar or array across scenarios).
+        """
         net_profit = (
             np.asarray(self.gross_profit_array, dtype=float)
             - np.asarray(self.tax_paid_array, dtype=float)
@@ -1677,6 +1919,22 @@ class Plant:
             return self.roi
 
     def calculate_irr(self, print_results: bool = False):
+        """
+        Calculate the Internal Rate of Return (IRR).
+
+        Finds the discount rate at which NPV equals zero using Brent's method.
+        Returns ``nan`` if no sign change is found (no valid IRR exists).
+
+        Parameters
+        ----------
+        print_results : bool, optional
+            Print the IRR value. Default is False.
+
+        Returns
+        -------
+        float or np.ndarray
+            IRR as a fraction (e.g. 0.15 = 15%), or ``nan`` if undefined.
+        """
         cf = np.asarray(self.cash_flow, dtype=float)
 
         def _irr_from_cash_flow(cf_1d):
@@ -1787,6 +2045,22 @@ class Plant:
             return self.irr
 
     def calculate_all(self, additional_capex=False, print_results=False):
+        """
+        Run all financial calculations sequentially.
+
+        Calls ``calculate_fixed_capital``, ``calculate_variable_opex``,
+        ``calculate_fixed_opex``, ``calculate_revenue``, ``calculate_cash_flow``,
+        ``calculate_npv``, ``calculate_levelized_cost``,
+        ``calculate_payback_time``, ``calculate_roi``, and ``calculate_irr``.
+
+        Parameters
+        ----------
+        additional_capex : bool, optional
+            Pass through to ``calculate_fixed_capital``, ``calculate_payback_time``,
+            and ``calculate_roi``. Default is False.
+        print_results : bool, optional
+            Print results from each sub-calculation. Default is False.
+        """
         self.calculate_fixed_capital(fc=self.fc,
                                      additional_capex=additional_capex,
                                      print_results=print_results)
@@ -1803,6 +2077,16 @@ class Plant:
         self.calculate_irr(print_results=print_results)
 
     def to_dict(self):
+        """
+        Serialize plant configuration and all computed metrics to a dict.
+
+        Returns
+        -------
+        dict
+            Nested dictionary with sections: ``plant_configuration``,
+            ``equipment_summary``, ``capital_costs``, ``variable_opex``,
+            ``fixed_opex``, ``revenue``, ``cash_flow``, and ``metrics``.
+        """
         equipment_items = []
 
         for eq in self.equipment_list:
@@ -2166,6 +2450,25 @@ _UNIT_INTERVAL_PARAMS = {"plant_utilization", "tax_rate"}
 
 
 def _validate_project_uncertainties(cfg: dict) -> None:
+    """
+    Validate the structure and values of a ``project_uncertainties`` config dict.
+
+    Parameters
+    ----------
+    cfg : dict
+        Uncertainty configuration mapping parameter names to sub-dicts with
+        keys such as ``mean``, ``std``, ``min``, ``max``.
+
+    Raises
+    ------
+    TypeError
+        If ``cfg`` is not a dict, or any sub-entry is not a dict, or any
+        numeric value is not an int or float.
+    ValueError
+        If unknown parameter or sub-keys are present, ``std`` is negative,
+        ``min >= max``, or domain-specific bounds are violated (e.g. interest
+        rate ≤ 0, project lifetime < 1, unit-interval params outside [0, 1]).
+    """
     if not cfg:
         return
     if not isinstance(cfg, dict):

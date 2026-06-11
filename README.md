@@ -1,4 +1,6 @@
-# 🧩 OpenPyTEA
+<p align="center">
+  <img src="docs/logo-white.png" alt="OpenPyTEA" width="400"/>
+</p>
 
 **OpenPyTEA** is an open-source Python toolkit for performing **techno-economic assessment (TEA)** of chemical and energy systems. It was created to address a persistent gap in the TEA workflow: while process simulators model mass and energy balances, researchers often lack an equally transparent and flexible way to evaluate the **economic feasibility** of their designs. Commercial tools remain *black-box tools*, and many academic TEA implementations are process-specific, undocumented, or difficult to reproduce.
 
