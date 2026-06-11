@@ -4,10 +4,34 @@ import type {
   MonteCarloMultiResult, PlantInput,
 } from "../types";
 
-const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+// Resolve the API base URL once per page load.
+//
+// In a Tauri shell the backend is spawned on a kernel-assigned port; we ask
+// the Rust side for the URL via the `get_api_base` IPC command, polling
+// until the port marker arrives on the backend's stdout. Outside Tauri
+// (e.g. `start.sh` dev mode) we use VITE_API_BASE_URL / localhost:8000.
+async function resolveBaseUrl(): Promise<string> {
+  const tauri = "__TAURI_INTERNALS__" in window;
+  if (tauri) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    // Backend cold-start can take up to ~60s on first launch (matplotlib font
+    // cache). Poll every 100ms.
+    for (let i = 0; i < 700; i++) {
+      const url = await invoke<string | null>("get_api_base");
+      if (url) return url;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    throw new Error("Backend did not start within 70s");
+  }
+  return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+}
+
+let basePromise: Promise<string> | null = null;
+const getBase = (): Promise<string> => (basePromise ??= resolveBaseUrl());
 
 async function request<T>(path: string, opts?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
+  const base = await getBase();
+  const res = await fetch(`${base}${path}`, {
     headers: { "Content-Type": "application/json" },
     ...opts,
   });
@@ -57,9 +81,10 @@ export const runMonteCarlo = (params: {
 // Project I/O
 export const saveProject = () => request<unknown>("/project/save", { method: "POST" });
 export const loadProject = async (file: File) => {
+  const base = await getBase();
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch(`${BASE}/project/load`, { method: "POST", body: form });
+  const res = await fetch(`${base}/project/load`, { method: "POST", body: form });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.detail || `HTTP ${res.status}`);
