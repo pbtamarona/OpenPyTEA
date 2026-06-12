@@ -6,9 +6,9 @@ stdout as a single line:
 
     OPENPYTEA_BACKEND_PORT=<port>
 
-A Tauri (or any other) parent process can capture that line to know where
-to send API requests. The marker line is also printed for fixed `--port N`
-so the parent has a uniform signal.
+The marker is printed *after* uvicorn has fully started listening, so a
+parent process (e.g. the Tauri shell) can connect immediately on seeing
+it without racing the socket bind.
 
 This file is the PyInstaller entry script. It must live at the top of the
 backend tree (alongside the `app/` package) so the bundled binary can
@@ -31,6 +31,21 @@ def _pick_free_port(host: str) -> int:
         return s.getsockname()[1]
 
 
+class _AnnouncingServer(uvicorn.Server):
+    """uvicorn.Server that prints the port marker after startup completes."""
+
+    def __init__(self, config: uvicorn.Config, announce_port: int) -> None:
+        super().__init__(config)
+        self._announce_port = announce_port
+
+    async def startup(self, sockets=None):  # type: ignore[override]
+        await super().startup(sockets=sockets)
+        # By the time we get here uvicorn has bound the socket and the
+        # FastAPI app's startup events have run — safe for clients to
+        # connect immediately on seeing the marker.
+        print(f"OPENPYTEA_BACKEND_PORT={self._announce_port}", flush=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="OpenPyTEA backend server")
     parser.add_argument("--host", default="127.0.0.1",
@@ -42,9 +57,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     port = args.port if args.port != 0 else _pick_free_port(args.host)
-    print(f"OPENPYTEA_BACKEND_PORT={port}", flush=True)
 
-    uvicorn.run(app, host=args.host, port=port, log_level=args.log_level)
+    config = uvicorn.Config(app, host=args.host, port=port, log_level=args.log_level)
+    server = _AnnouncingServer(config, port)
+    server.run()
     return 0
 
 
