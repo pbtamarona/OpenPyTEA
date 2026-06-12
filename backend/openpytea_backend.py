@@ -16,6 +16,16 @@ import `from app.main import app` cleanly.
 """
 from __future__ import annotations
 
+import multiprocessing
+
+# Frozen-binary support for multiprocessing. When a worker re-invokes the
+# bundled executable to spawn a helper, freeze_support() detects the helper
+# invocation, runs the worker code, and exits — preventing our argparse from
+# choking on the helper's own argv (e.g. `-B -S -I -c "from
+# multiprocessing.resource_tracker import main; main(N)"`). Must run before
+# argparse touches sys.argv, hence before everything else.
+multiprocessing.freeze_support()
+
 import argparse
 import socket
 import sys
