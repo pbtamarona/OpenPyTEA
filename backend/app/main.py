@@ -9,7 +9,14 @@ app = FastAPI(title="OpenPyTEA GUI", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        # Vite dev server (npm run dev / start.sh / `tauri dev`)
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        # Packaged Tauri app (production build)
+        "tauri://localhost",        # macOS, Linux
+        "https://tauri.localhost",  # Windows (https scheme by default)
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

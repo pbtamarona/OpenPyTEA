@@ -10,6 +10,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 
 use tauri::{AppHandle, Emitter, Manager, RunEvent};
+use tauri_plugin_log::{Target, TargetKind};
 
 /// Shared state holding the spawned child handle and the discovered port.
 #[derive(Default)]
@@ -147,13 +148,24 @@ pub fn run() {
         .manage(BackendState::default())
         .invoke_handler(tauri::generate_handler![get_api_base])
         .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
+            // Enable logging in release too — production issues are otherwise
+            // invisible. Stdout target is visible when launched from terminal;
+            // LogDir target writes to ~/Library/Logs/org.openpytea.app/ on
+            // macOS, %LOCALAPPDATA%\org.openpytea.app\logs on Windows.
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log::LevelFilter::Info)
+                    .targets([
+                        Target::new(TargetKind::Stdout),
+                        Target::new(TargetKind::LogDir { file_name: None }),
+                    ])
+                    .build(),
+            )?;
+            log::info!(
+                "OpenPyTEA shell starting (release={}, version={})",
+                !cfg!(debug_assertions),
+                env!("CARGO_PKG_VERSION"),
+            );
             spawn_backend(app.handle().clone());
             Ok(())
         })

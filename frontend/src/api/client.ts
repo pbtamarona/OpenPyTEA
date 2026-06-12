@@ -11,13 +11,15 @@ import type {
 // until the port marker arrives on the backend's stdout. Outside Tauri
 // (e.g. `start.sh` dev mode) we use VITE_API_BASE_URL / localhost:8000.
 async function resolveBaseUrl(): Promise<string> {
-  const tauri = "__TAURI_INTERNALS__" in window;
-  if (tauri) {
-    const { invoke } = await import("@tauri-apps/api/core");
+  // Use Tauri's official isTauri() rather than a hand-rolled global check —
+  // production webviews can inject internals after our module loads, making
+  // naive `"__TAURI_INTERNALS__" in window` checks return false too early.
+  const core = await import("@tauri-apps/api/core");
+  if (core.isTauri()) {
     // Backend cold-start can take up to ~60s on first launch (matplotlib font
-    // cache). Poll every 100ms.
+    // cache). Poll every 100ms for up to ~70s.
     for (let i = 0; i < 700; i++) {
-      const url = await invoke<string | null>("get_api_base");
+      const url = await core.invoke<string | null>("get_api_base");
       if (url) return url;
       await new Promise((r) => setTimeout(r, 100));
     }
