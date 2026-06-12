@@ -88,6 +88,7 @@ fn spawn_backend(app: AppHandle) {
             return;
         }
     };
+    let stderr = child.stderr.take();
 
     // Stash the child handle so the Exit event can kill it.
     {
@@ -95,7 +96,7 @@ fn spawn_backend(app: AppHandle) {
         *state.child.lock().unwrap() = Some(child);
     }
 
-    // Reader thread: scan stdout for the port marker and stash it.
+    // Reader thread for stdout: scan for the port marker.
     let app_clone = app.clone();
     std::thread::spawn(move || {
         let reader = BufReader::new(stdout);
@@ -112,6 +113,19 @@ fn spawn_backend(app: AppHandle) {
         }
         log::info!("backend stdout closed");
     });
+
+    // Reader thread for stderr: just drain it so uvicorn never blocks on a
+    // full pipe buffer (~64 KB on macOS). uvicorn writes access logs and
+    // warnings here; we forward each line to our logger.
+    if let Some(stderr) = stderr {
+        std::thread::spawn(move || {
+            let reader = BufReader::new(stderr);
+            for line in reader.lines().map_while(Result::ok) {
+                log::warn!("backend[stderr]: {}", line);
+            }
+            log::info!("backend stderr closed");
+        });
+    }
 }
 
 /// IPC command: returns the API base URL once the backend has reported its
