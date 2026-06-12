@@ -71,7 +71,10 @@ export const runSensitivity = (params: {
   additional_capex: boolean; extra_plants?: PlantInput[];
 }) =>
   request<SensitivityResult>("/analysis/sensitivity", { method: "POST", body: JSON.stringify(params) });
-export const runTornado = (params: { plus_minus_value: number; metric: string; additional_capex: boolean }) =>
+export const runTornado = (params: {
+  plus_minus_value: number; metric: string; additional_capex: boolean;
+  extra_plants?: PlantInput[];
+}) =>
   request<TornadoResult>("/analysis/tornado", { method: "POST", body: JSON.stringify(params) });
 export const runMonteCarlo = (params: {
   num_samples: number; batch_size: number; additional_capex: boolean; extra_plants?: PlantInput[];

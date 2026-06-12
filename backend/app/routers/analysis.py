@@ -25,8 +25,19 @@ def _require_plant():
 
 
 def _rehydrate_extras(extras: list[PlantInput]):
-    """Build Plant objects from saved-JSON-shaped payloads."""
-    return [build_plant(p.equipment, p.plant) for p in extras]
+    """Build Plant objects from saved-JSON-shaped payloads.
+
+    If the PlantInput carries a `name` (the label the user picked on the
+    Compare tab), it overrides whatever `plant_name` was baked into the
+    saved JSON — so analysis legends show the user's chosen name.
+    """
+    plants = []
+    for extra in extras:
+        p = build_plant(extra.equipment, extra.plant)
+        if extra.name:
+            p.name = extra.name
+        plants.append(p)
+    return plants
 
 
 @router.get("/sensitivity/parameters", response_model=list[str])
@@ -59,16 +70,39 @@ def run_sensitivity(data: SensitivityIn):
 @router.post("/tornado", response_model=TornadoResult)
 def run_tornado(data: TornadoIn):
     plant = _require_plant()
-    try:
-        result = tornado_data(
-            plant,
-            plus_minus_value=data.plus_minus_value,
-            metric=data.metric,
-            additional_capex=data.additional_capex,
-        )
-    except (ValueError, KeyError):
-        raise HTTPException(status_code=400, detail="Tornado analysis failed — check configuration")
-    return to_jsonable(result)
+    plants = [plant] + _rehydrate_extras(data.extra_plants)
+
+    per_plant: list[dict] = []
+    xlabel = ""
+    for p in plants:
+        try:
+            r = tornado_data(
+                p,
+                plus_minus_value=data.plus_minus_value,
+                metric=data.metric,
+                additional_capex=data.additional_capex,
+            )
+        except (ValueError, KeyError) as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Tornado analysis failed for plant '{getattr(p, 'plant_name', '?')}': {e}",
+            )
+        xlabel = r.get("xlabel", xlabel)
+        per_plant.append({
+            "name": getattr(p, "name", None) or "Plant",
+            "factors": r["factors"],
+            "labels": r["labels"],
+            "lows": r["lows"],
+            "highs": r["highs"],
+            "base_value": r["base_value"],
+        })
+
+    return to_jsonable({
+        "plants": per_plant,
+        "plus_minus_value": data.plus_minus_value,
+        "metric": data.metric.upper(),
+        "xlabel": xlabel,
+    })
 
 
 def _summarize_mc(result: dict) -> dict:

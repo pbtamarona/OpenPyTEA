@@ -193,6 +193,7 @@ class TornadoIn(BaseModel):
     plus_minus_value: float = Field(default=0.2, gt=0, le=10)
     metric: str = "LCOP"
     additional_capex: bool = False
+    extra_plants: list[PlantInput] = Field(default_factory=list, max_length=8)
 
 
 class MonteCarloIn(BaseModel):
@@ -220,12 +221,17 @@ class SensitivityResult(BaseModel):
     metric: str
 
 
-class TornadoResult(BaseModel):
+class TornadoPlantResult(BaseModel):
+    name: str
     factors: list[str]
     lows: list[float]
     highs: list[float]
     base_value: float
     labels: list[str]
+
+
+class TornadoResult(BaseModel):
+    plants: list[TornadoPlantResult]
     plus_minus_value: float
     metric: str
     xlabel: str

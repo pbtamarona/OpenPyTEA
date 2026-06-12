@@ -95,12 +95,17 @@ export interface SensitivityResult {
   metric: string;
 }
 
-export interface TornadoResult {
+export interface TornadoPlantResult {
+  name: string;
   factors: string[];
+  labels: string[];
   lows: number[];
   highs: number[];
   base_value: number;
-  labels: string[];
+}
+
+export interface TornadoResult {
+  plants: TornadoPlantResult[];
   plus_minus_value: number;
   metric: string;
   xlabel: string;

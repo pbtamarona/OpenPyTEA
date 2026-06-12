@@ -54,6 +54,7 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
   const [tornMetric, setTornMetric] = useState("LCOP");
   const [tornResult, setTornResult] = useState<TornadoResult | null>(null);
   const [tornLoading, setTornLoading] = useState(false);
+  const [selectedTornExtras, setSelectedTornExtras] = useState<Set<string>>(new Set());
 
   const overlayCandidates = useMemo(
     () => comparedPlants.filter((p) => p.source != null),
@@ -93,6 +94,20 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
       return next;
     });
   };
+
+  const toggleTornExtra = (id: string) => {
+    setSelectedTornExtras((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const collectTornExtras = () =>
+    overlayCandidates
+      .filter((p) => selectedTornExtras.has(p.id))
+      .map((p) => p.source!)
+      .filter(Boolean);
 
   const collectExtras = () =>
     overlayCandidates
@@ -137,7 +152,13 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
     setTornLoading(true);
     setError(null);
     try {
-      const r = await runTornado({ plus_minus_value: tornPM, metric: tornMetric, additional_capex: false });
+      const extra_plants = collectTornExtras();
+      const r = await runTornado({
+        plus_minus_value: tornPM,
+        metric: tornMetric,
+        additional_capex: false,
+        extra_plants,
+      });
       setTornResult(r);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Tornado failed");
@@ -149,27 +170,51 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
   const anyLoading = panels.some((p) => p.loading);
   const isGrid = panels.length > 1;
 
-  // Tornado chart data — bars are deltas from base_value; x-axis ticks are offset to show actual values
-  const tornMaxDelta = tornResult
-    ? Math.max(...tornResult.lows.concat(tornResult.highs).map((v) => Math.abs(v - tornResult.base_value)))
-    : 0;
-  const tornScale = (tornResult && Math.abs(tornResult.base_value) >= 1e6) || tornMaxDelta >= 1e6 ? 1e6 : 1;
+  // Tornado chart data — bars are deltas from base_value. With a single plant
+  // the x-axis tick formatter adds the base back to display actual metric
+  // values; with multiple plants the bases differ, so we fall back to a pure
+  // Δ display.
+  const tornPlants = tornResult?.plants ?? [];
+  const isMultiTorn = tornPlants.length > 1;
 
-  const tornChartData = tornResult
-    ? tornResult.labels
-        .map((label, i) => ({
-          label,
-          low: (tornResult.lows[i] - tornResult.base_value) / tornScale,
-          high: (tornResult.highs[i] - tornResult.base_value) / tornScale,
-          range: Math.abs(tornResult.highs[i] - tornResult.lows[i]),
-        }))
-        .sort((a, b) => b.range - a.range)
-    : [];
+  const tornMaxDelta = tornPlants.reduce((acc, p) => {
+    for (let i = 0; i < p.lows.length; i++) {
+      acc = Math.max(acc, Math.abs(p.lows[i] - p.base_value), Math.abs(p.highs[i] - p.base_value));
+    }
+    return acc;
+  }, 0);
+  const tornMaxBase = tornPlants.reduce((acc, p) => Math.max(acc, Math.abs(p.base_value)), 0);
+  const tornScale = tornMaxBase >= 1e6 || tornMaxDelta >= 1e6 ? 1e6 : 1;
 
-  const tornBase = tornResult ? tornResult.base_value / tornScale : 0;
+  type TornRow = { label: string; range: number } & Record<string, number | undefined | string>;
+  const tornChartData: TornRow[] = (() => {
+    const rows = new Map<string, TornRow>();
+    tornPlants.forEach((p, pi) => {
+      for (let i = 0; i < p.labels.length; i++) {
+        const label = p.labels[i];
+        let row = rows.get(label);
+        if (!row) {
+          row = { label, range: 0 };
+          rows.set(label, row);
+        }
+        row[`p${pi}_low`] = (p.lows[i] - p.base_value) / tornScale;
+        row[`p${pi}_high`] = (p.highs[i] - p.base_value) / tornScale;
+        (row.range as number) += Math.abs(p.highs[i] - p.lows[i]);
+      }
+    });
+    return Array.from(rows.values()).sort((a, b) => (b.range as number) - (a.range as number));
+  })();
+
+  // For single-plant we keep the old behaviour of showing absolute metric
+  // values on the axis (delta + base). For multi-plant the bars stay as Δ.
+  const tornBase = isMultiTorn ? 0 : (tornPlants[0]?.base_value ?? 0) / tornScale;
 
   const tornXLabel = tornResult
-    ? (tornScale === 1e6 ? cleanLatex(tornResult.xlabel).replace("/ [", "/ [million ") : cleanLatex(tornResult.xlabel))
+    ? (() => {
+        const cleaned = cleanLatex(tornResult.xlabel);
+        const scaled = tornScale === 1e6 ? cleaned.replace("/ [", "/ [million ") : cleaned;
+        return isMultiTorn ? `Δ ${scaled}` : scaled;
+      })()
     : "";
 
   return (
@@ -254,6 +299,27 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
       {/* Tornado */}
       <div className="card">
         <h2>Tornado Analysis</h2>
+
+        {overlayCandidates.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "var(--text-secondary)" }}>
+              Compare with (from Compare tab)
+            </label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              {overlayCandidates.map((p) => (
+                <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedTornExtras.has(p.id)}
+                    onChange={() => toggleTornExtra(p.id)}
+                  />
+                  {p.name}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="form-grid" style={{ marginBottom: 16 }}>
           <div className="form-group">
             <label>+/- Variation</label>
@@ -267,34 +333,85 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
           </div>
         </div>
         <button className="btn-primary" onClick={doTornado} disabled={tornLoading}>
-          {tornLoading && <span className="spinner" />}Run Tornado
+          {tornLoading && <span className="spinner" />}Run Tornado{isMultiTorn ? ` (${tornPlants.length} plants)` : ""}
         </button>
 
         {tornResult && tornChartData.length > 0 && (
-          <DownloadableChart filename="tornado" height={Math.max(300, tornChartData.length * 30 + 120)} style={{ marginTop: 20 }}>
+          <DownloadableChart
+            filename="tornado"
+            height={Math.max(
+              300,
+              tornChartData.length * (isMultiTorn ? Math.max(40, tornPlants.length * 18) : 30) + 120,
+            )}
+            style={{ marginTop: 20 }}
+          >
             <ResponsiveContainer>
               <BarChart data={tornChartData} layout="vertical" margin={{ left: 160, bottom: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tickFormatter={(v) => (v + tornBase).toFixed(tornMetric === "IRR" ? 3 : 2)} label={{ value: tornXLabel, position: "insideBottom", offset: -20, style: { fontWeight: "bold" } }} />
+                <XAxis
+                  type="number"
+                  tickFormatter={(v) => (v + tornBase).toFixed(tornMetric === "IRR" ? 3 : 2)}
+                  label={{ value: tornXLabel, position: "insideBottom", offset: -20, style: { fontWeight: "bold" } }}
+                />
                 <YAxis type="category" dataKey="label" width={150} tick={{ fontSize: 12, fontWeight: "bold" }} />
-                <Tooltip formatter={(v) => { const unit = tornXLabel.match(/\[(.+)\]/)?.[1] ?? ""; const actual = typeof v === "number" ? v + tornBase : v; const val = typeof actual === "number" ? actual.toFixed(tornMetric === "IRR" ? 3 : 2) : actual; return (unit && tornMetric !== "IRR") ? `${val} ${unit}` : val; }} labelStyle={{ fontWeight: "bold", color: "#000" }} />
-                <Legend verticalAlign="bottom" align="right" content={() => (
-                  <div style={{ display: "flex", gap: 16, justifyContent: "flex-end", fontSize: 12, color: "var(--text-secondary)" }}>
-                    {[{ color: "#4361ee", label: `-${tornPM * 100}%` }, { color: "#e63946", label: `+${tornPM * 100}%` }].map(({ color, label }) => (
-                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                        <span style={{ width: 12, height: 12, background: color, display: "inline-block" }} />
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                )} />
+                <Tooltip
+                  formatter={(v) => {
+                    const unit = tornXLabel.match(/\[(.+)\]/)?.[1] ?? "";
+                    const actual = typeof v === "number" ? v + tornBase : v;
+                    const val = typeof actual === "number" ? actual.toFixed(tornMetric === "IRR" ? 3 : 2) : actual;
+                    return (unit && tornMetric !== "IRR") ? `${val} ${unit}` : val;
+                  }}
+                  labelStyle={{ fontWeight: "bold", color: "#000" }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  align="right"
+                  content={() => (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "flex-end", fontSize: 12, color: "var(--text-secondary)" }}>
+                      {isMultiTorn
+                        ? tornPlants.map((p, pi) => (
+                            <span key={p.name + pi} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <span style={{ width: 12, height: 12, background: COLORS[pi % COLORS.length], display: "inline-block" }} />
+                              {p.name}
+                            </span>
+                          ))
+                        : [
+                            { color: "#4361ee", label: `-${tornPM * 100}%` },
+                            { color: "#e63946", label: `+${tornPM * 100}%` },
+                          ].map(({ color, label }) => (
+                            <span key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <span style={{ width: 12, height: 12, background: color, display: "inline-block" }} />
+                              {label}
+                            </span>
+                          ))}
+                    </div>
+                  )}
+                />
                 <ReferenceLine x={0} stroke="#333" strokeDasharray="3 3" />
-                <Bar dataKey="low" name="Low">
-                  {tornChartData.map((_, i) => <Cell key={i} fill="#4361ee" />)}
-                </Bar>
-                <Bar dataKey="high" name="High">
-                  {tornChartData.map((_, i) => <Cell key={i} fill="#e63946" />)}
-                </Bar>
+                {/* Render all "low" bars first, then all "high" bars, so Recharts
+                    groups them as [p0_low p1_low ... p0_high p1_high ...] at each
+                    parameter row — each plant's low and high sit on opposite sides
+                    of zero with the same color. */}
+                {tornPlants.map((p, pi) => {
+                  const color = isMultiTorn ? COLORS[pi % COLORS.length] : "#4361ee";
+                  return (
+                    <Bar key={`p${pi}_low`} dataKey={`p${pi}_low`}
+                         name={isMultiTorn ? `${p.name} −${tornPM * 100}%` : `−${tornPM * 100}%`}>
+                      {tornChartData.map((_, i) => (
+                        <Cell key={i} fill={color} fillOpacity={isMultiTorn ? 0.55 : 1} />
+                      ))}
+                    </Bar>
+                  );
+                })}
+                {tornPlants.map((p, pi) => {
+                  const color = isMultiTorn ? COLORS[pi % COLORS.length] : "#e63946";
+                  return (
+                    <Bar key={`p${pi}_high`} dataKey={`p${pi}_high`}
+                         name={isMultiTorn ? `${p.name} +${tornPM * 100}%` : `+${tornPM * 100}%`}>
+                      {tornChartData.map((_, i) => <Cell key={i} fill={color} />)}
+                    </Bar>
+                  );
+                })}
               </BarChart>
             </ResponsiveContainer>
           </DownloadableChart>
