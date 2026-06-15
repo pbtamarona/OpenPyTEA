@@ -82,6 +82,59 @@
   flex-shrink: 0;
 }
 
+/* ===== Loading banner (top progress strip) ===== */
+.loading-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  animation: loading-banner-in .2s ease-out;
+}
+
+.loading-banner-msg {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.loading-banner-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,.25);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  min-width: 120px;
+}
+
+.loading-banner-bar {
+  position: absolute;
+  height: 100%;
+  width: 33%;
+  background: #fff;
+  border-radius: 2px;
+  animation: loading-slide 1.4s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes loading-slide {
+  0%   { left: -33%; }
+  100% { left: 100%; }
+}
+
+@keyframes loading-banner-in {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
 /* ===== Welcome / splash screen ===== */
 .welcome {
   min-height: 100vh;

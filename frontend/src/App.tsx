@@ -6,7 +6,7 @@ import AnalysisPage from "./pages/AnalysisPage";
 import MonteCarloPage from "./pages/MonteCarloPage";
 import {
   saveProject, loadProject, loadProjectFromText,
-  newProject, getExamples, loadExample,
+  newProject, getExamples, loadExample, runCalculations,
 } from "./api/client";
 import type { ExamplePreset } from "./api/client";
 import ComparePage from "./pages/ComparePage";
@@ -57,6 +57,9 @@ function App() {
   const [dirty, setDirty] = useState(false);
   const markDirty = useCallback(() => setDirty(true), []);
 
+  // Loading banner: non-null message shows a fixed top progress bar.
+  const [loadingMsg, setLoadingMsg] = useState<string | null>(null);
+
   const fileRef = useRef<HTMLInputElement>(null);
 
   const addToComparison = async (name: string, currency: string, r: CalculationResults) => {
@@ -77,10 +80,12 @@ function App() {
       ...prev,
       { id: crypto.randomUUID(), name, currency, results: r, source },
     ]);
+    markDirty();
   };
 
   const removeFromComparison = (id: string) => {
     setComparedPlants((prev) => prev.filter((p) => p.id !== id));
+    markDirty();
   };
 
   useEffect(() => {
@@ -90,6 +95,38 @@ function App() {
 
   useEffect(() => {
     detectTauri().then(setInTauri);
+  }, []);
+
+  // Backend-ready poller for Tauri builds: shows a "Starting backend…" banner
+  // while uvicorn boots inside the .app (first launch is slow because of
+  // matplotlib's font cache), clears it once the port marker arrives.
+  useEffect(() => {
+    let canceled = false;
+    let delayTimer: ReturnType<typeof setTimeout> | undefined;
+    (async () => {
+      if (!(await detectTauri())) return;
+      // Only show the banner if startup actually takes a noticeable moment,
+      // so instant-ready cases don't flash a useless banner.
+      delayTimer = setTimeout(() => {
+        if (!canceled) setLoadingMsg("Starting backend… (first launch may take ~30–45 s)");
+      }, 800);
+      const { invoke } = await import("@tauri-apps/api/core");
+      for (let i = 0; i < 700; i++) {
+        if (canceled) return;
+        const url = await invoke<string | null>("get_api_base");
+        if (url) {
+          if (delayTimer) clearTimeout(delayTimer);
+          setLoadingMsg(null);
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      if (!canceled) setLoadingMsg("Backend did not start. Try restarting the app.");
+    })();
+    return () => {
+      canceled = true;
+      if (delayTimer) clearTimeout(delayTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -137,8 +174,10 @@ function App() {
   const handleNew = useCallback(async () => {
     if (!(await confirmIfDirty("Start a new project"))) return;
     try {
+      setLoadingMsg("Creating new project…");
       await newProject();
       setCurrentPath(null);
+      setComparedPlants([]);
       setDirty(false);
       setResults(null);
       setError(null);
@@ -146,27 +185,67 @@ function App() {
       setTab("Equipment");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "New project failed");
+    } finally {
+      setLoadingMsg(null);
     }
   }, [dirty]);
+
+  /** Restore compared plants from a parsed save-file. UUIDs are
+      regenerated; everything else is taken verbatim. */
+  const restoreComparedPlants = (parsed: unknown): ComparedPlant[] => {
+    const arr = (parsed as { compared_plants?: unknown }).compared_plants;
+    if (!Array.isArray(arr)) return [];
+    return arr.map((p: unknown) => {
+      const obj = p as {
+        name?: string; currency?: string;
+        results?: CalculationResults; source?: PlantInput;
+      };
+      return {
+        id: crypto.randomUUID(),
+        name: obj.name ?? "Plant",
+        currency: obj.currency ?? "$",
+        results: obj.results as CalculationResults,
+        source: obj.source,
+      };
+    }).filter((p) => p.results != null);
+  };
 
   /** Load a project file at a known path (Tauri only). Shared between
       File ▸ Open and the OS file-association open-file event. */
   const loadFromPath = useCallback(async (path: string) => {
     try {
+      setLoadingMsg("Reading project file…");
       const { readTextFile } = await import("@tauri-apps/plugin-fs");
       const text = await readTextFile(path);
+      const parsed = JSON.parse(text);
+
+      setLoadingMsg("Loading project…");
       await loadProjectFromText(text);
+
+      setComparedPlants(restoreComparedPlants(parsed));
       setCurrentPath(path);
       setDirty(false);
-      setResults(null);
       setError(null);
       setRefreshKey((k) => k + 1);
       setTab("Equipment");
       // If the user opens a file from Finder while the welcome screen is up,
       // skip straight to the main app.
       setShowWelcome(false);
+
+      // Auto-recompute so the Results tab is populated and analysis pages
+      // (which need the backend's Plant object) work without a manual
+      // Calculate click.
+      setLoadingMsg("Calculating…");
+      try {
+        const r = await runCalculations();
+        setResults(r);
+      } catch {
+        setResults(null);
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Open failed");
+    } finally {
+      setLoadingMsg(null);
     }
   }, []);
 
@@ -208,8 +287,19 @@ function App() {
   };
 
   const writeProjectTo = async (path: string) => {
-    const data = await saveProject();
-    const text = JSON.stringify(data, null, 2);
+    const backendData = await saveProject() as Record<string, unknown>;
+    // Frontend-only state we want to persist alongside the active plant:
+    // the Compare tab's stash so multi-plant sessions survive save/load.
+    const full = {
+      ...backendData,
+      compared_plants: comparedPlants.map((p) => ({
+        name: p.name,
+        currency: p.currency,
+        results: p.results,
+        source: p.source,
+      })),
+    };
+    const text = JSON.stringify(full, null, 2);
     const { writeTextFile } = await import("@tauri-apps/plugin-fs");
     await writeTextFile(path, text);
   };
@@ -260,15 +350,26 @@ function App() {
     setExamplesOpen(false);
     if (!(await confirmIfDirty("Load an example"))) return;
     try {
+      setLoadingMsg("Loading example…");
       await loadExample(id);
+      setComparedPlants([]);
       setCurrentPath(null);
       setDirty(false);
-      setResults(null);
       setError(null);
       setRefreshKey((k) => k + 1);
       setTab("Equipment");
+
+      setLoadingMsg("Calculating…");
+      try {
+        const r = await runCalculations();
+        setResults(r);
+      } catch {
+        setResults(null);
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load example");
+    } finally {
+      setLoadingMsg(null);
     }
   };
 
@@ -347,14 +448,29 @@ function App() {
     };
   }, [showWelcome]);
 
+  const loadingBanner = loadingMsg ? (
+    <div className="loading-banner" role="status" aria-live="polite">
+      <span className="loading-banner-msg">{loadingMsg}</span>
+      <div className="loading-banner-track">
+        <div className="loading-banner-bar" />
+      </div>
+    </div>
+  ) : null;
+
   if (showWelcome) {
-    return <WelcomePage onContinue={() => setShowWelcome(false)} />;
+    return (
+      <>
+        {loadingBanner}
+        <WelcomePage onContinue={() => setShowWelcome(false)} />
+      </>
+    );
   }
 
   const cmdKey = navigator.platform.includes("Mac") ? "⌘" : "Ctrl";
 
   return (
     <div className="app">
+      {loadingBanner}
       <header className="header">
         <img src="/logo.png" alt="OpenPyTEA" className="brand-logo" />
         <nav className="tabs">
