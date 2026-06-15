@@ -117,11 +117,25 @@ function App() {
 
   // ── Project file operations ───────────────────────────────────────────
 
-  const confirmIfDirty = (verb: string): boolean =>
-    !dirty || window.confirm(`You have unsaved changes. ${verb} anyway?`);
+  // window.confirm is suppressed in Tauri's WebKit webview, so use the
+  // native ask dialog when running inside Tauri and fall back to
+  // window.confirm in browser-dev.
+  const confirmIfDirty = async (verb: string): Promise<boolean> => {
+    if (!dirty) return true;
+    const message = `You have unsaved changes. ${verb} anyway?`;
+    if (await detectTauri()) {
+      const { ask } = await import("@tauri-apps/plugin-dialog");
+      return await ask(message, {
+        title: "Unsaved Changes",
+        okLabel: "Continue",
+        cancelLabel: "Cancel",
+      });
+    }
+    return window.confirm(message);
+  };
 
   const handleNew = useCallback(async () => {
-    if (!confirmIfDirty("Start a new project")) return;
+    if (!(await confirmIfDirty("Start a new project"))) return;
     try {
       await newProject();
       setCurrentPath(null);
@@ -157,7 +171,7 @@ function App() {
   }, []);
 
   const handleOpen = useCallback(async () => {
-    if (!confirmIfDirty("Open another project")) return;
+    if (!(await confirmIfDirty("Open another project"))) return;
     try {
       if (await detectTauri()) {
         const { open } = await import("@tauri-apps/plugin-dialog");
@@ -244,7 +258,7 @@ function App() {
 
   const handleLoadExample = async (id: string) => {
     setExamplesOpen(false);
-    if (!confirmIfDirty("Load an example")) return;
+    if (!(await confirmIfDirty("Load an example"))) return;
     try {
       await loadExample(id);
       setCurrentPath(null);
