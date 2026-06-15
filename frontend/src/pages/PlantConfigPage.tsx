@@ -17,9 +17,10 @@ const defaultConfig: PlantConfig = {
 
 interface Props {
   setError: (e: string | null) => void;
+  markDirty: () => void;
 }
 
-export default function PlantConfigPage({ setError }: Props) {
+export default function PlantConfigPage({ setError, markDirty }: Props) {
   const [config, setConfig] = useState<PlantConfig>({ ...defaultConfig });
   const [locations, setLocations] = useState<Record<string, unknown>>({});
   const [saved, setSaved] = useState(false);
@@ -52,6 +53,7 @@ export default function PlantConfigPage({ setError }: Props) {
     setSaveError(null);
     try {
       await setPlantConfig(config);
+      markDirty();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (e: unknown) {

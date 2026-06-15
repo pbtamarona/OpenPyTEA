@@ -13,9 +13,10 @@ const defaultInput: EquipmentInput = {
 
 interface Props {
   setError: (e: string | null) => void;
+  markDirty: () => void;
 }
 
-export default function EquipmentPage({ setError }: Props) {
+export default function EquipmentPage({ setError, markDirty }: Props) {
   const [items, setItems] = useState<EquipmentItem[]>([]);
   const [categories, setCategories] = useState<Record<string, CostDBEntry[]>>({});
   const [processTypes, setProcessTypes] = useState<string[]>([]);
@@ -74,6 +75,7 @@ export default function EquipmentPage({ setError }: Props) {
       } else {
         await addEquipment(payload);
       }
+      markDirty();
       setShowModal(false);
       refresh();
     } catch (e: unknown) {
@@ -83,6 +85,7 @@ export default function EquipmentPage({ setError }: Props) {
 
   const handleDelete = async (idx: number) => {
     await deleteEquipment(idx);
+    markDirty();
     refresh();
   };
 

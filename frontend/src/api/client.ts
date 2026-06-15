@@ -84,7 +84,11 @@ export const runMonteCarlo = (params: {
   request<MonteCarloMultiResult>("/analysis/monte-carlo", { method: "POST", body: JSON.stringify(params) });
 
 // Project I/O
+export const newProject = () =>
+  request<{ ok: boolean }>("/project/new", { method: "POST" });
+
 export const saveProject = () => request<unknown>("/project/save", { method: "POST" });
+
 export const loadProject = async (file: File) => {
   const base = await getBase();
   const form = new FormData();
@@ -95,6 +99,13 @@ export const loadProject = async (file: File) => {
     throw new Error(body.detail || `HTTP ${res.status}`);
   }
   return res.json();
+};
+
+/** Load a project from raw JSON text (Tauri path: text comes from fs.readTextFile). */
+export const loadProjectFromText = async (text: string, filename = "project.openpytea") => {
+  const blob = new Blob([text], { type: "application/json" });
+  const file = new File([blob], filename, { type: "application/json" });
+  return loadProject(file);
 };
 
 // Examples

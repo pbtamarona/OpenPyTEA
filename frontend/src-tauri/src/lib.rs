@@ -161,6 +161,11 @@ pub fn run() {
                     ])
                     .build(),
             )?;
+            // Native file dialogs (open / save panels) and direct read/write
+            // access to the path the user picks. Used by the File ▸ Save /
+            // Save As / Open flow.
+            app.handle().plugin(tauri_plugin_dialog::init())?;
+            app.handle().plugin(tauri_plugin_fs::init())?;
             log::info!(
                 "OpenPyTEA shell starting (release={}, version={})",
                 !cfg!(debug_assertions),

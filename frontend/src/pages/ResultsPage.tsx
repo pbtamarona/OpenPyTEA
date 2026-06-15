@@ -11,9 +11,10 @@ interface Props {
   setResults: (r: CalculationResults | null) => void;
   setError: (e: string | null) => void;
   onAddToComparison: (name: string, currency: string, r: CalculationResults) => void;
+  markDirty: () => void;
 }
 
-export default function ResultsPage({ results, setResults, setError, onAddToComparison }: Props) {
+export default function ResultsPage({ results, setResults, setError, onAddToComparison, markDirty }: Props) {
   const [loading, setLoading] = useState(false);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [plantConfig, setPlantConfig] = useState<PlantConfig | null>(null);
@@ -28,6 +29,7 @@ export default function ResultsPage({ results, setResults, setError, onAddToComp
     try {
       const r = await runCalculations();
       setResults(r);
+      markDirty();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Calculation failed");
     } finally {

@@ -1,6 +1,7 @@
 """Save/load project + example presets endpoints."""
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
@@ -15,10 +16,27 @@ router = APIRouter()
 
 PRESETS_DIR = Path(__file__).resolve().parent.parent / "presets"
 
+# Saved-project format identifier and current schema version. Bump `version`
+# whenever the on-disk shape changes in a way that the loader needs to detect
+# and migrate.
+PROJECT_FORMAT = "openpytea-project"
+PROJECT_VERSION = 1
+APP_VERSION = "0.1.0"
+
+
+@router.post("/new")
+def new_project():
+    """Clear the in-memory session — fresh start."""
+    state.equipment_list = []
+    state.plant_config = {}
+    state.plant = None
+    state.results = {}
+    return {"ok": True}
+
 
 @router.post("/save")
 def save_project():
-    """Return the full project state as JSON."""
+    """Return the full project state as a versioned JSON envelope."""
     equipment_data = []
     for eq in state.equipment_list:
         equipment_data.append({
@@ -35,6 +53,10 @@ def save_project():
         })
 
     project = {
+        "format": PROJECT_FORMAT,
+        "version": PROJECT_VERSION,
+        "saved_at": datetime.now(timezone.utc).isoformat(),
+        "app_version": APP_VERSION,
         "equipment": equipment_data,
         "plant": state.plant_config,
         "results": to_jsonable(state.results) if state.results else None,
