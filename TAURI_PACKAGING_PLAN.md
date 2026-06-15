@@ -10,23 +10,56 @@ This document is a working plan / decision log, not a commitment. Re-read it sta
 
 Work happens on branch `standalone-package` (see https://github.com/pbtamarona/OpenPyTEA/tree/standalone-package). The GUI work for users stays on `GUI-beta`; packaging experiments are isolated here so the working GUI never breaks.
 
-- **Step 3 — sidecar wiring** ✅ *done locally, demo-able end-to-end on macOS arm64.*  Commit `291743c`. Tauri shell spawns the PyInstaller backend with `--port 0`, scans its stdout for `OPENPYTEA_BACKEND_PORT=<n>`, exposes the URL to React via the `get_api_base` IPC command, and kills the child on app exit. Frontend `client.ts` polls the IPC on first request and falls back to `VITE_API_BASE_URL` outside Tauri so `start.sh` dev mode is unaffected. CORS for `tauri://localhost` not yet added (only matters for the prod build — Step 4).
-- **Step 2 — Tauri scaffold** ✅ *done.*  Commit `95fe5cd`. `frontend/src-tauri/` (Tauri 2.11, identifier `org.openpytea.app`, 1400×900 default / 1024×700 min). Rust shell compiles cleanly in ~40s. Confirmed: native window opens via `npm run tauri dev`.
-- **Step 1 — backend as PyInstaller binary** ✅ *done.*  Commit `7bda17c`. `dist/openpytea-backend/` is a 152 MB onedir bundle (CPython + numpy/scipy/pandas/matplotlib + openpytea + FastAPI + uvicorn). `backend/openpytea_backend.py` is the entrypoint with `--port 0` + `OPENPYTEA_BACKEND_PORT=<n>` marker. Built by `python scripts/build_sidecar.py` (includes a threaded smoke test that surfaces real crashes). Verified end-to-end on macOS arm64: health, equipment, examples, load preset, calculate all return HTTP 200.
+### Status: a shareable Mac `.dmg` exists and works end-to-end.
 
-What works today (`npm run tauri dev` on macOS arm64, after `python scripts/build_sidecar.py`):
-- Native window, no browser tab. Welcome screen + dark mode + all six tabs render the same as `start.sh`.
-- Backend boots inside the app; matplotlib font-cache build adds ~30–60s on first launch, instant after.
-- Examples dropdown loads, presets calculate, results render in the GUI. End-to-end TEA without any Python on the host.
+Locally produced via `npm run tauri build` (frontend dir), 71 MB compressed installer, 163 MB `.app` on disk. Arm64 Apple Silicon only. Verified by an external tester on a different machine. **Apple Silicon Macs**: not yet on **Intel** or **Windows** — those require running the same build on a matching OS (Step 4 → CI handles this).
 
-Next steps in this branch:
-- **Step 4 — CI release pipeline** (GitHub Actions matrix: macOS arm64 + Intel, Windows, Linux). Each runner needs Python, Node, Rust, and runs `scripts/build_sidecar.py` followed by `npm run tauri build`. Produces `.dmg` / `.msi` / `.deb` / `.AppImage` as release assets on tag push.
-- **Step 5 — polish.** Real icon set (currently Tauri's placeholder), real productName / about strings, optional auto-updater, signed installer (Apple Developer ID + Windows EV cert — needs the decision below).
+### Commits, latest first
 
-Known follow-ups parked for later (none blocking):
-- Bundle size 152 MB. `openpytea/__init__.py` eagerly imports `plotting.py` → forces `matplotlib` + `scienceplots` into the backend even though the backend never plots. Lazy-importing `openpytea.plotting` (a small library-side PR) would shave ~30–50 MB.
-- Backend CORS list will need `tauri://localhost` (macOS/Linux) and `https://tauri.localhost` (Windows) added before `tauri build` ships.
-- Preset JSONs in `backend/app/presets/` are missing the `price` field on each product — pre-existing GUI-beta bug (revenue silently calculates to 0; tornado crashes on `KeyError: "price"`). Belongs on GUI-beta, not this branch.
+- `559a1b0` **Ad-hoc sign the macOS bundle.** `bundle.macOS.signingIdentity = "-"` in `tauri.conf.json` so Tauri runs a proper deep ad-hoc codesign over the assembled `.app`. Fixes the "code has no resources but signature indicates they must be present" mismatch that was making downloaded copies show "*OpenPyTEA is damaged and can't be opened*" on recipients' Macs. Still not Developer-ID signed (would need $99/yr) — recipients still see the milder "from unidentified developer" warning and need `xattr -dr com.apple.quarantine /Applications/OpenPyTEA.app` (or right-click → Open).
+- `ae1a49a` **`multiprocessing.freeze_support()`** at the top of the PyInstaller entrypoint. Monte Carlo's parallel workers re-invoke the bundled exe with Python-helper argv (`-B -S -I -c "from multiprocessing.resource_tracker import main; main(N)"`); without freeze_support our argparse rejected them and every spawn leaked a dead helper. MC still produced correct numbers but loudly.
+- `f501592` **The "make the packaged .app talk to its backend" fix** (three production-only bugs in one commit):
+  - `backend/app/main.py` CORS allowlist now includes `tauri://localhost` (macOS/Linux) and `https://tauri.localhost` (Windows). Without this the packaged webview's fetches were CORS-blocked and surfaced as "Load failed" after a few seconds.
+  - `frontend/src/api/client.ts` switched from hand-rolled `"__TAURI_INTERNALS__" in window` to the official `isTauri()` from `@tauri-apps/api/core`. The hand-rolled check was unreliable across production webview load orders.
+  - `frontend/src-tauri/src/lib.rs` enabled `tauri-plugin-log` unconditionally (was gated on `cfg!(debug_assertions)`), with both Stdout and LogDir targets. Production logs now appear in the terminal when launched there and persist to `~/Library/Logs/org.openpytea.app/` on macOS.
+- `0b93cb1` **Multi-plant tornado.** Sensitivity + MC already supported it via `extra_plants`; tornado was the odd one out. Backend returns `{plants: [{name, factors, labels, lows, highs, base_value}…], plus_minus_value, metric, xlabel}`. Frontend renders grouped low/high bars per plant per parameter; single-plant keeps the original absolute-value x-axis trick, multi-plant switches to a pure Δ axis. Cherry-picked to `GUI-beta` as `9bce3fd`.
+- `eb4c109` **Preset price fix.** Four preset JSONs (`h2_smr`, `h2_electrolysis`, `h2_methane_pyrolysis`, `lh2_smr_best`) were missing the `price` field on their hydrogen/liquid_h2 products → revenue silently calculated to 0 and tornado crashed with `KeyError("price")`. Added 5 US$/kg (H2) and 6 US$/kg (LH2) with std/min/max from the walkthrough notebook. Cherry-picked to `GUI-beta` as `ba607b5`.
+- `cab872b` **Drain backend stderr.** Tauri shell piped stderr but never read it; uvicorn's access logs filled the 64 KB buffer and uvicorn blocked on its next stderr write. GUI got a few responses, then hung — the actual root cause of "examples don't load" earlier in the session. Added a second reader thread that drains stderr to the Rust logger.
+- `9dd97de` **Sidecar timing race.** The entrypoint printed `OPENPYTEA_BACKEND_PORT=…` *before* uvicorn finished binding. Subclassed `uvicorn.Server` so the marker prints inside `startup()` — after the socket is bound and FastAPI startup events have run.
+- `291743c` Step 3 — sidecar wiring (initial). Tauri spawns the PyInstaller binary, reads the port from stdout, exposes it via the `get_api_base` IPC command, kills the child on app exit.
+- `95fe5cd` Step 2 — Tauri scaffold (`frontend/src-tauri/`, Tauri 2.11, identifier `org.openpytea.app`, 1400×900 default).
+- `7bda17c` Step 1 — backend as PyInstaller binary (`dist/openpytea-backend/`, 152 MB onedir, `--port 0` + marker entrypoint, built by `python scripts/build_sidecar.py`).
+
+### Distribution recipe today (Mac arm64)
+
+```bash
+# rebuild backend (if openpytea/backend code changed)
+python scripts/build_sidecar.py --skip-smoke-test
+# rebuild the .app + .dmg
+cd frontend && npm run tauri build
+# installer:
+# frontend/src-tauri/target/release/bundle/dmg/OpenPyTEA_<version>_aarch64.dmg
+```
+
+Recipients on macOS need to clear Apple's "downloaded file" quarantine attribute once, after dragging the .app into Applications:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/OpenPyTEA.app
+```
+
+First launch is 30–60 s while matplotlib builds its font cache; subsequent launches are fast.
+
+### Next steps
+
+- **Step 4 — CI release pipeline** (GitHub Actions matrix: macOS arm64 + Intel, Windows, Linux). Each runner needs Python, Node, Rust, then runs `scripts/build_sidecar.py` followed by `npm run tauri build`. Produces `.dmg` / `.msi` / `.deb` / `.AppImage` as Release assets on tag push. This is what unlocks Windows builds without owning a Windows machine.
+- **Step 5 — polish.** Real icon set (currently Tauri's placeholder cup), the inner binary name (it's still `app` because Cargo crate is named `app` — `productName` only renames the .app bundle), optional auto-updater, signed installer (Apple Developer ID + Windows EV cert if/when budget allows).
+
+### Known follow-ups, parked
+
+- **Bundle size 152 MB.** `openpytea/__init__.py` eagerly imports `plotting.py` → forces `matplotlib` + `scienceplots` into the backend even though the backend never plots. Lazy-importing `openpytea.plotting` (a small library-side PR) would shave ~30–50 MB.
+- **Matplotlib font cache rebuilds on every launch** — PyInstaller's runtime hook resets MPLCONFIGDIR. Adds 30–45 s to every cold start. Workaround: set `MPLCONFIGDIR` to a persistent user-dir path in the entrypoint.
+- **Plant-name UX:** when a user adds a comparison plant in the GUI and gives it a custom name, that name flows through to Tornado/Sensitivity/MC legends now (`_rehydrate_extras` override added in `0b93cb1`). But the *active* plant's name still comes from `plant_config.plant_name` in the preset JSON, so legend labels can mix preset-defined and user-defined names.
+- **Devtools in release** for easier in-browser-console debugging by recipients — `tauri = { features = ["devtools"] }` adds right-click-inspect, only worth it if we hit another opaque webview-side bug.
 
 ---
 
@@ -155,12 +188,21 @@ Initialize `src-tauri/`, configure it to load the static `frontend/dist/` build.
 
 **Shipped:** commit `95fe5cd`. Tauri 2.11, identifier `org.openpytea.app`. Verified `npm run tauri dev` opens the native window.
 
-### Step 3 — Sidecar wiring ✅ *done (macOS arm64)*
+### Step 3 — Sidecar wiring ✅ *done (macOS arm64), shareable .dmg produced*
 Tauri spawns the PyInstaller binary as a sidecar process. Captures the port from stdout. Injects it into the webview. Cleanly shuts down on window close. Handles the case where the sidecar dies unexpectedly (show an error dialog instead of a blank window).
 
 **Deliverable**: Full app works end-to-end on your dev machine. Demo-able.
 
-**Shipped:** commit `291743c`. Demo-able end-to-end: load preset → calculate → results render, no host-side Python. Not yet verified on Windows / Linux (Step 4 territory). Graceful "sidecar died" UI is still on the polish list.
+**Shipped:** initial wiring `291743c`, then a string of production fixes the moment the bundled `.app` was actually installed and tested:
+- `9dd97de` sidecar timing race (announce port after uvicorn binds)
+- `cab872b` drain backend stderr (uvicorn was blocking on a full pipe)
+- `eb4c109` preset price fix (tornado was crashing on missing field)
+- `0b93cb1` multi-plant tornado (parity with sensitivity / MC)
+- `f501592` CORS for `tauri://localhost` + `isTauri()` detection + release-mode logging
+- `ae1a49a` `multiprocessing.freeze_support()` so MC's worker spawns don't log errors
+- `559a1b0` ad-hoc codesign the whole bundle (fixes "App is damaged" on recipients)
+
+A `.dmg` produced via `npm run tauri build` has been confirmed installable and runnable on a second machine. Not yet verified on Windows / Linux (Step 4 territory). Graceful "sidecar died" UI is still on the polish list.
 
 ### Step 4 — CI release pipeline  *(2–3 days)*
 GitHub Actions matrix building the three OSes on tag push. Outputs `.dmg`, `.msi`, `.deb`, `.AppImage` as release assets. This is fiddly — caching the PyInstaller venvs, matplotlib backend exclusion lists, signing the macOS bundle if certs exist.
