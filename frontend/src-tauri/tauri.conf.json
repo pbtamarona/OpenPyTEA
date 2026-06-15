@@ -31,6 +31,15 @@
     "resources": {
       "../../dist/openpytea-backend/": "./openpytea-backend/"
     },
+    "fileAssociations": [
+      {
+        "ext": ["openpytea"],
+        "name": "OpenPyTEA Project",
+        "description": "OpenPyTEA techno-economic assessment project",
+        "role": "Editor",
+        "mimeType": "application/json"
+      }
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

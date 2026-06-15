@@ -255,17 +255,32 @@ pub fn run() {
         .expect("error while building tauri application");
 
     app.run(|app_handle, event| {
-        if matches!(event, RunEvent::Exit) {
-            let maybe_child = {
-                let state = app_handle.state::<BackendState>();
-                let mut guard = state.child.lock().unwrap();
-                guard.take()
-            };
-            if let Some(mut child) = maybe_child {
-                log::info!("terminating backend (pid {})", child.id());
-                let _ = child.kill();
-                let _ = child.wait();
+        match event {
+            RunEvent::Exit => {
+                let maybe_child = {
+                    let state = app_handle.state::<BackendState>();
+                    let mut guard = state.child.lock().unwrap();
+                    guard.take()
+                };
+                if let Some(mut child) = maybe_child {
+                    log::info!("terminating backend (pid {})", child.id());
+                    let _ = child.kill();
+                    let _ = child.wait();
+                }
             }
+            // macOS sends this when the user double-clicks a .openpytea file
+            // (or chooses Open With → OpenPyTEA) — once the file association
+            // declared in tauri.conf.json is registered with the OS.
+            RunEvent::Opened { urls } => {
+                for url in urls {
+                    if let Ok(path) = url.to_file_path() {
+                        let path_str = path.to_string_lossy().to_string();
+                        log::info!("open-file requested: {}", path_str);
+                        let _ = app_handle.emit("open-file", path_str);
+                    }
+                }
+            }
+            _ => {}
         }
     });
 }

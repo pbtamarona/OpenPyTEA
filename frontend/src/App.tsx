@@ -135,36 +135,46 @@ function App() {
     }
   }, [dirty]);
 
-  const handleOpen = useCallback(async () => {
-    if (!confirmIfDirty("Open another project")) return;
+  /** Load a project file at a known path (Tauri only). Shared between
+      File ▸ Open and the OS file-association open-file event. */
+  const loadFromPath = useCallback(async (path: string) => {
     try {
-      if (await detectTauri()) {
-        const [{ open }, { readTextFile }] = await Promise.all([
-          import("@tauri-apps/plugin-dialog"),
-          import("@tauri-apps/plugin-fs"),
-        ]);
-        const selected = await open({
-          multiple: false,
-          filters: [{ name: "OpenPyTEA Project", extensions: [PROJECT_EXT, "json"] }],
-        });
-        if (!selected || typeof selected !== "string") return; // user cancelled
-        const text = await readTextFile(selected);
-        await loadProjectFromText(text);
-        setCurrentPath(selected);
-      } else {
-        // Browser fallback: hidden <input type=file>
-        fileRef.current?.click();
-        return; // handleBrowserLoad takes over
-      }
+      const { readTextFile } = await import("@tauri-apps/plugin-fs");
+      const text = await readTextFile(path);
+      await loadProjectFromText(text);
+      setCurrentPath(path);
       setDirty(false);
       setResults(null);
       setError(null);
       setRefreshKey((k) => k + 1);
       setTab("Equipment");
+      // If the user opens a file from Finder while the welcome screen is up,
+      // skip straight to the main app.
+      setShowWelcome(false);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Open failed");
     }
-  }, [dirty]);
+  }, []);
+
+  const handleOpen = useCallback(async () => {
+    if (!confirmIfDirty("Open another project")) return;
+    try {
+      if (await detectTauri()) {
+        const { open } = await import("@tauri-apps/plugin-dialog");
+        const selected = await open({
+          multiple: false,
+          filters: [{ name: "OpenPyTEA Project", extensions: [PROJECT_EXT, "json"] }],
+        });
+        if (!selected || typeof selected !== "string") return; // user cancelled
+        await loadFromPath(selected);
+      } else {
+        // Browser fallback: hidden <input type=file>
+        fileRef.current?.click();
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Open failed");
+    }
+  }, [dirty, loadFromPath]);
 
   const handleBrowserLoad = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -272,6 +282,23 @@ function App() {
     })();
     return () => { unlisten?.(); };
   }, [showWelcome]);
+
+  // OS file-open events (Tauri only): fires when the user double-clicks a
+  // .openpytea file in Finder or chooses Open With → OpenPyTEA. The Rust
+  // shell forwards the file path via the `open-file` event.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      if (!(await detectTauri())) return;
+      const { listen } = await import("@tauri-apps/api/event");
+      unlisten = await listen<string>("open-file", ({ payload }) => {
+        if (typeof payload === "string" && payload) {
+          loadFromPath(payload);
+        }
+      });
+    })();
+    return () => { unlisten?.(); };
+  }, [loadFromPath]);
 
   // Browser-dev keyboard shortcuts. Skipped in Tauri, where the native
   // menu's accelerators (CmdOrCtrl+N/O/S/⇧S) handle the same keys via
