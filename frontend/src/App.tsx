@@ -41,7 +41,7 @@ function App() {
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [examples, setExamples] = useState<ExamplePreset[]>([]);
-  const [fileMenuOpen, setFileMenuOpen] = useState(false);
+  const [examplesOpen, setExamplesOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("openpytea-theme");
@@ -50,6 +50,7 @@ function App() {
   });
   const [comparedPlants, setComparedPlants] = useState<ComparedPlant[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [inTauri, setInTauri] = useState(false);
 
   // Project file state
   const [currentPath, setCurrentPath] = useState<string | null>(null);
@@ -88,6 +89,10 @@ function App() {
   }, [dark]);
 
   useEffect(() => {
+    detectTauri().then(setInTauri);
+  }, []);
+
+  useEffect(() => {
     if (showWelcome) return;
     getExamples().then(setExamples).catch((e: unknown) => {
       // non-critical — examples just won't appear in the dropdown
@@ -116,7 +121,6 @@ function App() {
     !dirty || window.confirm(`You have unsaved changes. ${verb} anyway?`);
 
   const handleNew = useCallback(async () => {
-    setFileMenuOpen(false);
     if (!confirmIfDirty("Start a new project")) return;
     try {
       await newProject();
@@ -132,7 +136,6 @@ function App() {
   }, [dirty]);
 
   const handleOpen = useCallback(async () => {
-    setFileMenuOpen(false);
     if (!confirmIfDirty("Open another project")) return;
     try {
       if (await detectTauri()) {
@@ -188,7 +191,6 @@ function App() {
   };
 
   const handleSaveAs = useCallback(async () => {
-    setFileMenuOpen(false);
     try {
       if (await detectTauri()) {
         const { save } = await import("@tauri-apps/plugin-dialog");
@@ -218,7 +220,6 @@ function App() {
   }, [currentPath]);
 
   const handleSave = useCallback(async () => {
-    setFileMenuOpen(false);
     // Without a known path (or outside Tauri), Save behaves as Save As.
     if (!currentPath || !(await detectTauri())) {
       return handleSaveAs();
@@ -232,7 +233,7 @@ function App() {
   }, [currentPath, handleSaveAs]);
 
   const handleLoadExample = async (id: string) => {
-    setFileMenuOpen(false);
+    setExamplesOpen(false);
     if (!confirmIfDirty("Load an example")) return;
     try {
       await loadExample(id);
@@ -247,23 +248,62 @@ function App() {
     }
   };
 
-  // Keyboard shortcuts (Cmd / Ctrl + N / O / S / Shift+S).
-  // Use a ref so the listener always calls the freshest handler closures.
+  // File-action dispatch — used by both the native menu (Tauri) and the
+  // browser-dev keydown listener. Ref-stored so listeners always see the
+  // freshest closure without re-attaching on every render.
   const handlersRef = useRef({ handleNew, handleOpen, handleSave, handleSaveAs });
   handlersRef.current = { handleNew, handleOpen, handleSave, handleSaveAs };
+
+  // Native menu events (Tauri): the Rust shell emits "menu" with the item
+  // id (e.g. "menu:new") whenever the user clicks File ▸ New or hits ⌘N.
   useEffect(() => {
     if (showWelcome) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey)) return;
-      const k = e.key.toLowerCase();
-      const h = handlersRef.current;
-      if (k === "n" && !e.shiftKey) { e.preventDefault(); h.handleNew(); }
-      else if (k === "o" && !e.shiftKey) { e.preventDefault(); h.handleOpen(); }
-      else if (k === "s" && !e.shiftKey) { e.preventDefault(); h.handleSave(); }
-      else if (k === "s" && e.shiftKey) { e.preventDefault(); h.handleSaveAs(); }
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      if (!(await detectTauri())) return;
+      const { listen } = await import("@tauri-apps/api/event");
+      unlisten = await listen<string>("menu", ({ payload }) => {
+        const h = handlersRef.current;
+        if (payload === "menu:new") h.handleNew();
+        else if (payload === "menu:open") h.handleOpen();
+        else if (payload === "menu:save") h.handleSave();
+        else if (payload === "menu:save-as") h.handleSaveAs();
+      });
+    })();
+    return () => { unlisten?.(); };
+  }, [showWelcome]);
+
+  // Browser-dev keyboard shortcuts. Skipped in Tauri, where the native
+  // menu's accelerators (CmdOrCtrl+N/O/S/⇧S) handle the same keys via
+  // the OS menu system and we don't want to double-fire.
+  useEffect(() => {
+    if (showWelcome) return;
+    let canceled = false;
+    let attached = false;
+    (async () => {
+      if (await detectTauri()) return; // native menu handles shortcuts
+      if (canceled) return;
+      const onKey = (e: KeyboardEvent) => {
+        if (!(e.metaKey || e.ctrlKey)) return;
+        const k = e.key.toLowerCase();
+        const h = handlersRef.current;
+        if (k === "n" && !e.shiftKey) { e.preventDefault(); h.handleNew(); }
+        else if (k === "o" && !e.shiftKey) { e.preventDefault(); h.handleOpen(); }
+        else if (k === "s" && !e.shiftKey) { e.preventDefault(); h.handleSave(); }
+        else if (k === "s" && e.shiftKey) { e.preventDefault(); h.handleSaveAs(); }
+      };
+      window.addEventListener("keydown", onKey);
+      attached = true;
+      // store on a closure-captured slot for cleanup
+      (handlersRef.current as unknown as { _keyHandler?: typeof onKey })._keyHandler = onKey;
+    })();
+    return () => {
+      canceled = true;
+      if (attached) {
+        const onKey = (handlersRef.current as unknown as { _keyHandler?: (e: KeyboardEvent) => void })._keyHandler;
+        if (onKey) window.removeEventListener("keydown", onKey);
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
   }, [showWelcome]);
 
   if (showWelcome) {
@@ -285,27 +325,13 @@ function App() {
         </nav>
         <div className="header-actions">
           <div className="examples-dropdown">
-            <button className="btn-examples" onClick={() => setFileMenuOpen(!fileMenuOpen)}>
-              File ▾
+            <button className="btn-examples" onClick={() => setExamplesOpen(!examplesOpen)}>
+              Examples
             </button>
-            {fileMenuOpen && (
+            {examplesOpen && (
               <>
-                <div className="dropdown-backdrop" onClick={() => setFileMenuOpen(false)} />
-                <div className="dropdown-menu file-menu">
-                  <button className="dropdown-item file-item" onClick={handleNew}>
-                    <span>New Project</span><span className="shortcut">{cmdKey}N</span>
-                  </button>
-                  <button className="dropdown-item file-item" onClick={handleOpen}>
-                    <span>Open…</span><span className="shortcut">{cmdKey}O</span>
-                  </button>
-                  <button className="dropdown-item file-item" onClick={handleSave}>
-                    <span>Save</span><span className="shortcut">{cmdKey}S</span>
-                  </button>
-                  <button className="dropdown-item file-item" onClick={handleSaveAs}>
-                    <span>Save As…</span><span className="shortcut">{cmdKey}⇧S</span>
-                  </button>
-                  <div className="dropdown-divider" />
-                  <div className="dropdown-section">Examples</div>
+                <div className="dropdown-backdrop" onClick={() => setExamplesOpen(false)} />
+                <div className="dropdown-menu">
                   {examples.map((ex) => (
                     <button key={ex.id} className="dropdown-item" onClick={() => handleLoadExample(ex.id)}>
                       <span className="dropdown-item-title">{ex.title}</span>
@@ -316,7 +342,17 @@ function App() {
               </>
             )}
           </div>
-          <input ref={fileRef} type="file" accept=".openpytea,.json" hidden onChange={handleBrowserLoad} />
+          {/* In Tauri the system menu bar handles File ▸ New / Open / Save /
+              Save As. In browser-dev mode (start.sh) there's no system menu,
+              so we show inline buttons + keyboard shortcuts. */}
+          {!inTauri && (
+            <>
+              <button className="btn-secondary" onClick={handleNew} title={`New project (${cmdKey}N)`}>New</button>
+              <button className="btn-secondary" onClick={handleOpen} title={`Open (${cmdKey}O)`}>Open</button>
+              <button className="btn-secondary" onClick={handleSave} title={`Save (${cmdKey}S)`}>Save</button>
+              <input ref={fileRef} type="file" accept=".openpytea,.json" hidden onChange={handleBrowserLoad} />
+            </>
+          )}
           <button className="btn-theme" onClick={() => setDark((d) => !d)} title={dark ? "Switch to light mode" : "Switch to dark mode"}>
             {dark ? "☀️" : "🌙"}
           </button>
