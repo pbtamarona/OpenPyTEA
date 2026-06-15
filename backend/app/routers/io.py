@@ -68,25 +68,20 @@ MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 MAX_EQUIPMENT = 500
 
 
-@router.post("/load", response_model=LoadResponse)
-async def load_project(file: UploadFile = File(...)):
-    """Load a project from an uploaded JSON file."""
-    try:
-        content = await file.read(MAX_UPLOAD_SIZE + 1)
-        if len(content) > MAX_UPLOAD_SIZE:
-            raise HTTPException(status_code=413, detail="File too large (max 5 MB)")
-        data = json.loads(content)
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid JSON file")
+def _restore_project_state(data: dict) -> int:
+    """Apply a project payload to the in-memory state. Returns equipment count.
 
-    # Restore equipment
+    Accepts both the current versioned envelope and the legacy flat shape —
+    both have `equipment` and `plant` at the top level.
+    """
     equipment_data = data.get("equipment", [])
     if len(equipment_data) > MAX_EQUIPMENT:
-        raise HTTPException(status_code=400, detail=f"Too many equipment items (max {MAX_EQUIPMENT})")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Too many equipment items (max {MAX_EQUIPMENT})",
+        )
 
-    state.equipment_list = []
+    rebuilt: list[Equipment] = []
     for entry in equipment_data:
         try:
             eq = Equipment(
@@ -101,19 +96,46 @@ async def load_project(file: UploadFile = File(...)):
                 cost_year=entry.get("cost_year"),
                 target_year=entry.get("target_year", 2024),
             )
-            state.equipment_list.append(eq)
+            rebuilt.append(eq)
         except Exception:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid equipment entry '{entry.get('name', '?')}'",
             )
 
-    # Restore plant config
+    state.equipment_list = rebuilt
     state.plant_config = data.get("plant", {})
     state.plant = None
     state.results = {}
+    return len(rebuilt)
 
-    return {"ok": True, "equipment_count": len(state.equipment_list)}
+
+@router.post("/load", response_model=LoadResponse)
+async def load_project(file: UploadFile = File(...)):
+    """Load a project from a multipart-uploaded JSON file (browser path)."""
+    try:
+        content = await file.read(MAX_UPLOAD_SIZE + 1)
+        if len(content) > MAX_UPLOAD_SIZE:
+            raise HTTPException(status_code=413, detail="File too large (max 5 MB)")
+        data = json.loads(content)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON file")
+
+    n = _restore_project_state(data)
+    return {"ok": True, "equipment_count": n}
+
+
+@router.post("/load_json", response_model=LoadResponse)
+async def load_project_json(data: dict):
+    """Load a project from a JSON body directly (Tauri path).
+
+    Avoids the Blob → File → FormData → multipart round-trip that's
+    fragile inside WebKit-based webviews.
+    """
+    n = _restore_project_state(data)
+    return {"ok": True, "equipment_count": n}
 
 
 @router.get("/examples", response_model=list[ExamplePreset])

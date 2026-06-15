@@ -101,11 +101,21 @@ export const loadProject = async (file: File) => {
   return res.json();
 };
 
-/** Load a project from raw JSON text (Tauri path: text comes from fs.readTextFile). */
-export const loadProjectFromText = async (text: string, filename = "project.openpytea") => {
-  const blob = new Blob([text], { type: "application/json" });
-  const file = new File([blob], filename, { type: "application/json" });
-  return loadProject(file);
+/** Load a project from raw JSON text (Tauri path: text comes from fs.readTextFile).
+ *  Sends the parsed JSON directly to /project/load_json — bypasses the
+ *  Blob → File → FormData multipart round-trip, which is unreliable inside
+ *  Tauri's WebKit webview. */
+export const loadProjectFromText = async (text: string) => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("File is not valid JSON");
+  }
+  return request<{ ok: boolean; equipment_count: number }>(
+    "/project/load_json",
+    { method: "POST", body: JSON.stringify(parsed) },
+  );
 };
 
 // Examples
