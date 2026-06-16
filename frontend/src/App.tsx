@@ -52,13 +52,37 @@ function App() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [inTauri, setInTauri] = useState(false);
 
-  // Project file state
+  // Project file state.
+  //   dirty           = user edited inputs (equipment / plant config)
+  //                     since the last save / load. Used for the
+  //                     "Load an example anyway?" switch-prompt.
+  //   comparisonDirty = user added/removed compared plants since the
+  //                     last save / load. NOT used for switch-prompts
+  //                     (would block the typical multi-example
+  //                     comparison flow) but IS checked on app close.
   const [currentPath, setCurrentPath] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [comparisonDirty, setComparisonDirty] = useState(false);
   const markDirty = useCallback(() => setDirty(true), []);
+
+  // Close-confirmation modal state (Tauri-only: triggered when the
+  // user tries to quit while there's unsaved work).
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
 
   // Loading banner: non-null message shows a fixed top progress bar.
   const [loadingMsg, setLoadingMsg] = useState<string | null>(null);
+
+  // Refs for state values that listeners (close-requested, menu, etc.)
+  // need to read freshly. Reassigning a ref in render is safe — these
+  // are not part of React's render output.
+  const dirtyRef = useRef(dirty);
+  const comparisonDirtyRef = useRef(comparisonDirty);
+  const comparedPlantsRef = useRef(comparedPlants);
+  const currentPathRef = useRef(currentPath);
+  dirtyRef.current = dirty;
+  comparisonDirtyRef.current = comparisonDirty;
+  comparedPlantsRef.current = comparedPlants;
+  currentPathRef.current = currentPath;
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -80,13 +104,16 @@ function App() {
       ...prev,
       { id: crypto.randomUUID(), name, currency, results: r, source },
     ]);
-    // No markDirty: the Compare list is a working scratchpad. We persist it
-    // on save and warn for actual input edits (equipment / plant config),
-    // not for the compare-multiple-examples workflow.
+    setComparisonDirty(true);
+    // We deliberately don't set the input-`dirty` flag — that one drives
+    // the load-example/open prompts and would otherwise block the typical
+    // "load A, add, load B, add, …" flow. comparisonDirty is only checked
+    // on app close.
   };
 
   const removeFromComparison = (id: string) => {
     setComparedPlants((prev) => prev.filter((p) => p.id !== id));
+    setComparisonDirty(true);
   };
 
   useEffect(() => {
@@ -179,6 +206,7 @@ function App() {
       await newProject();
       setCurrentPath(null);
       setComparedPlants([]);
+      setComparisonDirty(false);
       setDirty(false);
       setResults(null);
       setError(null);
@@ -224,6 +252,7 @@ function App() {
       await loadProjectFromText(text);
 
       setComparedPlants(restoreComparedPlants(parsed));
+      setComparisonDirty(false);
       setCurrentPath(path);
       setDirty(false);
       setError(null);
@@ -289,11 +318,13 @@ function App() {
 
   const writeProjectTo = async (path: string) => {
     const backendData = await saveProject() as Record<string, unknown>;
-    // Frontend-only state we want to persist alongside the active plant:
-    // the Compare tab's stash so multi-plant sessions survive save/load.
+    // Read compared plants via ref so we always serialize the latest list,
+    // even when this function is called from a memoized handler whose
+    // closure captured an older `comparedPlants` value.
+    const cps = comparedPlantsRef.current;
     const full = {
       ...backendData,
-      compared_plants: comparedPlants.map((p) => ({
+      compared_plants: cps.map((p) => ({
         name: p.name,
         currency: p.currency,
         results: p.results,
@@ -305,7 +336,7 @@ function App() {
     await writeTextFile(path, text);
   };
 
-  const handleSaveAs = useCallback(async () => {
+  const handleSaveAs = useCallback(async (): Promise<boolean> => {
     try {
       if (await detectTauri()) {
         const { save } = await import("@tauri-apps/plugin-dialog");
@@ -313,10 +344,12 @@ function App() {
           defaultPath: currentPath ?? `untitled.${PROJECT_EXT}`,
           filters: [{ name: "OpenPyTEA Project", extensions: [PROJECT_EXT] }],
         });
-        if (!path) return; // user cancelled
+        if (!path) return false; // user cancelled
         await writeProjectTo(path);
         setCurrentPath(path);
         setDirty(false);
+        setComparisonDirty(false);
+        return true;
       } else {
         // Browser fallback: blob download
         const data = await saveProject();
@@ -328,13 +361,16 @@ function App() {
         a.click();
         URL.revokeObjectURL(url);
         setDirty(false);
+        setComparisonDirty(false);
+        return true;
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Save failed");
+      return false;
     }
   }, [currentPath]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (): Promise<boolean> => {
     // Without a known path (or outside Tauri), Save behaves as Save As.
     if (!currentPath || !(await detectTauri())) {
       return handleSaveAs();
@@ -342,8 +378,11 @@ function App() {
     try {
       await writeProjectTo(currentPath);
       setDirty(false);
+      setComparisonDirty(false);
+      return true;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Save failed");
+      return false;
     }
   }, [currentPath, handleSaveAs]);
 
@@ -359,6 +398,8 @@ function App() {
       // analysis tabs. Clearing would break that.
       setCurrentPath(null);
       setDirty(false);
+      // Comparison list is unchanged by example loads; leave comparisonDirty
+      // alone so building a comparison still counts as unsaved work.
       setError(null);
       setRefreshKey((k) => k + 1);
       setTab("Equipment");
@@ -419,6 +460,49 @@ function App() {
     return () => { unlisten?.(); };
   }, [loadFromPath]);
 
+  // Intercept window close so we can prompt for unsaved work. preventDefault
+  // is called synchronously; the actual modal shows the user the three
+  // choices (Save / Don't Save / Cancel) and the window is destroyed only
+  // after they pick a non-cancel option.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      if (!(await detectTauri())) return;
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      const win = getCurrentWindow();
+      unlisten = await win.onCloseRequested((event) => {
+        if (dirtyRef.current || comparisonDirtyRef.current) {
+          event.preventDefault();
+          setCloseConfirmOpen(true);
+        }
+      });
+    })();
+    return () => { unlisten?.(); };
+  }, []);
+
+  const destroyWindow = async () => {
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    await getCurrentWindow().destroy();
+  };
+
+  const handleCloseSave = async () => {
+    const ok = await handleSave();
+    if (!ok) {
+      // Save failed or user cancelled the file dialog: keep the window open.
+      setCloseConfirmOpen(false);
+      return;
+    }
+    setCloseConfirmOpen(false);
+    await destroyWindow();
+  };
+
+  const handleCloseDiscard = async () => {
+    setCloseConfirmOpen(false);
+    await destroyWindow();
+  };
+
+  const handleCloseCancel = () => setCloseConfirmOpen(false);
+
   // Browser-dev keyboard shortcuts. Skipped in Tauri, where the native
   // menu's accelerators (CmdOrCtrl+N/O/S/⇧S) handle the same keys via
   // the OS menu system and we don't want to double-fire.
@@ -461,10 +545,33 @@ function App() {
     </div>
   ) : null;
 
+  const closeConfirmModal = closeConfirmOpen ? (
+    <div className="modal-overlay">
+      <div className="modal" style={{ maxWidth: 440 }}>
+        <h2>Unsaved Changes</h2>
+        <p style={{ marginTop: 0, color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.5 }}>
+          You have unsaved work
+          {dirty && comparisonDirty
+            ? " (edited inputs and an unsaved comparison)"
+            : dirty
+              ? " (edited inputs)"
+              : " (unsaved comparison)"}
+          . Do you want to save before quitting?
+        </p>
+        <div className="modal-actions">
+          <button className="btn-secondary" onClick={handleCloseCancel}>Cancel</button>
+          <button className="btn-secondary" onClick={handleCloseDiscard}>Don't Save</button>
+          <button className="btn-primary" onClick={handleCloseSave}>Save</button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   if (showWelcome) {
     return (
       <>
         {loadingBanner}
+        {closeConfirmModal}
         <WelcomePage onContinue={() => setShowWelcome(false)} />
       </>
     );
@@ -475,6 +582,7 @@ function App() {
   return (
     <div className="app">
       {loadingBanner}
+      {closeConfirmModal}
       <header className="header">
         <img src="/logo.png" alt="OpenPyTEA" className="brand-logo" />
         <nav className="tabs">
