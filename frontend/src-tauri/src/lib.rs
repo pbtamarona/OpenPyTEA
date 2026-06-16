@@ -7,9 +7,10 @@
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
-use tauri::{AppHandle, Emitter, Manager, Runtime, RunEvent};
+use tauri::{AppHandle, Emitter, Manager, Runtime, RunEvent, WindowEvent};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri_plugin_log::{Target, TargetKind};
 
@@ -19,6 +20,19 @@ struct BackendState {
     child: Mutex<Option<Child>>,
     port: Mutex<Option<u16>>,
 }
+
+/// Set to true after the frontend has confirmed it's OK to actually quit
+/// (user clicked Save → success or Don't Save in the unsaved-work modal).
+/// Without this we'd loop: app.exit() → ExitRequested → prevent → ask JS
+/// again → JS calls force_quit → ExitRequested → …
+#[derive(Default)]
+struct ConfirmedExit(AtomicBool);
+
+/// File paths the OS asked us to open before the webview was ready. The
+/// frontend drains this list on mount via take_pending_open_files() to
+/// catch cold-start file double-clicks.
+#[derive(Default)]
+struct OpenFileQueue(Mutex<Vec<String>>);
 
 /// Locate the backend binary.
 ///
@@ -142,6 +156,24 @@ fn get_api_base(state: tauri::State<'_, BackendState>) -> Option<String> {
         .map(|p| format!("http://127.0.0.1:{}/api", p))
 }
 
+/// IPC command: drain and return any file paths the OS asked us to open
+/// before the frontend was ready (cold-start double-click case).
+#[tauri::command]
+fn take_pending_open_files(q: tauri::State<'_, OpenFileQueue>) -> Vec<String> {
+    let mut guard = q.0.lock().unwrap();
+    std::mem::take(&mut *guard)
+}
+
+/// IPC command: actually quit the app, bypassing the
+/// CloseRequested / ExitRequested confirmation cycle. Called by the
+/// frontend after the user has either saved or chosen "Don't Save" in the
+/// unsaved-work modal.
+#[tauri::command]
+fn force_quit(app: AppHandle, confirmed: tauri::State<'_, ConfirmedExit>) {
+    confirmed.0.store(true, Ordering::Relaxed);
+    app.exit(0);
+}
+
 /// Build the native macOS-style menu bar (App / File / Edit). The same
 /// structure is used on Windows/Linux, where it renders as a window menu
 /// bar.
@@ -209,7 +241,26 @@ pub fn run() {
     let context = tauri::generate_context!();
     let app = tauri::Builder::default()
         .manage(BackendState::default())
-        .invoke_handler(tauri::generate_handler![get_api_base])
+        .manage(ConfirmedExit::default())
+        .manage(OpenFileQueue::default())
+        .invoke_handler(tauri::generate_handler![
+            get_api_base,
+            take_pending_open_files,
+            force_quit,
+        ])
+        .on_window_event(|window, event| {
+            // Fired when the user clicks the red close button. Cancel the
+            // close, ask the frontend to handle it (it may or may not show
+            // a "save first?" modal depending on dirty state).
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                let app = window.app_handle();
+                let confirmed = app.state::<ConfirmedExit>();
+                if !confirmed.0.load(Ordering::Relaxed) {
+                    api.prevent_close();
+                    let _ = app.emit("request-close", ());
+                }
+            }
+        })
         .on_menu_event(|app, event| {
             // Every native menu item we own carries an id beginning with
             // "menu:". Forward those to the frontend; let predefined items
@@ -256,6 +307,14 @@ pub fn run() {
 
     app.run(|app_handle, event| {
         match event {
+            // Cmd+Q on macOS, or any other "quit the app" path.
+            RunEvent::ExitRequested { api, .. } => {
+                let confirmed = app_handle.state::<ConfirmedExit>();
+                if !confirmed.0.load(Ordering::Relaxed) {
+                    api.prevent_exit();
+                    let _ = app_handle.emit("request-close", ());
+                }
+            }
             RunEvent::Exit => {
                 let maybe_child = {
                     let state = app_handle.state::<BackendState>();
@@ -271,11 +330,17 @@ pub fn run() {
             // macOS sends this when the user double-clicks a .openpytea file
             // (or chooses Open With → OpenPyTEA) — once the file association
             // declared in tauri.conf.json is registered with the OS.
+            //
+            // We BOTH emit live (warm-open case: the app is running and the
+            // frontend's listener is ready) AND queue (cold-open case: the
+            // event fires during app startup before React has mounted).
             RunEvent::Opened { urls } => {
+                let q = app_handle.state::<OpenFileQueue>();
                 for url in urls {
                     if let Ok(path) = url.to_file_path() {
                         let path_str = path.to_string_lossy().to_string();
                         log::info!("open-file requested: {}", path_str);
+                        q.0.lock().unwrap().push(path_str.clone());
                         let _ = app_handle.emit("open-file", path_str);
                     }
                 }

@@ -460,30 +460,49 @@ function App() {
     return () => { unlisten?.(); };
   }, [loadFromPath]);
 
-  // Intercept window close so we can prompt for unsaved work. preventDefault
-  // is called synchronously; the actual modal shows the user the three
-  // choices (Save / Don't Save / Cancel) and the window is destroyed only
-  // after they pick a non-cancel option.
+  // Drain any file paths the OS asked us to open before the frontend was
+  // ready (cold-start file double-click case: macOS fires RunEvent::Opened
+  // during app launch, well before this useEffect attached the open-file
+  // listener below, so the live emit is lost).
+  useEffect(() => {
+    (async () => {
+      if (!(await detectTauri())) return;
+      try {
+        const { invoke } = await import("@tauri-apps/api/core");
+        const paths = await invoke<string[]>("take_pending_open_files");
+        for (const p of paths) {
+          await loadFromPath(p);
+        }
+      } catch (e) {
+        console.warn("take_pending_open_files failed", e);
+      }
+    })();
+  }, [loadFromPath]);
+
+  // Quit requests come from Rust (both red-close-button and Cmd+Q go
+  // through the same `request-close` event now). We pop the modal here if
+  // there's unsaved work; otherwise we let the quit go through immediately.
+  const requestForceQuit = async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("force_quit");
+  };
+
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     (async () => {
       if (!(await detectTauri())) return;
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      const win = getCurrentWindow();
-      unlisten = await win.onCloseRequested((event) => {
+      const { listen } = await import("@tauri-apps/api/event");
+      unlisten = await listen("request-close", () => {
         if (dirtyRef.current || comparisonDirtyRef.current) {
-          event.preventDefault();
           setCloseConfirmOpen(true);
+        } else {
+          // No unsaved work — just quit.
+          requestForceQuit();
         }
       });
     })();
     return () => { unlisten?.(); };
   }, []);
-
-  const destroyWindow = async () => {
-    const { getCurrentWindow } = await import("@tauri-apps/api/window");
-    await getCurrentWindow().destroy();
-  };
 
   const handleCloseSave = async () => {
     const ok = await handleSave();
@@ -493,12 +512,12 @@ function App() {
       return;
     }
     setCloseConfirmOpen(false);
-    await destroyWindow();
+    await requestForceQuit();
   };
 
   const handleCloseDiscard = async () => {
     setCloseConfirmOpen(false);
-    await destroyWindow();
+    await requestForceQuit();
   };
 
   const handleCloseCancel = () => setCloseConfirmOpen(false);
