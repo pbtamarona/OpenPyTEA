@@ -80,12 +80,13 @@ function App() {
       ...prev,
       { id: crypto.randomUUID(), name, currency, results: r, source },
     ]);
-    markDirty();
+    // No markDirty: the Compare list is a working scratchpad. We persist it
+    // on save and warn for actual input edits (equipment / plant config),
+    // not for the compare-multiple-examples workflow.
   };
 
   const removeFromComparison = (id: string) => {
     setComparedPlants((prev) => prev.filter((p) => p.id !== id));
-    markDirty();
   };
 
   useEffect(() => {
@@ -352,7 +353,10 @@ function App() {
     try {
       setLoadingMsg("Loading example…");
       await loadExample(id);
-      setComparedPlants([]);
+      // Intentionally NOT clearing comparedPlants — the typical multi-plant
+      // comparison workflow is: load A → calculate → Add to comparison →
+      // load B → calculate → Add to comparison → overlay both on the
+      // analysis tabs. Clearing would break that.
       setCurrentPath(null);
       setDirty(false);
       setError(null);
@@ -519,7 +523,7 @@ function App() {
       <main className="main">
         {tab === "Equipment" && <EquipmentPage key={refreshKey} setError={setError} markDirty={markDirty} />}
         {tab === "Plant Config" && <PlantConfigPage key={refreshKey} setError={setError} markDirty={markDirty} />}
-        {tab === "Results" && <ResultsPage results={results} setResults={setResults} setError={setError} onAddToComparison={addToComparison} markDirty={markDirty} />}
+        {tab === "Results" && <ResultsPage results={results} setResults={setResults} setError={setError} onAddToComparison={addToComparison} />}
         {tab === "Analysis" && <AnalysisPage setError={setError} comparedPlants={comparedPlants} />}
         {tab === "Monte Carlo" && <MonteCarloPage setError={setError} comparedPlants={comparedPlants} />}
         {tab === "Compare" && (
