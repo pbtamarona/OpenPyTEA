@@ -124,35 +124,37 @@ OpenPyTEA includes an optional web-based graphical interface for users who prefe
 
 ### Running the GUI
 
-**Quick start** (requires Python 3.10+ and Node.js — macOS/Linux):
+**Two options:**
 
-```bash
-./start.sh
-```
+1. **Standalone macOS app** (no Python or Node on the user's machine needed). Build instructions and install steps are in **[`PACKAGING.md`](PACKAGING.md)**.
 
-That's it. On first run the script creates a local `.venv`, installs the backend dependencies, runs `npm install`, then launches both servers and opens your browser at http://localhost:5173. Subsequent runs just start the servers. Press `Ctrl+C` to stop both.
+2. **From source, for development** (requires Python 3.10+ and Node.js):
 
-<details>
-<summary><strong>Manual steps</strong> (if you'd rather run backend and frontend yourself)</summary>
+   ```bash
+   ./start.sh
+   ```
 
-**Backend** (Python 3.10+):
-```bash
-pip install -e .          # install OpenPyTEA from repo root
-cd backend
-pip install -r requirements.txt
-PYTHONPATH=../src python3 -m uvicorn app.main:app --reload --port 8000
-```
+   On first run the script creates a local `.venv`, installs the backend dependencies, runs `npm install`, then launches both servers and opens your browser at http://localhost:5173. Subsequent runs just start the servers. Press `Ctrl+C` to stop both.
 
-**Frontend** (Node.js):
-```bash
-cd frontend
-npm install
-npm run dev
-```
+   <details>
+   <summary><strong>Manual steps</strong> (if you'd rather run backend and frontend yourself)</summary>
 
-Then open http://localhost:5173.
+   ```bash
+   # Backend
+   pip install -e .
+   cd backend
+   pip install -r requirements.txt
+   PYTHONPATH=../src python3 -m uvicorn app.main:app --reload --port 8000
 
-</details>
+   # Frontend (separate terminal)
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+   Then open http://localhost:5173.
+
+   </details>
 
 Click **Examples** in the header to load a case study preset and explore.
 
