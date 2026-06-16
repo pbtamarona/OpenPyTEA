@@ -255,8 +255,11 @@ pub fn run() {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 let app = window.app_handle();
                 let confirmed = app.state::<ConfirmedExit>();
-                if !confirmed.0.load(Ordering::Relaxed) {
+                let already = confirmed.0.load(Ordering::Relaxed);
+                log::info!("WindowEvent::CloseRequested (confirmed_exit={})", already);
+                if !already {
                     api.prevent_close();
+                    log::info!("CloseRequested → prevented; emitting request-close");
                     let _ = app.emit("request-close", ());
                 }
             }
@@ -310,8 +313,11 @@ pub fn run() {
             // Cmd+Q on macOS, or any other "quit the app" path.
             RunEvent::ExitRequested { api, .. } => {
                 let confirmed = app_handle.state::<ConfirmedExit>();
-                if !confirmed.0.load(Ordering::Relaxed) {
+                let already = confirmed.0.load(Ordering::Relaxed);
+                log::info!("RunEvent::ExitRequested (confirmed_exit={})", already);
+                if !already {
                     api.prevent_exit();
+                    log::info!("ExitRequested → prevented; emitting request-close");
                     let _ = app_handle.emit("request-close", ());
                 }
             }

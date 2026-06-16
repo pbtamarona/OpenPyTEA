@@ -476,6 +476,19 @@ tbody tr:hover { background: var(--hover-bg); }
 .modal h2 { margin: 0 0 20px; font-size: 18px; }
 .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
 
+/* .btn-secondary is styled for the dark header (white text on
+   transparent). Inside a modal that has a light background, white-on-
+   white renders invisibly. Override so non-primary modal buttons use
+   the proper foreground/border colors for the modal surface. */
+.modal-actions .btn-secondary {
+  color: var(--text);
+  border: 1px solid var(--input-border);
+  background: transparent;
+}
+.modal-actions .btn-secondary:hover {
+  background: var(--hover-bg);
+}
+
 /* Dynamic list editor */
 .list-editor { margin-bottom: 16px; }
 .list-editor-row {

@@ -493,13 +493,16 @@ function App() {
       if (!(await detectTauri())) return;
       const { listen } = await import("@tauri-apps/api/event");
       unlisten = await listen("request-close", () => {
-        if (dirtyRef.current || comparisonDirtyRef.current) {
+        const d = dirtyRef.current, cd = comparisonDirtyRef.current;
+        console.log("[close] request-close received; dirty=", d, "comparisonDirty=", cd);
+        if (d || cd) {
           setCloseConfirmOpen(true);
         } else {
           // No unsaved work — just quit.
           requestForceQuit();
         }
       });
+      console.log("[close] request-close listener attached");
     })();
     return () => { unlisten?.(); };
   }, []);
