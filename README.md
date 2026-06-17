@@ -17,7 +17,25 @@ https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb
 https://github.com/pbtamarona/OpenPyTEA/tree/main/examples
 
 ---
+## 🎓 Workshop
 
+We are hosting a one-day workshop on open-science techno-economic assessment using **OpenPyTEA**!
+
+<p align="center">
+  <img src="workshop-flyer.jpg" alt="OpenPyTEA" width="800"/>
+</p>
+
+**Open-Science Techno-Economic Assessment with OpenPyTEA: From Process Design to Economic Insights**
+
+The workshop covers the full workflow from process design and simulation to economic evaluation, combining lectures, a hands-on session with OpenPyTEA, and an industry talk by Shell. It closes with a community discussion on establishing shared TEA standards, bringing together students, researchers, engineers, and policymakers across chemical, energy, and sustainability sciences.
+
+- 📅 **Date:** November 6, 2026 | 09:30 – 18:00
+- 📍 **Location:** Process & Energy, TU Delft, Delft, The Netherlands
+- 📝 **Registration:** [aanmelder.nl/openpytea2026](https://aanmelder.nl/openpytea2026)
+
+Lunch, snacks, coffee, and drinks will be provided!
+
+---
 ## ✨ Key Features
 - **Modular architecture:** clean separation of cost correlations, equipment objects, plant economics, and uncertainty analysis.  
 - **Transparent and reproducible:** all algorithms, equations, and assumptions are openly available for full traceability.
@@ -30,7 +48,6 @@ https://github.com/pbtamarona/OpenPyTEA/tree/main/examples
 - **Community-driven:** users can contribute new correlations, improve models, request features, and shape the evolution of the platform.  
 
 ---
-
 ## 📦 Installation
 
 ### 1. **Install from PyPI (recommended)**
@@ -63,7 +80,6 @@ The main dependencies include:
 - `jinja2` 
 
 ---
-
 ## ⚙️ Package (Repository) Structure
 ```
 src/openpytea/
@@ -99,15 +115,13 @@ frontend/                   # React + TypeScript web GUI
 pyproject.toml
 README.md
 ```
----
 
+---
 ## 🏗️ Software Architecture
 
 ![OpenPyTEA Architecture](examples/img/architecture.png)
 
 Software architecture and data flow of **OpenPyTEA**, illustrating the progression from user input to TEA output. Users provide economic assumptions, process simulation results, and equipment-sizing parameters. Equipment-sizing information is linked with cost correlations and CEPCI values stored in CSV databases to calculate inflation-adjusted purchased and direct costs. `Equipment` objects are aggregated into a `Plant` object, where CAPEX, OPEX, and financial performance metrics are evaluated. The `analysis.py` module subsequently operates on `Plant` objects to perform sensitivity and uncertainty analyses.
-
----
 
 <!-- ## 🖥️ Web GUI (**work in progress**)
 
@@ -160,6 +174,7 @@ For detailed architecture documentation, see `GUI_ARCHITECTURE.md`. -->
 
 <!-- --- -->
 
+---
 ## 🧠 Core Concepts
 
 ### 1. **Equipment-level costing**
@@ -271,7 +286,6 @@ results = monte_carlo(
 ```
 Outputs include probability distributions and confidence intervals for LCOP or NPV—supporting uncertainty-informed decision-making. With `plot_multiple_monte_carlo`, **OpenPyTEA** can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons.
 
----
 ### 5. **Workflow using JSON configuration files**
 
 **OpenPyTEA** supports a workflow using structured JSON input files via the `io.py` module. This enables standardized, reproducible, and scalable TEA studies.
@@ -283,6 +297,7 @@ Key functionalities include:
 
 This workflow is demonstrated in `case_study_1_with_JSON.ipynb` in the example folder.
 
+---
 ## ▶️ Tutorials
 
 Step-by-step tutorial videos covering the full OpenPyTEA workflow are available here:
@@ -307,6 +322,7 @@ Step-by-step tutorial videos covering the full OpenPyTEA workflow are available 
 
 The notebooks used in the tutorials and the raw video files are available in the [tutorial_videos folder](https://github.com/pbtamarona/OpenPyTEA/tree/main/tutorial_videos)
 
+---
 ## 📘 Example Workflows
 
 Example notebooks are available in the `examples/` folder, including:
@@ -325,12 +341,14 @@ Each notebook demonstrates:
 - Sensitivity and uncertainty analysis
 - Visualization of key economic indicators
 
+---
 ## 🧑‍🏫 Educational Use
 
 **OpenPyTEA** is suitable for chemical and process engineering education.
 Students can perform full TEA using their simulation outputs—estimating capital, operating, and profitability metrics—without commercial software.
 All algorithms are visible and modifiable, eliminating the “black-box” nature of most TEA tools.
 
+---
 ## 🛠️ Contributing
 We welcome community contributions!
 You can help by:
@@ -349,41 +367,51 @@ git checkout -b feature-new-equipment
 Please follow PEP8 coding conventions and include a short description of your updates.
 
 ---
+## 📖 Publication
 
+**OpenPyTEA** is described in the following peer-reviewed paper published in *SoftwareX*:
+
+> Tamarona, P.B., Vlugt, T.J.H., & Ramdin, M. (2026). *OpenPyTEA: An open-source python toolkit
+> for techno-economic assessment of chemical process plants and energy systems with economic
+> sensitivity and uncertainty evaluation.* SoftwareX, 35, 102816.
+> https://doi.org/10.1016/j.softx.2026.102816
+
+If you use **OpenPyTEA** in your research, please cite this paper (see [Citation](#-citation) below).
+
+---
 ## 📚 Citation
 
-If you use **OpenPyTEA** in your research, please cite it using the automatic GitHub citation feature or the `CITATION.cff` file included in this repository.
+If you use **OpenPyTEA** in your research, please cite the following paper:
 
-On GitHub, click:
-```
-Repository page → "Cite this repository"
-```
-This will provide formatted citation export options (BibTeX, APA, MLA, etc.) based on the CITATION.cff metadata.
-
-Or if you prefer to cite manually, you may use:
-
-> Tamarona, P.B., Vlugt, T.J.H., & Ramdin, M. (2025). *OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation.* GitHub Repository. Available at: [https://github.com/pbtamarona/OpenPyTEA](https://github.com/pbtamarona/OpenPyTEA)
+> Tamarona, P.B., Vlugt, T.J.H., & Ramdin, M. (2026). *OpenPyTEA: An open-source python toolkit
+> for techno-economic assessment of chemical process plants and energy systems with economic
+> sensitivity and uncertainty evaluation.* SoftwareX, 35, 102816.
+> https://doi.org/10.1016/j.softx.2026.102816
 
 **BibTeX:**
 ```bibtex
-@misc{tamarona2025openpytea,
-  author       = {Panji B. Tamarona and Thijs J.H. Vlugt and Mahinder Ramdin},
-  title        = {OpenPyTEA: An open-source python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation},
-  year         = {2025},
-  url          = {\url{https://github.com/pbtamarona/OpenPyTEA}},
-  version      = {2.0.0},
-  note         = {Accessed: YYYY-MM-DD}
-}
+@article{TAMARONA2026102816,
+title = {OpenPyTEA: An open-source python toolkit for techno-economic assessment of chemical process plants and energy systems with economic sensitivity and uncertainty evaluation},
+journal = {SoftwareX},
+volume = {35},
+pages = {102816},
+year = {2026},
+issn = {2352-7110},
+doi = {https://doi.org/10.1016/j.softx.2026.102816},
+url = {https://www.sciencedirect.com/science/article/pii/S2352711026003080},
+author = {P.B. Tamarona and T.J.H. Vlugt and M. Ramdin},
+keywords = {Techno-economic assessment, Process design, Process plant, Power plant, Chemical engineering},
+` ` `
 ```
 
 ---
-
 ## 📄 License
 
 **OpenPyTEA** is released under the MIT License.
 
 You are free to use, modify, and distribute the code with proper attribution.
 
+---
 ## 📬 Contact
 Panji B. Tamarona
 
