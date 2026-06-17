@@ -3,17 +3,17 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
-        <link rel="prefetch" href="../../_static/OpenPyTEA-logo-black.png" as="image">
-        <link rel="prefetch" href="../../_static/OpenPyTEA-logo.png" as="image">
+        <link rel="prefetch" href="../../_static/logo-black.png" as="image">
+        <link rel="prefetch" href="../../_static/logo-white.png" as="image">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../../_static/logo-opt.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>openpytea.plant - OpenPyTEA</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=3437e138" />
     
     
 
@@ -228,8 +228,8 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   <div class="sidebar-logo-container">
-    <img class="sidebar-logo only-light" src="../../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
-    <img class="sidebar-logo only-dark" src="../../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+    <img class="sidebar-logo only-light" src="../../_static/logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../../_static/logo-white.png" alt="Dark Logo"/>
   </div>
   
   
@@ -248,7 +248,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/analysis.html">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/io_workflow.html">JSON Workflow</a></li>
 </ul>
@@ -263,8 +263,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -437,70 +439,6 @@
 <span class="sd">                populated after running monte_carlo().</span>
 <span class="sd">            monte_carlo_metrics (dict or None): Distribution results populated</span>
 <span class="sd">                after running monte_carlo().</span>
-<span class="sd">    Methods:</span>
-<span class="sd">        __init__(configuration: dict):</span>
-<span class="sd">            Initialize plant with configuration dictionary.</span>
-<span class="sd">        update_configuration(configuration: dict):</span>
-<span class="sd">            Update plant parameters while preserving nested structures.</span>
-<span class="sd">        calculate_purchased_cost(print_results: bool = False) -&gt; float:</span>
-<span class="sd">            Sum equipment purchase costs with exchange rate conversion.</span>
-<span class="sd">        calculate_isbl(fc: float = 1.0, print_results: bool = False) -&gt; float:</span>
-<span class="sd">            Calculate Inside Battery Limits cost (direct equipment costs</span>
-<span class="sd">            adjusted for location).</span>
-<span class="sd">        calculate_fixed_capital(fc: float = None,</span>
-<span class="sd">                                additional_capex: bool = False,</span>
-<span class="sd">                                print_results: bool = False) -&gt; float:</span>
-<span class="sd">            Calculate total fixed capital including ISBL, OSBL,</span>
-<span class="sd">            design/engineering, and contingency.</span>
-<span class="sd">        calculate_variable_opex(print_results: bool = False) -&gt; float:</span>
-<span class="sd">            Calculate annual variable operating costs (feedstock, utilities).</span>
-<span class="sd">        calculate_revenue(print_results: bool = False) -&gt; float:</span>
-<span class="sd">            Calculate annual revenue from plant products.</span>
-<span class="sd">        calculate_operating_labor(no_fluid_process: int = None,</span>
-<span class="sd">                                 no_solid_process: int = None) -&gt; float:</span>
-<span class="sd">            Calculate total annual operating labor costs.</span>
-<span class="sd">        calculate_fixed_opex(fp: float = None,</span>
-<span class="sd">                            print_results: bool = False) -&gt; float:</span>
-<span class="sd">            Calculate fixed operating expenses (maintenance, supervision,</span>
-<span class="sd">            overhead, etc.).</span>
-<span class="sd">        calculate_cash_flow(print_results: bool = False) -&gt;</span>
-<span class="sd">                            pd.DataFrame or None:</span>
-<span class="sd">            Build year-by-year cash flow with CAPEX profile, revenue, costs,</span>
-<span class="sd">            depreciation, taxes. Supports multiple scenarios if array inputs</span>
-<span class="sd">            provided.</span>
-<span class="sd">        calculate_npv(print_results: bool = False) -&gt; float or np.ndarray:</span>
-<span class="sd">            Calculate Net Present Value of cash flows using interest_rate as</span>
-<span class="sd">            discount rate.</span>
-<span class="sd">        calculate_levelized_cost(print_results: bool = False) -&gt; float:</span>
-<span class="sd">            Calculate levelized cost ($/unit) over project lifetime.</span>
-<span class="sd">        calculate_payback_time(additional_capex: bool = False,</span>
-<span class="sd">                              print_results: bool = False) -&gt; float:</span>
-<span class="sd">            Calculate years required to recover initial investment</span>
-<span class="sd">            from cash flows.</span>
-<span class="sd">        calculate_roi(additional_capex: bool = False,</span>
-<span class="sd">                        print_results: bool = False) -&gt; float:</span>
-<span class="sd">            Calculate Return on Investment percentage over project lifetime.</span>
-<span class="sd">        calculate_irr(print_results: bool = False) -&gt; float:</span>
-<span class="sd">            Calculate Internal Rate of Return (discount rate where NPV = 0).</span>
-<span class="sd">        calculate_all(additional_capex: bool = False,</span>
-<span class="sd">                        print_results: bool = False):</span>
-<span class="sd">            Execute all financial calculations sequentially.</span>
-<span class="sd">        count_process_steps(equipments: list, target_process_types: set,</span>
-<span class="sd">                           excluded_cats: set = None) -&gt; int:</span>
-<span class="sd">            Count equipment units matching process type and category filters.</span>
-<span class="sd">        calculate_operators_per_shift(no_fluid_process: int = None,</span>
-<span class="sd">                                     no_solid_process: int = None) -&gt; float:</span>
-<span class="sd">            Calculate operators needed per shift using empirical correlation.</span>
-<span class="sd">        calculate_operators_hired(no_fluid_process: int = None,</span>
-<span class="sd">                                 no_solid_process: int = None) -&gt; int:</span>
-<span class="sd">            Calculate total operators to hire accounting for</span>
-<span class="sd">            working/operating schedule.</span>
-<span class="sd">        to_dict() -&gt; dict:</span>
-<span class="sd">            Serialize plant configuration and all calculated metrics</span>
-<span class="sd">            to dictionary.</span>
-<span class="sd">        __str__() -&gt; str:</span>
-<span class="sd">            Return formatted string representation of all configuration</span>
-<span class="sd">            parameters.</span>
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; config = {</span>
 <span class="sd">        ...     &quot;plant_name&quot;: &quot;Example Plant&quot;,</span>
@@ -546,7 +484,7 @@
     <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configuration</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize plant from a configuration dictionary.&quot;&quot;&quot;</span>
         <span class="c1"># keep a copy of the original config so code can read from it later</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">configuration</span><span class="p">)</span>
 
@@ -647,7 +585,19 @@
 <div class="viewcode-block" id="Plant.update_configuration">
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.update_configuration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_configuration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configuration</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update plant parameters while preserving nested structures.</span>
 
+<span class="sd">        Top-level scalar keys overwrite existing values. Nested dicts</span>
+<span class="sd">        (``variable_opex_inputs``, ``plant_products``, ``operator_hourly_rate``,</span>
+<span class="sd">        ``project_uncertainties``, ``fixed_opex_factors``,</span>
+<span class="sd">        ``fixed_capital_factors``) are deep-merged rather than replaced.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        configuration : dict</span>
+<span class="sd">            Partial or full plant configuration. Only supplied keys are updated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># keep the stored config up to date</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span>
@@ -852,7 +802,19 @@
 <div class="viewcode-block" id="Plant.calculate_purchased_cost">
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.calculate_purchased_cost">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_purchased_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">print_results</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sum equipment purchased costs with exchange rate conversion.</span>
 
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print a per-equipment cost breakdown. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Total purchased cost in plant currency.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">purchased_cost</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
             <span class="n">equipment</span><span class="o">.</span><span class="n">purchased_cost</span>
             <span class="k">for</span> <span class="n">equipment</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">equipment_list</span>
@@ -880,7 +842,30 @@
 <div class="viewcode-block" id="Plant.calculate_isbl">
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.calculate_isbl">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_isbl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">print_results</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate Inside Battery Limits (ISBL) cost.</span>
 
+<span class="sd">        Sums direct equipment costs and applies the location factor and the</span>
+<span class="sd">        installed cost multiplier ``fc``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fc : float, optional</span>
+<span class="sd">            Installed cost multiplier. Default is 1.0.</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print a per-equipment cost breakdown. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            ISBL cost in plant currency.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the plant&#39;s country or region is not found in ``locFactors``</span>
+<span class="sd">            and no explicit ``loc_factor`` is set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">location_factors</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loc_factor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -937,7 +922,32 @@
         <span class="n">additional_capex</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">print_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate total fixed capital investment.</span>
 
+<span class="sd">        Includes ISBL, OSBL, design &amp; engineering, and contingency. Factors</span>
+<span class="sd">        can be overridden via ``fixed_capital_factors`` / ``fixed_capital_components``</span>
+<span class="sd">        set on the plant.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fc : float or None, optional</span>
+<span class="sd">            Installed cost multiplier. Defaults to 1.0 if None.</span>
+<span class="sd">        additional_capex : bool, optional</span>
+<span class="sd">            Include additional CAPEX items in the printed summary. Default is False.</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print a cost breakdown. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Total fixed capital cost in plant currency.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``process_type`` is not one of the supported process types.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">fc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="o">=</span> <span class="mf">1.0</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1024,6 +1034,22 @@
 <div class="viewcode-block" id="Plant.calculate_variable_opex">
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.calculate_variable_opex">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_variable_opex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">print_results</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate annual variable operating costs.</span>
+
+<span class="sd">        Iterates over ``variable_opex_inputs`` and computes cost as</span>
+<span class="sd">        consumption × price × 365 × plant_utilization for each item.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print a per-item cost breakdown. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Total annual variable OPEX in plant currency.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">variable_production_costs</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">variable_opex_breakdown</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -1069,6 +1095,22 @@
 <div class="viewcode-block" id="Plant.calculate_revenue">
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.calculate_revenue">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_revenue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">print_results</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate annual revenue from plant products.</span>
+
+<span class="sd">        Iterates over ``plant_products`` and computes revenue as</span>
+<span class="sd">        production × price × 365 × plant_utilization for each product.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print a per-product revenue breakdown. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Total annual revenue in plant currency.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">revenue</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">revenue_breakdown</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -1121,6 +1163,23 @@
         <span class="n">target_process_types</span><span class="p">,</span>
         <span class="n">excluded_cats</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Count equipment units matching a set of process types.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        equipments : list</span>
+<span class="sd">            List of Equipment objects to scan.</span>
+<span class="sd">        target_process_types : set</span>
+<span class="sd">            Process type labels to match (e.g. ``{&quot;Fluids&quot;, &quot;Mixed&quot;}``).</span>
+<span class="sd">        excluded_cats : set or None, optional</span>
+<span class="sd">            Equipment categories to skip. Default is None (no exclusions).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            Number of matching equipment units.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">excluded_cats</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">excluded_cats</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1139,6 +1198,30 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_operators_per_shift</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">no_fluid_process</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">no_solid_process</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the number of operators required per shift.</span>
+
+<span class="sd">        Uses the empirical correlation from Turton et al. based on fluid and</span>
+<span class="sd">        solid process step counts. Returns ``operators_per_shift`` directly if</span>
+<span class="sd">        it was set manually on the plant.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        no_fluid_process : int or None, optional</span>
+<span class="sd">            Number of fluid/mixed process steps. Auto-counted if None.</span>
+<span class="sd">        no_solid_process : int or None, optional</span>
+<span class="sd">            Number of solid/mixed process steps (max 2). Auto-counted if None.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Estimated operators per shift.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``no_solid_process`` exceeds 2.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operators_per_shift</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">operators_per_shift</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1174,6 +1257,26 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_operators_hired</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">no_fluid_process</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">no_solid_process</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the total number of operators to hire.</span>
+
+<span class="sd">        Accounts for the ratio of operating shifts per year to working shifts</span>
+<span class="sd">        per year. Returns ``operators_hired`` directly if set manually.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        no_fluid_process : int or None, optional</span>
+<span class="sd">            Number of fluid/mixed process steps. Passed to</span>
+<span class="sd">            ``calculate_operators_per_shift`` if needed.</span>
+<span class="sd">        no_solid_process : int or None, optional</span>
+<span class="sd">            Number of solid/mixed process steps. Passed to</span>
+<span class="sd">            ``calculate_operators_per_shift`` if needed.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            Total operators to hire.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operators_hired</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">operators_hired</span>
 
@@ -1206,6 +1309,21 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_operating_labor</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">no_fluid_process</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">no_solid_process</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate total annual operating labor costs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        no_fluid_process : int or None, optional</span>
+<span class="sd">            Number of fluid/mixed process steps. Auto-counted if None.</span>
+<span class="sd">        no_solid_process : int or None, optional</span>
+<span class="sd">            Number of solid/mixed process steps. Auto-counted if None.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Annual operating labor cost in plant currency.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">operators_hired</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_operators_hired</span><span class="p">(</span>
             <span class="n">no_fluid_process</span><span class="p">,</span> <span class="n">no_solid_process</span>
         <span class="p">)</span>
@@ -1239,6 +1357,28 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_fixed_opex</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">fp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_results</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate fixed operating expenses (OPEX).</span>
+
+<span class="sd">        Computes supervision, salary overhead, laboratory charges, maintenance,</span>
+<span class="sd">        taxes &amp; insurance, rent, environmental charges, operating supplies,</span>
+<span class="sd">        general plant overhead, working capital interest, patents &amp; royalties,</span>
+<span class="sd">        distribution &amp; selling, and R&amp;D costs. Factors and individual component</span>
+<span class="sd">        values can be overridden via ``fixed_opex_factors`` and</span>
+<span class="sd">        ``fixed_opex_components`` set on the plant.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fp : float or None, optional</span>
+<span class="sd">            Fixed OPEX multiplier applied to the total. Defaults to 1.0 if None.</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print a full fixed OPEX breakdown. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Total annual fixed OPEX in plant currency.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">fp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fp</span> <span class="o">=</span> <span class="mf">1.0</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1443,7 +1583,33 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_cash_flow</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">print_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build a year-by-year cash flow table.</span>
 
+<span class="sd">        Applies the CAPEX ramp, production ramp, depreciation schedule,</span>
+<span class="sd">        and tax lag to produce annual capital cost, revenue, cash cost,</span>
+<span class="sd">        gross profit, depreciation, taxable income, tax paid, and net cash</span>
+<span class="sd">        flow arrays. Supports vectorised (Monte Carlo) inputs when</span>
+<span class="sd">        ``project_lifetime``, ``interest_rate``, etc. are arrays.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Return a formatted ``pd.DataFrame.style`` for scalar scenarios.</span>
+<span class="sd">            Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame.style or None</span>
+<span class="sd">            Styled cash flow table when ``print_results=True`` and inputs are</span>
+<span class="sd">            scalar; None otherwise (results stored as instance arrays).</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``project_lifetime &lt; 3``, ``capex_ramp`` or</span>
+<span class="sd">            ``production_ramp`` are invalid, or no plant products are defined.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># 0) Upstream calcs (capital, opex breakdowns)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">calculate_fixed_capital</span><span class="p">(</span><span class="n">fc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fc</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">calculate_variable_opex</span><span class="p">()</span>
@@ -1726,6 +1892,30 @@
 <div class="viewcode-block" id="Plant.calculate_npv">
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.calculate_npv">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_npv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">print_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate Net Present Value (NPV) of the project cash flows.</span>
+
+<span class="sd">        Discounts each year&#39;s cash flow at ``interest_rate`` and returns the</span>
+<span class="sd">        cumulative NPV at the end of the project lifetime. Supports vectorised</span>
+<span class="sd">        inputs for Monte Carlo scenarios.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print a year-by-year present value and cumulative NPV table.</span>
+<span class="sd">            Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float or np.ndarray</span>
+<span class="sd">            Final NPV (scalar) or array of NPVs across scenarios.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``interest_rate`` is an array whose length does not match the</span>
+<span class="sd">            number of cash flow scenarios.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">calculate_fixed_capital</span><span class="p">(</span>
             <span class="n">fc</span><span class="o">=</span><span class="mf">1.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span>
         <span class="p">)</span>
@@ -1801,6 +1991,23 @@
 <div class="viewcode-block" id="Plant.calculate_levelized_cost">
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.calculate_levelized_cost">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_levelized_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">print_results</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the levelized cost of production (LCOP).</span>
+
+<span class="sd">        Discounts capital costs, operating costs, and production over the</span>
+<span class="sd">        project lifetime at ``interest_rate``. Side-product revenues are</span>
+<span class="sd">        subtracted before dividing by discounted production.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print the mean levelized cost. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float or np.ndarray</span>
+<span class="sd">            Levelized cost per unit of main product (scalar or array).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">calculate_fixed_capital</span><span class="p">(</span>
             <span class="n">fc</span><span class="o">=</span><span class="mf">1.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span>
         <span class="p">)</span>
@@ -1878,6 +2085,24 @@
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.calculate_payback_time">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_payback_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additional_capex</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
                                <span class="n">print_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate simple payback time.</span>
+
+<span class="sd">        Divides total fixed capital (optionally including additional CAPEX) by</span>
+<span class="sd">        the mean annual cash flow across revenue-generating years.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        additional_capex : bool, optional</span>
+<span class="sd">            Include additional CAPEX in the total investment. Default is False.</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print the payback time. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float or np.ndarray</span>
+<span class="sd">            Payback time in years (``nan`` if no revenue-generating years exist).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">revenue</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">revenue_array</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
         <span class="n">cash_flow</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cash_flow</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
@@ -1959,6 +2184,25 @@
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.calculate_roi">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additional_capex</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
                       <span class="n">print_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate Return on Investment (ROI).</span>
+
+<span class="sd">        Computes total net profit over the project lifetime as a percentage of</span>
+<span class="sd">        total investment (fixed capital + working capital, optionally including</span>
+<span class="sd">        additional CAPEX), annualised by project lifetime.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        additional_capex : bool, optional</span>
+<span class="sd">            Include additional CAPEX in total investment. Default is False.</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print the ROI value. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float or np.ndarray</span>
+<span class="sd">            ROI as a percentage (scalar or array across scenarios).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">net_profit</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gross_profit_array</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
             <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tax_paid_array</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
@@ -2029,6 +2273,22 @@
 <div class="viewcode-block" id="Plant.calculate_irr">
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.calculate_irr">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_irr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">print_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the Internal Rate of Return (IRR).</span>
+
+<span class="sd">        Finds the discount rate at which NPV equals zero using Brent&#39;s method.</span>
+<span class="sd">        Returns ``nan`` if no sign change is found (no valid IRR exists).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print the IRR value. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float or np.ndarray</span>
+<span class="sd">            IRR as a fraction (e.g. 0.15 = 15%), or ``nan`` if undefined.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cash_flow</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_irr_from_cash_flow</span><span class="p">(</span><span class="n">cf_1d</span><span class="p">):</span>
@@ -2142,6 +2402,22 @@
 <div class="viewcode-block" id="Plant.calculate_all">
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.calculate_all">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additional_capex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_results</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run all financial calculations sequentially.</span>
+
+<span class="sd">        Calls ``calculate_fixed_capital``, ``calculate_variable_opex``,</span>
+<span class="sd">        ``calculate_fixed_opex``, ``calculate_revenue``, ``calculate_cash_flow``,</span>
+<span class="sd">        ``calculate_npv``, ``calculate_levelized_cost``,</span>
+<span class="sd">        ``calculate_payback_time``, ``calculate_roi``, and ``calculate_irr``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        additional_capex : bool, optional</span>
+<span class="sd">            Pass through to ``calculate_fixed_capital``, ``calculate_payback_time``,</span>
+<span class="sd">            and ``calculate_roi``. Default is False.</span>
+<span class="sd">        print_results : bool, optional</span>
+<span class="sd">            Print results from each sub-calculation. Default is False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">calculate_fixed_capital</span><span class="p">(</span><span class="n">fc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fc</span><span class="p">,</span>
                                      <span class="n">additional_capex</span><span class="o">=</span><span class="n">additional_capex</span><span class="p">,</span>
                                      <span class="n">print_results</span><span class="o">=</span><span class="n">print_results</span><span class="p">)</span>
@@ -2161,6 +2437,16 @@
 <div class="viewcode-block" id="Plant.to_dict">
 <a class="viewcode-back" href="../../api/plant.html#openpytea.plant.Plant.to_dict">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Serialize plant configuration and all computed metrics to a dict.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Nested dictionary with sections: ``plant_configuration``,</span>
+<span class="sd">            ``equipment_summary``, ``capital_costs``, ``variable_opex``,</span>
+<span class="sd">            ``fixed_opex``, ``revenue``, ``cash_flow``, and ``metrics``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">equipment_items</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">eq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">equipment_list</span><span class="p">:</span>
@@ -2529,6 +2815,25 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_project_uncertainties</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Validate the structure and values of a ``project_uncertainties`` config dict.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cfg : dict</span>
+<span class="sd">        Uncertainty configuration mapping parameter names to sub-dicts with</span>
+<span class="sd">        keys such as ``mean``, ``std``, ``min``, ``max``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If ``cfg`` is not a dict, or any sub-entry is not a dict, or any</span>
+<span class="sd">        numeric value is not an int or float.</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If unknown parameter or sub-keys are present, ``std`` is negative,</span>
+<span class="sd">        ``min &gt;= max``, or domain-specific bounds are violated (e.g. interest</span>
+<span class="sd">        rate ≤ 0, project lifetime &lt; 1, unit-interval params outside [0, 1]).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -2936,5 +3241,6 @@
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=fd10adb8"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>

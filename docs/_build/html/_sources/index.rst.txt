@@ -23,6 +23,30 @@ financial metrics.
 Source code, issue tracker, and contributions:
 `github.com/pbtamarona/OpenPyTEA <https://github.com/pbtamarona/OpenPyTEA>`_.
 
+----
+
+.. admonition:: 🎓 Upcoming Workshop — Register Now!
+   :class: important
+
+   **Open-Science Techno-Economic Assessment with OpenPyTEA: From Process Design to Economic Insights**
+
+   We are hosting a one-day workshop covering the full workflow from process design and simulation
+   to economic evaluation, with lectures, a hands-on OpenPyTEA session, and an industry talk by Shell.
+   It closes with a community discussion on establishing shared TEA standards.
+
+   - 📅 **Date:** November 6, 2026 | 09:30 – 18:00
+   - 📍 **Location:** Process & Energy, TU Delft, Delft, The Netherlands
+   - 📝 **Registration:** `aanmelder.nl/openpytea2026 <https://aanmelder.nl/openpytea2026>`_
+
+   Lunch, snacks, coffee, and drinks will be provided!
+
+   .. image:: _static/workshop-flyer.jpg
+      :alt: OpenPyTEA Workshop Flyer
+      :width: 600px
+      :align: center
+
+----
+
 .. grid:: 2
    :gutter: 3
    :margin: 0

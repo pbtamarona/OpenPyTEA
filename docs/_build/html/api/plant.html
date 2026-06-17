@@ -482,92 +482,6 @@ plant_utilization and tax_rate). Supported keys:</p>
 </dl>
 </div></blockquote>
 <dl>
-<dt>Methods:</dt><dd><dl>
-<dt>__init__(configuration: dict):</dt><dd><p>Initialize plant with configuration dictionary.</p>
-</dd>
-<dt>update_configuration(configuration: dict):</dt><dd><p>Update plant parameters while preserving nested structures.</p>
-</dd>
-<dt>calculate_purchased_cost(print_results: bool = False) -&gt; float:</dt><dd><p>Sum equipment purchase costs with exchange rate conversion.</p>
-</dd>
-<dt>calculate_isbl(fc: float = 1.0, print_results: bool = False) -&gt; float:</dt><dd><p>Calculate Inside Battery Limits cost (direct equipment costs
-adjusted for location).</p>
-</dd>
-<dt>calculate_fixed_capital(fc: float = None,</dt><dd><blockquote>
-<div><p>additional_capex: bool = False,
-print_results: bool = False) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate total fixed capital including ISBL, OSBL,
-design/engineering, and contingency.</p>
-</dd>
-<dt>calculate_variable_opex(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate annual variable operating costs (feedstock, utilities).</p>
-</dd>
-<dt>calculate_revenue(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate annual revenue from plant products.</p>
-</dd>
-<dt>calculate_operating_labor(no_fluid_process: int = None,</dt><dd><blockquote>
-<div><p>no_solid_process: int = None) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate total annual operating labor costs.</p>
-</dd>
-<dt>calculate_fixed_opex(fp: float = None,</dt><dd><blockquote>
-<div><p>print_results: bool = False) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate fixed operating expenses (maintenance, supervision,
-overhead, etc.).</p>
-</dd>
-<dt>calculate_cash_flow(print_results: bool = False) -&gt;</dt><dd><blockquote>
-<div><p>pd.DataFrame or None:</p>
-</div></blockquote>
-<p>Build year-by-year cash flow with CAPEX profile, revenue, costs,
-depreciation, taxes. Supports multiple scenarios if array inputs
-provided.</p>
-</dd>
-<dt>calculate_npv(print_results: bool = False) -&gt; float or np.ndarray:</dt><dd><p>Calculate Net Present Value of cash flows using interest_rate as
-discount rate.</p>
-</dd>
-<dt>calculate_levelized_cost(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate levelized cost ($/unit) over project lifetime.</p>
-</dd>
-<dt>calculate_payback_time(additional_capex: bool = False,</dt><dd><blockquote>
-<div><p>print_results: bool = False) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate years required to recover initial investment
-from cash flows.</p>
-</dd>
-<dt>calculate_roi(additional_capex: bool = False,</dt><dd><blockquote>
-<div><p>print_results: bool = False) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate Return on Investment percentage over project lifetime.</p>
-</dd>
-<dt>calculate_irr(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate Internal Rate of Return (discount rate where NPV = 0).</p>
-</dd>
-<dt>calculate_all(additional_capex: bool = False,</dt><dd><blockquote>
-<div><p>print_results: bool = False):</p>
-</div></blockquote>
-<p>Execute all financial calculations sequentially.</p>
-</dd>
-<dt>count_process_steps(equipments: list, target_process_types: set,</dt><dd><blockquote>
-<div><p>excluded_cats: set = None) -&gt; int:</p>
-</div></blockquote>
-<p>Count equipment units matching process type and category filters.</p>
-</dd>
-<dt>calculate_operators_per_shift(no_fluid_process: int = None,</dt><dd><blockquote>
-<div><p>no_solid_process: int = None) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate operators needed per shift using empirical correlation.</p>
-</dd>
-<dt>calculate_operators_hired(no_fluid_process: int = None,</dt><dd><blockquote>
-<div><p>no_solid_process: int = None) -&gt; int:</p>
-</div></blockquote>
-<p>Calculate total operators to hire accounting for
-working/operating schedule.</p>
-</dd>
-<dt>to_dict() -&gt; dict:</dt><dd><p>Serialize plant configuration and all calculated metrics
-to dictionary.</p>
-</dd>
-<dt>__str__() -&gt; str:</dt><dd><p>Return formatted string representation of all configuration
-parameters.</p>
-</dd>
-</dl>
-</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
 <span class="gp">... </span>    <span class="s2">&quot;plant_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Example Plant&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="s2">&quot;process_type&quot;</span><span class="p">:</span> <span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
@@ -602,9 +516,14 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.update_configuration">
 <span class="sig-name descname"><span class="pre">update_configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.update_configuration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.update_configuration" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Update plant parameters while preserving nested structures.</p>
+<p>Top-level scalar keys overwrite existing values. Nested dicts
+(<code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code>, <code class="docutils literal notranslate"><span class="pre">plant_products</span></code>, <code class="docutils literal notranslate"><span class="pre">operator_hourly_rate</span></code>,
+<code class="docutils literal notranslate"><span class="pre">project_uncertainties</span></code>, <code class="docutils literal notranslate"><span class="pre">fixed_opex_factors</span></code>,
+<code class="docutils literal notranslate"><span class="pre">fixed_capital_factors</span></code>) are deep-merged rather than replaced.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>configuration</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+<dd class="field-odd"><p><strong>configuration</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Partial or full plant configuration. Only supplied keys are updated.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -612,19 +531,69 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_purchased_cost">
 <span class="sig-name descname"><span class="pre">calculate_purchased_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_purchased_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_purchased_cost" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sum equipment purchased costs with exchange rate conversion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a per-equipment cost breakdown. Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total purchased cost in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_isbl">
 <span class="sig-name descname"><span class="pre">calculate_isbl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_isbl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_isbl" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate Inside Battery Limits (ISBL) cost.</p>
+<p>Sums direct equipment costs and applies the location factor and the
+installed cost multiplier <code class="docutils literal notranslate"><span class="pre">fc</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Installed cost multiplier. Default is 1.0.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a per-equipment cost breakdown. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ISBL cost in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the plant’s country or region is not found in <code class="docutils literal notranslate"><span class="pre">locFactors</span></code>
+    and no explicit <code class="docutils literal notranslate"><span class="pre">loc_factor</span></code> is set.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_fixed_capital">
 <span class="sig-name descname"><span class="pre">calculate_fixed_capital</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_fixed_capital"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_fixed_capital" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Calculate total fixed capital investment.</p>
+<p>Includes ISBL, OSBL, design &amp; engineering, and contingency. Factors
+can be overridden via <code class="docutils literal notranslate"><span class="pre">fixed_capital_factors</span></code> / <code class="docutils literal notranslate"><span class="pre">fixed_capital_components</span></code>
+set on the plant.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Installed cost multiplier. Defaults to 1.0 if None.</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Include additional CAPEX items in the printed summary. Default is False.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a cost breakdown. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total fixed capital cost in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">process_type</span></code> is not one of the supported process types.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -632,44 +601,182 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_variable_opex">
 <span class="sig-name descname"><span class="pre">calculate_variable_opex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_variable_opex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_variable_opex" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate annual variable operating costs.</p>
+<p>Iterates over <code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code> and computes cost as
+consumption × price × 365 × plant_utilization for each item.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a per-item cost breakdown. Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total annual variable OPEX in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_revenue">
 <span class="sig-name descname"><span class="pre">calculate_revenue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_revenue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_revenue" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate annual revenue from plant products.</p>
+<p>Iterates over <code class="docutils literal notranslate"><span class="pre">plant_products</span></code> and computes revenue as
+production × price × 365 × plant_utilization for each product.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a per-product revenue breakdown. Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total annual revenue in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.count_process_steps">
 <span class="sig-name descname"><span class="pre">count_process_steps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">equipments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_process_types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_cats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.count_process_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.count_process_steps" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Count equipment units matching a set of process types.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>equipments</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>) – List of Equipment objects to scan.</p></li>
+<li><p><strong>target_process_types</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">set</span></code></a>) – Process type labels to match (e.g. <code class="docutils literal notranslate"><span class="pre">{&quot;Fluids&quot;,</span> <span class="pre">&quot;Mixed&quot;}</span></code>).</p></li>
+<li><p><strong>excluded_cats</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">set</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Equipment categories to skip. Default is None (no exclusions).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of matching equipment units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_operators_per_shift">
 <span class="sig-name descname"><span class="pre">calculate_operators_per_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operators_per_shift"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_operators_per_shift" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate the number of operators required per shift.</p>
+<p>Uses the empirical correlation from Turton et al. based on fluid and
+solid process step counts. Returns <code class="docutils literal notranslate"><span class="pre">operators_per_shift</span></code> directly if
+it was set manually on the plant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>no_fluid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of fluid/mixed process steps. Auto-counted if None.</p></li>
+<li><p><strong>no_solid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of solid/mixed process steps (max 2). Auto-counted if None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Estimated operators per shift.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">no_solid_process</span></code> exceeds 2.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_operators_hired">
 <span class="sig-name descname"><span class="pre">calculate_operators_hired</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operators_hired"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_operators_hired" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate the total number of operators to hire.</p>
+<p>Accounts for the ratio of operating shifts per year to working shifts
+per year. Returns <code class="docutils literal notranslate"><span class="pre">operators_hired</span></code> directly if set manually.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>no_fluid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of fluid/mixed process steps. Passed to
+<code class="docutils literal notranslate"><span class="pre">calculate_operators_per_shift</span></code> if needed.</p></li>
+<li><p><strong>no_solid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of solid/mixed process steps. Passed to
+<code class="docutils literal notranslate"><span class="pre">calculate_operators_per_shift</span></code> if needed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total operators to hire.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_operating_labor">
 <span class="sig-name descname"><span class="pre">calculate_operating_labor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operating_labor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_operating_labor" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate total annual operating labor costs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>no_fluid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of fluid/mixed process steps. Auto-counted if None.</p></li>
+<li><p><strong>no_solid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of solid/mixed process steps. Auto-counted if None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Annual operating labor cost in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_fixed_opex">
 <span class="sig-name descname"><span class="pre">calculate_fixed_opex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_fixed_opex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_fixed_opex" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate fixed operating expenses (OPEX).</p>
+<p>Computes supervision, salary overhead, laboratory charges, maintenance,
+taxes &amp; insurance, rent, environmental charges, operating supplies,
+general plant overhead, working capital interest, patents &amp; royalties,
+distribution &amp; selling, and R&amp;D costs. Factors and individual component
+values can be overridden via <code class="docutils literal notranslate"><span class="pre">fixed_opex_factors</span></code> and
+<code class="docutils literal notranslate"><span class="pre">fixed_opex_components</span></code> set on the plant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fp</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Fixed OPEX multiplier applied to the total. Defaults to 1.0 if None.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a full fixed OPEX breakdown. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total annual fixed OPEX in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_cash_flow">
 <span class="sig-name descname"><span class="pre">calculate_cash_flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_cash_flow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_cash_flow" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Build a year-by-year cash flow table.</p>
+<p>Applies the CAPEX ramp, production ramp, depreciation schedule,
+and tax lag to produce annual capital cost, revenue, cash cost,
+gross profit, depreciation, taxable income, tax paid, and net cash
+flow arrays. Supports vectorised (Monte Carlo) inputs when
+<code class="docutils literal notranslate"><span class="pre">project_lifetime</span></code>, <code class="docutils literal notranslate"><span class="pre">interest_rate</span></code>, etc. are arrays.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Return a formatted <code class="docutils literal notranslate"><span class="pre">pd.DataFrame.style</span></code> for scalar scenarios.
+Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Styled cash flow table when <code class="docutils literal notranslate"><span class="pre">print_results=True</span></code> and inputs are
+scalar; None otherwise (results stored as instance arrays).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">pd.DataFrame.style</span></code> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">project_lifetime</span> <span class="pre">&lt;</span> <span class="pre">3</span></code>, <code class="docutils literal notranslate"><span class="pre">capex_ramp</span></code> or
+    <code class="docutils literal notranslate"><span class="pre">production_ramp</span></code> are invalid, or no plant products are defined.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -677,9 +784,24 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_npv">
 <span class="sig-name descname"><span class="pre">calculate_npv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_npv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_npv" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Calculate Net Present Value (NPV) of the project cash flows.</p>
+<p>Discounts each year’s cash flow at <code class="docutils literal notranslate"><span class="pre">interest_rate</span></code> and returns the
+cumulative NPV at the end of the project lifetime. Supports vectorised
+inputs for Monte Carlo scenarios.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a year-by-year present value and cumulative NPV table.
+Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Final NPV (scalar) or array of NPVs across scenarios.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">interest_rate</span></code> is an array whose length does not match the
+    number of cash flow scenarios.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -687,17 +809,41 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_levelized_cost">
 <span class="sig-name descname"><span class="pre">calculate_levelized_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_levelized_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_levelized_cost" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate the levelized cost of production (LCOP).</p>
+<p>Discounts capital costs, operating costs, and production over the
+project lifetime at <code class="docutils literal notranslate"><span class="pre">interest_rate</span></code>. Side-product revenues are
+subtracted before dividing by discounted production.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print the mean levelized cost. Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Levelized cost per unit of main product (scalar or array).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_payback_time">
 <span class="sig-name descname"><span class="pre">calculate_payback_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_payback_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_payback_time" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Calculate simple payback time.</p>
+<p>Divides total fixed capital (optionally including additional CAPEX) by
+the mean annual cash flow across revenue-generating years.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
-<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Include additional CAPEX in the total investment. Default is False.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print the payback time. Default is False.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Payback time in years (<code class="docutils literal notranslate"><span class="pre">nan</span></code> if no revenue-generating years exist).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -705,12 +851,22 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_roi">
 <span class="sig-name descname"><span class="pre">calculate_roi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_roi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_roi" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Calculate Return on Investment (ROI).</p>
+<p>Computes total net profit over the project lifetime as a percentage of
+total investment (fixed capital + working capital, optionally including
+additional CAPEX), annualised by project lifetime.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
-<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Include additional CAPEX in total investment. Default is False.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print the ROI value. Default is False.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ROI as a percentage (scalar or array across scenarios).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -718,9 +874,18 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_irr">
 <span class="sig-name descname"><span class="pre">calculate_irr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_irr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_irr" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Calculate the Internal Rate of Return (IRR).</p>
+<p>Finds the discount rate at which NPV equals zero using Brent’s method.
+Returns <code class="docutils literal notranslate"><span class="pre">nan</span></code> if no sign change is found (no valid IRR exists).</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print the IRR value. Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>IRR as a fraction (e.g. 0.15 = 15%), or <code class="docutils literal notranslate"><span class="pre">nan</span></code> if undefined.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -728,12 +893,37 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.calculate_all">
 <span class="sig-name descname"><span class="pre">calculate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.calculate_all" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Run all financial calculations sequentially.</p>
+<p>Calls <code class="docutils literal notranslate"><span class="pre">calculate_fixed_capital</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_variable_opex</span></code>,
+<code class="docutils literal notranslate"><span class="pre">calculate_fixed_opex</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_revenue</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_cash_flow</span></code>,
+<code class="docutils literal notranslate"><span class="pre">calculate_npv</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_levelized_cost</span></code>,
+<code class="docutils literal notranslate"><span class="pre">calculate_payback_time</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_roi</span></code>, and <code class="docutils literal notranslate"><span class="pre">calculate_irr</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Pass through to <code class="docutils literal notranslate"><span class="pre">calculate_fixed_capital</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_payback_time</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">calculate_roi</span></code>. Default is False.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print results from each sub-calculation. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="openpytea.plant.Plant.to_dict">
 <span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plant.Plant.to_dict" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Serialize plant configuration and all computed metrics to a dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nested dictionary with sections: <code class="docutils literal notranslate"><span class="pre">plant_configuration</span></code>,
+<code class="docutils literal notranslate"><span class="pre">equipment_summary</span></code>, <code class="docutils literal notranslate"><span class="pre">capital_costs</span></code>, <code class="docutils literal notranslate"><span class="pre">variable_opex</span></code>,
+<code class="docutils literal notranslate"><span class="pre">fixed_opex</span></code>, <code class="docutils literal notranslate"><span class="pre">revenue</span></code>, <code class="docutils literal notranslate"><span class="pre">cash_flow</span></code>, and <code class="docutils literal notranslate"><span class="pre">metrics</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -1035,92 +1225,6 @@ plant_utilization and tax_rate). Supported keys:</p>
 </dl>
 </div></blockquote>
 <dl>
-<dt>Methods:</dt><dd><dl>
-<dt>__init__(configuration: dict):</dt><dd><p>Initialize plant with configuration dictionary.</p>
-</dd>
-<dt>update_configuration(configuration: dict):</dt><dd><p>Update plant parameters while preserving nested structures.</p>
-</dd>
-<dt>calculate_purchased_cost(print_results: bool = False) -&gt; float:</dt><dd><p>Sum equipment purchase costs with exchange rate conversion.</p>
-</dd>
-<dt>calculate_isbl(fc: float = 1.0, print_results: bool = False) -&gt; float:</dt><dd><p>Calculate Inside Battery Limits cost (direct equipment costs
-adjusted for location).</p>
-</dd>
-<dt>calculate_fixed_capital(fc: float = None,</dt><dd><blockquote>
-<div><p>additional_capex: bool = False,
-print_results: bool = False) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate total fixed capital including ISBL, OSBL,
-design/engineering, and contingency.</p>
-</dd>
-<dt>calculate_variable_opex(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate annual variable operating costs (feedstock, utilities).</p>
-</dd>
-<dt>calculate_revenue(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate annual revenue from plant products.</p>
-</dd>
-<dt>calculate_operating_labor(no_fluid_process: int = None,</dt><dd><blockquote>
-<div><p>no_solid_process: int = None) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate total annual operating labor costs.</p>
-</dd>
-<dt>calculate_fixed_opex(fp: float = None,</dt><dd><blockquote>
-<div><p>print_results: bool = False) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate fixed operating expenses (maintenance, supervision,
-overhead, etc.).</p>
-</dd>
-<dt>calculate_cash_flow(print_results: bool = False) -&gt;</dt><dd><blockquote>
-<div><p>pd.DataFrame or None:</p>
-</div></blockquote>
-<p>Build year-by-year cash flow with CAPEX profile, revenue, costs,
-depreciation, taxes. Supports multiple scenarios if array inputs
-provided.</p>
-</dd>
-<dt>calculate_npv(print_results: bool = False) -&gt; float or np.ndarray:</dt><dd><p>Calculate Net Present Value of cash flows using interest_rate as
-discount rate.</p>
-</dd>
-<dt>calculate_levelized_cost(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate levelized cost ($/unit) over project lifetime.</p>
-</dd>
-<dt>calculate_payback_time(additional_capex: bool = False,</dt><dd><blockquote>
-<div><p>print_results: bool = False) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate years required to recover initial investment
-from cash flows.</p>
-</dd>
-<dt>calculate_roi(additional_capex: bool = False,</dt><dd><blockquote>
-<div><p>print_results: bool = False) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate Return on Investment percentage over project lifetime.</p>
-</dd>
-<dt>calculate_irr(print_results: bool = False) -&gt; float:</dt><dd><p>Calculate Internal Rate of Return (discount rate where NPV = 0).</p>
-</dd>
-<dt>calculate_all(additional_capex: bool = False,</dt><dd><blockquote>
-<div><p>print_results: bool = False):</p>
-</div></blockquote>
-<p>Execute all financial calculations sequentially.</p>
-</dd>
-<dt>count_process_steps(equipments: list, target_process_types: set,</dt><dd><blockquote>
-<div><p>excluded_cats: set = None) -&gt; int:</p>
-</div></blockquote>
-<p>Count equipment units matching process type and category filters.</p>
-</dd>
-<dt>calculate_operators_per_shift(no_fluid_process: int = None,</dt><dd><blockquote>
-<div><p>no_solid_process: int = None) -&gt; float:</p>
-</div></blockquote>
-<p>Calculate operators needed per shift using empirical correlation.</p>
-</dd>
-<dt>calculate_operators_hired(no_fluid_process: int = None,</dt><dd><blockquote>
-<div><p>no_solid_process: int = None) -&gt; int:</p>
-</div></blockquote>
-<p>Calculate total operators to hire accounting for
-working/operating schedule.</p>
-</dd>
-<dt>to_dict() -&gt; dict:</dt><dd><p>Serialize plant configuration and all calculated metrics
-to dictionary.</p>
-</dd>
-<dt>__str__() -&gt; str:</dt><dd><p>Return formatted string representation of all configuration
-parameters.</p>
-</dd>
-</dl>
-</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
 <span class="gp">... </span>    <span class="s2">&quot;plant_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Example Plant&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="s2">&quot;process_type&quot;</span><span class="p">:</span> <span class="s2">&quot;Fluids&quot;</span><span class="p">,</span>
@@ -1155,9 +1259,14 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="id3">
 <span class="sig-name descname"><span class="pre">update_configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.update_configuration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Update plant parameters while preserving nested structures.</p>
+<p>Top-level scalar keys overwrite existing values. Nested dicts
+(<code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code>, <code class="docutils literal notranslate"><span class="pre">plant_products</span></code>, <code class="docutils literal notranslate"><span class="pre">operator_hourly_rate</span></code>,
+<code class="docutils literal notranslate"><span class="pre">project_uncertainties</span></code>, <code class="docutils literal notranslate"><span class="pre">fixed_opex_factors</span></code>,
+<code class="docutils literal notranslate"><span class="pre">fixed_capital_factors</span></code>) are deep-merged rather than replaced.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>configuration</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
+<dd class="field-odd"><p><strong>configuration</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – Partial or full plant configuration. Only supplied keys are updated.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1165,19 +1274,69 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="id4">
 <span class="sig-name descname"><span class="pre">calculate_purchased_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_purchased_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sum equipment purchased costs with exchange rate conversion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a per-equipment cost breakdown. Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total purchased cost in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id5">
 <span class="sig-name descname"><span class="pre">calculate_isbl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_isbl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id5" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate Inside Battery Limits (ISBL) cost.</p>
+<p>Sums direct equipment costs and applies the location factor and the
+installed cost multiplier <code class="docutils literal notranslate"><span class="pre">fc</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Installed cost multiplier. Default is 1.0.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a per-equipment cost breakdown. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ISBL cost in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the plant’s country or region is not found in <code class="docutils literal notranslate"><span class="pre">locFactors</span></code>
+    and no explicit <code class="docutils literal notranslate"><span class="pre">loc_factor</span></code> is set.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id6">
 <span class="sig-name descname"><span class="pre">calculate_fixed_capital</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_fixed_capital"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Calculate total fixed capital investment.</p>
+<p>Includes ISBL, OSBL, design &amp; engineering, and contingency. Factors
+can be overridden via <code class="docutils literal notranslate"><span class="pre">fixed_capital_factors</span></code> / <code class="docutils literal notranslate"><span class="pre">fixed_capital_components</span></code>
+set on the plant.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Installed cost multiplier. Defaults to 1.0 if None.</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Include additional CAPEX items in the printed summary. Default is False.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a cost breakdown. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total fixed capital cost in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">process_type</span></code> is not one of the supported process types.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1185,44 +1344,182 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="id7">
 <span class="sig-name descname"><span class="pre">calculate_variable_opex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_variable_opex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id7" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate annual variable operating costs.</p>
+<p>Iterates over <code class="docutils literal notranslate"><span class="pre">variable_opex_inputs</span></code> and computes cost as
+consumption × price × 365 × plant_utilization for each item.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a per-item cost breakdown. Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total annual variable OPEX in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id8">
 <span class="sig-name descname"><span class="pre">calculate_revenue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_revenue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id8" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate annual revenue from plant products.</p>
+<p>Iterates over <code class="docutils literal notranslate"><span class="pre">plant_products</span></code> and computes revenue as
+production × price × 365 × plant_utilization for each product.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a per-product revenue breakdown. Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total annual revenue in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id9">
 <span class="sig-name descname"><span class="pre">count_process_steps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">equipments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_process_types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_cats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.count_process_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id9" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Count equipment units matching a set of process types.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>equipments</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>) – List of Equipment objects to scan.</p></li>
+<li><p><strong>target_process_types</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">set</span></code></a>) – Process type labels to match (e.g. <code class="docutils literal notranslate"><span class="pre">{&quot;Fluids&quot;,</span> <span class="pre">&quot;Mixed&quot;}</span></code>).</p></li>
+<li><p><strong>excluded_cats</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">set</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Equipment categories to skip. Default is None (no exclusions).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of matching equipment units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id10">
 <span class="sig-name descname"><span class="pre">calculate_operators_per_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operators_per_shift"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id10" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate the number of operators required per shift.</p>
+<p>Uses the empirical correlation from Turton et al. based on fluid and
+solid process step counts. Returns <code class="docutils literal notranslate"><span class="pre">operators_per_shift</span></code> directly if
+it was set manually on the plant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>no_fluid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of fluid/mixed process steps. Auto-counted if None.</p></li>
+<li><p><strong>no_solid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of solid/mixed process steps (max 2). Auto-counted if None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Estimated operators per shift.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">no_solid_process</span></code> exceeds 2.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id11">
 <span class="sig-name descname"><span class="pre">calculate_operators_hired</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operators_hired"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id11" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate the total number of operators to hire.</p>
+<p>Accounts for the ratio of operating shifts per year to working shifts
+per year. Returns <code class="docutils literal notranslate"><span class="pre">operators_hired</span></code> directly if set manually.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>no_fluid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of fluid/mixed process steps. Passed to
+<code class="docutils literal notranslate"><span class="pre">calculate_operators_per_shift</span></code> if needed.</p></li>
+<li><p><strong>no_solid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of solid/mixed process steps. Passed to
+<code class="docutils literal notranslate"><span class="pre">calculate_operators_per_shift</span></code> if needed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total operators to hire.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id12">
 <span class="sig-name descname"><span class="pre">calculate_operating_labor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_fluid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_solid_process</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_operating_labor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id12" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate total annual operating labor costs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>no_fluid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of fluid/mixed process steps. Auto-counted if None.</p></li>
+<li><p><strong>no_solid_process</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Number of solid/mixed process steps. Auto-counted if None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Annual operating labor cost in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id13">
 <span class="sig-name descname"><span class="pre">calculate_fixed_opex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_fixed_opex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id13" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate fixed operating expenses (OPEX).</p>
+<p>Computes supervision, salary overhead, laboratory charges, maintenance,
+taxes &amp; insurance, rent, environmental charges, operating supplies,
+general plant overhead, working capital interest, patents &amp; royalties,
+distribution &amp; selling, and R&amp;D costs. Factors and individual component
+values can be overridden via <code class="docutils literal notranslate"><span class="pre">fixed_opex_factors</span></code> and
+<code class="docutils literal notranslate"><span class="pre">fixed_opex_components</span></code> set on the plant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fp</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – Fixed OPEX multiplier applied to the total. Defaults to 1.0 if None.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a full fixed OPEX breakdown. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total annual fixed OPEX in plant currency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id14">
 <span class="sig-name descname"><span class="pre">calculate_cash_flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_cash_flow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id14" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Build a year-by-year cash flow table.</p>
+<p>Applies the CAPEX ramp, production ramp, depreciation schedule,
+and tax lag to produce annual capital cost, revenue, cash cost,
+gross profit, depreciation, taxable income, tax paid, and net cash
+flow arrays. Supports vectorised (Monte Carlo) inputs when
+<code class="docutils literal notranslate"><span class="pre">project_lifetime</span></code>, <code class="docutils literal notranslate"><span class="pre">interest_rate</span></code>, etc. are arrays.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Return a formatted <code class="docutils literal notranslate"><span class="pre">pd.DataFrame.style</span></code> for scalar scenarios.
+Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Styled cash flow table when <code class="docutils literal notranslate"><span class="pre">print_results=True</span></code> and inputs are
+scalar; None otherwise (results stored as instance arrays).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">pd.DataFrame.style</span></code> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">project_lifetime</span> <span class="pre">&lt;</span> <span class="pre">3</span></code>, <code class="docutils literal notranslate"><span class="pre">capex_ramp</span></code> or
+    <code class="docutils literal notranslate"><span class="pre">production_ramp</span></code> are invalid, or no plant products are defined.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1230,9 +1527,24 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="id15">
 <span class="sig-name descname"><span class="pre">calculate_npv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_npv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id15" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Calculate Net Present Value (NPV) of the project cash flows.</p>
+<p>Discounts each year’s cash flow at <code class="docutils literal notranslate"><span class="pre">interest_rate</span></code> and returns the
+cumulative NPV at the end of the project lifetime. Supports vectorised
+inputs for Monte Carlo scenarios.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print a year-by-year present value and cumulative NPV table.
+Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Final NPV (scalar) or array of NPVs across scenarios.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">interest_rate</span></code> is an array whose length does not match the
+    number of cash flow scenarios.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1240,17 +1552,41 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="id16">
 <span class="sig-name descname"><span class="pre">calculate_levelized_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_levelized_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id16" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculate the levelized cost of production (LCOP).</p>
+<p>Discounts capital costs, operating costs, and production over the
+project lifetime at <code class="docutils literal notranslate"><span class="pre">interest_rate</span></code>. Side-product revenues are
+subtracted before dividing by discounted production.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print the mean levelized cost. Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Levelized cost per unit of main product (scalar or array).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id17">
 <span class="sig-name descname"><span class="pre">calculate_payback_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_payback_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id17" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Calculate simple payback time.</p>
+<p>Divides total fixed capital (optionally including additional CAPEX) by
+the mean annual cash flow across revenue-generating years.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
-<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Include additional CAPEX in the total investment. Default is False.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print the payback time. Default is False.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Payback time in years (<code class="docutils literal notranslate"><span class="pre">nan</span></code> if no revenue-generating years exist).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1258,12 +1594,22 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="id18">
 <span class="sig-name descname"><span class="pre">calculate_roi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_roi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id18" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Calculate Return on Investment (ROI).</p>
+<p>Computes total net profit over the project lifetime as a percentage of
+total investment (fixed capital + working capital, optionally including
+additional CAPEX), annualised by project lifetime.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
-<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Include additional CAPEX in total investment. Default is False.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print the ROI value. Default is False.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ROI as a percentage (scalar or array across scenarios).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1271,9 +1617,18 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="id19">
 <span class="sig-name descname"><span class="pre">calculate_irr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_irr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id19" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Calculate the Internal Rate of Return (IRR).</p>
+<p>Finds the discount rate at which NPV equals zero using Brent’s method.
+Returns <code class="docutils literal notranslate"><span class="pre">nan</span></code> if no sign change is found (no valid IRR exists).</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p>
+<dd class="field-odd"><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print the IRR value. Default is False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>IRR as a fraction (e.g. 0.15 = 15%), or <code class="docutils literal notranslate"><span class="pre">nan</span></code> if undefined.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1281,12 +1636,37 @@ parameters.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="id20">
 <span class="sig-name descname"><span class="pre">calculate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.calculate_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id20" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Run all financial calculations sequentially.</p>
+<p>Calls <code class="docutils literal notranslate"><span class="pre">calculate_fixed_capital</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_variable_opex</span></code>,
+<code class="docutils literal notranslate"><span class="pre">calculate_fixed_opex</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_revenue</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_cash_flow</span></code>,
+<code class="docutils literal notranslate"><span class="pre">calculate_npv</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_levelized_cost</span></code>,
+<code class="docutils literal notranslate"><span class="pre">calculate_payback_time</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_roi</span></code>, and <code class="docutils literal notranslate"><span class="pre">calculate_irr</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Pass through to <code class="docutils literal notranslate"><span class="pre">calculate_fixed_capital</span></code>, <code class="docutils literal notranslate"><span class="pre">calculate_payback_time</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">calculate_roi</span></code>. Default is False.</p></li>
+<li><p><strong>print_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Print results from each sub-calculation. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id21">
 <span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plant.html#Plant.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id21" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Serialize plant configuration and all computed metrics to a dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nested dictionary with sections: <code class="docutils literal notranslate"><span class="pre">plant_configuration</span></code>,
+<code class="docutils literal notranslate"><span class="pre">equipment_summary</span></code>, <code class="docutils literal notranslate"><span class="pre">capital_costs</span></code>, <code class="docutils literal notranslate"><span class="pre">variable_opex</span></code>,
+<code class="docutils literal notranslate"><span class="pre">fixed_opex</span></code>, <code class="docutils literal notranslate"><span class="pre">revenue</span></code>, <code class="docutils literal notranslate"><span class="pre">cash_flow</span></code>, and <code class="docutils literal notranslate"><span class="pre">metrics</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 

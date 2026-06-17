@@ -3,17 +3,17 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
-        <link rel="prefetch" href="../../_static/OpenPyTEA-logo-black.png" as="image">
-        <link rel="prefetch" href="../../_static/OpenPyTEA-logo.png" as="image">
+        <link rel="prefetch" href="../../_static/logo-black.png" as="image">
+        <link rel="prefetch" href="../../_static/logo-white.png" as="image">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../../_static/logo-opt.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>openpytea.equipment - OpenPyTEA</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=3437e138" />
     
     
 
@@ -228,8 +228,8 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   <div class="sidebar-logo-container">
-    <img class="sidebar-logo only-light" src="../../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
-    <img class="sidebar-logo only-dark" src="../../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+    <img class="sidebar-logo only-light" src="../../_static/logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../../_static/logo-white.png" alt="Dark Logo"/>
   </div>
   
   
@@ -248,7 +248,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/analysis.html">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/io_workflow.html">JSON Workflow</a></li>
 </ul>
@@ -263,8 +263,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -391,29 +393,64 @@
 <span class="sd">    df : pd.DataFrame</span>
 <span class="sd">        Cost correlation data with columns: key, category, type, form,</span>
 <span class="sd">        s_lower, s_upper, upper_parallel, a, b, n, k1, k2, k3, cost_year.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<span class="sd">    Methods</span>
-<span class="sd">    -------</span>
-<span class="sd">    __init__(df: pd.DataFrame) -&gt; None</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="n">COST_DB_DF</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize database with cost correlation DataFrame.</span>
+
 <span class="sd">        Normalizes column names to lowercase and converts numeric columns.</span>
 
-<span class="sd">    _parallelize(s: float, cap: float | None) -&gt; tuple[int, float]</span>
-<span class="sd">        Calculate parallel units and adjusted size when capacity exceeded.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Cost correlation data. Defaults to the bundled CSV database.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">&quot;s_lower&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;s_upper&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;upper_parallel&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;a&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;b&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;s0&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;c0&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;f&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;cost_year&quot;</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span>
+                    <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span>
+                <span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;form&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;form&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parallelize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate parallel units and adjusted size when capacity is exceeded.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        s : float</span>
 <span class="sd">            Equipment size/capacity.</span>
 <span class="sd">        cap : float | None</span>
-<span class="sd">            Unit capacity limit. If None, no parallelization occurs.</span>
+<span class="sd">            Unit capacity limit. If None or NaN, no parallelization occurs.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        tuple[int, float]</span>
 <span class="sd">            (number_of_units, adjusted_size_per_unit).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">cap</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="n">cap</span><span class="p">:</span>
+            <span class="n">units</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">s</span> <span class="o">/</span> <span class="n">cap</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">units</span><span class="p">,</span> <span class="n">s</span> <span class="o">/</span> <span class="n">units</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span>
 
-<span class="sd">    evaluate(key: str, s: float) -&gt; tuple[float, int, int]</span>
+<div class="viewcode-block" id="CostCorrelationDB.evaluate">
+<a class="viewcode-back" href="../../api/equipment.html#openpytea.equipment.CostCorrelationDB.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate purchased equipment cost based on correlation key and size.</span>
 
 <span class="sd">        Parameters</span>
@@ -433,60 +470,8 @@
 <span class="sd">        KeyError</span>
 <span class="sd">            If correlation key not found in database.</span>
 <span class="sd">        ValueError</span>
-<span class="sd">            If size below lower bound or form unsupported.</span>
-
-<span class="sd">    key_for_category_type(eq_category: str, type: str | None) -&gt; str | None</span>
-<span class="sd">        Look up correlation key by equipment category and optional type.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        eq_category : str</span>
-<span class="sd">            Equipment category name.</span>
-<span class="sd">        type : str | None</span>
-<span class="sd">            Equipment sub-type (optional).</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        str | None</span>
-<span class="sd">            Correlation key if found, None otherwise.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="CostCorrelationDB.__init__">
-<a class="viewcode-back" href="../../api/equipment.html#openpytea.equipment.CostCorrelationDB.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="n">COST_DB_DF</span><span class="p">):</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span>
-            <span class="s2">&quot;s_lower&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;s_upper&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;upper_parallel&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;a&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;b&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;n&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;s0&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;c0&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;f&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;cost_year&quot;</span><span class="p">,</span>
-        <span class="p">]:</span>
-            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span>
-                    <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span>
-                <span class="p">)</span>
-        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;form&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;form&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span></div>
-
-
-<div class="viewcode-block" id="CostCorrelationDB._parallelize">
-<a class="viewcode-back" href="../../api/equipment.html#openpytea.equipment.CostCorrelationDB._parallelize">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_parallelize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">cap</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="n">cap</span><span class="p">:</span>
-            <span class="n">units</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">s</span> <span class="o">/</span> <span class="n">cap</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">units</span><span class="p">,</span> <span class="n">s</span> <span class="o">/</span> <span class="n">units</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span></div>
-
-
-<div class="viewcode-block" id="CostCorrelationDB.evaluate">
-<a class="viewcode-back" href="../../api/equipment.html#openpytea.equipment.CostCorrelationDB.evaluate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="sd">            If size is below the lower bound or the correlation form is unsupported.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">key</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
@@ -538,7 +523,21 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">key_for_category_type</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">eq_category</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Look up correlation key by equipment category and optional type.</span>
 
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        eq_category : str</span>
+<span class="sd">            Equipment category name.</span>
+<span class="sd">        type : str | None</span>
+<span class="sd">            Equipment sub-type (optional).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str | None</span>
+<span class="sd">            Correlation key if found, None otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">t</span> <span class="o">=</span> <span class="n">eq_category</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="n">st</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="nb">type</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span>
@@ -555,7 +554,6 @@
         <span class="k">if</span> <span class="n">cand</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="c1"># ✅ Return the first match (take the first listed in the CSV)</span>
         <span class="k">return</span> <span class="n">cand</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;key&quot;</span><span class="p">]</span></div>
 </div>
 
@@ -567,19 +565,19 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Equipment cost estimation class for process equipment.</span>
 
-<span class="sd">    This class manages the cost calculation of process equipment based on</span>
-<span class="sd">    process type, material, and equipment parameters. It supports both direct</span>
-<span class="sd">    cost input and calculated costs based on correlations from a cost database.</span>
+<span class="sd">    Manages cost calculation of process equipment based on process type,</span>
+<span class="sd">    material, and equipment parameters. Supports both direct cost input and</span>
+<span class="sd">    calculated costs from a cost correlation database.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    process_factors : dict</span>
-<span class="sd">        Dictionary of process type factors affecting cost calculation.</span>
+<span class="sd">        Process type factors affecting cost calculation.</span>
 <span class="sd">        Keys are process types (&quot;Solids&quot;, &quot;Fluids&quot;, &quot;Mixed&quot;, &quot;Electrical&quot;).</span>
 <span class="sd">        Values are dicts with factors: fer, fp, fi, fel, fc, fs, fl.</span>
 <span class="sd">    material_factors : dict</span>
-<span class="sd">        Dictionary of material type multipliers.</span>
-<span class="sd">        Maps material names to cost multiplication factors (1.0 to 1.7).</span>
+<span class="sd">        Material type multipliers mapping material names to cost factors</span>
+<span class="sd">        (1.0 to 1.7).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -596,16 +594,17 @@
 <span class="sd">    material : str, optional</span>
 <span class="sd">        Material of construction. Default is &quot;Carbon steel&quot;.</span>
 <span class="sd">    num_units : int | None, optional</span>
-<span class="sd">        Number of identical units. Default is None (set to 1 if</span>
-<span class="sd">        purchased_cost provided).</span>
+<span class="sd">        Number of identical units. Default is None (set to 1 when</span>
+<span class="sd">        purchased_cost is provided).</span>
 <span class="sd">    purchased_cost : float | None, optional</span>
 <span class="sd">        Direct purchased cost input. If provided, param is ignored.</span>
 <span class="sd">        Default is None.</span>
 <span class="sd">    cost_year : int | None, optional</span>
-<span class="sd">        Year of the purchased_cost quote. Default is None.</span>
+<span class="sd">        Year of the purchased_cost quote for inflation adjustment.</span>
+<span class="sd">        Default is None.</span>
 <span class="sd">    cost_func : str | None, optional</span>
-<span class="sd">        Explicit cost correlation key from database.</span>
-<span class="sd">        Default is None (auto-resolved).</span>
+<span class="sd">        Explicit cost correlation key from the database.</span>
+<span class="sd">        Default is None (auto-resolved from category/type).</span>
 <span class="sd">    target_year : int, optional</span>
 <span class="sd">        Target year for inflation adjustment. Default is 2024.</span>
 <span class="sd">    erection_factor : float | None, optional</span>
@@ -621,31 +620,18 @@
 <span class="sd">    structural_factor : float | None, optional</span>
 <span class="sd">        Structural steel factor override. Default is None (use process_type table).</span>
 <span class="sd">    lagging_factor : float | None, optional</span>
-<span class="sd">        Lagging &amp; painting factor override. Default is None (use process_type table).</span>
+<span class="sd">        Lagging &amp; painting factor override. Default is None</span>
+<span class="sd">        (use process_type table).</span>
 <span class="sd">    material_factor : float | None, optional</span>
 <span class="sd">        Material factor override. Default is None (use material table).</span>
-
-<span class="sd">    Methods</span>
-<span class="sd">    -------</span>
-<span class="sd">    _resolve_key() -&gt; str</span>
-<span class="sd">        Resolves the cost correlation key from database or explicit input.</span>
-<span class="sd">    _calc_purchased_cost() -&gt; float</span>
-<span class="sd">        Calculates purchased cost using database correlation.</span>
-<span class="sd">    calculate_direct_cost() -&gt; float</span>
-<span class="sd">        Calculates total direct cost including process and material factors.</span>
-<span class="sd">    to_dict() -&gt; dict</span>
-<span class="sd">        Converts equipment specifications and costs to dictionary format.</span>
-<span class="sd">    __str__() -&gt; str</span>
-<span class="sd">        Returns formatted string representation of equipment specifications</span>
-<span class="sd">        and costs.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    ValueError</span>
-<span class="sd">        If process_type or material not found in factor dictionaries.</span>
+<span class="sd">        If process_type or material is not found in the factor dictionaries.</span>
 <span class="sd">    KeyError</span>
-<span class="sd">        If category/type combination not found in database and cost_func</span>
-<span class="sd">        not specified.</span>
+<span class="sd">        If the category/type combination is not found in the database and</span>
+<span class="sd">        cost_func is not specified.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -734,7 +720,7 @@
         <span class="n">lagging_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">material_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize equipment and compute purchased and direct costs.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">process_type</span> <span class="o">=</span> <span class="n">process_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="n">material</span>
@@ -810,10 +796,21 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">calculate_direct_cost</span><span class="p">()</span>
         <span class="p">)</span>  <span class="c1"># your existing method</span>
 
-<div class="viewcode-block" id="Equipment._resolve_key">
-<a class="viewcode-back" href="../../api/equipment.html#openpytea.equipment.Equipment._resolve_key">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve the cost correlation key from the database or explicit input.</span>
 
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Cost correlation key to use for cost evaluation.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If no database entry matches the equipment&#39;s category and type,</span>
+<span class="sd">            and no explicit cost_func was provided.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cost_func</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cost_func</span>
 
@@ -826,12 +823,21 @@
                 <span class="sa">f</span><span class="s2">&quot;type=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;Add a row to the CSV or specify cost_func manually.&quot;</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">key</span></div>
+        <span class="k">return</span> <span class="n">key</span>
 
-
-<div class="viewcode-block" id="Equipment._calc_purchased_cost">
-<a class="viewcode-back" href="../../api/equipment.html#openpytea.equipment.Equipment._calc_purchased_cost">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">_calc_purchased_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate purchased cost using the database correlation.</span>
+
+<span class="sd">        Resolves the correlation key, evaluates the cost for the equipment&#39;s</span>
+<span class="sd">        size parameter, and applies inflation adjustment to the target year.</span>
+<span class="sd">        Also sets ``num_units`` and ``cost_year`` as side effects.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Inflation-adjusted purchased equipment cost.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_key</span><span class="p">()</span>
         <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span>
         <span class="n">purchased</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">year</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
@@ -839,12 +845,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cost_year</span> <span class="o">=</span> <span class="n">year</span>
         <span class="k">return</span> <span class="n">inflation_adjustment</span><span class="p">(</span>
             <span class="n">purchased</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">target_year</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_year</span>
-        <span class="p">)</span></div>
-
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="Equipment.calculate_direct_cost">
 <a class="viewcode-back" href="../../api/equipment.html#openpytea.equipment.Equipment.calculate_direct_cost">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_direct_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate total direct cost including process and material factors.</span>
+
+<span class="sd">        Applies erection, piping, instrumentation, electrical, civil,</span>
+<span class="sd">        structural, lagging, and material factors to the purchased cost.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Total direct installed cost.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">direct_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">purchased_cost</span> <span class="o">*</span> <span class="p">(</span>
             <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">piping_factor</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">material_factor</span>
             <span class="o">+</span> <span class="p">(</span>
@@ -862,6 +878,15 @@
 <div class="viewcode-block" id="Equipment.to_dict">
 <a class="viewcode-back" href="../../api/equipment.html#openpytea.equipment.Equipment.to_dict">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert equipment specifications and costs to a dictionary.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Keys: name, category, type, material, process_type, param,</span>
+<span class="sd">            num_units, cost_year, target_year, purchased_cost, direct_cost.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="p">,</span>
@@ -877,9 +902,16 @@
         <span class="p">}</span></div>
 
 
-<div class="viewcode-block" id="Equipment.__str__">
-<a class="viewcode-back" href="../../api/equipment.html#openpytea.equipment.Equipment.__str__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a formatted string summary of the equipment.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Human-readable representation of equipment specifications</span>
+<span class="sd">            and computed costs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Name=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">, &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;Category=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="si">}</span><span class="s2">, Sub-type=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">, &quot;</span>
@@ -888,7 +920,6 @@
             <span class="sa">f</span><span class="s2">&quot;Purchased Cost=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">purchased_cost</span><span class="si">}</span><span class="s2">, &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;Direct Cost=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">direct_cost</span><span class="si">}</span><span class="s2">)&quot;</span>
         <span class="p">)</span></div>
-</div>
 
 </pre></div>
         </article>
@@ -929,5 +960,6 @@
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=fd10adb8"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>
