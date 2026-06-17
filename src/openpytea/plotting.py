@@ -3,12 +3,18 @@ from itertools import cycle
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 import numpy as np
-import scienceplots
+try:
+    import scienceplots  # noqa: F401
+    plt.style.use(["science", "ieee"])
+except (AttributeError, ImportError):
+    warnings.warn(
+        "scienceplots could not be loaded due to a matplotlib "
+        "compatibility issue. Plots will use matplotlib defaults.",
+        ImportWarning,
+        stacklevel=2,
+    )
 
 from openpytea.helpers import _default_metric_label
-
-plt.style.use(["science", "ieee"])
-_ = scienceplots  # mark as used for Flake8
 cmap = plt.cm.plasma
 
 
