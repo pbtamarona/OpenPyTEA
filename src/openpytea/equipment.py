@@ -193,7 +193,7 @@ class CostCorrelationDB:
             purchased = ce * units
 
         elif form == "quad log-log":
-            K1, K2, K3 = r["k1"], r["k3"], r["k3"]
+            K1, K2, K3 = r["k1"], r["k2"], r["k3"]
 
             logS = np.log10(s_adj)
             logCe = K1 + K2 * logS + K3 * (logS**2)

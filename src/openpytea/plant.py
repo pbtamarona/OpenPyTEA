@@ -529,6 +529,41 @@ class Plant:
         else:
             return self.purchased_cost
 
+    def _resolve_loc_factor(self) -> float:
+        """
+        Resolve the location factor from explicit override or country/region lookup.
+
+        Returns
+        -------
+        float
+            Resolved location factor.
+
+        Raises
+        ------
+        ValueError
+            If the plant's country or region is not found in ``locFactors``
+            and no explicit ``loc_factor`` is set.
+        """
+        if self.loc_factor is not None:
+            return self.loc_factor
+
+        if self.country not in self.locFactors:
+            raise ValueError(
+                f"Country not found: {self.country}. "
+                f"Available countries: {list(self.locFactors.keys())}"
+            )
+
+        loc_factor = self.locFactors[self.country]
+        if isinstance(loc_factor, dict):
+            if self.region in loc_factor:
+                return loc_factor[self.region]
+            else:
+                raise ValueError(
+                    f"Region not found: {self.region}. "
+                    f"Available regions: {list(loc_factor.keys())}"
+                )
+        return loc_factor
+
     def calculate_isbl(self, fc=1.0, print_results=False):
         """
         Calculate Inside Battery Limits (ISBL) cost.
@@ -554,34 +589,12 @@ class Plant:
             If the plant's country or region is not found in ``locFactors``
             and no explicit ``loc_factor`` is set.
         """
-        def location_factors() -> float:
-
-            if self.loc_factor is not None:
-                return self.loc_factor
-
-            if self.country not in self.locFactors:
-                raise ValueError(
-                    f"Country not found: {self.country}. "
-                    f"Available countries: {list(self.locFactors.keys())}"
-                )
-
-            loc_factor = self.locFactors[self.country]
-            if isinstance(loc_factor, dict):
-                if self.region in loc_factor:
-                    return loc_factor[self.region]
-                else:
-                    raise ValueError(
-                        f"Region not found: {self.region}. "
-                        f"Available regions: {list(loc_factor.keys())}"
-                    )
-            return loc_factor
-
         self.isbl = (
             sum(
                 equipment.direct_cost
                 for equipment in self.equipment_list
             )
-            * location_factors()
+            * self._resolve_loc_factor()
             * fc
             * self.exchange_rate
         )

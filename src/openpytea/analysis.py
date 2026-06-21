@@ -62,8 +62,9 @@ def direct_costs_data(plants, pct=False):
     xlabels = []
 
     for plant in plants:
+        loc = plant._resolve_loc_factor()
         components = {
-            eq.name: float(eq.direct_cost)
+            eq.name: float(eq.direct_cost * loc * plant.exchange_rate)
             for eq in plant.equipment_list
         }
         components_list.append(components)
@@ -186,12 +187,11 @@ def variable_opex_data(plants, pct=False):
         components = {}
 
         for name, props in plant.variable_opex_inputs.items():
-            if "annual_cost" in props:
-                val = props["annual_cost"]
-            elif "cost" in props:
-                val = props["cost"]
-            elif "consumption" in props and "price" in props:
-                val = props["consumption"] * props["price"]
+            if "consumption" in props and "price" in props:
+                val = (
+                    props["consumption"] * props["price"]
+                    * 365 * plant.plant_utilization
+                )
             else:
                 continue
 

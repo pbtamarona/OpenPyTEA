@@ -13,6 +13,9 @@ Whether used for early-stage process design, technology screening, or teaching, 
 **For a full walkthrough of the features and usage of OpenPyTEA, refer to the `walkthrough.ipynb` notebook**:  
 https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb
 
+**For the full documentation of the package, visit the ReadTheDocs page:**  
+https://openpytea.readthedocs.io
+
 **For some case-study examples, please check the `examples` folder:**
 https://github.com/pbtamarona/OpenPyTEA/tree/main/examples
 
