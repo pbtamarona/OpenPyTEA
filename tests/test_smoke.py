@@ -60,10 +60,13 @@ def test_end_to_end_smoke(test_plant):
     assert "lows" in tornado
     assert "highs" in tornado
 
-    ax1 = plot_stacked_bar(direct, show=False)
-    ax2 = plot_sensitivity(sensitivity, show=False)
-    ax3 = plot_tornado(tornado, show=False)
+    fig1, ax1 = plot_stacked_bar(direct, show=False)
+    fig2, ax2 = plot_sensitivity(sensitivity, show=False)
+    fig3, ax3 = plot_tornado(tornado, show=False)
 
+    assert fig1 is not None
     assert ax1 is not None
+    assert fig2 is not None
     assert ax2 is not None
+    assert fig3 is not None
     assert ax3 is not None

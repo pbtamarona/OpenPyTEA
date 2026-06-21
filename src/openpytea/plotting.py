@@ -55,8 +55,9 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
         If True and a new figure is created, display the plot. Default is True.
     Returns
     -------
-    matplotlib.axes.Axes
-        The axes object containing the stacked bar chart.
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the stacked bar chart.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     Notes
     -----
     - Components are sorted in descending order by their total value across
@@ -154,7 +155,7 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     if show and created_fig is not None:
         plt.show()
 
-    return ax
+    return ax.figure, ax
 
 
 def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
@@ -185,8 +186,9 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
         Whether to display the plot. Default is True.
     Returns
     -------
-    matplotlib.axes.Axes
-        The axes object containing the plotted sensitivity curves.
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the plotted sensitivity curves.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     Notes
     -----
     - Multiple curves are plotted with colors from the Set2 colormap.
@@ -223,7 +225,7 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
         if show:
             ax.figure.canvas.draw_idle()
 
-    return ax
+    return ax.figure, ax
 
 
 def plot_tornado(
@@ -262,8 +264,9 @@ def plot_tornado(
         Default is True.
     Returns
     -------
-    matplotlib.axes.Axes
-        The axes object containing the tornado plot.
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the tornado plot.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     Notes
     -----
     - Blue bars represent negative deviations (lows from base_value).
@@ -340,7 +343,7 @@ def plot_tornado(
         if show:
             plt.show()
 
-    return ax
+    return ax.figure, ax
 
 
 def plot_monte_carlo(
@@ -385,8 +388,9 @@ def plot_monte_carlo(
         figure was created. Default is True.
     Returns
     -------
-    matplotlib.axes.Axes
-        The axes object containing the plot.
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the plot.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     Raises
     ------
     ValueError
@@ -554,7 +558,7 @@ def plot_monte_carlo(
         created_fig.tight_layout()
         plt.show()
 
-    return ax
+    return ax.figure, ax
 
 
 def plot_monte_carlo_inputs(
@@ -587,10 +591,10 @@ def plot_monte_carlo_inputs(
         returns the axes without displaying (default: True).
     Returns
     -------
-    numpy.ndarray
-        Array of matplotlib Axes objects corresponding to each subplot.
-        For a single parameter, returns a 1D array; for multiple parameters,
-        returns a flattened array of subplots.
+    tuple of (matplotlib.figure.Figure, numpy.ndarray)
+        The figure and an array of Axes objects (one per subplot).
+        For a single parameter the array has length 1; for multiple
+        parameters it is a flattened 1-D array of subplots.
     Notes
     -----
     - Histograms are plotted with density normalization enabled
@@ -658,7 +662,7 @@ def plot_monte_carlo_inputs(
         fig.tight_layout()
         plt.show()
 
-    return axes
+    return fig, axes
 
 
 def plot_multiple_monte_carlo(
@@ -693,7 +697,9 @@ def plot_multiple_monte_carlo(
 
     Returns
     -------
-    matplotlib.axes.Axes
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the overlaid histograms.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     """
     metric = metric.upper()
 
@@ -848,4 +854,4 @@ def plot_multiple_monte_carlo(
         else:
             plt.close(created_fig)
 
-    return ax
+    return ax.figure, ax

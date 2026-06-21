@@ -143,8 +143,8 @@ Step 5 — Visualise the CAPEX breakdown
 .. code-block:: python
 
    capex = fixed_capital_data(plant)
-   ax = plot_stacked_bar(capex)
-   ax.get_figure().savefig("capex.png", dpi=150)
+   fig, ax = plot_stacked_bar(capex)
+   fig.savefig("capex.png", dpi=150)
 
 For more visualisation options, see the :doc:`Plotting user guide <user_guide/plotting>`.
 
@@ -164,7 +164,7 @@ See how the levelized cost of ammonia changes as the electricity price varies
        n_points=30,
        label="LCOA (USD/t)",
    )
-   ax = plot_sensitivity(sens)
+   fig, ax = plot_sensitivity(sens)
 
 For more sensitivity and uncertainty analysis options, see the :doc:`Analysis user guide <user_guide/analysis>`.
 

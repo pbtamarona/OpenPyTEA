@@ -306,10 +306,10 @@ Pass the plant (or ``mc_results``) to the plotting functions:
    from openpytea.plotting import plot_monte_carlo, plot_monte_carlo_inputs
 
    # Distribution of the LCOP
-   plot_monte_carlo(plant, metric="LCOP", bins=30)
+   fig, ax = plot_monte_carlo(plant, metric="LCOP", bins=30)
 
    # Verify input distributions (useful for checking std/min/max settings)
-   plot_monte_carlo_inputs(mc_results, bins=40)
+   fig, axes = plot_monte_carlo_inputs(mc_results, bins=40)
 
 See :doc:`plotting` for full plotting options.
 
@@ -322,7 +322,7 @@ Comparing multiple plants under uncertainty
 
    mc_b = monte_carlo(plant_b, num_samples=1_000_000, batch_size=10_000)
 
-   plot_multiple_monte_carlo(
+   fig, ax = plot_multiple_monte_carlo(
        data_list=[plant, plant_b],
        metric="LCOP",
        bins=30,
