@@ -88,6 +88,11 @@ jobs:
 
       - name: Build Tauri app
         working-directory: frontend
+        # linuxdeploy (used for the AppImage) is itself an AppImage and needs
+        # FUSE to mount, which GitHub runners lack. Extract-and-run instead.
+        # Harmless on macOS/Windows.
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
         run: npm run tauri build -- --bundles ${{ matrix.bundles }}
 
       - name: Patch macOS bundle (custom UTI + re-sign + rebuild dmg)
