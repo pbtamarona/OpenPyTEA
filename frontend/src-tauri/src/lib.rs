@@ -340,6 +340,10 @@ pub fn run() {
             // We BOTH emit live (warm-open case: the app is running and the
             // frontend's listener is ready) AND queue (cold-open case: the
             // event fires during app startup before React has mounted).
+            //
+            // `RunEvent::Opened` only exists on macOS/iOS; on Windows and
+            // Linux file-open is handled via CLI args, so gate the arm.
+            #[cfg(target_os = "macos")]
             RunEvent::Opened { urls } => {
                 let q = app_handle.state::<OpenFileQueue>();
                 for url in urls {

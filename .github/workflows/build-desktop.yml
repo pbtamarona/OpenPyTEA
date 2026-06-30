@@ -19,9 +19,6 @@ jobs:
   build:
     name: ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
-    # ARM legs use newer runner images / wheel sets and may be flaky; don't
-    # let them fail the whole matrix or block the release.
-    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
       fail-fast: false
       matrix:
@@ -30,28 +27,14 @@ jobs:
             os: macos-14
             artifact: macos-arm64
             bundles: app,dmg
-          - label: macOS (Intel)
-            os: macos-13
-            artifact: macos-x64
-            bundles: app,dmg
           - label: Windows (x64)
             os: windows-latest
             artifact: windows-x64
             bundles: nsis,msi
-          - label: Windows (ARM64)
-            os: windows-11-arm
-            artifact: windows-arm64
-            bundles: nsis
-            experimental: true
           - label: Linux (x64)
             os: ubuntu-22.04
             artifact: linux-x64
             bundles: deb,appimage
-          - label: Linux (ARM64)
-            os: ubuntu-22.04-arm
-            artifact: linux-arm64
-            bundles: deb,appimage
-            experimental: true
 
     steps:
       - name: Checkout

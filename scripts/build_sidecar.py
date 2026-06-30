@@ -23,6 +23,15 @@ import time
 import urllib.request
 from pathlib import Path
 
+# Windows consoles default to cp1252, which can't encode the →/✓ glyphs
+# printed below and raises UnicodeEncodeError. Force UTF-8 so the script
+# behaves identically on every platform (including GitHub-hosted runners).
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BACKEND = REPO_ROOT / "backend"
 SPEC = BACKEND / "openpytea-backend.spec"
