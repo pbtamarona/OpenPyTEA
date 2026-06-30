@@ -122,11 +122,29 @@ OpenPyTEA includes an optional web-based graphical interface for users who prefe
 - **Downloadable charts** — all plots include a download button to export as standalone PNG images with full axis labels
 - **Examples** — built-in presets from the case study notebooks for quick demonstration
 
+### Download the desktop app
+
+The easiest way to use the GUI is the **standalone desktop app** — no Python, Node, or any other tooling required. Grab the installer for your platform from the **[latest release](https://github.com/pbtamarona/OpenPyTEA/releases/latest)**:
+
+| Platform | File to download |
+|---|---|
+| **Windows** (x64) | `OpenPyTEA_*_x64-setup.exe` (or the `.msi`) |
+| **Windows** (ARM64) | `OpenPyTEA_*_arm64-setup.exe` |
+| **macOS** (Apple Silicon) | `OpenPyTEA_*_aarch64.dmg` |
+| **macOS** (Intel) | `OpenPyTEA_*_x64.dmg` |
+| **Linux** (x64 / ARM64) | `.AppImage` (portable) or `.deb` |
+
+Installers are rebuilt automatically on every change and attached to the **`latest`** pre-release; tagged versions (`v0.1.0`, …) get their own permanent release.
+
+> **First launch (unsigned app).** The app isn't code-signed, so the OS will warn on first run.
+> - **Windows:** SmartScreen shows *"Windows protected your PC"* → **More info** → **Run anyway**.
+> - **macOS:** clear the quarantine flag once in Terminal — `xattr -dr com.apple.quarantine /Applications/OpenPyTEA.app` — then open normally. See **[`PACKAGING.md`](PACKAGING.md)** for details and the `.openpytea` file-association steps.
+
 ### Running the GUI
 
 **Two options:**
 
-1. **Standalone macOS app** (no Python or Node on the user's machine needed). Build instructions and install steps are in **[`PACKAGING.md`](PACKAGING.md)**.
+1. **Standalone desktop app** — download a prebuilt installer above, or build one yourself following **[`PACKAGING.md`](PACKAGING.md)**.
 
 2. **From source, for development** (requires Python 3.10+ and Node.js):
 
