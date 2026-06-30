@@ -130,7 +130,8 @@ The easiest way to use the GUI is the **standalone desktop app** — no Python, 
 |---|---|
 | **Windows** (x64) | `OpenPyTEA_*_x64-setup.exe` (or the `.msi`) |
 | **macOS** (Apple Silicon) | `OpenPyTEA_*_aarch64.dmg` |
-| **Linux** (x64) | `.AppImage` (portable) or `.deb` |
+
+> A Linux (`.AppImage` / `.deb`) build is planned — it works locally and in CI; we've just held it back from releases for now.
 
 Installers are rebuilt automatically on every change and attached to the **`latest`** pre-release; tagged versions (`v0.1.0`, …) get their own permanent release.
 

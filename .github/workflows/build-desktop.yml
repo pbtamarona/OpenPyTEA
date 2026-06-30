@@ -31,28 +31,13 @@ jobs:
             os: windows-latest
             artifact: windows-x64
             bundles: nsis,msi
-          - label: Linux (x64)
-            os: ubuntu-22.04
-            artifact: linux-x64
-            bundles: deb,appimage
+
+    # Linux (.deb/.AppImage) builds fine too — re-add an ubuntu leg plus the
+    # apt step for webkit2gtk/appindicator when we want to ship it.
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install Linux system dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libgtk-3-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            build-essential \
-            libssl-dev \
-            file wget curl
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -88,11 +73,6 @@ jobs:
 
       - name: Build Tauri app
         working-directory: frontend
-        # linuxdeploy (used for the AppImage) is itself an AppImage and needs
-        # FUSE to mount, which GitHub runners lack. Extract-and-run instead.
-        # Harmless on macOS/Windows.
-        env:
-          APPIMAGE_EXTRACT_AND_RUN: 1
         run: npm run tauri build -- --bundles ${{ matrix.bundles }}
 
       - name: Patch macOS bundle (custom UTI + re-sign + rebuild dmg)
