@@ -29,6 +29,7 @@ multiprocessing.freeze_support()
 import argparse
 import socket
 import sys
+import threading
 
 import uvicorn
 
@@ -39,6 +40,21 @@ def _pick_free_port(host: str) -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, 0))
         return s.getsockname()[1]
+
+
+def _parent_watchdog(server: uvicorn.Server) -> None:
+    """Block until stdin hits EOF, then ask uvicorn to shut down.
+
+    The parent (Tauri shell) spawns us with a piped stdin it never writes
+    to. The OS closes that pipe when the parent exits for *any* reason —
+    including crashes and force-kills that skip the parent's own cleanup —
+    so stdin-EOF is a reliable orphan-prevention tether on every platform.
+    """
+    try:
+        sys.stdin.buffer.read()
+    except Exception:
+        pass
+    server.should_exit = True
 
 
 class _AnnouncingServer(uvicorn.Server):
@@ -64,12 +80,19 @@ def main(argv: list[str] | None = None) -> int:
                         help="Port to bind (default: 8000; pass 0 for OS-assigned)")
     parser.add_argument("--log-level", default="warning",
                         choices=["critical", "error", "warning", "info", "debug", "trace"])
+    parser.add_argument("--exit-on-parent-close", action="store_true",
+                        help="Shut down when stdin reaches EOF, i.e. when the "
+                             "parent process that spawned us with a piped stdin "
+                             "has exited (cleanly or not). Opt-in so running "
+                             "standalone from a terminal is unaffected.")
     args = parser.parse_args(argv)
 
     port = args.port if args.port != 0 else _pick_free_port(args.host)
 
     config = uvicorn.Config(app, host=args.host, port=port, log_level=args.log_level)
     server = _AnnouncingServer(config, port)
+    if args.exit_on_parent_close:
+        threading.Thread(target=_parent_watchdog, args=(server,), daemon=True).start()
     server.run()
     return 0
 

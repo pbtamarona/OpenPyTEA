@@ -79,9 +79,19 @@ def resign() -> None:
 
 
 def rebuild_dmg() -> None:
-    """Repackage the patched .app into a fresh DMG using hdiutil."""
-    dmg_out = APP.parent.parent / "dmg" / "OpenPyTEA_0.1.0_aarch64.dmg"
-    dmg_out.parent.mkdir(parents=True, exist_ok=True)
+    """Repackage the patched .app into a fresh DMG using hdiutil.
+
+    Reuses the name of the DMG Tauri already produced
+    (OpenPyTEA_<version>_<arch>.dmg) instead of hardcoding it, so a version
+    bump or a different target arch can't leave an unpatched DMG behind.
+    """
+    dmg_dir = APP.parent.parent / "dmg"
+    existing = sorted(dmg_dir.glob("*.dmg"), key=lambda p: p.stat().st_mtime)
+    if not existing:
+        raise SystemExit(f"no DMG found in {dmg_dir} — run `npm run tauri build` first")
+    if len(existing) > 1:
+        print(f"! multiple DMGs in {dmg_dir}, rebuilding the newest: {existing[-1].name}")
+    dmg_out = existing[-1]
 
     stage = REPO_ROOT / "build" / "dmg-stage"
     if stage.exists():

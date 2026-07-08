@@ -64,8 +64,12 @@ jobs:
           pip install -r backend/requirements.txt
           pip install pyinstaller
 
+      # The smoke test launches the frozen binary and hits /api/health —
+      # without it, a missing hidden import or data file only surfaces on a
+      # user's machine (the Windows binary would otherwise never be run
+      # anywhere before release).
       - name: Build backend sidecar (PyInstaller)
-        run: python scripts/build_sidecar.py --skip-smoke-test
+        run: python scripts/build_sidecar.py
 
       - name: Install frontend dependencies
         working-directory: frontend

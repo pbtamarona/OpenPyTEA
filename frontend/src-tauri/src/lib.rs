@@ -110,6 +110,12 @@ fn spawn_backend(app: AppHandle) {
     let mut cmd = Command::new(&binary);
     cmd.arg("--port")
         .arg("0")
+        // Orphan tether: we pipe stdin and never write to it. The backend
+        // watches for stdin EOF and shuts itself down — the OS closes the
+        // pipe when this process dies for any reason (including crashes
+        // and force-kills that never reach RunEvent::Exit).
+        .arg("--exit-on-parent-close")
+        .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     // The backend is a console-subsystem binary (it must print the port
@@ -216,6 +222,35 @@ fn close_handler_ready(ready: tauri::State<'_, FrontendReady>) {
     ready.0.store(true, Ordering::Relaxed);
 }
 
+/// Project-file I/O is done here in Rust instead of granting the webview
+/// filesystem access (the fs plugin's scope would have to cover arbitrary
+/// user-chosen paths, including file-association opens from anywhere on
+/// disk). Restricting these commands to project-file extensions keeps a
+/// compromised webview away from ~/.ssh, shell rc files, and the like.
+fn is_project_file(path: &std::path::Path) -> bool {
+    path.extension().is_some_and(|e| {
+        e.eq_ignore_ascii_case("openpytea") || e.eq_ignore_ascii_case("json")
+    })
+}
+
+#[tauri::command]
+fn read_project_text(path: String) -> Result<String, String> {
+    let p = std::path::PathBuf::from(&path);
+    if !is_project_file(&p) {
+        return Err("not an OpenPyTEA project file".into());
+    }
+    std::fs::read_to_string(&p).map_err(|e| format!("could not read {}: {}", path, e))
+}
+
+#[tauri::command]
+fn write_project_text(path: String, contents: String) -> Result<(), String> {
+    let p = std::path::PathBuf::from(&path);
+    if !is_project_file(&p) {
+        return Err("not an OpenPyTEA project file".into());
+    }
+    std::fs::write(&p, contents).map_err(|e| format!("could not write {}: {}", path, e))
+}
+
 /// Build the native macOS-style menu bar (App / File / Edit). The same
 /// structure is used on Windows/Linux, where it renders as a window menu
 /// bar.
@@ -310,6 +345,8 @@ pub fn run() {
             take_pending_open_files,
             force_quit,
             close_handler_ready,
+            read_project_text,
+            write_project_text,
         ])
         .on_window_event(|window, event| {
             // Fired when the user clicks the red close button. Cancel the
@@ -353,11 +390,11 @@ pub fn run() {
                     ])
                     .build(),
             )?;
-            // Native file dialogs (open / save panels) and direct read/write
-            // access to the path the user picks. Used by the File ▸ Save /
-            // Save As / Open flow.
+            // Native file dialogs (open / save panels). The actual file
+            // read/write goes through the read_project_text /
+            // write_project_text IPC commands — the webview has no direct
+            // filesystem access.
             app.handle().plugin(tauri_plugin_dialog::init())?;
-            app.handle().plugin(tauri_plugin_fs::init())?;
             // Install the system menu bar (macOS top-of-screen, window menu
             // on Win/Linux). Menu items emit a `menu` event the frontend
             // listens for.

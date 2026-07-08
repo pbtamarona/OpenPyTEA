@@ -109,7 +109,8 @@ export const loadProject = async (file: File) => {
   return res.json();
 };
 
-/** Load a project from raw JSON text (Tauri path: text comes from fs.readTextFile).
+/** Load a project from raw JSON text (Tauri path: text comes from the
+ *  read_project_text IPC command).
  *  Sends the parsed JSON directly to /project/load_json — bypasses the
  *  Blob → File → FormData multipart round-trip, which is unreliable inside
  *  Tauri's WebKit webview. */

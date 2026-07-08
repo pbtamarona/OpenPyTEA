@@ -24,7 +24,6 @@ log = "0.4"
 tauri = { version = "2.11.2", features = ["devtools"] }
 tauri-plugin-log = "2"
 tauri-plugin-dialog = "2"
-tauri-plugin-fs = "2"
 
 # Desktop-only: forwards a second launch's argv (e.g. a double-clicked
 # .openpytea file on Windows) to the running instance instead of starting

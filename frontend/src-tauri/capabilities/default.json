@@ -7,17 +7,6 @@
   ],
   "permissions": [
     "core:default",
-    "dialog:default",
-    "fs:allow-read-text-file",
-    "fs:allow-write-text-file",
-    {
-      "identifier": "fs:scope",
-      "allow": [
-        { "path": "$HOME/**" },
-        { "path": "$DOCUMENT/**" },
-        { "path": "$DESKTOP/**" },
-        { "path": "$DOWNLOAD/**" }
-      ]
-    }
+    "dialog:default"
   ]
 }

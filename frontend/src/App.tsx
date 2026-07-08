@@ -187,8 +187,11 @@ function App() {
   // window.confirm is suppressed in Tauri's WebKit webview, so use the
   // native ask dialog when running inside Tauri and fall back to
   // window.confirm in browser-dev.
-  const confirmIfDirty = async (verb: string): Promise<boolean> => {
-    if (!dirty) return true;
+  const confirmIfDirty = async (verb: string, includeComparison = false): Promise<boolean> => {
+    // Comparison-only changes are deliberately excluded from switch-prompts
+    // (open / load-example keep the comparison list), but must count for
+    // flows that destroy it — New — and for app close.
+    if (!(dirty || (includeComparison && comparisonDirty))) return true;
     const message = `You have unsaved changes. ${verb} anyway?`;
     if (await detectTauri()) {
       const { ask } = await import("@tauri-apps/plugin-dialog");
@@ -202,7 +205,8 @@ function App() {
   };
 
   const handleNew = useCallback(async () => {
-    if (!(await confirmIfDirty("Start a new project"))) return;
+    // includeComparison: New wipes comparedPlants, unlike open/load-example.
+    if (!(await confirmIfDirty("Start a new project", true))) return;
     try {
       setLoadingMsg("Creating new project…");
       await newProject();
@@ -219,7 +223,7 @@ function App() {
     } finally {
       setLoadingMsg(null);
     }
-  }, [dirty]);
+  }, [dirty, comparisonDirty]);
 
   /** Restore compared plants from a parsed save-file. UUIDs are
       regenerated; everything else is taken verbatim. */
@@ -246,8 +250,11 @@ function App() {
   const loadFromPath = useCallback(async (path: string) => {
     try {
       setLoadingMsg("Reading project file…");
-      const { readTextFile } = await import("@tauri-apps/plugin-fs");
-      const text = await readTextFile(path);
+      // Read via the extension-restricted Rust command — works for any
+      // path (dialog picks AND file-association opens from anywhere on
+      // disk) without granting the webview filesystem access.
+      const { invoke } = await import("@tauri-apps/api/core");
+      const text = await invoke<string>("read_project_text", { path });
       const parsed = JSON.parse(text);
 
       setLoadingMsg("Loading project…");
@@ -306,6 +313,14 @@ function App() {
     if (!file) return;
     try {
       await loadProject(file);
+      // Restore the comparison list from the file, like the Tauri path does.
+      try {
+        const parsed = JSON.parse(await file.text());
+        setComparedPlants(restoreComparedPlants(parsed));
+      } catch {
+        setComparedPlants([]);
+      }
+      setComparisonDirty(false);
       setCurrentPath(file.name); // browser only gives us a basename
       setDirty(false);
       setResults(null);
@@ -318,7 +333,10 @@ function App() {
     e.target.value = "";
   };
 
-  const writeProjectTo = async (path: string) => {
+  /** Serialize the full project (backend state + compared plants) to JSON.
+      Shared by the Tauri file write and the browser blob download so both
+      produce identical files. */
+  const buildProjectText = async (): Promise<string> => {
     const backendData = await saveProject() as Record<string, unknown>;
     // Read compared plants via ref so we always serialize the latest list,
     // even when this function is called from a memoized handler whose
@@ -333,9 +351,14 @@ function App() {
         source: p.source,
       })),
     };
-    const text = JSON.stringify(full, null, 2);
-    const { writeTextFile } = await import("@tauri-apps/plugin-fs");
-    await writeTextFile(path, text);
+    return JSON.stringify(full, null, 2);
+  };
+
+  const writeProjectTo = async (path: string) => {
+    const text = await buildProjectText();
+    // Write via the extension-restricted Rust command — see loadFromPath.
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("write_project_text", { path, contents: text });
   };
 
   const handleSaveAs = useCallback(async (): Promise<boolean> => {
@@ -353,9 +376,10 @@ function App() {
         setComparisonDirty(false);
         return true;
       } else {
-        // Browser fallback: blob download
-        const data = await saveProject();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        // Browser fallback: blob download. Uses the same envelope as the
+        // Tauri path so the comparison list survives a save/reopen cycle.
+        const text = await buildProjectText();
+        const blob = new Blob([text], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -430,36 +454,46 @@ function App() {
   // id (e.g. "menu:new") whenever the user clicks File ▸ New or hits ⌘N.
   useEffect(() => {
     if (showWelcome) return;
+    // `active` guards the gap between cleanup and the async listen()
+    // resolving: without it a cleanup that runs first (StrictMode, HMR)
+    // finds `unlisten` still undefined and the registration leaks,
+    // leaving duplicate listeners attached.
+    let active = true;
     let unlisten: (() => void) | undefined;
     (async () => {
       if (!(await detectTauri())) return;
       const { listen } = await import("@tauri-apps/api/event");
-      unlisten = await listen<string>("menu", ({ payload }) => {
+      const un = await listen<string>("menu", ({ payload }) => {
         const h = handlersRef.current;
         if (payload === "menu:new") h.handleNew();
         else if (payload === "menu:open") h.handleOpen();
         else if (payload === "menu:save") h.handleSave();
         else if (payload === "menu:save-as") h.handleSaveAs();
       });
+      if (!active) { un(); return; }
+      unlisten = un;
     })();
-    return () => { unlisten?.(); };
+    return () => { active = false; unlisten?.(); };
   }, [showWelcome]);
 
   // OS file-open events (Tauri only): fires when the user double-clicks a
   // .openpytea file in Finder or chooses Open With → OpenPyTEA. The Rust
   // shell forwards the file path via the `open-file` event.
   useEffect(() => {
+    let active = true; // see the menu-listener effect for why
     let unlisten: (() => void) | undefined;
     (async () => {
       if (!(await detectTauri())) return;
       const { listen } = await import("@tauri-apps/api/event");
-      unlisten = await listen<string>("open-file", ({ payload }) => {
+      const un = await listen<string>("open-file", ({ payload }) => {
         if (typeof payload === "string" && payload) {
           loadFromPath(payload);
         }
       });
+      if (!active) { un(); return; }
+      unlisten = un;
     })();
-    return () => { unlisten?.(); };
+    return () => { active = false; unlisten?.(); };
   }, [loadFromPath]);
 
   // Drain any file paths the OS asked us to open before the frontend was
@@ -490,11 +524,12 @@ function App() {
   };
 
   useEffect(() => {
+    let active = true; // see the menu-listener effect for why
     let unlisten: (() => void) | undefined;
     (async () => {
       if (!(await detectTauri())) return;
       const { listen } = await import("@tauri-apps/api/event");
-      unlisten = await listen("request-close", () => {
+      const un = await listen("request-close", () => {
         const d = dirtyRef.current, cd = comparisonDirtyRef.current;
         console.log("[close] request-close received; dirty=", d, "comparisonDirty=", cd);
         if (d || cd) {
@@ -504,6 +539,8 @@ function App() {
           requestForceQuit();
         }
       });
+      if (!active) { un(); return; }
+      unlisten = un;
       console.log("[close] request-close listener attached");
       // Tell Rust it may now delegate close/quit to us. Until this call,
       // the shell lets close/quit proceed unintercepted so a wedged or
@@ -511,7 +548,7 @@ function App() {
       const { invoke } = await import("@tauri-apps/api/core");
       await invoke("close_handler_ready");
     })();
-    return () => { unlisten?.(); };
+    return () => { active = false; unlisten?.(); };
   }, []);
 
   const handleCloseSave = async () => {
