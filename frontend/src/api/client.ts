@@ -17,19 +17,27 @@ async function resolveBaseUrl(): Promise<string> {
   const core = await import("@tauri-apps/api/core");
   if (core.isTauri()) {
     // Backend cold-start can take up to ~60s on first launch (matplotlib font
-    // cache). Poll every 100ms for up to ~70s.
-    for (let i = 0; i < 700; i++) {
+    // cache), longer still when AV software scans the bundle. Poll every
+    // 200ms for up to 120s — keep this in sync with the startup-banner
+    // poller in App.tsx.
+    for (let i = 0; i < 600; i++) {
       const url = await core.invoke<string | null>("get_api_base");
       if (url) return url;
-      await new Promise((r) => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 200));
     }
-    throw new Error("Backend did not start within 70s");
+    throw new Error("Backend did not start within 120s");
   }
   return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 }
 
 let basePromise: Promise<string> | null = null;
-const getBase = (): Promise<string> => (basePromise ??= resolveBaseUrl());
+const getBase = (): Promise<string> =>
+  (basePromise ??= resolveBaseUrl().catch((e) => {
+    // Never cache a rejection: a timed-out resolution (slow cold start)
+    // must be retried on the next API call, not fail instantly forever.
+    basePromise = null;
+    throw e;
+  }));
 
 async function request<T>(path: string, opts?: RequestInit): Promise<T> {
   const base = await getBase();

@@ -138,8 +138,10 @@ function App() {
       delayTimer = setTimeout(() => {
         if (!canceled) setLoadingMsg("Starting backend… (first launch may take ~30–45 s)");
       }, 800);
+      // 600 × 200ms = 120s — keep in sync with resolveBaseUrl() in
+      // api/client.ts so the banner never clears while requests still fail.
       const { invoke } = await import("@tauri-apps/api/core");
-      for (let i = 0; i < 700; i++) {
+      for (let i = 0; i < 600; i++) {
         if (canceled) return;
         const url = await invoke<string | null>("get_api_base");
         if (url) {
@@ -503,6 +505,11 @@ function App() {
         }
       });
       console.log("[close] request-close listener attached");
+      // Tell Rust it may now delegate close/quit to us. Until this call,
+      // the shell lets close/quit proceed unintercepted so a wedged or
+      // never-loaded webview can't make the app unquittable.
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("close_handler_ready");
     })();
     return () => { unlisten?.(); };
   }, []);

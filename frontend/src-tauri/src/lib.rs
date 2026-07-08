@@ -28,11 +28,35 @@ struct BackendState {
 #[derive(Default)]
 struct ConfirmedExit(AtomicBool);
 
+/// Set once the frontend's `request-close` listener is attached (it calls
+/// the close_handler_ready command). Until then, CloseRequested and
+/// ExitRequested must NOT be delegated to JS: if the webview never came up,
+/// an emitted `request-close` vanishes and the app becomes unquittable.
+/// Before the listener exists there can be no unsaved work, so quitting
+/// immediately is always safe.
+#[derive(Default)]
+struct FrontendReady(AtomicBool);
+
 /// File paths the OS asked us to open before the webview was ready. The
 /// frontend drains this list on mount via take_pending_open_files() to
 /// catch cold-start file double-clicks.
 #[derive(Default)]
 struct OpenFileQueue(Mutex<Vec<String>>);
+
+/// Filter command-line args down to existing `.openpytea` file paths.
+/// On Windows (and Linux) a file-association open arrives as a plain argv
+/// entry — both on cold start and, via the single-instance plugin, from a
+/// second launch.
+fn project_paths_from_args<I: IntoIterator<Item = String>>(args: I) -> Vec<String> {
+    args.into_iter()
+        .filter(|a| {
+            let p = std::path::Path::new(a);
+            p.extension()
+                .is_some_and(|e| e.eq_ignore_ascii_case("openpytea"))
+                && p.exists()
+        })
+        .collect()
+}
 
 /// Locate the backend binary.
 ///
@@ -83,13 +107,22 @@ fn spawn_backend(app: AppHandle) {
     };
     log::info!("spawning backend: {}", binary.display());
 
-    let mut child = match Command::new(&binary)
-        .arg("--port")
+    let mut cmd = Command::new(&binary);
+    cmd.arg("--port")
         .arg("0")
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+        .stderr(Stdio::piped());
+    // The backend is a console-subsystem binary (it must print the port
+    // marker on stdout); spawned from a GUI process on Windows that would
+    // allocate a visible console window — piping the handles does not
+    // suppress it, only CREATE_NO_WINDOW does.
+    #[cfg(windows)]
     {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    let mut child = match cmd.spawn() {
         Ok(c) => c,
         Err(e) => {
             log::error!("failed to spawn backend ({}): {}", binary.display(), e);
@@ -174,6 +207,15 @@ fn force_quit(app: AppHandle, confirmed: tauri::State<'_, ConfirmedExit>) {
     app.exit(0);
 }
 
+/// IPC command: the frontend calls this once its `request-close` listener
+/// is attached. Only from then on do we intercept close/quit and delegate
+/// the unsaved-work check to JS.
+#[tauri::command]
+fn close_handler_ready(ready: tauri::State<'_, FrontendReady>) {
+    log::info!("frontend close handler ready");
+    ready.0.store(true, Ordering::Relaxed);
+}
+
 /// Build the native macOS-style menu bar (App / File / Edit). The same
 /// structure is used on Windows/Linux, where it renders as a window menu
 /// bar.
@@ -239,14 +281,35 @@ fn build_app_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let context = tauri::generate_context!();
-    let app = tauri::Builder::default()
+    #[allow(unused_mut)]
+    let mut builder = tauri::Builder::default();
+    // Must be registered before any other plugin. A second launch (e.g.
+    // double-clicking a .openpytea file on Windows while the app runs)
+    // hands its argv to this callback inside the running instance and
+    // exits, instead of spawning a duplicate app + duplicate backend.
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            for path in project_paths_from_args(argv.into_iter().skip(1)) {
+                log::info!("open-file from second instance: {}", path);
+                app.state::<OpenFileQueue>().0.lock().unwrap().push(path.clone());
+                let _ = app.emit("open-file", path);
+            }
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.set_focus();
+            }
+        }));
+    }
+    let app = builder
         .manage(BackendState::default())
         .manage(ConfirmedExit::default())
+        .manage(FrontendReady::default())
         .manage(OpenFileQueue::default())
         .invoke_handler(tauri::generate_handler![
             get_api_base,
             take_pending_open_files,
             force_quit,
+            close_handler_ready,
         ])
         .on_window_event(|window, event| {
             // Fired when the user clicks the red close button. Cancel the
@@ -254,10 +317,13 @@ pub fn run() {
             // a "save first?" modal depending on dirty state).
             if let WindowEvent::CloseRequested { api, .. } = event {
                 let app = window.app_handle();
-                let confirmed = app.state::<ConfirmedExit>();
-                let already = confirmed.0.load(Ordering::Relaxed);
-                log::info!("WindowEvent::CloseRequested (confirmed_exit={})", already);
-                if !already {
+                let already = app.state::<ConfirmedExit>().0.load(Ordering::Relaxed);
+                let ready = app.state::<FrontendReady>().0.load(Ordering::Relaxed);
+                log::info!(
+                    "WindowEvent::CloseRequested (confirmed_exit={}, frontend_ready={})",
+                    already, ready
+                );
+                if !already && ready {
                     api.prevent_close();
                     log::info!("CloseRequested → prevented; emitting request-close");
                     let _ = app.emit("request-close", ());
@@ -303,6 +369,17 @@ pub fn run() {
                 env!("CARGO_PKG_VERSION"),
             );
             spawn_backend(app.handle().clone());
+            // Windows/Linux file-association cold start: the OS passes the
+            // double-clicked file as a plain argv entry. (macOS never puts
+            // paths in argv — it sends RunEvent::Opened instead.)
+            #[cfg(not(target_os = "macos"))]
+            {
+                let paths = project_paths_from_args(std::env::args().skip(1));
+                if !paths.is_empty() {
+                    log::info!("open-file from argv: {:?}", paths);
+                    app.state::<OpenFileQueue>().0.lock().unwrap().extend(paths);
+                }
+            }
             Ok(())
         })
         .build(context)
@@ -312,10 +389,13 @@ pub fn run() {
         match event {
             // Cmd+Q on macOS, or any other "quit the app" path.
             RunEvent::ExitRequested { api, .. } => {
-                let confirmed = app_handle.state::<ConfirmedExit>();
-                let already = confirmed.0.load(Ordering::Relaxed);
-                log::info!("RunEvent::ExitRequested (confirmed_exit={})", already);
-                if !already {
+                let already = app_handle.state::<ConfirmedExit>().0.load(Ordering::Relaxed);
+                let ready = app_handle.state::<FrontendReady>().0.load(Ordering::Relaxed);
+                log::info!(
+                    "RunEvent::ExitRequested (confirmed_exit={}, frontend_ready={})",
+                    already, ready
+                );
+                if !already && ready {
                     api.prevent_exit();
                     log::info!("ExitRequested → prevented; emitting request-close");
                     let _ = app_handle.emit("request-close", ());
@@ -342,7 +422,8 @@ pub fn run() {
             // event fires during app startup before React has mounted).
             //
             // `RunEvent::Opened` only exists on macOS/iOS; on Windows and
-            // Linux file-open is handled via CLI args, so gate the arm.
+            // Linux file-open arrives via argv instead — handled in setup()
+            // (cold start) and the single-instance callback (warm start).
             #[cfg(target_os = "macos")]
             RunEvent::Opened { urls } => {
                 let q = app_handle.state::<OpenFileQueue>();
