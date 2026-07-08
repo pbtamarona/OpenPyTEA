@@ -44,6 +44,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Tag is the single source of truth for release versions: v0.2.0
+      # stamps 0.2.0 into tauri.conf.json (bundle names, app version) before
+      # anything builds. Branch builds keep whatever version is checked in.
+      - name: Stamp version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: python scripts/set_version.py "${GITHUB_REF_NAME#v}"
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
