@@ -15,7 +15,8 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         # Packaged Tauri app (production build)
         "tauri://localhost",        # macOS, Linux
-        "https://tauri.localhost",  # Windows (https scheme by default)
+        "http://tauri.localhost",   # Windows (Tauri v2 default scheme)
+        "https://tauri.localhost",  # Windows with useHttpsScheme: true
     ],
     allow_credentials=True,
     allow_methods=["*"],
