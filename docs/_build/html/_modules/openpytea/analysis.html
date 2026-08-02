@@ -3,17 +3,17 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
-        <link rel="prefetch" href="../../_static/OpenPyTEA-logo-black.png" as="image">
-        <link rel="prefetch" href="../../_static/OpenPyTEA-logo.png" as="image">
+        <link rel="prefetch" href="../../_static/logo-black.png" as="image">
+        <link rel="prefetch" href="../../_static/logo-white.png" as="image">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../../_static/logo-opt.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>openpytea.analysis - OpenPyTEA</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=a0178497" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=3437e138" />
     
     
 
@@ -228,8 +228,8 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   <div class="sidebar-logo-container">
-    <img class="sidebar-logo only-light" src="../../_static/OpenPyTEA-logo-black.png" alt="Light Logo"/>
-    <img class="sidebar-logo only-dark" src="../../_static/OpenPyTEA-logo.png" alt="Dark Logo"/>
+    <img class="sidebar-logo only-light" src="../../_static/logo-black.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../../_static/logo-white.png" alt="Dark Logo"/>
   </div>
   
   
@@ -248,7 +248,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/equipment.html">Equipment Cost Estimation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/plant.html">Plant-Level TEA</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide/analysis.html">Sensitivity &amp; Uncertainty Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/analysis.html">Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/plotting.html">Plotting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide/io_workflow.html">JSON Workflow</a></li>
 </ul>
@@ -263,8 +263,10 @@
 <p class="caption" role="heading"><span class="caption-text">More</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples &amp; Case Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../gui.html">Web GUI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../citation.html">Citation &amp; License</a></li>
 </ul>
 
 </div>
@@ -300,6 +302,7 @@
           <h1>Source code for openpytea.analysis</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">_make_label</span><span class="p">,</span>
@@ -364,8 +367,9 @@
     <span class="n">xlabels</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">for</span> <span class="n">plant</span> <span class="ow">in</span> <span class="n">plants</span><span class="p">:</span>
+        <span class="n">loc</span> <span class="o">=</span> <span class="n">plant</span><span class="o">.</span><span class="n">_resolve_loc_factor</span><span class="p">()</span>
         <span class="n">components</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">eq</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">direct_cost</span><span class="p">)</span>
+            <span class="n">eq</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">direct_cost</span> <span class="o">*</span> <span class="n">loc</span> <span class="o">*</span> <span class="n">plant</span><span class="o">.</span><span class="n">exchange_rate</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">eq</span> <span class="ow">in</span> <span class="n">plant</span><span class="o">.</span><span class="n">equipment_list</span>
         <span class="p">}</span>
         <span class="n">components_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">components</span><span class="p">)</span>
@@ -494,12 +498,11 @@
         <span class="n">components</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">props</span> <span class="ow">in</span> <span class="n">plant</span><span class="o">.</span><span class="n">variable_opex_inputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="s2">&quot;annual_cost&quot;</span> <span class="ow">in</span> <span class="n">props</span><span class="p">:</span>
-                <span class="n">val</span> <span class="o">=</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;annual_cost&quot;</span><span class="p">]</span>
-            <span class="k">elif</span> <span class="s2">&quot;cost&quot;</span> <span class="ow">in</span> <span class="n">props</span><span class="p">:</span>
-                <span class="n">val</span> <span class="o">=</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;cost&quot;</span><span class="p">]</span>
-            <span class="k">elif</span> <span class="s2">&quot;consumption&quot;</span> <span class="ow">in</span> <span class="n">props</span> <span class="ow">and</span> <span class="s2">&quot;price&quot;</span> <span class="ow">in</span> <span class="n">props</span><span class="p">:</span>
-                <span class="n">val</span> <span class="o">=</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;consumption&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;price&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;consumption&quot;</span> <span class="ow">in</span> <span class="n">props</span> <span class="ow">and</span> <span class="s2">&quot;price&quot;</span> <span class="ow">in</span> <span class="n">props</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">props</span><span class="p">[</span><span class="s2">&quot;consumption&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">props</span><span class="p">[</span><span class="s2">&quot;price&quot;</span><span class="p">]</span>
+                    <span class="o">*</span> <span class="mi">365</span> <span class="o">*</span> <span class="n">plant</span><span class="o">.</span><span class="n">plant_utilization</span>
+                <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">continue</span>
 
@@ -951,90 +954,314 @@
 
 
 
+<div class="viewcode-block" id="make_distribution">
+<a class="viewcode-back" href="../../api/analysis.html#openpytea.analysis.make_distribution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_distribution</span><span class="p">(</span><span class="n">dist_id</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">minimum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build a frozen ``scipy.stats`` distribution from an OpenPyTEA dist_id.</span>
+
+<span class="sd">    Translates the compact ``(dist_id, loc, scale, shape, minimum, maximum)``</span>
+<span class="sd">    parameterization used throughout the Monte Carlo module into the</span>
+<span class="sd">    corresponding frozen SciPy distribution object.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dist_id : int</span>
+<span class="sd">        Distribution family identifier:</span>
+
+<span class="sd">        - 2 : Lognormal (``loc``=mu, ``scale``=sigma)</span>
+<span class="sd">        - 3 : Normal (``loc``=mean, ``scale``=std)</span>
+<span class="sd">        - 4 : Uniform (``minimum``, ``maximum``)</span>
+<span class="sd">        - 5 : Triangular (``loc``=mode, ``minimum``, ``maximum``)</span>
+<span class="sd">        - 6 : Bernoulli (``loc``=p, ``scale``=success value, default 1)</span>
+<span class="sd">        - 7 : Discrete uniform (``minimum``, ``maximum``, inclusive)</span>
+<span class="sd">        - 8 : Weibull (``loc``=offset, ``scale``=lambda, ``shape``=k)</span>
+<span class="sd">        - 9 : Gamma (``loc``=offset, ``scale``=theta, ``shape``=k)</span>
+<span class="sd">        - 10 : Beta (``loc``=alpha, ``shape``=beta, ``maximum``=upper bound)</span>
+<span class="sd">        - 11 : GEV (``loc``=mu, ``scale``=sigma, ``shape``=xi)</span>
+<span class="sd">        - 12 : Student&#39;s t (``loc``=median, ``scale``=scale, ``shape``=nu)</span>
+<span class="sd">    loc : float, optional</span>
+<span class="sd">        Location parameter; meaning depends on ``dist_id`` (see above).</span>
+<span class="sd">    scale : float, optional</span>
+<span class="sd">        Scale parameter; meaning depends on ``dist_id`` (see above).</span>
+<span class="sd">    shape : float, optional</span>
+<span class="sd">        Shape parameter, required for Weibull, Gamma, Beta, GEV, and</span>
+<span class="sd">        Student&#39;s t.</span>
+<span class="sd">    minimum : float, optional</span>
+<span class="sd">        Lower bound, required for Uniform, Triangular, and Discrete uniform.</span>
+<span class="sd">    maximum : float, optional</span>
+<span class="sd">        Upper bound, required for Uniform, Triangular, Discrete uniform,</span>
+<span class="sd">        and (optionally) Beta.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    scipy.stats distribution</span>
+<span class="sd">        A frozen distribution instance (continuous ``rv_continuous`` /</span>
+<span class="sd">        ``rv_discrete``) exposing the usual ``rvs``, ``pdf``/``pmf``, etc.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``dist_id`` is not one of the supported values above (0/1 are</span>
+<span class="sd">        handled separately by :func:`sample_distribution` as constants).</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    sample_distribution : Draws random samples, with optional truncation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Lognormal: loc=mu, scale=sigma</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">lognorm</span><span class="p">(</span><span class="n">s</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">loc</span><span class="p">))</span>
+
+    <span class="k">elif</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># Normal: loc=mu, scale=sigma</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>  <span class="c1"># Uniform: minimum, maximum</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">minimum</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">maximum</span> <span class="o">-</span> <span class="n">minimum</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>  <span class="c1"># Triangular: loc=mode, minimum, maximum</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="p">(</span><span class="n">loc</span> <span class="o">-</span> <span class="n">minimum</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">maximum</span> <span class="o">-</span> <span class="n">minimum</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">triang</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">minimum</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">maximum</span> <span class="o">-</span> <span class="n">minimum</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>  <span class="c1"># Bernoulli: loc=p, scale=success value (default 1)</span>
+        <span class="c1"># Outcomes are 0 (failure) or scale (success), with prob 1-p / p</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">loc</span>
+        <span class="n">success_value</span> <span class="o">=</span> <span class="n">scale</span> <span class="k">if</span> <span class="n">scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">rv_discrete</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;bernoulli_scaled&#39;</span><span class="p">,</span>
+                                <span class="n">values</span><span class="o">=</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">success_value</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">]))</span>
+
+    <span class="k">elif</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">7</span><span class="p">:</span>  <span class="c1"># Discrete uniform: minimum, maximum</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">minimum</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">maximum</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>  <span class="c1"># Weibull: loc=offset, scale=lambda, shape=k</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">weibull_min</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>  <span class="c1"># Gamma: loc=offset, scale=theta, shape=k</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">10</span><span class="p">:</span>  <span class="c1"># Beta: loc=alpha, shape=beta, maximum=upper bound</span>
+        <span class="n">upper</span> <span class="o">=</span> <span class="n">maximum</span> <span class="k">if</span> <span class="n">maximum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">beta</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">upper</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">11</span><span class="p">:</span>  <span class="c1"># GEV: loc=mu, scale=sigma, shape=xi (scipy negates xi)</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">genextreme</span><span class="p">(</span><span class="n">c</span><span class="o">=-</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">dist_id</span> <span class="o">==</span> <span class="mi">12</span><span class="p">:</span>  <span class="c1"># Student&#39;s t: loc=median, scale=scale, shape=nu</span>
+        <span class="k">return</span> <span class="n">stats</span><span class="o">.</span><span class="n">t</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported dist_id for make_distribution: </span><span class="si">{</span><span class="n">dist_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="sample_distribution">
+<a class="viewcode-back" href="../../api/analysis.html#openpytea.analysis.sample_distribution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_distribution</span><span class="p">(</span><span class="n">dist_id</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">minimum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Draw random samples for a Monte Carlo input, with optional truncation.</span>
+
+<span class="sd">    Wraps :func:`make_distribution` to generate an array of samples. For</span>
+<span class="sd">    ``dist_id`` 0 or 1 (fixed/constant values) it returns a constant array</span>
+<span class="sd">    without touching ``random_state``. When ``minimum``/``maximum`` bounds</span>
+<span class="sd">    are given for Lognormal, Normal, or Bernoulli (``dist_id`` 2, 3, 6),</span>
+<span class="sd">    samples are drawn and re-drawn (rejection sampling) until ``size``</span>
+<span class="sd">    values fall within ``[minimum, maximum]``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dist_id : int</span>
+<span class="sd">        Distribution family identifier, see :func:`make_distribution`.</span>
+<span class="sd">        0 or 1 means &quot;constant value equal to ``loc``&quot;.</span>
+<span class="sd">    size : int</span>
+<span class="sd">        Number of samples to draw.</span>
+<span class="sd">    loc : float, optional</span>
+<span class="sd">        Location parameter, forwarded to :func:`make_distribution`.</span>
+<span class="sd">    scale : float, optional</span>
+<span class="sd">        Scale parameter, forwarded to :func:`make_distribution`.</span>
+<span class="sd">    shape : float, optional</span>
+<span class="sd">        Shape parameter, forwarded to :func:`make_distribution`.</span>
+<span class="sd">    minimum : float, optional</span>
+<span class="sd">        Lower truncation bound (also used as a distribution parameter for</span>
+<span class="sd">        some families, see :func:`make_distribution`).</span>
+<span class="sd">    maximum : float, optional</span>
+<span class="sd">        Upper truncation bound (also used as a distribution parameter for</span>
+<span class="sd">        some families, see :func:`make_distribution`).</span>
+<span class="sd">    random_state : numpy.random.Generator or int, optional</span>
+<span class="sd">        Random state passed to ``scipy.stats``&#39; ``rvs``. Pass a single</span>
+<span class="sd">        shared ``Generator`` across calls to keep an entire Monte Carlo run</span>
+<span class="sd">        reproducible from one seed.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.ndarray</span>
+<span class="sd">        Array of ``size`` samples.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Rejection sampling redraws in batches of ``2 * remaining`` until enough</span>
+<span class="sd">    in-bounds values are collected, so very narrow ``[minimum, maximum]``</span>
+<span class="sd">    windows relative to the distribution&#39;s spread can be slow.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    make_distribution : Builds the underlying frozen SciPy distribution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dist_id</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">loc</span> <span class="k">if</span> <span class="n">loc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">make_distribution</span><span class="p">(</span><span class="n">dist_id</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span>
+                              <span class="n">minimum</span><span class="o">=</span><span class="n">minimum</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="n">maximum</span><span class="p">)</span>
+
+    <span class="n">needs_truncation</span> <span class="o">=</span> <span class="n">dist_id</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="n">minimum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">maximum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">needs_truncation</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">filled</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">filled</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">:</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">filled</span>
+        <span class="n">draw</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">remaining</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">minimum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">draw</span> <span class="o">=</span> <span class="n">draw</span><span class="p">[</span><span class="n">draw</span> <span class="o">&gt;=</span> <span class="n">minimum</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">maximum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">draw</span> <span class="o">=</span> <span class="n">draw</span><span class="p">[</span><span class="n">draw</span> <span class="o">&lt;=</span> <span class="n">maximum</span><span class="p">]</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">draw</span><span class="p">),</span> <span class="n">remaining</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">filled</span><span class="p">:</span><span class="n">filled</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">draw</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">filled</span> <span class="o">+=</span> <span class="n">n</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_dist_params</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">default_loc</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">default_scale</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                          <span class="n">default_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">default_max</span><span class="o">=</span><span class="mi">99999</span><span class="p">,</span> <span class="n">default_id</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract ``(dist_id, loc, scale, shape, minimum, maximum)`` from a config dict.</span>
+
+<span class="sd">    Lets Monte Carlo input blocks use whichever field name reads naturally</span>
+<span class="sd">    for that input (e.g. ``&quot;price&quot;`` or ``&quot;rate&quot;`` instead of ``&quot;loc&quot;``,</span>
+<span class="sd">    ``&quot;std&quot;`` instead of ``&quot;scale&quot;``, ``&quot;min&quot;``/``&quot;max&quot;`` instead of</span>
+<span class="sd">    ``&quot;minimum&quot;``/``&quot;maximum&quot;``) while normalizing them to the positional</span>
+<span class="sd">    arguments expected by :func:`make_distribution` /</span>
+<span class="sd">    :func:`sample_distribution`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cfg : dict</span>
+<span class="sd">        Uncertainty configuration for one input, e.g. an entry from</span>
+<span class="sd">        ``plant.project_uncertainties``, ``plant.variable_opex_inputs``, or</span>
+<span class="sd">        ``plant.plant_products``. Recognized keys: ``dist_id``, ``loc``,</span>
+<span class="sd">        ``mean``, ``price``, ``rate``, ``scale``, ``std``, ``shape``,</span>
+<span class="sd">        ``minimum``, ``min``, ``maximum``, ``max``.</span>
+<span class="sd">    default_loc : float, optional</span>
+<span class="sd">        Fallback for ``loc`` when none of ``loc``/``mean``/``price``/``rate``</span>
+<span class="sd">        is present in ``cfg``. Default is 0.0.</span>
+<span class="sd">    default_scale : float, optional</span>
+<span class="sd">        Fallback for ``scale`` when neither ``scale`` nor ``std`` is present</span>
+<span class="sd">        in ``cfg``. Default is 0.0.</span>
+<span class="sd">    default_min : float, optional</span>
+<span class="sd">        Fallback for ``minimum`` when neither ``minimum`` nor ``min`` is</span>
+<span class="sd">        present in ``cfg``. Default is 0.</span>
+<span class="sd">    default_max : float, optional</span>
+<span class="sd">        Fallback for ``maximum`` when neither ``maximum`` nor ``max`` is</span>
+<span class="sd">        present in ``cfg``. Default is 99999.</span>
+<span class="sd">    default_id : int, optional</span>
+<span class="sd">        Fallback distribution id when ``cfg`` has no ``dist_id``. Default</span>
+<span class="sd">        is 3 (Normal).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">        ``(dist_id, loc, scale, shape, minimum, maximum)`` ready to unpack</span>
+<span class="sd">        as arguments to :func:`make_distribution` or</span>
+<span class="sd">        :func:`sample_distribution`. ``shape`` is ``None`` unless ``cfg``</span>
+<span class="sd">        sets it explicitly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dist_id</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dist_id&quot;</span><span class="p">,</span> <span class="n">default_id</span><span class="p">)</span>
+    <span class="n">loc</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;loc&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;price&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rate&quot;</span><span class="p">,</span> <span class="n">default_loc</span><span class="p">)))</span>
+    <span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scale&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="n">default_scale</span><span class="p">))</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shape&quot;</span><span class="p">)</span>
+    <span class="n">minimum</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;minimum&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">default_min</span><span class="p">))</span>
+    <span class="n">maximum</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;maximum&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">default_max</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">dist_id</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">minimum</span><span class="p">,</span> <span class="n">maximum</span>
+
+
 <div class="viewcode-block" id="monte_carlo">
 <a class="viewcode-back" href="../../api/analysis.html#openpytea.analysis.monte_carlo">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span>
-                <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000_000</span><span class="p">,</span>
-                <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
-                <span class="n">additional_capex</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+                 <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000_000</span><span class="p">,</span>
+                 <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+                 <span class="n">additional_capex</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">random_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Probabilistic analysis of a plant&#39;s economic performance by sampling</span>
-<span class="sd">    input parameters from truncated normal distributions and computing</span>
-<span class="sd">    economic metrics across all samples. Samples are processed in batches</span>
-<span class="sd">    to manage memory.</span>
+<span class="sd">    Run a Monte Carlo uncertainty simulation over a plant&#39;s financial metrics.</span>
+
+<span class="sd">    Samples every configured uncertain input (project-level factors such as</span>
+<span class="sd">    fixed capital/OPEX, project lifetime, and interest rate; optionally</span>
+<span class="sd">    plant utilization and tax rate; variable OPEX item prices; and product</span>
+<span class="sd">    prices) and re-evaluates the plant&#39;s economics ``num_samples`` times,</span>
+<span class="sd">    producing a distribution of outcomes for LCOP and, when product prices</span>
+<span class="sd">    are configured, NPV, ROI, and payback time.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    plant : Plant</span>
-<span class="sd">        A fully configured Plant instance. Baseline economic calculations</span>
-<span class="sd">        are run internally before sampling begins. The original plant is not</span>
-<span class="sd">        modified; results are stored on it after the simulation completes.</span>
+<span class="sd">        A configured :class:`~openpytea.plant.Plant`. Uncertainty ranges are</span>
+<span class="sd">        read from ``plant.project_uncertainties``, ``plant.operator_hourly_rate``,</span>
+<span class="sd">        ``plant.variable_opex_inputs``, and ``plant.plant_products`` — see</span>
+<span class="sd">        the Monte Carlo section of the user guide for the configuration</span>
+<span class="sd">        format. The plant is first baseline-initialized (fixed capital,</span>
+<span class="sd">        variable/fixed OPEX, cash flow, levelized cost) but is not mutated</span>
+<span class="sd">        by the simulation itself; each batch operates on a deep copy.</span>
 <span class="sd">    num_samples : int, optional</span>
-<span class="sd">        Total number of Monte Carlo samples. Default is 1_000_000.</span>
+<span class="sd">        Total number of Monte Carlo draws. Default is 1,000,000.</span>
 <span class="sd">    batch_size : int, optional</span>
-<span class="sd">        Number of samples processed per batch. Smaller values reduce peak</span>
-<span class="sd">        memory at the cost of slightly more overhead. Default is 1000.</span>
+<span class="sd">        Number of samples evaluated per batch (each batch deep-copies the</span>
+<span class="sd">        plant and vectorizes the economic calculations over the batch).</span>
+<span class="sd">        Larger values are faster but use more memory. Default is 1000.</span>
 <span class="sd">    additional_capex : bool, optional</span>
-<span class="sd">        Include additional CAPEX in ROI and payback time calculations.</span>
-<span class="sd">        Only applies when product prices are available. Default is False.</span>
+<span class="sd">        Whether to include additional CAPEX events when computing ROI and</span>
+<span class="sd">        payback time. Default is False.</span>
+<span class="sd">    random_seed : int, optional</span>
+<span class="sd">        Seed for the single ``numpy.random.Generator`` shared across all</span>
+<span class="sd">        parameter draws, for reproducible runs. Default is None</span>
+<span class="sd">        (nondeterministic).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    dict</span>
-<span class="sd">        A dictionary with the following keys:</span>
+<span class="sd">        Dictionary with keys:</span>
 
-<span class="sd">        - ``&quot;name&quot;`` : str — plant name.</span>
-<span class="sd">        - ``&quot;metrics&quot;`` : dict — arrays of length *num_samples*:</span>
-<span class="sd">            - ``&quot;LCOP&quot;`` — levelized cost of production (always populated).</span>
-<span class="sd">            - ``&quot;NPV&quot;`` — net present value (requires product prices).</span>
-<span class="sd">            - ``&quot;ROI&quot;`` — return on investment (requires product prices).</span>
-<span class="sd">            - ``&quot;PBT&quot;`` — payback time (requires product prices).</span>
-<span class="sd">        - ``&quot;inputs&quot;`` : dict — sampled input arrays, always containing:</span>
-<span class="sd">            - ``&quot;Fixed capital factor&quot;``</span>
-<span class="sd">            - ``&quot;Fixed opex factor&quot;``</span>
-<span class="sd">            - ``&quot;Operator hourly rate&quot;``</span>
-<span class="sd">            - ``&quot;Project lifetime&quot;``</span>
-<span class="sd">            - ``&quot;Interest rate&quot;``</span>
-<span class="sd">            - ``&quot;{Item} price&quot;`` for each variable OPEX item.</span>
-<span class="sd">            - ``&quot;{Product} product price&quot;`` for each product.</span>
-<span class="sd">            And conditionally (when ``std &gt; 0`` in ``project_uncertainties``):</span>
-<span class="sd">            - ``&quot;Plant utilization&quot;``</span>
-<span class="sd">            - ``&quot;Tax rate&quot;``</span>
-<span class="sd">        - ``&quot;num_samples&quot;`` : int — number of samples generated.</span>
-<span class="sd">        - ``&quot;additional_capex&quot;`` : bool — whether additional CAPEX was</span>
-<span class="sd">          included.</span>
-<span class="sd">        - ``&quot;currency&quot;`` : str — currency symbol.</span>
+<span class="sd">        - ``&quot;name&quot;`` : the plant&#39;s name.</span>
+<span class="sd">        - ``&quot;metrics&quot;`` : dict mapping ``&quot;LCOP&quot;``, ``&quot;ROI&quot;``, ``&quot;NPV&quot;``,</span>
+<span class="sd">          ``&quot;PBT&quot;`` to ``numpy.ndarray`` of length ``num_samples`` (ROI,</span>
+<span class="sd">          NPV, PBT stay zero-filled if product prices aren&#39;t configured).</span>
+<span class="sd">        - ``&quot;inputs&quot;`` : dict mapping each sampled input&#39;s display name to</span>
+<span class="sd">          its ``numpy.ndarray`` of drawn values.</span>
+<span class="sd">        - ``&quot;num_samples&quot;`` : the requested sample count.</span>
+<span class="sd">        - ``&quot;additional_capex&quot;`` : the flag used for ROI/PBT.</span>
+<span class="sd">        - ``&quot;currency&quot;`` : the plant&#39;s currency symbol.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    - Sampling distributions for fixed capital factor, fixed opex factor,</span>
-<span class="sd">      project lifetime, interest rate, plant utilization, and tax rate are</span>
-<span class="sd">      controlled by the plant&#39;s ``project_uncertainties`` configuration dict</span>
-<span class="sd">      (see Plant class docstring). Default std, min, and max values are used</span>
-<span class="sd">      when a parameter is absent from that dict.</span>
-<span class="sd">    - ``plant_utilization`` and ``tax_rate`` have a default ``std`` of 0 and</span>
-<span class="sd">      are only sampled when explicitly set to a positive value in</span>
-<span class="sd">      ``project_uncertainties``.</span>
-<span class="sd">    - Variable OPEX items and products are sampled using the ``std``,</span>
-<span class="sd">      ``min``, and ``max`` fields defined within each item&#39;s own config dict.</span>
-<span class="sd">    - The plant is deep-copied each batch to avoid mutating the original.</span>
-<span class="sd">      After the run, ``monte_carlo_metrics`` and ``monte_carlo_inputs`` are</span>
-<span class="sd">      written back to the original plant.</span>
-<span class="sd">    - Progress is shown via a tqdm progress bar over batches.</span>
+<span class="sd">    - The same results are also stored on the plant as</span>
+<span class="sd">      ``plant.monte_carlo_metrics`` and ``plant.monte_carlo_inputs`` for use</span>
+<span class="sd">      by :func:`~openpytea.plotting.plot_monte_carlo` and</span>
+<span class="sd">      :func:`~openpytea.plotting.plot_monte_carlo_inputs`.</span>
+<span class="sd">    - All inputs are sampled once up front (in a fixed order, from one</span>
+<span class="sd">      shared RNG) and then consumed batch-by-batch, so results are</span>
+<span class="sd">      reproducible for a given ``random_seed`` regardless of ``batch_size``.</span>
 
-<span class="sd">    Raises</span>
-<span class="sd">    ------</span>
-<span class="sd">    AttributeError</span>
-<span class="sd">        If the plant object lacks required economic calculation methods or</span>
-<span class="sd">        configuration attributes.</span>
-
-<span class="sd">    Examples</span>
+<span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; results = monte_carlo(plant, num_samples=10000, batch_size=500)</span>
-<span class="sd">    &gt;&gt;&gt; lcop_values = results[&#39;metrics&#39;][&#39;LCOP&#39;]</span>
-<span class="sd">    &gt;&gt;&gt; roi_values = results[&#39;metrics&#39;][&#39;ROI&#39;]</span>
+<span class="sd">    sample_distribution : Underlying per-input sampling routine.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">currency</span> <span class="o">=</span> <span class="n">plant</span><span class="o">.</span><span class="n">currency</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="s2">&quot;currency&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="sa">r</span><span class="s2">&quot;\$&quot;</span>
+
     <span class="c1"># Ensure plant is baseline-initialized</span>
     <span class="n">plant</span><span class="o">.</span><span class="n">calculate_fixed_capital</span><span class="p">()</span>
     <span class="n">plant</span><span class="o">.</span><span class="n">calculate_variable_opex</span><span class="p">()</span>
@@ -1043,6 +1270,13 @@
     <span class="n">plant</span><span class="o">.</span><span class="n">calculate_levelized_cost</span><span class="p">()</span>
 
     <span class="n">num_batches</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_samples</span> <span class="o">+</span> <span class="n">batch_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">batch_size</span>
+
+    <span class="c1"># ---- Single shared RNG for full reproducibility ----</span>
+    <span class="c1"># One Generator is created here and passed to every sample_distribution()</span>
+    <span class="c1"># call below, in a fixed order, so it advances its internal state once</span>
+    <span class="c1"># per draw rather than being reseeded each time (reseeding each call</span>
+    <span class="c1"># would make every parameter draw the same underlying sequence).</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">random_seed</span><span class="p">)</span>
 
     <span class="c1"># ---- Allocate arrays for ALL metrics ----</span>
     <span class="n">mc_metrics</span> <span class="o">=</span> <span class="p">{</span>
@@ -1055,87 +1289,115 @@
     <span class="c1"># ---- Resolve project uncertainty parameters ----</span>
     <span class="n">pu</span> <span class="o">=</span> <span class="n">plant</span><span class="o">.</span><span class="n">project_uncertainties</span>
 
-    <span class="n">fc_cfg</span>  <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fixed_capital_factor&quot;</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="n">fc_std</span>  <span class="o">=</span> <span class="n">fc_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
-    <span class="n">fc_min</span>  <span class="o">=</span> <span class="n">fc_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)</span>
-    <span class="n">fc_max</span>  <span class="o">=</span> <span class="n">fc_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="mf">1.75</span><span class="p">)</span>
+    <span class="n">fc_id</span><span class="p">,</span> <span class="n">fc_loc</span><span class="p">,</span> <span class="n">fc_scale</span><span class="p">,</span> <span class="n">fc_shape</span><span class="p">,</span> <span class="n">fc_min</span><span class="p">,</span> <span class="n">fc_max</span> <span class="o">=</span> <span class="n">_resolve_dist_params</span><span class="p">(</span>
+        <span class="n">pu</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fixed_capital_factor&quot;</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="n">default_loc</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">default_scale</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">default_min</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">default_max</span><span class="o">=</span><span class="mf">1.75</span><span class="p">,</span>
+    <span class="p">)</span>
 
-    <span class="n">fo_cfg</span>  <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fixed_opex_factor&quot;</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="n">fo_std</span>  <span class="o">=</span> <span class="n">fo_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
-    <span class="n">fo_min</span>  <span class="o">=</span> <span class="n">fo_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)</span>
-    <span class="n">fo_max</span>  <span class="o">=</span> <span class="n">fo_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="mf">1.75</span><span class="p">)</span>
+    <span class="n">fo_id</span><span class="p">,</span> <span class="n">fo_loc</span><span class="p">,</span> <span class="n">fo_scale</span><span class="p">,</span> <span class="n">fo_shape</span><span class="p">,</span> <span class="n">fo_min</span><span class="p">,</span> <span class="n">fo_max</span> <span class="o">=</span> <span class="n">_resolve_dist_params</span><span class="p">(</span>
+        <span class="n">pu</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fixed_opex_factor&quot;</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="n">default_loc</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">default_scale</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">default_min</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">default_max</span><span class="o">=</span><span class="mf">1.75</span><span class="p">,</span>
+    <span class="p">)</span>
 
-    <span class="n">lt_cfg</span>  <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;project_lifetime&quot;</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="n">lt_std</span>  <span class="o">=</span> <span class="n">lt_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-    <span class="n">lt_min</span>  <span class="o">=</span> <span class="n">lt_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">plant</span><span class="o">.</span><span class="n">project_lifetime</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lt_std</span><span class="p">))</span>
-    <span class="n">lt_max</span>  <span class="o">=</span> <span class="n">lt_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">plant</span><span class="o">.</span><span class="n">project_lifetime</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lt_std</span><span class="p">)</span>
+    <span class="n">lt_cfg</span> <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;project_lifetime&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">lt_std_default</span> <span class="o">=</span> <span class="n">lt_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="n">lt_id</span><span class="p">,</span> <span class="n">lt_loc</span><span class="p">,</span> <span class="n">lt_scale</span><span class="p">,</span> <span class="n">lt_shape</span><span class="p">,</span> <span class="n">lt_min</span><span class="p">,</span> <span class="n">lt_max</span> <span class="o">=</span> <span class="n">_resolve_dist_params</span><span class="p">(</span>
+        <span class="n">lt_cfg</span><span class="p">,</span>
+        <span class="n">default_loc</span><span class="o">=</span><span class="n">plant</span><span class="o">.</span><span class="n">project_lifetime</span><span class="p">,</span>
+        <span class="n">default_scale</span><span class="o">=</span><span class="n">lt_std_default</span><span class="p">,</span>
+        <span class="n">default_min</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">plant</span><span class="o">.</span><span class="n">project_lifetime</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lt_std_default</span><span class="p">),</span>
+        <span class="n">default_max</span><span class="o">=</span><span class="n">plant</span><span class="o">.</span><span class="n">project_lifetime</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lt_std_default</span><span class="p">,</span>
+    <span class="p">)</span>
 
-    <span class="n">ir_cfg</span>  <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;interest_rate&quot;</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="n">ir_std</span>  <span class="o">=</span> <span class="n">ir_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">)</span>
-    <span class="n">ir_min</span>  <span class="o">=</span> <span class="n">ir_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">plant</span><span class="o">.</span><span class="n">interest_rate</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">ir_std</span><span class="p">))</span>
-    <span class="n">ir_max</span>  <span class="o">=</span> <span class="n">ir_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">plant</span><span class="o">.</span><span class="n">interest_rate</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">ir_std</span><span class="p">)</span>
+    <span class="n">ir_cfg</span> <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;interest_rate&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">ir_std_default</span> <span class="o">=</span> <span class="n">ir_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">)</span>
+    <span class="n">ir_id</span><span class="p">,</span> <span class="n">ir_loc</span><span class="p">,</span> <span class="n">ir_scale</span><span class="p">,</span> <span class="n">ir_shape</span><span class="p">,</span> <span class="n">ir_min</span><span class="p">,</span> <span class="n">ir_max</span> <span class="o">=</span> <span class="n">_resolve_dist_params</span><span class="p">(</span>
+        <span class="n">ir_cfg</span><span class="p">,</span>
+        <span class="n">default_loc</span><span class="o">=</span><span class="n">plant</span><span class="o">.</span><span class="n">interest_rate</span><span class="p">,</span>
+        <span class="n">default_scale</span><span class="o">=</span><span class="n">ir_std_default</span><span class="p">,</span>
+        <span class="n">default_min</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">plant</span><span class="o">.</span><span class="n">interest_rate</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">ir_std_default</span><span class="p">),</span>
+        <span class="n">default_max</span><span class="o">=</span><span class="n">plant</span><span class="o">.</span><span class="n">interest_rate</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">ir_std_default</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">pu_util_cfg</span> <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;plant_utilization&quot;</span><span class="p">,</span> <span class="p">{})</span>
     <span class="n">pu_util_std</span> <span class="o">=</span> <span class="n">pu_util_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">pu_util_std</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">pu_util_std</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="s2">&quot;dist_id&quot;</span> <span class="ow">in</span> <span class="n">pu_util_cfg</span><span class="p">:</span>
         <span class="n">pu_util_mean</span> <span class="o">=</span> <span class="n">plant</span><span class="o">.</span><span class="n">plant_utilization</span>
-        <span class="n">pu_util_min</span> <span class="o">=</span> <span class="n">pu_util_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">pu_util_mean</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pu_util_std</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">util_id</span><span class="p">,</span> <span class="n">util_loc</span><span class="p">,</span> <span class="n">util_scale</span><span class="p">,</span> <span class="n">util_shape</span><span class="p">,</span>
+         <span class="n">util_min</span><span class="p">,</span> <span class="n">util_max</span><span class="p">)</span> <span class="o">=</span> <span class="n">_resolve_dist_params</span><span class="p">(</span>
+            <span class="n">pu_util_cfg</span><span class="p">,</span>
+            <span class="n">default_loc</span><span class="o">=</span><span class="n">pu_util_mean</span><span class="p">,</span>
+            <span class="n">default_scale</span><span class="o">=</span><span class="n">pu_util_std</span><span class="p">,</span>
+            <span class="n">default_min</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">pu_util_mean</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pu_util_std</span><span class="p">),</span>
+            <span class="n">default_max</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">pu_util_mean</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pu_util_std</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">pu_util_max</span> <span class="o">=</span> <span class="n">pu_util_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">pu_util_mean</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pu_util_std</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">plant_utilizations</span> <span class="o">=</span> <span class="n">_truncated_normal_samples</span><span class="p">(</span>
-            <span class="n">pu_util_mean</span><span class="p">,</span> <span class="n">pu_util_std</span><span class="p">,</span> <span class="n">pu_util_min</span><span class="p">,</span> <span class="n">pu_util_max</span><span class="p">,</span> <span class="n">num_samples</span>
+        <span class="n">plant_utilizations</span> <span class="o">=</span> <span class="n">sample_distribution</span><span class="p">(</span>
+            <span class="n">util_id</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">util_loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">util_scale</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="n">util_shape</span><span class="p">,</span> <span class="n">minimum</span><span class="o">=</span><span class="n">util_min</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="n">util_max</span><span class="p">,</span>
+            <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">plant_utilizations</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">tr_cfg</span> <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tax_rate&quot;</span><span class="p">,</span> <span class="p">{})</span>
     <span class="n">tr_std</span> <span class="o">=</span> <span class="n">tr_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">tr_std</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">tr_std</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="s2">&quot;dist_id&quot;</span> <span class="ow">in</span> <span class="n">tr_cfg</span><span class="p">:</span>
         <span class="n">tr_mean</span> <span class="o">=</span> <span class="n">plant</span><span class="o">.</span><span class="n">tax_rate</span>
-        <span class="n">tr_min</span> <span class="o">=</span> <span class="n">tr_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tr_mean</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">tr_std</span><span class="p">))</span>
-        <span class="n">tr_max</span> <span class="o">=</span> <span class="n">tr_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">tr_mean</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">tr_std</span><span class="p">))</span>
-        <span class="n">tax_rates</span> <span class="o">=</span> <span class="n">_truncated_normal_samples</span><span class="p">(</span>
-            <span class="n">tr_mean</span><span class="p">,</span> <span class="n">tr_std</span><span class="p">,</span> <span class="n">tr_min</span><span class="p">,</span> <span class="n">tr_max</span><span class="p">,</span> <span class="n">num_samples</span>
+        <span class="p">(</span><span class="n">tr_id</span><span class="p">,</span> <span class="n">tr_loc</span><span class="p">,</span> <span class="n">tr_scale</span><span class="p">,</span> <span class="n">tr_shape</span><span class="p">,</span>
+         <span class="n">tr_min</span><span class="p">,</span> <span class="n">tr_max</span><span class="p">)</span> <span class="o">=</span> <span class="n">_resolve_dist_params</span><span class="p">(</span>
+            <span class="n">tr_cfg</span><span class="p">,</span>
+            <span class="n">default_loc</span><span class="o">=</span><span class="n">tr_mean</span><span class="p">,</span>
+            <span class="n">default_scale</span><span class="o">=</span><span class="n">tr_std</span><span class="p">,</span>
+            <span class="n">default_min</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tr_mean</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">tr_std</span><span class="p">),</span>
+            <span class="n">default_max</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">tr_mean</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">tr_std</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">tax_rates</span> <span class="o">=</span> <span class="n">sample_distribution</span><span class="p">(</span>
+            <span class="n">tr_id</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">tr_loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">tr_scale</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="n">tr_shape</span><span class="p">,</span> <span class="n">minimum</span><span class="o">=</span><span class="n">tr_min</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="n">tr_max</span><span class="p">,</span>
+            <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">tax_rates</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="c1"># ---- Allocate all input distributions ----</span>
+    <span class="c1"># ---- Operator hourly rate ----</span>
     <span class="n">op_cfg</span> <span class="o">=</span> <span class="n">plant</span><span class="o">.</span><span class="n">operator_hourly_rate</span>
-    <span class="n">op_mean</span> <span class="o">=</span> <span class="n">op_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rate&quot;</span><span class="p">,</span> <span class="mf">38.11</span><span class="p">)</span>
-    <span class="n">op_std</span> <span class="o">=</span> <span class="n">op_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="mi">20</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="n">op_min</span> <span class="o">=</span> <span class="n">op_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
-    <span class="n">op_max</span> <span class="o">=</span> <span class="n">op_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">op_id</span><span class="p">,</span> <span class="n">op_loc</span><span class="p">,</span> <span class="n">op_scale</span><span class="p">,</span> <span class="n">op_shape</span><span class="p">,</span> <span class="n">op_min</span><span class="p">,</span> <span class="n">op_max</span> <span class="o">=</span> <span class="n">_resolve_dist_params</span><span class="p">(</span>
+        <span class="n">op_cfg</span><span class="p">,</span> <span class="n">default_loc</span><span class="o">=</span><span class="mf">38.11</span><span class="p">,</span> <span class="n">default_scale</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">default_min</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">default_max</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="c1"># ---- Sample ALL inputs once ----</span>
-    <span class="n">fixed_capitals</span> <span class="o">=</span> <span class="n">_truncated_normal_samples</span><span class="p">(</span>
-        <span class="mi">1</span><span class="p">,</span> <span class="n">fc_std</span><span class="p">,</span> <span class="n">fc_min</span><span class="p">,</span> <span class="n">fc_max</span><span class="p">,</span> <span class="n">num_samples</span>
+    <span class="n">fixed_capitals</span> <span class="o">=</span> <span class="n">sample_distribution</span><span class="p">(</span>
+        <span class="n">fc_id</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">fc_loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">fc_scale</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">fc_shape</span><span class="p">,</span>
+        <span class="n">minimum</span><span class="o">=</span><span class="n">fc_min</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="n">fc_max</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">fixed_opexs</span> <span class="o">=</span> <span class="n">_truncated_normal_samples</span><span class="p">(</span>
-        <span class="mi">1</span><span class="p">,</span> <span class="n">fo_std</span><span class="p">,</span> <span class="n">fo_min</span><span class="p">,</span> <span class="n">fo_max</span><span class="p">,</span> <span class="n">num_samples</span>
+    <span class="n">fixed_opexs</span> <span class="o">=</span> <span class="n">sample_distribution</span><span class="p">(</span>
+        <span class="n">fo_id</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">fo_loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">fo_scale</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">fo_shape</span><span class="p">,</span>
+        <span class="n">minimum</span><span class="o">=</span><span class="n">fo_min</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="n">fo_max</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">operator_hourlys</span> <span class="o">=</span> <span class="n">_truncated_normal_samples</span><span class="p">(</span>
-        <span class="n">op_mean</span><span class="p">,</span> <span class="n">op_std</span><span class="p">,</span> <span class="n">op_min</span><span class="p">,</span> <span class="n">op_max</span><span class="p">,</span> <span class="n">num_samples</span>
+    <span class="n">operator_hourlys</span> <span class="o">=</span> <span class="n">sample_distribution</span><span class="p">(</span>
+        <span class="n">op_id</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">op_loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">op_scale</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">op_shape</span><span class="p">,</span>
+        <span class="n">minimum</span><span class="o">=</span><span class="n">op_min</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="n">op_max</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">project_lifetimes</span> <span class="o">=</span> <span class="n">_truncated_normal_samples</span><span class="p">(</span>
-        <span class="n">plant</span><span class="o">.</span><span class="n">project_lifetime</span><span class="p">,</span> <span class="n">lt_std</span><span class="p">,</span> <span class="n">lt_min</span><span class="p">,</span> <span class="n">lt_max</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span>
+    <span class="n">project_lifetimes</span> <span class="o">=</span> <span class="n">sample_distribution</span><span class="p">(</span>
+        <span class="n">lt_id</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">lt_loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">lt_scale</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">lt_shape</span><span class="p">,</span>
+        <span class="n">minimum</span><span class="o">=</span><span class="n">lt_min</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="n">lt_max</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">interests</span> <span class="o">=</span> <span class="n">_truncated_normal_samples</span><span class="p">(</span>
-        <span class="n">plant</span><span class="o">.</span><span class="n">interest_rate</span><span class="p">,</span> <span class="n">ir_std</span><span class="p">,</span> <span class="n">ir_min</span><span class="p">,</span> <span class="n">ir_max</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span>
+    <span class="n">interests</span> <span class="o">=</span> <span class="n">sample_distribution</span><span class="p">(</span>
+        <span class="n">ir_id</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">ir_loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">ir_scale</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">ir_shape</span><span class="p">,</span>
+        <span class="n">minimum</span><span class="o">=</span><span class="n">ir_min</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="n">ir_max</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">variable_opex_price_samples</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">item</span><span class="p">,</span> <span class="n">props</span> <span class="ow">in</span> <span class="n">plant</span><span class="o">.</span><span class="n">variable_opex_inputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="o">=</span> <span class="n">_get_sampling_params</span><span class="p">(</span><span class="n">props</span><span class="p">)</span>
-        <span class="n">variable_opex_price_samples</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="n">_truncated_normal_samples</span><span class="p">(</span>
-            <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span><span class="p">,</span> <span class="n">num_samples</span>
+        <span class="p">(</span><span class="n">v_id</span><span class="p">,</span> <span class="n">v_loc</span><span class="p">,</span> <span class="n">v_scale</span><span class="p">,</span> <span class="n">v_shape</span><span class="p">,</span>
+         <span class="n">v_min</span><span class="p">,</span> <span class="n">v_max</span><span class="p">)</span> <span class="o">=</span> <span class="n">_resolve_dist_params</span><span class="p">(</span><span class="n">props</span><span class="p">)</span>
+        <span class="n">variable_opex_price_samples</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample_distribution</span><span class="p">(</span>
+            <span class="n">v_id</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">v_loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">v_scale</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">v_shape</span><span class="p">,</span>
+            <span class="n">minimum</span><span class="o">=</span><span class="n">v_min</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="n">v_max</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="n">have_product_prices</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span>
@@ -1145,9 +1407,11 @@
     <span class="n">product_price_samples</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">have_product_prices</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">prod</span><span class="p">,</span> <span class="n">props</span> <span class="ow">in</span> <span class="n">plant</span><span class="o">.</span><span class="n">plant_products</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="o">=</span> <span class="n">_get_sampling_params</span><span class="p">(</span><span class="n">props</span><span class="p">)</span>
-            <span class="n">product_price_samples</span><span class="p">[</span><span class="n">prod</span><span class="p">]</span> <span class="o">=</span> <span class="n">_truncated_normal_samples</span><span class="p">(</span>
-                <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span><span class="p">,</span> <span class="n">num_samples</span>
+            <span class="p">(</span><span class="n">p_id</span><span class="p">,</span> <span class="n">p_loc</span><span class="p">,</span> <span class="n">p_scale</span><span class="p">,</span> <span class="n">p_shape</span><span class="p">,</span>
+             <span class="n">p_min</span><span class="p">,</span> <span class="n">p_max</span><span class="p">)</span> <span class="o">=</span> <span class="n">_resolve_dist_params</span><span class="p">(</span><span class="n">props</span><span class="p">)</span>
+            <span class="n">product_price_samples</span><span class="p">[</span><span class="n">prod</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample_distribution</span><span class="p">(</span>
+                <span class="n">p_id</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">p_loc</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">p_scale</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">p_shape</span><span class="p">,</span>
+                <span class="n">minimum</span><span class="o">=</span><span class="n">p_min</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="n">p_max</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
             <span class="p">)</span>
 
     <span class="c1"># ---- Batch calculation loop ----</span>
@@ -1276,5 +1540,6 @@
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=fd10adb8"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../_static/caption_links.js?v=2098cfba"></script>
     </body>
 </html>

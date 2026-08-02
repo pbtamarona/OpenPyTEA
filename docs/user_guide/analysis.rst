@@ -243,9 +243,13 @@ by adding ``std``, ``min``, and ``max`` fields to each item:
    })
 
 The first four keys are **active by default**. ``plant_utilization`` and
-``tax_rate`` require an explicit ``std > 0`` to be sampled. When ``min``/
-``max`` are omitted they are derived as ±2 × std around the plant baseline.
-Set ``std=0`` for any key to disable it.
+``tax_rate`` require an explicit ``std > 0`` (or an explicit ``dist_id``) to
+be sampled. For ``project_lifetime``, ``interest_rate``, ``plant_utilization``,
+and ``tax_rate``, omitted ``min``/``max`` are derived as ±2 × std around the
+plant's baseline value. For ``fixed_capital_factor`` and ``fixed_opex_factor``
+the default bounds are a fixed ``[0.25, 1.75]`` regardless of ``std`` unless
+you set ``min``/``max`` explicitly. Set ``std=0`` for any key to disable
+sampling for it (the value collapses to its baseline).
 
 .. list-table::
    :header-rows: 1
@@ -273,6 +277,111 @@ Set ``std=0`` for any key to disable it.
      - Corporate tax rate.
      - 0 (opt-in)
 
+Every uncertain input above defaults to a **Normal** distribution built from
+its ``std`` (and, if given, ``min``/``max`` truncation bounds). Add a
+``dist_id`` field to any uncertainty block — in ``variable_opex_inputs``,
+``plant_products``, ``operator_hourly_rate``, or ``project_uncertainties`` —
+to draw from a different family instead. Field names are reused across
+families (``loc``/``mean``/``price``/``rate``, ``scale``/``std``, ``shape``,
+``minimum``/``min``, ``maximum``/``max``); which ones apply depends on
+``dist_id``.
+
+Under the hood every family is a frozen `scipy.stats
+<https://docs.scipy.org/doc/scipy/reference/stats.html>`_ distribution, so
+the parameter meanings and shapes follow SciPy's conventions. The table
+below links each family to its SciPy reference page for the full
+mathematical definition:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 22 30 38
+
+   * - ``dist_id``
+     - Family
+     - Parameters used
+     - Notes
+   * - 0 / 1
+     - Fixed value
+     - ``loc``
+     - No randomness; every draw equals ``loc``.
+   * - 2
+     - `Lognormal <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html>`_
+     - ``loc`` (μ), ``scale`` (σ)
+     - Optional ``min``/``max`` truncate the drawn samples.
+   * - 3
+     - `Normal <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.norm.html>`_ *(default)*
+     - ``loc`` (mean), ``scale`` (std)
+     - Optional ``min``/``max`` truncate the drawn samples.
+   * - 4
+     - `Uniform <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.uniform.html>`_
+     - ``min``, ``max``
+     -
+   * - 5
+     - `Triangular <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.triang.html>`_
+     - ``loc`` (mode), ``min``, ``max``
+     -
+   * - 6
+     - `Bernoulli <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_discrete.html>`_
+     - ``loc`` (probability *p*), ``scale`` (success value, default 1)
+     - Draws are 0 or ``scale``. Optional ``min``/``max`` truncate.
+   * - 7
+     - `Discrete uniform <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.randint.html>`_
+     - ``min``, ``max``
+     - Integers, inclusive of ``max``.
+   * - 8
+     - `Weibull <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.weibull_min.html>`_
+     - ``loc`` (offset), ``scale`` (λ), ``shape`` (k)
+     -
+   * - 9
+     - `Gamma <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gamma.html>`_
+     - ``loc`` (offset), ``scale`` (θ), ``shape`` (k)
+     -
+   * - 10
+     - `Beta <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.beta.html>`_
+     - ``loc`` (α), ``shape`` (β), ``max`` (upper bound, default 1)
+     -
+   * - 11
+     - `Generalized extreme value (GEV) <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.genextreme.html>`_
+     - ``loc`` (μ), ``scale`` (σ), ``shape`` (ξ)
+     -
+   * - 12
+     - `Student's t <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html>`_
+     - ``loc`` (median), ``scale``, ``shape`` (ν, degrees of freedom)
+     -
+
+.. code-block:: python
+
+   plant.update_configuration({
+       "plant_products": {
+           "methanol": {
+               "production": 150_000,
+               "price": 1.75,
+               "dist_id": 5,     # Triangular; "price" doubles as the mode
+               "min": 1.25,
+               "max": 2.50,
+           },
+       },
+       "project_uncertainties": {
+           "fixed_capital_factor": {
+               "dist_id": 2,     # Lognormal
+               "loc": 0.0,       # mu
+               "std": 0.20,      # sigma
+           },
+       },
+   })
+
+Only Lognormal, Normal, and Bernoulli (``dist_id`` 2, 3, 6) apply ``min``/
+``max`` as post-hoc truncation via rejection sampling. For Uniform,
+Triangular, and Discrete uniform the bounds define the distribution itself.
+Weibull, Gamma, GEV, and Student's t ignore ``min``/``max`` entirely (Beta
+uses ``max`` as its upper scale bound instead).
+
+For direct programmatic use outside of ``monte_carlo``, the same families
+are available via :func:`~openpytea.analysis.make_distribution` (returns a
+frozen ``scipy.stats`` distribution) and
+:func:`~openpytea.analysis.sample_distribution` (draws an array of samples,
+with optional truncation).
+
 Running the simulation
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -283,18 +392,45 @@ Running the simulation
    mc_results = monte_carlo(
        plant,
        num_samples=1_000_000,   # increase for accuracy, decrease for speed
-       batch_size=10_000,       # adjust to available memory
+       batch_size=1_000,        # samples evaluated per batch; default 1000
+       random_seed=42,          # optional, for reproducible runs
    )
 
-Results are stored on the ``Plant`` object and returned as a dict keyed by
-metric name. Each entry contains the raw sample array:
+``monte_carlo`` returns a dict:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Key
+     - Description
+   * - ``"metrics"``
+     - Dict of sample arrays keyed by metric: ``"LCOP"``, ``"NPV"``,
+       ``"ROI"``, ``"PBT"``.
+   * - ``"inputs"``
+     - Dict mapping each sampled input's display name to its sample array.
+   * - ``"name"``
+     - The plant's name.
+   * - ``"num_samples"``, ``"additional_capex"``, ``"currency"``
+     - Echo of the parameters the run was executed with.
+
+``LCOP`` is always computed. ``NPV``, ``ROI``, and ``PBT`` are only
+meaningful (otherwise they stay zero-filled) when **every** entry in
+``plant_products`` has a ``"price"`` set. There is no ``"IRR"`` key here —
+IRR is available for :func:`~openpytea.analysis.sensitivity_data` and
+:func:`~openpytea.analysis.tornado_data`, but not for ``monte_carlo``. Pass
+``additional_capex=True`` to account for mid-project CAPEX events in the
+ROI/PBT calculation.
+
+The same ``"metrics"`` and ``"inputs"`` dicts are also stored on the plant
+as ``plant.monte_carlo_metrics`` and ``plant.monte_carlo_inputs``, which is
+what the plotting functions fall back to when passed a ``Plant`` directly.
 
 .. code-block:: python
 
    # Access results
-   print(mc_results["LCOP"])    # array of LCOP samples
-   print(mc_results["NPV"])     # array of NPV samples
-   # Available keys: "LCOP", "NPV", "IRR", "ROI", "PBT"
+   print(mc_results["metrics"]["LCOP"])   # array of LCOP samples
+   print(mc_results["metrics"]["NPV"])    # array of NPV samples
 
 Visualizing results
 ~~~~~~~~~~~~~~~~~~~

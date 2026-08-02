@@ -687,59 +687,151 @@ sensitivity magnitude (ascending).</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="openpytea.analysis.monte_carlo">
-<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">monte_carlo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#monte_carlo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.monte_carlo" title="Link to this definition">¶</a></dt>
-<dd><p>Probabilistic analysis of a plant’s economic performance by sampling
-input parameters from truncated normal distributions and computing
-economic metrics across all samples. Samples are processed in batches
-to manage memory.</p>
+<dt class="sig sig-object py" id="openpytea.analysis.make_distribution">
+<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">make_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#make_distribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.make_distribution" title="Link to this definition">¶</a></dt>
+<dd><p>Build a frozen <code class="docutils literal notranslate"><span class="pre">scipy.stats</span></code> distribution from an OpenPyTEA dist_id.</p>
+<p>Translates the compact <code class="docutils literal notranslate"><span class="pre">(dist_id,</span> <span class="pre">loc,</span> <span class="pre">scale,</span> <span class="pre">shape,</span> <span class="pre">minimum,</span> <span class="pre">maximum)</span></code>
+parameterization used throughout the Monte Carlo module into the
+corresponding frozen SciPy distribution object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>plant</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code>) – A fully configured Plant instance. Baseline economic calculations
-are run internally before sampling begins. The original plant is not
-modified; results are stored on it after the simulation completes.</p></li>
-<li><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Total number of Monte Carlo samples. Default is 1_000_000.</p></li>
-<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Number of samples processed per batch. Smaller values reduce peak
-memory at the cost of slightly more overhead. Default is 1000.</p></li>
-<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Include additional CAPEX in ROI and payback time calculations.
-Only applies when product prices are available. Default is False.</p></li>
+<li><p><strong>dist_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – <p>Distribution family identifier:</p>
+<ul>
+<li><p>2 : Lognormal (<a href="#id1"><span class="problematic" id="id2">``</span></a>loc``=mu, <a href="#id3"><span class="problematic" id="id4">``</span></a>scale``=sigma)</p></li>
+<li><p>3 : Normal (<a href="#id5"><span class="problematic" id="id6">``</span></a>loc``=mean, <a href="#id7"><span class="problematic" id="id8">``</span></a>scale``=std)</p></li>
+<li><p>4 : Uniform (<code class="docutils literal notranslate"><span class="pre">minimum</span></code>, <code class="docutils literal notranslate"><span class="pre">maximum</span></code>)</p></li>
+<li><p>5 : Triangular (<code class="docutils literal notranslate"><span class="pre">loc``=mode,</span> <span class="pre">``minimum</span></code>, <code class="docutils literal notranslate"><span class="pre">maximum</span></code>)</p></li>
+<li><p>6 : Bernoulli (<a href="#id9"><span class="problematic" id="id10">``</span></a>loc``=p, <a href="#id11"><span class="problematic" id="id12">``</span></a>scale``=success value, default 1)</p></li>
+<li><p>7 : Discrete uniform (<code class="docutils literal notranslate"><span class="pre">minimum</span></code>, <code class="docutils literal notranslate"><span class="pre">maximum</span></code>, inclusive)</p></li>
+<li><p>8 : Weibull (<a href="#id13"><span class="problematic" id="id14">``</span></a>loc``=offset, <a href="#id15"><span class="problematic" id="id16">``</span></a>scale``=lambda, <a href="#id17"><span class="problematic" id="id18">``</span></a>shape``=k)</p></li>
+<li><p>9 : Gamma (<a href="#id19"><span class="problematic" id="id20">``</span></a>loc``=offset, <a href="#id21"><span class="problematic" id="id22">``</span></a>scale``=theta, <a href="#id23"><span class="problematic" id="id24">``</span></a>shape``=k)</p></li>
+<li><p>10 : Beta (<a href="#id25"><span class="problematic" id="id26">``</span></a>loc``=alpha, <a href="#id27"><span class="problematic" id="id28">``</span></a>shape``=beta, <a href="#id29"><span class="problematic" id="id30">``</span></a>maximum``=upper bound)</p></li>
+<li><p>11 : GEV (<a href="#id31"><span class="problematic" id="id32">``</span></a>loc``=mu, <a href="#id33"><span class="problematic" id="id34">``</span></a>scale``=sigma, <a href="#id35"><span class="problematic" id="id36">``</span></a>shape``=xi)</p></li>
+<li><p>12 : Student’s t (<a href="#id37"><span class="problematic" id="id38">``</span></a>loc``=median, <a href="#id39"><span class="problematic" id="id40">``</span></a>scale``=scale, <a href="#id41"><span class="problematic" id="id42">``</span></a>shape``=nu)</p></li>
+</ul>
+</p></li>
+<li><p><strong>loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Location parameter; meaning depends on <code class="docutils literal notranslate"><span class="pre">dist_id</span></code> (see above).</p></li>
+<li><p><strong>scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Scale parameter; meaning depends on <code class="docutils literal notranslate"><span class="pre">dist_id</span></code> (see above).</p></li>
+<li><p><strong>shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Shape parameter, required for Weibull, Gamma, Beta, GEV, and
+Student’s t.</p></li>
+<li><p><strong>minimum</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Lower bound, required for Uniform, Triangular, and Discrete uniform.</p></li>
+<li><p><strong>maximum</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Upper bound, required for Uniform, Triangular, Discrete uniform,
+and (optionally) Beta.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p>A dictionary with the following keys:</p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;name&quot;</span></code> : str — plant name.</p></li>
-<li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">&quot;metrics&quot;</span></code><span class="classifier">dict — arrays of length <em>num_samples</em>:</span></dt><dd><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;LCOP&quot;</span></code> — levelized cost of production (always populated).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;NPV&quot;</span></code> — net present value (requires product prices).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;ROI&quot;</span></code> — return on investment (requires product prices).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;PBT&quot;</span></code> — payback time (requires product prices).</p></li>
-</ul>
+<dd class="field-even"><p>A frozen distribution instance (continuous <code class="docutils literal notranslate"><span class="pre">rv_continuous</span></code> /
+<code class="docutils literal notranslate"><span class="pre">rv_discrete</span></code>) exposing the usual <code class="docutils literal notranslate"><span class="pre">rvs</span></code>, <code class="docutils literal notranslate"><span class="pre">pdf</span></code>/<code class="docutils literal notranslate"><span class="pre">pmf</span></code>, etc.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.stats</span> <span class="pre">distribution</span></code></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">dist_id</span></code> is not one of the supported values above (0/1 are
+    handled separately by <a class="reference internal" href="#openpytea.analysis.sample_distribution" title="openpytea.analysis.sample_distribution"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_distribution()</span></code></a> as constants).</p>
 </dd>
 </dl>
-</li>
-<li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">&quot;inputs&quot;</span></code><span class="classifier">dict — sampled input arrays, always containing:</span></dt><dd><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;Fixed</span> <span class="pre">capital</span> <span class="pre">factor&quot;</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;Fixed</span> <span class="pre">opex</span> <span class="pre">factor&quot;</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;Operator</span> <span class="pre">hourly</span> <span class="pre">rate&quot;</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;Project</span> <span class="pre">lifetime&quot;</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;Interest</span> <span class="pre">rate&quot;</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;{Item}</span> <span class="pre">price&quot;</span></code> for each variable OPEX item.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;{Product}</span> <span class="pre">product</span> <span class="pre">price&quot;</span></code> for each product.</p></li>
-</ul>
-<p>And conditionally (when <code class="docutils literal notranslate"><span class="pre">std</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> in <code class="docutils literal notranslate"><span class="pre">project_uncertainties</span></code>):
-- <code class="docutils literal notranslate"><span class="pre">&quot;Plant</span> <span class="pre">utilization&quot;</span></code>
-- <code class="docutils literal notranslate"><span class="pre">&quot;Tax</span> <span class="pre">rate&quot;</span></code></p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#openpytea.analysis.sample_distribution" title="openpytea.analysis.sample_distribution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_distribution</span></code></a></dt><dd><p>Draws random samples, with optional truncation.</p>
 </dd>
 </dl>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;num_samples&quot;</span></code> : int — number of samples generated.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;additional_capex&quot;</span></code> : bool — whether additional CAPEX was
-included.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;currency&quot;</span></code> : str — currency symbol.</p></li>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openpytea.analysis.sample_distribution">
+<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">sample_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#sample_distribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.sample_distribution" title="Link to this definition">¶</a></dt>
+<dd><p>Draw random samples for a Monte Carlo input, with optional truncation.</p>
+<p>Wraps <a class="reference internal" href="#openpytea.analysis.make_distribution" title="openpytea.analysis.make_distribution"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_distribution()</span></code></a> to generate an array of samples. For
+<code class="docutils literal notranslate"><span class="pre">dist_id</span></code> 0 or 1 (fixed/constant values) it returns a constant array
+without touching <code class="docutils literal notranslate"><span class="pre">random_state</span></code>. When <code class="docutils literal notranslate"><span class="pre">minimum</span></code>/<code class="docutils literal notranslate"><span class="pre">maximum</span></code> bounds
+are given for Lognormal, Normal, or Bernoulli (<code class="docutils literal notranslate"><span class="pre">dist_id</span></code> 2, 3, 6),
+samples are drawn and re-drawn (rejection sampling) until <code class="docutils literal notranslate"><span class="pre">size</span></code>
+values fall within <code class="docutils literal notranslate"><span class="pre">[minimum,</span> <span class="pre">maximum]</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Distribution family identifier, see <a class="reference internal" href="#openpytea.analysis.make_distribution" title="openpytea.analysis.make_distribution"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_distribution()</span></code></a>.
+0 or 1 means “constant value equal to <code class="docutils literal notranslate"><span class="pre">loc</span></code>”.</p></li>
+<li><p><strong>size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Number of samples to draw.</p></li>
+<li><p><strong>loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Location parameter, forwarded to <a class="reference internal" href="#openpytea.analysis.make_distribution" title="openpytea.analysis.make_distribution"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_distribution()</span></code></a>.</p></li>
+<li><p><strong>scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Scale parameter, forwarded to <a class="reference internal" href="#openpytea.analysis.make_distribution" title="openpytea.analysis.make_distribution"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_distribution()</span></code></a>.</p></li>
+<li><p><strong>shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Shape parameter, forwarded to <a class="reference internal" href="#openpytea.analysis.make_distribution" title="openpytea.analysis.make_distribution"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_distribution()</span></code></a>.</p></li>
+<li><p><strong>minimum</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Lower truncation bound (also used as a distribution parameter for
+some families, see <a class="reference internal" href="#openpytea.analysis.make_distribution" title="openpytea.analysis.make_distribution"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_distribution()</span></code></a>).</p></li>
+<li><p><strong>maximum</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Upper truncation bound (also used as a distribution parameter for
+some families, see <a class="reference internal" href="#openpytea.analysis.make_distribution" title="openpytea.analysis.make_distribution"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_distribution()</span></code></a>).</p></li>
+<li><p><strong>random_state</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/random/generator.html#numpy.random.Generator" title="(in NumPy v2.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.random.Generator</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Random state passed to <code class="docutils literal notranslate"><span class="pre">scipy.stats</span></code>’ <code class="docutils literal notranslate"><span class="pre">rvs</span></code>. Pass a single
+shared <code class="docutils literal notranslate"><span class="pre">Generator</span></code> across calls to keep an entire Monte Carlo run
+reproducible from one seed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of <code class="docutils literal notranslate"><span class="pre">size</span></code> samples.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Rejection sampling redraws in batches of <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">remaining</span></code> until enough
+in-bounds values are collected, so very narrow <code class="docutils literal notranslate"><span class="pre">[minimum,</span> <span class="pre">maximum]</span></code>
+windows relative to the distribution’s spread can be slow.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#openpytea.analysis.make_distribution" title="openpytea.analysis.make_distribution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_distribution</span></code></a></dt><dd><p>Builds the underlying frozen SciPy distribution.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="openpytea.analysis.monte_carlo">
+<span class="sig-prename descclassname"><span class="pre">openpytea.analysis.</span></span><span class="sig-name descname"><span class="pre">monte_carlo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_capex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/analysis.html#monte_carlo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.analysis.monte_carlo" title="Link to this definition">¶</a></dt>
+<dd><p>Run a Monte Carlo uncertainty simulation over a plant’s financial metrics.</p>
+<p>Samples every configured uncertain input (project-level factors such as
+fixed capital/OPEX, project lifetime, and interest rate; optionally
+plant utilization and tax rate; variable OPEX item prices; and product
+prices) and re-evaluates the plant’s economics <code class="docutils literal notranslate"><span class="pre">num_samples</span></code> times,
+producing a distribution of outcomes for LCOP and, when product prices
+are configured, NPV, ROI, and payback time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plant</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code>) – A configured <a class="reference internal" href="plant.html#id0" title="openpytea.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code></a>. Uncertainty ranges are
+read from <code class="docutils literal notranslate"><span class="pre">plant.project_uncertainties</span></code>, <code class="docutils literal notranslate"><span class="pre">plant.operator_hourly_rate</span></code>,
+<code class="docutils literal notranslate"><span class="pre">plant.variable_opex_inputs</span></code>, and <code class="docutils literal notranslate"><span class="pre">plant.plant_products</span></code> — see
+the Monte Carlo section of the user guide for the configuration
+format. The plant is first baseline-initialized (fixed capital,
+variable/fixed OPEX, cash flow, levelized cost) but is not mutated
+by the simulation itself; each batch operates on a deep copy.</p></li>
+<li><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Total number of Monte Carlo draws. Default is 1,000,000.</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Number of samples evaluated per batch (each batch deep-copies the
+plant and vectorizes the economic calculations over the batch).
+Larger values are faster but use more memory. Default is 1000.</p></li>
+<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Whether to include additional CAPEX events when computing ROI and
+payback time. Default is False.</p></li>
+<li><p><strong>random_seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Seed for the single <code class="docutils literal notranslate"><span class="pre">numpy.random.Generator</span></code> shared across all
+parameter draws, for reproducible runs. Default is None
+(nondeterministic).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Dictionary with keys:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;name&quot;</span></code> : the plant’s name.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;metrics&quot;</span></code> : dict mapping <code class="docutils literal notranslate"><span class="pre">&quot;LCOP&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;ROI&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;NPV&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;PBT&quot;</span></code> to <code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> of length <code class="docutils literal notranslate"><span class="pre">num_samples</span></code> (ROI,
+NPV, PBT stay zero-filled if product prices aren’t configured).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;inputs&quot;</span></code> : dict mapping each sampled input’s display name to
+its <code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> of drawn values.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;num_samples&quot;</span></code> : the requested sample count.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;additional_capex&quot;</span></code> : the flag used for ROI/PBT.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;currency&quot;</span></code> : the plant’s currency symbol.</p></li>
 </ul>
 </p>
 </dd>
@@ -749,39 +841,20 @@ included.</p></li>
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>Sampling distributions for fixed capital factor, fixed opex factor,
-project lifetime, interest rate, plant utilization, and tax rate are
-controlled by the plant’s <code class="docutils literal notranslate"><span class="pre">project_uncertainties</span></code> configuration dict
-(see Plant class docstring). Default std, min, and max values are used
-when a parameter is absent from that dict.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">plant_utilization</span></code> and <code class="docutils literal notranslate"><span class="pre">tax_rate</span></code> have a default <code class="docutils literal notranslate"><span class="pre">std</span></code> of 0 and
-are only sampled when explicitly set to a positive value in
-<code class="docutils literal notranslate"><span class="pre">project_uncertainties</span></code>.</p></li>
-<li><p>Variable OPEX items and products are sampled using the <code class="docutils literal notranslate"><span class="pre">std</span></code>,
-<code class="docutils literal notranslate"><span class="pre">min</span></code>, and <code class="docutils literal notranslate"><span class="pre">max</span></code> fields defined within each item’s own config dict.</p></li>
-<li><p>The plant is deep-copied each batch to avoid mutating the original.
-After the run, <code class="docutils literal notranslate"><span class="pre">monte_carlo_metrics</span></code> and <code class="docutils literal notranslate"><span class="pre">monte_carlo_inputs</span></code> are
-written back to the original plant.</p></li>
-<li><p>Progress is shown via a tqdm progress bar over batches.</p></li>
+<li><p>The same results are also stored on the plant as
+<code class="docutils literal notranslate"><span class="pre">plant.monte_carlo_metrics</span></code> and <code class="docutils literal notranslate"><span class="pre">plant.monte_carlo_inputs</span></code> for use
+by <a class="reference internal" href="plotting.html#openpytea.plotting.plot_monte_carlo" title="openpytea.plotting.plot_monte_carlo"><code class="xref py py-func docutils literal notranslate"><span class="pre">plot_monte_carlo()</span></code></a> and
+<a class="reference internal" href="plotting.html#openpytea.plotting.plot_monte_carlo_inputs" title="openpytea.plotting.plot_monte_carlo_inputs"><code class="xref py py-func docutils literal notranslate"><span class="pre">plot_monte_carlo_inputs()</span></code></a>.</p></li>
+<li><p>All inputs are sampled once up front (in a fixed order, from one
+shared RNG) and then consumed batch-by-batch, so results are
+reproducible for a given <code class="docutils literal notranslate"><span class="pre">random_seed</span></code> regardless of <code class="docutils literal notranslate"><span class="pre">batch_size</span></code>.</p></li>
 </ul>
-<dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.14)"><strong>AttributeError</strong></a> – If the plant object lacks required economic calculation methods or
-    configuration attributes.</p>
-</dd>
-<dt class="field-even">Parameters<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>num_samples</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>additional_capex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
-</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#openpytea.analysis.sample_distribution" title="openpytea.analysis.sample_distribution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_distribution</span></code></a></dt><dd><p>Underlying per-input sampling routine.</p>
 </dd>
 </dl>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">lcop_values</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;metrics&#39;</span><span class="p">][</span><span class="s1">&#39;LCOP&#39;</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">roi_values</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;metrics&#39;</span><span class="p">][</span><span class="s1">&#39;ROI&#39;</span><span class="p">]</span>
-</pre></div>
 </div>
 </dd></dl>
 
@@ -849,6 +922,8 @@ written back to the original plant.</p></li>
 <li><a class="reference internal" href="#openpytea.analysis.fixed_opex_data"><code class="docutils literal notranslate"><span class="pre">fixed_opex_data()</span></code></a></li>
 <li><a class="reference internal" href="#openpytea.analysis.sensitivity_data"><code class="docutils literal notranslate"><span class="pre">sensitivity_data()</span></code></a></li>
 <li><a class="reference internal" href="#openpytea.analysis.tornado_data"><code class="docutils literal notranslate"><span class="pre">tornado_data()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.analysis.make_distribution"><code class="docutils literal notranslate"><span class="pre">make_distribution()</span></code></a></li>
+<li><a class="reference internal" href="#openpytea.analysis.sample_distribution"><code class="docutils literal notranslate"><span class="pre">sample_distribution()</span></code></a></li>
 <li><a class="reference internal" href="#openpytea.analysis.monte_carlo"><code class="docutils literal notranslate"><span class="pre">monte_carlo()</span></code></a></li>
 </ul>
 </li>

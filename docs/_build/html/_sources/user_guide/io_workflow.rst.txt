@@ -266,7 +266,7 @@ results file for further analysis or visualization. The output file is named
    mc = results["monte_carlo"]
 
    from openpytea.plotting import plot_monte_carlo
-   plot_monte_carlo(mc, metric="LCOP", bins=30)
+   fig, ax = plot_monte_carlo(mc, metric="LCOP", bins=30)
 
 Comparing multiple scenarios
 -----------------------------

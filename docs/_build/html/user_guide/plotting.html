@@ -310,8 +310,9 @@
 <h1>Plotting<a class="headerlink" href="#plotting" title="Link to this heading">¶</a></h1>
 <p>The <a class="reference internal" href="../api/plotting.html#module-openpytea.plotting" title="openpytea.plotting"><code class="xref py py-mod docutils literal notranslate"><span class="pre">openpytea.plotting</span></code></a> module wraps matplotlib to produce
 publication-quality figures using the <a class="reference external" href="https://github.com/garrettj403/SciencePlots">SciencePlots</a> style. All functions return
-a <code class="docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code> object so you can further customize the figure
-before saving.</p>
+a <code class="docutils literal notranslate"><span class="pre">(fig,</span> <span class="pre">ax)</span></code> tuple — a <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="(in Matplotlib v3.11.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.figure.Figure</span></code></a> and a
+<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.11.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a> — so you can further customize or save the
+figure directly.</p>
 <p>To see the outputs of all code examples below, refer to the
 <a class="reference external" href="https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb">walkthrough notebook</a>.</p>
 <section id="cost-breakdown-charts">
@@ -328,19 +329,19 @@ helper functions in <a class="reference internal" href="../api/analysis.html#mod
 
 <span class="c1"># Equipment-level direct costs</span>
 <span class="n">equip_data</span> <span class="o">=</span> <span class="n">direct_costs_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">equip_data</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">equip_data</span><span class="p">)</span>
 
 <span class="c1"># Capital cost breakdown (ISBL, OSBL, D&amp;E, Contingency)</span>
 <span class="n">capex_data</span> <span class="o">=</span> <span class="n">fixed_capital_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">capex_data</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">capex_data</span><span class="p">)</span>
 
 <span class="c1"># Fixed OPEX breakdown</span>
 <span class="n">fopex_data</span> <span class="o">=</span> <span class="n">fixed_opex_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">fopex_data</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">fopex_data</span><span class="p">)</span>
 
 <span class="c1"># Variable OPEX breakdown</span>
 <span class="n">vopex_data</span> <span class="o">=</span> <span class="n">variable_opex_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">vopex_data</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">vopex_data</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -351,15 +352,15 @@ helper functions in <a class="reference internal" href="../api/analysis.html#mod
 
 <span class="c1"># Vary electricity price ±50 % and plot LCOP</span>
 <span class="n">sens</span> <span class="o">=</span> <span class="n">sensitivity_data</span><span class="p">(</span><span class="n">plants</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;electricity&quot;</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">)</span>
 
-<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;sensitivity.pdf&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;sensitivity.pdf&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Axis labels and the legend are set automatically from the data returned by
 <a class="reference internal" href="../api/analysis.html#openpytea.analysis.sensitivity_data" title="openpytea.analysis.sensitivity_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">sensitivity_data()</span></code></a>. Pass a custom <code class="docutils literal notranslate"><span class="pre">figsize</span></code> to
 resize the chart:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 </pre></div>
 </div>
 <section id="comparing-multiple-plants">
@@ -372,7 +373,7 @@ plot all curves on the same axes:</p>
     <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;NPV&quot;</span><span class="p">,</span>
     <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens_multi</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens_multi</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -384,13 +385,13 @@ plot all curves on the same axes:</p>
 
 <span class="c1"># Default metric is LCOP</span>
 <span class="n">td</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span><span class="n">plant</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_tornado</span><span class="p">(</span><span class="n">td</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_tornado</span><span class="p">(</span><span class="n">td</span><span class="p">)</span>
 
 <span class="c1"># Profit-oriented metric</span>
 <span class="n">td_roi</span> <span class="o">=</span> <span class="n">tornado_data</span><span class="p">(</span><span class="n">plant</span><span class="o">=</span><span class="n">plant</span><span class="p">,</span> <span class="n">plus_minus_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;ROI&quot;</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_tornado</span><span class="p">(</span><span class="n">td_roi</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_tornado</span><span class="p">(</span><span class="n">td_roi</span><span class="p">)</span>
 
-<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;tornado.pdf&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;tornado.pdf&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -402,9 +403,9 @@ plot all curves on the same axes:</p>
 <span class="n">mc_results</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10_000</span><span class="p">)</span>
 
 <span class="c1"># Distribution of the LCOP</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_monte_carlo</span><span class="p">(</span><span class="n">plant</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
 
-<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;monte_carlo_lcop.pdf&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;monte_carlo_lcop.pdf&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <section id="visualizing-input-distributions">
@@ -413,7 +414,7 @@ plot all curves on the same axes:</p>
 <code class="docutils literal notranslate"><span class="pre">std</span></code>/<code class="docutils literal notranslate"><span class="pre">min</span></code>/<code class="docutils literal notranslate"><span class="pre">max</span></code> settings produce the intended input distributions:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">openpytea.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_monte_carlo_inputs</span>
 
-<span class="n">axes</span> <span class="o">=</span> <span class="n">plot_monte_carlo_inputs</span><span class="p">(</span><span class="n">mc_results</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plot_monte_carlo_inputs</span><span class="p">(</span><span class="n">mc_results</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -423,7 +424,7 @@ plot all curves on the same axes:</p>
 
 <span class="n">mc_b</span> <span class="o">=</span> <span class="n">monte_carlo</span><span class="p">(</span><span class="n">plant_b</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10_000</span><span class="p">)</span>
 
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_multiple_monte_carlo</span><span class="p">(</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_multiple_monte_carlo</span><span class="p">(</span>
     <span class="n">data_list</span><span class="o">=</span><span class="p">[</span><span class="n">plant</span><span class="p">,</span> <span class="n">plant_b</span><span class="p">],</span>
     <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;LCOP&quot;</span><span class="p">,</span>
     <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
@@ -434,18 +435,17 @@ plot all curves on the same axes:</p>
 </section>
 <section id="saving-figures">
 <h2>Saving figures<a class="headerlink" href="#saving-figures" title="Link to this heading">¶</a></h2>
-<p>All functions return an <code class="docutils literal notranslate"><span class="pre">Axes</span></code> object. Access the parent figure via
-<code class="docutils literal notranslate"><span class="pre">ax.figure</span></code> to save:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">capex_data</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;capex.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;capex.pdf&quot;</span><span class="p">)</span>   <span class="c1"># vector format for publications</span>
+<p>All functions return a <code class="docutils literal notranslate"><span class="pre">(fig,</span> <span class="pre">ax)</span></code> tuple. Use <code class="docutils literal notranslate"><span class="pre">fig</span></code> directly to save:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">capex_data</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;capex.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;capex.pdf&quot;</span><span class="p">)</span>   <span class="c1"># vector format for publications</span>
 </pre></div>
 </div>
 </section>
 <section id="customizing-axes">
 <h2>Customizing axes<a class="headerlink" href="#customizing-axes" title="Link to this heading">¶</a></h2>
 <p>You can modify the returned axes object with standard matplotlib calls:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Custom title&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper left&quot;</span><span class="p">)</span>
