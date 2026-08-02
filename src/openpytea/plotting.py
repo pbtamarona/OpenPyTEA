@@ -350,6 +350,7 @@ def plot_monte_carlo(
     data,
     metric: str = None,
     bins: int = 30,
+    show_fit: bool = True,
     label: str | None = None,
     figsize=(3.2, 2.2),
     ax=None,
@@ -375,6 +376,11 @@ def plot_monte_carlo(
         Must be present in the data's available metrics.
     bins : int, optional
         Number of histogram bins. Default is 30.
+    show_fit : bool, optional
+        Whether to overlay a normal distribution fitted to the data (or,
+        when the fitted standard deviation is 0, a vertical line at the
+        mean). If False, only the histogram is plotted and the legend is
+        omitted. Default is True.
     label : str or None, optional
         X-axis label. If None, a default label is generated based on the metric
         and currency. Default is None.
@@ -398,8 +404,8 @@ def plot_monte_carlo(
         metrics.
     Notes
     -----
-    - The normal distribution parameters (μ, σ) are fitted to the data using
-    scipy.stats.norm.fit()
+    - When ``show_fit`` is True, the normal distribution parameters (μ, σ)
+    are fitted to the data using scipy.stats.norm.fit()
     - The standard deviation is formatted in scientific notation if
     |σ|>= 1000 or < 0.001
     - The histogram is semi-transparent (alpha=0.6) with black edges for
@@ -485,8 +491,6 @@ def plot_monte_carlo(
             "No finite Monte Carlo values available for plotting."
         )
 
-    mu, std = norm.fit(values)
-
     created_fig = None
     if ax is None:
         created_fig, ax = plt.subplots(figsize=figsize)
@@ -505,54 +509,56 @@ def plot_monte_carlo(
         label="Samples",
     )
 
-    x = np.linspace(values.min(), values.max(), 1000)
-    p = norm.pdf(x, mu, std)
+    if show_fit:
+        mu, std = norm.fit(values)
 
-    if std > 0:
-        x = np.linspace(values.min(), values.max(), 1000)
-        p = norm.pdf(x, mu, std)
+        if std > 0:
+            x = np.linspace(values.min(), values.max(), 1000)
+            p = norm.pdf(x, mu, std)
 
-        std_exp = int(np.floor(np.log10(std)))
+            std_exp = int(np.floor(np.log10(std)))
 
-        if std_exp == 0:
-            stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+            if std_exp == 0:
+                stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+            else:
+                std_mant = std / 10**std_exp
+                stat_label = (
+                    rf"$\mu$={mu:.3g}, "
+                    rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
+
+            ax.plot(
+                    x,
+                    p,
+                    color=line_color,
+                    linewidth=1.2,
+                    zorder=2,
+                    linestyle="-",
+                    label=stat_label,
+                )
         else:
-            std_mant = std / 10**std_exp
-            stat_label = (
-                rf"$\mu$={mu:.3g}, "
-                rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
-
-        ax.plot(
-                x,
-                p,
+            stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+            ax.axvline(
+                mu,
                 color=line_color,
                 linewidth=1.2,
                 zorder=2,
                 linestyle="-",
                 label=stat_label,
             )
-    else:
-        stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-        ax.axvline(
-            mu,
-            color=line_color,
-            linewidth=1.2,
-            zorder=2,
-            linestyle="-",
-            label=stat_label,
-        )
 
     ax.set_xlabel(label)
     ax.set_ylabel("Density")
-    ax.legend(
-            loc="best",
-            ncol=1,
-            fontsize=4,
-            frameon=True,
-            facecolor="white",
-            framealpha=0.6,
-            fancybox=True,
-        )
+
+    if show_fit:
+        ax.legend(
+                loc="best",
+                ncol=1,
+                fontsize=4,
+                frameon=True,
+                facecolor="white",
+                framealpha=0.6,
+                fancybox=True,
+            )
 
     if created_fig is not None and show:
         created_fig.tight_layout()
@@ -645,14 +651,36 @@ def plot_monte_carlo_inputs(
                 f"No finite values available for Monte Carlo input '{label}'."
             )
 
-        ax.hist(
-            values,
-            bins=bins,
-            density=True,
-            color=hist_color,
-            edgecolor="black",
-            alpha=0.7,
-        )
+        unique_vals = np.unique(values)
+        if unique_vals.size <= 10 and unique_vals.size < bins:
+            # Discrete-looking input (e.g. Bernoulli, fixed/no-uncertainty
+            # values): a fine-grained histogram would bury the few distinct
+            # values among mostly-empty bins, so plot one bar per value
+            # instead and size the x-axis to the data instead of `bins`.
+            counts = np.array([np.count_nonzero(values == v) for v in unique_vals])
+            heights = counts / counts.sum()
+            if unique_vals.size > 1:
+                width = np.diff(unique_vals).min() * 0.6
+            else:
+                width = max(abs(unique_vals[0]) * 0.1, 1e-9)
+            ax.bar(
+                unique_vals,
+                heights,
+                width=width*0.5,
+                color=hist_color,
+                edgecolor="black",
+                alpha=0.7,
+            )
+            ax.set_xlim(unique_vals.min() - width, unique_vals.max() + width)
+        else:
+            ax.hist(
+                values,
+                bins=bins,
+                density=True,
+                color=hist_color,
+                edgecolor="black",
+                alpha=0.7,
+            )
         ax.set_title(label, fontsize=9)
 
     for i in range(n_params, len(axes)):
@@ -669,6 +697,7 @@ def plot_multiple_monte_carlo(
     data_list,
     metric="LCOP",
     bins=30,
+    show_fit: bool = True,
     figsize=None,
     label=None,
     ax=None,
@@ -686,6 +715,10 @@ def plot_multiple_monte_carlo(
         Metric to plot from Monte Carlo results (default: "LCOP").
     bins : int, optional
         Number of histogram bins (default: 30).
+    show_fit : bool, optional
+        Whether to overlay a normal distribution fitted to each dataset (or,
+        when the fitted standard deviation is 0, a vertical line at the
+        mean). If False, only the histograms are plotted. Default is True.
     figsize : tuple, optional
         Figure size as (width, height).
     label : str, optional
@@ -766,8 +799,6 @@ def plot_multiple_monte_carlo(
         plotted_any = True
         color = next(color_cycle)
 
-        mu, std = norm.fit(values)
-
         ax.hist(
             values,
             bins=bins,
@@ -780,39 +811,42 @@ def plot_multiple_monte_carlo(
             label=name,
         )
 
-        if std > 0:
-            x = np.linspace(values.min(), values.max(), 1000)
-            p = norm.pdf(x, mu, std)
+        if show_fit:
+            mu, std = norm.fit(values)
 
-            std_exp = int(np.floor(np.log10(std)))
+            if std > 0:
+                x = np.linspace(values.min(), values.max(), 1000)
+                p = norm.pdf(x, mu, std)
 
-            if std_exp == 0:
-                stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+                std_exp = int(np.floor(np.log10(std)))
+
+                if std_exp == 0:
+                    stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+                else:
+                    std_mant = std / 10**std_exp
+                    stat_label = (
+                        rf"$\mu$={mu:.3g}, "
+                        rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
+
+                ax.plot(
+                    x,
+                    p,
+                    color=color,
+                    linewidth=1.2,
+                    zorder=2,
+                    linestyle="-",
+                    label=stat_label,
+                )
             else:
-                std_mant = std / 10**std_exp
-                stat_label = (
-                    rf"$\mu$={mu:.3g}, "
-                    rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
-
-            ax.plot(
-                x,
-                p,
-                color=color,
-                linewidth=1.2,
-                zorder=2,
-                linestyle="-",
-                label=stat_label,
-            )
-        else:
-            stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-            ax.axvline(
-                mu,
-                color=color,
-                linewidth=1.2,
-                zorder=2,
-                linestyle="-",
-                label=stat_label,
-            )
+                stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+                ax.axvline(
+                    mu,
+                    color=color,
+                    linewidth=1.2,
+                    zorder=2,
+                    linestyle="-",
+                    label=stat_label,
+                )
 
     if label is None:
         label = _default_metric_label(currency, metric)

@@ -320,7 +320,7 @@
 </section>
 <section id="step-2-define-equipment">
 <h2>Step 2 — Define equipment<a class="headerlink" href="#step-2-define-equipment" title="Link to this heading">¶</a></h2>
-<p>Create an <a class="reference internal" href="api/equipment.html#id15" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> object by specifying the
+<p>Create an <a class="reference internal" href="api/equipment.html#id7" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> object by specifying the
 equipment category, type, size parameter, and material. To check which equipment
 categories and types are available, open the
 <a class="reference download internal" download="" href="_downloads/31b5d5c42012f34eb9c85ee1a7322127/cost_correlations.csv"><code class="xref download docutils literal notranslate"><span class="pre">cost</span> <span class="pre">correlation</span> <span class="pre">database</span></code></a>.
@@ -503,8 +503,8 @@ Internal Rate of Return: 62.31%
 <section id="step-5-visualise-the-capex-breakdown">
 <h2>Step 5 — Visualise the CAPEX breakdown<a class="headerlink" href="#step-5-visualise-the-capex-breakdown" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">capex</span> <span class="o">=</span> <span class="n">fixed_capital_data</span><span class="p">(</span><span class="n">plant</span><span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">capex</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">get_figure</span><span class="p">()</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;capex.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_stacked_bar</span><span class="p">(</span><span class="n">capex</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;capex.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>For more visualisation options, see the <a class="reference internal" href="user_guide/plotting.html"><span class="doc">Plotting user guide</span></a>.</p>
@@ -521,7 +521,7 @@ Internal Rate of Return: 62.31%
     <span class="n">n_points</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;LCOA (USD/t)&quot;</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plot_sensitivity</span><span class="p">(</span><span class="n">sens</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>For more sensitivity and uncertainty analysis options, see the <a class="reference internal" href="user_guide/analysis.html"><span class="doc">Analysis user guide</span></a>.</p>

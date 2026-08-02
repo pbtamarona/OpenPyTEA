@@ -447,7 +447,7 @@ merged recursively, so unspecified sub-keys are preserved:</p>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">equipment</span></code></p></td>
 <td><p>required</p></td>
-<td><p>List of <a class="reference internal" href="../api/equipment.html#id15" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> objects.</p></td>
+<td><p>List of <a class="reference internal" href="../api/equipment.html#id7" title="openpytea.equipment.Equipment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Equipment</span></code></a> objects.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">interest_rate</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">0.09</span></code></p></td>
@@ -597,8 +597,8 @@ the contingency factor, and <span class="math notranslate nohighlight">\(LF\)</s
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ISBL        : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">isbl</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OSBL        : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">osbl</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;D&amp;E         : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">dne</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Contingency : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">contingency</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;FCI         : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">fci</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Contingency : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">contigency</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;FCI         : $</span><span class="si">{</span><span class="n">plant</span><span class="o">.</span><span class="n">fixed_capital</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <section id="location-factors">
@@ -1093,7 +1093,7 @@ default to 1.0:</p>
 <span class="n">plant</span><span class="o">.</span><span class="n">update_configuration</span><span class="p">({</span>
     <span class="s2">&quot;depreciation&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;macrs&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>                 <span class="c1"># recovery period in years</span>
+        <span class="s2">&quot;macrs_class&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>           <span class="c1"># recovery period in years</span>
     <span class="p">}</span>
 <span class="p">})</span>
 </pre></div>

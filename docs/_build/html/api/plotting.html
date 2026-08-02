@@ -358,16 +358,17 @@ accordingly.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>figsize</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Figure size as (width, height) in inches. Default is (1.2, 1.8).
 The width is automatically adjusted based on the number of bars.</p></li>
-<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>, <em>optional</em>) – Existing axes object to plot on. If None, a new figure and axes are
+<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.11.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>, <em>optional</em>) – Existing axes object to plot on. If None, a new figure and axes are
 created. Default is None.</p></li>
 <li><p><strong>show</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – If True and a new figure is created, display the plot. Default is True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The axes object containing the stacked bar chart.</p>
+<dd class="field-even"><p>The figure and axes containing the stacked bar chart.
+When <em>ax</em> is supplied by the caller, <code class="docutils literal notranslate"><span class="pre">fig</span></code> is <code class="docutils literal notranslate"><span class="pre">ax.figure</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> of <code class="xref py py-class docutils literal notranslate"><span class="pre">(matplotlib.figure.Figure</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes)</span></code></p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -436,16 +437,17 @@ created. Default is None.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>figsize</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>, <em>optional</em>) – Figure size as (width, height) in inches. Default is (3.2, 2.2).</p></li>
-<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>, <em>optional</em>) – Axes object to plot on. If None, a new figure and axes are created.
+<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.11.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>, <em>optional</em>) – Axes object to plot on. If None, a new figure and axes are created.
 Default is None.</p></li>
 <li><p><strong>show</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Whether to display the plot. Default is True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The axes object containing the plotted sensitivity curves.</p>
+<dd class="field-even"><p>The figure and axes containing the plotted sensitivity curves.
+When <em>ax</em> is supplied by the caller, <code class="docutils literal notranslate"><span class="pre">fig</span></code> is <code class="docutils literal notranslate"><span class="pre">ax.figure</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> of <code class="xref py py-class docutils literal notranslate"><span class="pre">(matplotlib.figure.Figure</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes)</span></code></p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -505,17 +507,18 @@ showing positive and negative deviations as horizontal bars.
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>figsize</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>, <em>optional</em>) – Figure size as (width, height) in inches. Default is (3.4, 2.4).</p></li>
-<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>, <em>optional</em>) – Existing axes object to plot on. If None, a new figure and axes are
+<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.11.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>, <em>optional</em>) – Existing axes object to plot on. If None, a new figure and axes are
 created. Default is None.</p></li>
 <li><p><strong>show</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – If True and a new figure is created, display the plot using plt.show().
 Default is True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The axes object containing the tornado plot.</p>
+<dd class="field-even"><p>The figure and axes containing the tornado plot.
+When <em>ax</em> is supplied by the caller, <code class="docutils literal notranslate"><span class="pre">fig</span></code> is <code class="docutils literal notranslate"><span class="pre">ax.figure</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> of <code class="xref py py-class docutils literal notranslate"><span class="pre">(matplotlib.figure.Figure</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes)</span></code></p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -529,7 +532,7 @@ Default is True.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="openpytea.plotting.plot_monte_carlo">
-<span class="sig-prename descclassname"><span class="pre">openpytea.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_monte_carlo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(3.2,</span> <span class="pre">2.2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plotting.html#plot_monte_carlo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plotting.plot_monte_carlo" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">openpytea.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_monte_carlo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_fit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(3.2,</span> <span class="pre">2.2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plotting.html#plot_monte_carlo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plotting.plot_monte_carlo" title="Link to this definition">¶</a></dt>
 <dd><p>Plot a histogram with a fitted normal distribution overlay for Monte Carlo
 simulation results. This function visualizes Monte Carlo data by
 displaying a histogram of sample values overlaid with a normal
@@ -551,20 +554,25 @@ or raw numpy arrays.
 <li><p><strong>metric</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – The name of the metric to plot (case-insensitive). Default is “LCOP”.
 Must be present in the data’s available metrics.</p></li>
 <li><p><strong>bins</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Number of histogram bins. Default is 30.</p></li>
+<li><p><strong>show_fit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Whether to overlay a normal distribution fitted to the data (or,
+when the fitted standard deviation is 0, a vertical line at the
+mean). If False, only the histogram is plotted and the legend is
+omitted. Default is True.</p></li>
 <li><p><strong>label</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <em>optional</em>) – X-axis label. If None, a default label is generated based on the metric
 and currency. Default is None.</p></li>
 <li><p><strong>figsize</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>, <em>optional</em>) – Figure size as (width, height) in inches. Default is (3.2, 2.2).</p></li>
-<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>, <em>optional</em>) – Existing matplotlib axes to plot on. If None, a new figure and axes
+<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.11.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>, <em>optional</em>) – Existing matplotlib axes to plot on. If None, a new figure and axes
 are created. Default is None.</p></li>
 <li><p><strong>show</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Whether to display the plot using plt.show(). Only applies if a new
 figure was created. Default is True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The axes object containing the plot.</p>
+<dd class="field-even"><p>The figure and axes containing the plot.
+When <em>ax</em> is supplied by the caller, <code class="docutils literal notranslate"><span class="pre">fig</span></code> is <code class="docutils literal notranslate"><span class="pre">ax.figure</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> of <code class="xref py py-class docutils literal notranslate"><span class="pre">(matplotlib.figure.Figure</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes)</span></code></p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the specified metric is not found in the input data’s available
@@ -573,9 +581,9 @@ figure was created. Default is True.</p></li>
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>The normal distribution parameters (μ, σ) are fitted to the data using</p></li>
+<li><p>When <code class="docutils literal notranslate"><span class="pre">show_fit</span></code> is True, the normal distribution parameters (μ, σ)</p></li>
 </ul>
-<p>scipy.stats.norm.fit()
+<p>are fitted to the data using scipy.stats.norm.fit()
 - The standard deviation is formatted in scientific notation if
 <a href="#id1"><span class="problematic" id="id2">|σ|</span></a>&gt;= 1000 or &lt; 0.001
 - The histogram is semi-transparent (alpha=0.6) with black edges for
@@ -611,12 +619,12 @@ returns the axes without displaying (default: True).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Array of matplotlib Axes objects corresponding to each subplot.
-For a single parameter, returns a 1D array; for multiple parameters,
-returns a flattened array of subplots.</p>
+<dd class="field-even"><p>The figure and an array of Axes objects (one per subplot).
+For a single parameter the array has length 1; for multiple
+parameters it is a flattened 1-D array of subplots.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> of <code class="xref py py-class docutils literal notranslate"><span class="pre">(matplotlib.figure.Figure</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray)</span></code></p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -629,7 +637,7 @@ returns a flattened array of subplots.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="openpytea.plotting.plot_multiple_monte_carlo">
-<span class="sig-prename descclassname"><span class="pre">openpytea.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_multiple_monte_carlo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LCOP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plotting.html#plot_multiple_monte_carlo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plotting.plot_multiple_monte_carlo" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">openpytea.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_multiple_monte_carlo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LCOP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_fit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/openpytea/plotting.html#plot_multiple_monte_carlo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openpytea.plotting.plot_multiple_monte_carlo" title="Link to this definition">¶</a></dt>
 <dd><p>Plot multiple Monte Carlo simulation results as overlaid histograms
 with fitted normal distributions.</p>
 <dl class="field-list simple">
@@ -638,14 +646,21 @@ with fitted normal distributions.</p>
 <li><p><strong>data_list</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <code class="xref py py-class docutils literal notranslate"><span class="pre">Plant</span></code>) – List of Monte Carlo data dictionaries or Plant objects.</p></li>
 <li><p><strong>metric</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – Metric to plot from Monte Carlo results (default: “LCOP”).</p></li>
 <li><p><strong>bins</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Number of histogram bins (default: 30).</p></li>
+<li><p><strong>show_fit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Whether to overlay a normal distribution fitted to each dataset (or,
+when the fitted standard deviation is 0, a vertical line at the
+mean). If False, only the histograms are plotted. Default is True.</p></li>
 <li><p><strong>figsize</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>, <em>optional</em>) – Figure size as (width, height).</p></li>
 <li><p><strong>label</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – Label for the x-axis.</p></li>
-<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>, <em>optional</em>) – Axes object to plot on.</p></li>
+<li><p><strong>ax</strong> (<a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.11.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a>, <em>optional</em>) – Axes object to plot on.</p></li>
 <li><p><strong>show</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Whether to display the plot.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The figure and axes containing the overlaid histograms.
+When <em>ax</em> is supplied by the caller, <code class="docutils literal notranslate"><span class="pre">fig</span></code> is <code class="docutils literal notranslate"><span class="pre">ax.figure</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> of <code class="xref py py-class docutils literal notranslate"><span class="pre">(matplotlib.figure.Figure</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes)</span></code></p>
 </dd>
 </dl>
 </dd></dl>

@@ -256,8 +256,8 @@ Access individual components after calculation:
    print(f"ISBL        : ${plant.isbl:,.0f}")
    print(f"OSBL        : ${plant.osbl:,.0f}")
    print(f"D&E         : ${plant.dne:,.0f}")
-   print(f"Contingency : ${plant.contingency:,.0f}")
-   print(f"FCI         : ${plant.fci:,.0f}")
+   print(f"Contingency : ${plant.contigency:,.0f}")
+   print(f"FCI         : ${plant.fixed_capital:,.0f}")
 
 Location factors
 ~~~~~~~~~~~~~~~~
@@ -692,7 +692,7 @@ Three methods are supported:
    plant.update_configuration({
        "depreciation": {
            "method": "macrs",
-           "class": 7,                 # recovery period in years
+           "macrs_class": 7,           # recovery period in years
        }
    })
 

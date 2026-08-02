@@ -2457,31 +2457,14 @@ _UNCERTAINTY_KEYS = {
     "plant_utilization",
     "tax_rate",
 }
-_UNCERTAINTY_SUB_KEYS = {"std", "min", "max"}
+_UNCERTAINTY_SUB_KEYS = {"std", "min", "max"} | {
+    "dist_id", "loc", "scale", "shape", "minimum", "maximum"
+}
 # Parameters whose values must stay within [0, 1]
 _UNIT_INTERVAL_PARAMS = {"plant_utilization", "tax_rate"}
 
 
 def _validate_project_uncertainties(cfg: dict) -> None:
-    """
-    Validate the structure and values of a ``project_uncertainties`` config dict.
-
-    Parameters
-    ----------
-    cfg : dict
-        Uncertainty configuration mapping parameter names to sub-dicts with
-        keys such as ``mean``, ``std``, ``min``, ``max``.
-
-    Raises
-    ------
-    TypeError
-        If ``cfg`` is not a dict, or any sub-entry is not a dict, or any
-        numeric value is not an int or float.
-    ValueError
-        If unknown parameter or sub-keys are present, ``std`` is negative,
-        ``min >= max``, or domain-specific bounds are violated (e.g. interest
-        rate ≤ 0, project lifetime < 1, unit-interval params outside [0, 1]).
-    """
     if not cfg:
         return
     if not isinstance(cfg, dict):
@@ -2524,29 +2507,40 @@ def _validate_project_uncertainties(cfg: dict) -> None:
                 f"'project_uncertainties['{param}']': "
                 f"'min' ({sub['min']}) must be less than 'max' ({sub['max']})."
             )
+        # Same pairing check for the new-style bound keys.
+        if (
+            "minimum" in sub
+            and "maximum" in sub
+            and sub["minimum"] >= sub["maximum"]
+        ):
+            raise ValueError(
+                f"'project_uncertainties['{param}']': 'minimum' "
+                f"({sub['minimum']}) must be less than 'maximum' "
+                f"({sub['maximum']})."
+            )
         if param in ("fixed_capital_factor", "fixed_opex_factor"):
-            for bound in ("min", "max"):
+            for bound in ("min", "max", "minimum", "maximum"):
                 if bound in sub and sub[bound] <= 0:
                     raise ValueError(
                         f"'project_uncertainties['{param}']['{bound}']' "
                         f"must be > 0, got {sub[bound]}."
                     )
         if param == "interest_rate":
-            for bound in ("min", "max"):
+            for bound in ("min", "max", "minimum", "maximum"):
                 if bound in sub and sub[bound] <= 0:
                     raise ValueError(
                         f"'project_uncertainties['interest_rate']['{bound}']' "
                         f"must be > 0, got {sub[bound]}."
                     )
         if param == "project_lifetime":
-            for bound in ("min", "max"):
+            for bound in ("min", "max", "minimum", "maximum"):
                 if bound in sub and sub[bound] < 1:
                     raise ValueError(
                         f"'project_uncertainties['project_lifetime']"
                         f"['{bound}']' must be ≥ 1, got {sub[bound]}."
                     )
         if param in _UNIT_INTERVAL_PARAMS:
-            for bound in ("min", "max"):
+            for bound in ("min", "max", "minimum", "maximum"):
                 if bound in sub and not (0 <= sub[bound] <= 1):
                     raise ValueError(
                         f"'project_uncertainties['{param}']['{bound}']' "
