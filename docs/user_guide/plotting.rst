@@ -43,6 +43,18 @@ helper functions in :mod:`openpytea.analysis`.
    vopex_data = variable_opex_data(plants=plant)
    fig, ax = plot_stacked_bar(vopex_data)
 
+.. list-table::
+   :widths: 25 25 25 25
+
+   * - .. image:: ../_static/plotting/direct_costs.png
+          :width: 100%
+     - .. image:: ../_static/plotting/fixed_capital.png
+          :width: 100%
+     - .. image:: ../_static/plotting/fixed_opex.png
+          :width: 100%
+     - .. image:: ../_static/plotting/variable_opex.png
+          :width: 100%
+
 Sensitivity plots
 -----------------
 
@@ -57,6 +69,10 @@ Sensitivity plots
 
    fig.savefig("sensitivity.pdf")
 
+.. image:: ../_static/plotting/sensitivity.png
+   :width: 450px
+   :align: center
+
 Axis labels and the legend are set automatically from the data returned by
 :func:`~openpytea.analysis.sensitivity_data`. Pass a custom ``figsize`` to
 resize the chart:
@@ -64,6 +80,10 @@ resize the chart:
 .. code-block:: python
 
    fig, ax = plot_sensitivity(sens, figsize=(5, 3))
+
+.. image:: ../_static/plotting/sensitivity_figsize.png
+   :width: 550px
+   :align: center
 
 Comparing multiple plants
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,6 +100,10 @@ plot all curves on the same axes:
        plus_minus_value=0.5,
    )
    fig, ax = plot_sensitivity(sens_multi)
+
+.. image:: ../_static/plotting/sensitivity_multi.png
+   :width: 450px
+   :align: center
 
 Tornado diagrams
 ----------------
@@ -99,6 +123,14 @@ Tornado diagrams
 
    fig.savefig("tornado.pdf")
 
+.. list-table::
+   :widths: 50 50
+
+   * - .. image:: ../_static/plotting/tornado_lcop.png
+          :width: 100%
+     - .. image:: ../_static/plotting/tornado_roi.png
+          :width: 100%
+
 Monte Carlo histograms
 -----------------------
 
@@ -114,6 +146,10 @@ Monte Carlo histograms
 
    fig.savefig("monte_carlo_lcop.pdf")
 
+.. image:: ../_static/plotting/monte_carlo_lcop.png
+   :width: 450px
+   :align: center
+
 Visualizing input distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -125,6 +161,10 @@ Use :func:`~openpytea.plotting.plot_monte_carlo_inputs` to verify that the
    from openpytea.plotting import plot_monte_carlo_inputs
 
    fig, axes = plot_monte_carlo_inputs(mc_results, bins=40)
+
+.. image:: ../_static/plotting/monte_carlo_inputs.png
+   :width: 700px
+   :align: center
 
 Comparing scenarios
 ~~~~~~~~~~~~~~~~~~~
@@ -140,6 +180,10 @@ Comparing scenarios
        metric="LCOP",
        bins=30,
    )
+
+.. image:: ../_static/plotting/monte_carlo_multiple.png
+   :width: 450px
+   :align: center
 
 Saving figures
 --------------
@@ -163,6 +207,10 @@ You can modify the returned axes object with standard matplotlib calls:
    ax.set_title("Custom title", fontsize=14)
    ax.set_xlim(-0.6, 0.6)
    ax.legend(loc="upper left")
+
+.. image:: ../_static/plotting/sensitivity_custom_axes.png
+   :width: 450px
+   :align: center
 
 See also
 --------
