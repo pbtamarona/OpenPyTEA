@@ -5,3 +5,4 @@ for_publication/
 *.egg-info/
 frontend/dist/
 CLAUDE.md
+docs/_build/
