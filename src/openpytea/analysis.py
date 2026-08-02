@@ -6,8 +6,6 @@ import numpy as np
 from openpytea.helpers import (_make_label,
                                _get_original_value,
                                _update_and_evaluate,
-                               _get_sampling_params,
-                               _truncated_normal_samples,
                                _default_metric_label,
                                _ensure_list,
                                _build_bar_data,

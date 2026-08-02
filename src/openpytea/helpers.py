@@ -1,4 +1,3 @@
-from scipy.stats import truncnorm
 from copy import deepcopy
 from pathlib import Path
 import numpy as np
@@ -583,97 +582,6 @@ def _run_tornado_sensitivity(plant, keys, nested_keys,
         results[key] = [metric_low, metric_high]
 
     return results
-
-
-# For Monte Carlo analysis
-def _truncated_normal_samples(mean, std, low, high, size):
-    """
-    Generate samples from a truncated normal distribution.
-    This function generates random samples from a normal distribution that is
-    truncated to fall within a specified range [low, high].
-    Parameters
-    ----------
-    mean : float
-        The mean of the normal distribution.
-    std : float
-        The standard deviation of the normal distribution.
-    low : float
-        The lower bound of the truncation range.
-    high : float
-        The upper bound of the truncation range.
-    size : int or tuple of ints
-        The shape of the output. If an integer, the output is 1-D.
-        If a tuple of integers, the output is N-D with shape size.
-    Returns
-    -------
-    ndarray
-        Random samples from the truncated normal distribution with the
-        specified parameters. If std is 0 or very close to 0,
-        returns an array filled with the clipped mean value.
-    Notes
-    -----
-    - If std is 0 or numerically close to 0, the function returns the mean
-    value clipped to the [low, high] range, rather than sampling.
-    - Uses scipy.stats.truncnorm for sampling when std > 0.
-    Examples
-    --------
-    >>> samples = _truncated_normal_samples(mean=0, std=1,
-    low=-2, high=2, size=100)
-    >>> len(samples)
-    100
-    """
-    if std == 0 or np.isclose(std, 0):
-        return np.full(size, np.clip(mean, low, high))
-
-    a, b = (low - mean) / std, (high - mean) / std
-
-    return truncnorm.rvs(
-        a, b, loc=mean, scale=std, size=size
-    )
-
-
-def _get_sampling_params(props, default_min=0, default_max=99999):
-    """
-    Extract sampling parameters from a properties dictionary.
-
-    Parameters
-    ----------
-    props : dict
-        Dictionary containing sampling parameter properties with optional keys:
-        - "price": float, the mean value for sampling (default: 0)
-        - "std": float, the standard deviation (default: 0)
-        - "min": float, the minimum bound (default: default_min)
-        - "max": float, the maximum bound (default: default_max)
-    default_min : float, optional
-        Default minimum value if not specified in props (default: 0)
-    default_max : float, optional
-        Default maximum value if not specified in props (default: 99999)
-
-    Returns
-    -------
-    tuple of (float, float, float, float)
-        A tuple containing (mean, std, min_, max_) extracted from props or
-        defaults.
-        - mean: the price/mean value
-        - std: the standard deviation
-        - min_: the minimum bound
-        - max_: the maximum bound
-
-    Examples
-    --------
-    >>> props = {"price": 50, "std": 10, "min": 10, "max": 100}
-    >>> _get_sampling_params(props)
-    (50, 10, 10, 100)
-
-    >>> props = {"price": 25}
-    >>> _get_sampling_params(props)
-    (25, 0, 0, 99999)
-    """
-    mean = props.get("price", 0)
-    std = props.get("std", 0)
-    min_ = props.get("min", default_min)
-    max_ = props.get("max", default_max)
-    return mean, std, min_, max_
 
 
 # For reading and writing JSON files
