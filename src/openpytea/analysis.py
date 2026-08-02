@@ -1,5 +1,6 @@
 from copy import deepcopy
 from tqdm import tqdm
+from scipy import stats
 import numpy as np
 
 from openpytea.helpers import (_make_label,
@@ -633,88 +634,306 @@ def tornado_data(plant,
     }
 
 
-def monte_carlo(plant,
-                num_samples: int = 1_000_000,
-                batch_size: int = 1000,
-                additional_capex: bool = False):
+def make_distribution(dist_id, loc=None, scale=None, shape=None,
+                       minimum=None, maximum=None):
     """
-    Probabilistic analysis of a plant's economic performance by sampling
-    input parameters from truncated normal distributions and computing
-    economic metrics across all samples. Samples are processed in batches
-    to manage memory.
+    Build a frozen ``scipy.stats`` distribution from an OpenPyTEA dist_id.
+
+    Translates the compact ``(dist_id, loc, scale, shape, minimum, maximum)``
+    parameterization used throughout the Monte Carlo module into the
+    corresponding frozen SciPy distribution object.
+
+    Parameters
+    ----------
+    dist_id : int
+        Distribution family identifier:
+
+        - 2 : Lognormal (``loc``=mu, ``scale``=sigma)
+        - 3 : Normal (``loc``=mean, ``scale``=std)
+        - 4 : Uniform (``minimum``, ``maximum``)
+        - 5 : Triangular (``loc``=mode, ``minimum``, ``maximum``)
+        - 6 : Bernoulli (``loc``=p, ``scale``=success value, default 1)
+        - 7 : Discrete uniform (``minimum``, ``maximum``, inclusive)
+        - 8 : Weibull (``loc``=offset, ``scale``=lambda, ``shape``=k)
+        - 9 : Gamma (``loc``=offset, ``scale``=theta, ``shape``=k)
+        - 10 : Beta (``loc``=alpha, ``shape``=beta, ``maximum``=upper bound)
+        - 11 : GEV (``loc``=mu, ``scale``=sigma, ``shape``=xi)
+        - 12 : Student's t (``loc``=median, ``scale``=scale, ``shape``=nu)
+    loc : float, optional
+        Location parameter; meaning depends on ``dist_id`` (see above).
+    scale : float, optional
+        Scale parameter; meaning depends on ``dist_id`` (see above).
+    shape : float, optional
+        Shape parameter, required for Weibull, Gamma, Beta, GEV, and
+        Student's t.
+    minimum : float, optional
+        Lower bound, required for Uniform, Triangular, and Discrete uniform.
+    maximum : float, optional
+        Upper bound, required for Uniform, Triangular, Discrete uniform,
+        and (optionally) Beta.
+
+    Returns
+    -------
+    scipy.stats distribution
+        A frozen distribution instance (continuous ``rv_continuous`` /
+        ``rv_discrete``) exposing the usual ``rvs``, ``pdf``/``pmf``, etc.
+
+    Raises
+    ------
+    ValueError
+        If ``dist_id`` is not one of the supported values above (0/1 are
+        handled separately by :func:`sample_distribution` as constants).
+
+    See Also
+    --------
+    sample_distribution : Draws random samples, with optional truncation.
+    """
+    if dist_id == 2:  # Lognormal: loc=mu, scale=sigma
+        return stats.lognorm(s=scale, scale=np.exp(loc))
+
+    elif dist_id == 3:  # Normal: loc=mu, scale=sigma
+        return stats.norm(loc=loc, scale=scale)
+
+    elif dist_id == 4:  # Uniform: minimum, maximum
+        return stats.uniform(loc=minimum, scale=maximum - minimum)
+
+    elif dist_id == 5:  # Triangular: loc=mode, minimum, maximum
+        c = (loc - minimum) / (maximum - minimum)
+        return stats.triang(c, loc=minimum, scale=maximum - minimum)
+
+    elif dist_id == 6:  # Bernoulli: loc=p, scale=success value (default 1)
+        # Outcomes are 0 (failure) or scale (success), with prob 1-p / p
+        p = loc
+        success_value = scale if scale is not None else 1.0
+        return stats.rv_discrete(name='bernoulli_scaled',
+                                values=([0, success_value], [1 - p, p]))
+
+    elif dist_id == 7:  # Discrete uniform: minimum, maximum
+        return stats.randint(low=minimum, high=maximum + 1)
+
+    elif dist_id == 8:  # Weibull: loc=offset, scale=lambda, shape=k
+        return stats.weibull_min(c=shape, scale=scale, loc=loc)
+
+    elif dist_id == 9:  # Gamma: loc=offset, scale=theta, shape=k
+        return stats.gamma(a=shape, scale=scale, loc=loc)
+
+    elif dist_id == 10:  # Beta: loc=alpha, shape=beta, maximum=upper bound
+        upper = maximum if maximum is not None else 1.0
+        return stats.beta(a=loc, b=shape, scale=upper)
+
+    elif dist_id == 11:  # GEV: loc=mu, scale=sigma, shape=xi (scipy negates xi)
+        return stats.genextreme(c=-shape, loc=loc, scale=scale)
+
+    elif dist_id == 12:  # Student's t: loc=median, scale=scale, shape=nu
+        return stats.t(df=shape, loc=loc, scale=scale)
+
+    else:
+        raise ValueError(f"Unsupported dist_id for make_distribution: {dist_id}")
+
+
+def sample_distribution(dist_id, size, loc=None, scale=None, shape=None,
+                         minimum=None, maximum=None, random_state=None):
+    """
+    Draw random samples for a Monte Carlo input, with optional truncation.
+
+    Wraps :func:`make_distribution` to generate an array of samples. For
+    ``dist_id`` 0 or 1 (fixed/constant values) it returns a constant array
+    without touching ``random_state``. When ``minimum``/``maximum`` bounds
+    are given for Lognormal, Normal, or Bernoulli (``dist_id`` 2, 3, 6),
+    samples are drawn and re-drawn (rejection sampling) until ``size``
+    values fall within ``[minimum, maximum]``.
+
+    Parameters
+    ----------
+    dist_id : int
+        Distribution family identifier, see :func:`make_distribution`.
+        0 or 1 means "constant value equal to ``loc``".
+    size : int
+        Number of samples to draw.
+    loc : float, optional
+        Location parameter, forwarded to :func:`make_distribution`.
+    scale : float, optional
+        Scale parameter, forwarded to :func:`make_distribution`.
+    shape : float, optional
+        Shape parameter, forwarded to :func:`make_distribution`.
+    minimum : float, optional
+        Lower truncation bound (also used as a distribution parameter for
+        some families, see :func:`make_distribution`).
+    maximum : float, optional
+        Upper truncation bound (also used as a distribution parameter for
+        some families, see :func:`make_distribution`).
+    random_state : numpy.random.Generator or int, optional
+        Random state passed to ``scipy.stats``' ``rvs``. Pass a single
+        shared ``Generator`` across calls to keep an entire Monte Carlo run
+        reproducible from one seed.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of ``size`` samples.
+
+    Notes
+    -----
+    Rejection sampling redraws in batches of ``2 * remaining`` until enough
+    in-bounds values are collected, so very narrow ``[minimum, maximum]``
+    windows relative to the distribution's spread can be slow.
+
+    See Also
+    --------
+    make_distribution : Builds the underlying frozen SciPy distribution.
+    """
+    if dist_id in (0, 1):
+        return np.full(size, loc if loc is not None else 0.0)
+
+    dist = make_distribution(dist_id, loc=loc, scale=scale, shape=shape,
+                              minimum=minimum, maximum=maximum)
+
+    needs_truncation = dist_id in (2, 3, 6) and (
+        minimum is not None or maximum is not None
+    )
+    if not needs_truncation:
+        return dist.rvs(size=size, random_state=random_state)
+
+    out = np.empty(size)
+    filled = 0
+    while filled < size:
+        remaining = size - filled
+        draw = dist.rvs(size=remaining * 2, random_state=random_state)
+        if minimum is not None:
+            draw = draw[draw >= minimum]
+        if maximum is not None:
+            draw = draw[draw <= maximum]
+        n = min(len(draw), remaining)
+        out[filled:filled + n] = draw[:n]
+        filled += n
+    return out
+
+
+def _resolve_dist_params(cfg, default_loc=0.0, default_scale=0.0,
+                          default_min=0, default_max=99999, default_id=3):
+    """
+    Extract ``(dist_id, loc, scale, shape, minimum, maximum)`` from a config dict.
+
+    Lets Monte Carlo input blocks use whichever field name reads naturally
+    for that input (e.g. ``"price"`` or ``"rate"`` instead of ``"loc"``,
+    ``"std"`` instead of ``"scale"``, ``"min"``/``"max"`` instead of
+    ``"minimum"``/``"maximum"``) while normalizing them to the positional
+    arguments expected by :func:`make_distribution` /
+    :func:`sample_distribution`.
+
+    Parameters
+    ----------
+    cfg : dict
+        Uncertainty configuration for one input, e.g. an entry from
+        ``plant.project_uncertainties``, ``plant.variable_opex_inputs``, or
+        ``plant.plant_products``. Recognized keys: ``dist_id``, ``loc``,
+        ``mean``, ``price``, ``rate``, ``scale``, ``std``, ``shape``,
+        ``minimum``, ``min``, ``maximum``, ``max``.
+    default_loc : float, optional
+        Fallback for ``loc`` when none of ``loc``/``mean``/``price``/``rate``
+        is present in ``cfg``. Default is 0.0.
+    default_scale : float, optional
+        Fallback for ``scale`` when neither ``scale`` nor ``std`` is present
+        in ``cfg``. Default is 0.0.
+    default_min : float, optional
+        Fallback for ``minimum`` when neither ``minimum`` nor ``min`` is
+        present in ``cfg``. Default is 0.
+    default_max : float, optional
+        Fallback for ``maximum`` when neither ``maximum`` nor ``max`` is
+        present in ``cfg``. Default is 99999.
+    default_id : int, optional
+        Fallback distribution id when ``cfg`` has no ``dist_id``. Default
+        is 3 (Normal).
+
+    Returns
+    -------
+    tuple
+        ``(dist_id, loc, scale, shape, minimum, maximum)`` ready to unpack
+        as arguments to :func:`make_distribution` or
+        :func:`sample_distribution`. ``shape`` is ``None`` unless ``cfg``
+        sets it explicitly.
+    """
+    dist_id = cfg.get("dist_id", default_id)
+    loc = cfg.get(
+        "loc", cfg.get("mean", cfg.get("price", cfg.get("rate", default_loc)))
+    )
+    scale = cfg.get("scale", cfg.get("std", default_scale))
+    shape = cfg.get("shape")
+    minimum = cfg.get("minimum", cfg.get("min", default_min))
+    maximum = cfg.get("maximum", cfg.get("max", default_max))
+    return dist_id, loc, scale, shape, minimum, maximum
+
+
+def monte_carlo(plant,
+                 num_samples: int = 1_000_000,
+                 batch_size: int = 1000,
+                 additional_capex: bool = False,
+                 random_seed: int = None):
+    """
+    Run a Monte Carlo uncertainty simulation over a plant's financial metrics.
+
+    Samples every configured uncertain input (project-level factors such as
+    fixed capital/OPEX, project lifetime, and interest rate; optionally
+    plant utilization and tax rate; variable OPEX item prices; and product
+    prices) and re-evaluates the plant's economics ``num_samples`` times,
+    producing a distribution of outcomes for LCOP and, when product prices
+    are configured, NPV, ROI, and payback time.
 
     Parameters
     ----------
     plant : Plant
-        A fully configured Plant instance. Baseline economic calculations
-        are run internally before sampling begins. The original plant is not
-        modified; results are stored on it after the simulation completes.
+        A configured :class:`~openpytea.plant.Plant`. Uncertainty ranges are
+        read from ``plant.project_uncertainties``, ``plant.operator_hourly_rate``,
+        ``plant.variable_opex_inputs``, and ``plant.plant_products`` — see
+        the Monte Carlo section of the user guide for the configuration
+        format. The plant is first baseline-initialized (fixed capital,
+        variable/fixed OPEX, cash flow, levelized cost) but is not mutated
+        by the simulation itself; each batch operates on a deep copy.
     num_samples : int, optional
-        Total number of Monte Carlo samples. Default is 1_000_000.
+        Total number of Monte Carlo draws. Default is 1,000,000.
     batch_size : int, optional
-        Number of samples processed per batch. Smaller values reduce peak
-        memory at the cost of slightly more overhead. Default is 1000.
+        Number of samples evaluated per batch (each batch deep-copies the
+        plant and vectorizes the economic calculations over the batch).
+        Larger values are faster but use more memory. Default is 1000.
     additional_capex : bool, optional
-        Include additional CAPEX in ROI and payback time calculations.
-        Only applies when product prices are available. Default is False.
+        Whether to include additional CAPEX events when computing ROI and
+        payback time. Default is False.
+    random_seed : int, optional
+        Seed for the single ``numpy.random.Generator`` shared across all
+        parameter draws, for reproducible runs. Default is None
+        (nondeterministic).
 
     Returns
     -------
     dict
-        A dictionary with the following keys:
+        Dictionary with keys:
 
-        - ``"name"`` : str — plant name.
-        - ``"metrics"`` : dict — arrays of length *num_samples*:
-            - ``"LCOP"`` — levelized cost of production (always populated).
-            - ``"NPV"`` — net present value (requires product prices).
-            - ``"ROI"`` — return on investment (requires product prices).
-            - ``"PBT"`` — payback time (requires product prices).
-        - ``"inputs"`` : dict — sampled input arrays, always containing:
-            - ``"Fixed capital factor"``
-            - ``"Fixed opex factor"``
-            - ``"Operator hourly rate"``
-            - ``"Project lifetime"``
-            - ``"Interest rate"``
-            - ``"{Item} price"`` for each variable OPEX item.
-            - ``"{Product} product price"`` for each product.
-            And conditionally (when ``std > 0`` in ``project_uncertainties``):
-            - ``"Plant utilization"``
-            - ``"Tax rate"``
-        - ``"num_samples"`` : int — number of samples generated.
-        - ``"additional_capex"`` : bool — whether additional CAPEX was
-          included.
-        - ``"currency"`` : str — currency symbol.
+        - ``"name"`` : the plant's name.
+        - ``"metrics"`` : dict mapping ``"LCOP"``, ``"ROI"``, ``"NPV"``,
+          ``"PBT"`` to ``numpy.ndarray`` of length ``num_samples`` (ROI,
+          NPV, PBT stay zero-filled if product prices aren't configured).
+        - ``"inputs"`` : dict mapping each sampled input's display name to
+          its ``numpy.ndarray`` of drawn values.
+        - ``"num_samples"`` : the requested sample count.
+        - ``"additional_capex"`` : the flag used for ROI/PBT.
+        - ``"currency"`` : the plant's currency symbol.
 
     Notes
     -----
-    - Sampling distributions for fixed capital factor, fixed opex factor,
-      project lifetime, interest rate, plant utilization, and tax rate are
-      controlled by the plant's ``project_uncertainties`` configuration dict
-      (see Plant class docstring). Default std, min, and max values are used
-      when a parameter is absent from that dict.
-    - ``plant_utilization`` and ``tax_rate`` have a default ``std`` of 0 and
-      are only sampled when explicitly set to a positive value in
-      ``project_uncertainties``.
-    - Variable OPEX items and products are sampled using the ``std``,
-      ``min``, and ``max`` fields defined within each item's own config dict.
-    - The plant is deep-copied each batch to avoid mutating the original.
-      After the run, ``monte_carlo_metrics`` and ``monte_carlo_inputs`` are
-      written back to the original plant.
-    - Progress is shown via a tqdm progress bar over batches.
+    - The same results are also stored on the plant as
+      ``plant.monte_carlo_metrics`` and ``plant.monte_carlo_inputs`` for use
+      by :func:`~openpytea.plotting.plot_monte_carlo` and
+      :func:`~openpytea.plotting.plot_monte_carlo_inputs`.
+    - All inputs are sampled once up front (in a fixed order, from one
+      shared RNG) and then consumed batch-by-batch, so results are
+      reproducible for a given ``random_seed`` regardless of ``batch_size``.
 
-    Raises
-    ------
-    AttributeError
-        If the plant object lacks required economic calculation methods or
-        configuration attributes.
-
-    Examples
+    See Also
     --------
-    >>> results = monte_carlo(plant, num_samples=10000, batch_size=500)
-    >>> lcop_values = results['metrics']['LCOP']
-    >>> roi_values = results['metrics']['ROI']
+    sample_distribution : Underlying per-input sampling routine.
     """
     currency = plant.currency if hasattr(plant, "currency") else r"\$"
+
     # Ensure plant is baseline-initialized
     plant.calculate_fixed_capital()
     plant.calculate_variable_opex()
@@ -723,6 +942,13 @@ def monte_carlo(plant,
     plant.calculate_levelized_cost()
 
     num_batches = (num_samples + batch_size - 1) // batch_size
+
+    # ---- Single shared RNG for full reproducibility ----
+    # One Generator is created here and passed to every sample_distribution()
+    # call below, in a fixed order, so it advances its internal state once
+    # per draw rather than being reseeded each time (reseeding each call
+    # would make every parameter draw the same underlying sequence).
+    rng = np.random.default_rng(random_seed)
 
     # ---- Allocate arrays for ALL metrics ----
     mc_metrics = {
@@ -735,87 +961,115 @@ def monte_carlo(plant,
     # ---- Resolve project uncertainty parameters ----
     pu = plant.project_uncertainties
 
-    fc_cfg  = pu.get("fixed_capital_factor", {})
-    fc_std  = fc_cfg.get("std", 0.3)
-    fc_min  = fc_cfg.get("min", 0.25)
-    fc_max  = fc_cfg.get("max", 1.75)
+    fc_id, fc_loc, fc_scale, fc_shape, fc_min, fc_max = _resolve_dist_params(
+        pu.get("fixed_capital_factor", {}),
+        default_loc=1, default_scale=0.3, default_min=0.25, default_max=1.75,
+    )
 
-    fo_cfg  = pu.get("fixed_opex_factor", {})
-    fo_std  = fo_cfg.get("std", 0.3)
-    fo_min  = fo_cfg.get("min", 0.25)
-    fo_max  = fo_cfg.get("max", 1.75)
+    fo_id, fo_loc, fo_scale, fo_shape, fo_min, fo_max = _resolve_dist_params(
+        pu.get("fixed_opex_factor", {}),
+        default_loc=1, default_scale=0.3, default_min=0.25, default_max=1.75,
+    )
 
-    lt_cfg  = pu.get("project_lifetime", {})
-    lt_std  = lt_cfg.get("std", 5)
-    lt_min  = lt_cfg.get("min", max(5, plant.project_lifetime - 2 * lt_std))
-    lt_max  = lt_cfg.get("max", plant.project_lifetime + 2 * lt_std)
+    lt_cfg = pu.get("project_lifetime", {})
+    lt_std_default = lt_cfg.get("std", 5)
+    lt_id, lt_loc, lt_scale, lt_shape, lt_min, lt_max = _resolve_dist_params(
+        lt_cfg,
+        default_loc=plant.project_lifetime,
+        default_scale=lt_std_default,
+        default_min=max(5, plant.project_lifetime - 2 * lt_std_default),
+        default_max=plant.project_lifetime + 2 * lt_std_default,
+    )
 
-    ir_cfg  = pu.get("interest_rate", {})
-    ir_std  = ir_cfg.get("std", 0.03)
-    ir_min  = ir_cfg.get("min", max(0.02, plant.interest_rate - 2 * ir_std))
-    ir_max  = ir_cfg.get("max", plant.interest_rate + 2 * ir_std)
+    ir_cfg = pu.get("interest_rate", {})
+    ir_std_default = ir_cfg.get("std", 0.03)
+    ir_id, ir_loc, ir_scale, ir_shape, ir_min, ir_max = _resolve_dist_params(
+        ir_cfg,
+        default_loc=plant.interest_rate,
+        default_scale=ir_std_default,
+        default_min=max(0.02, plant.interest_rate - 2 * ir_std_default),
+        default_max=plant.interest_rate + 2 * ir_std_default,
+    )
 
     pu_util_cfg = pu.get("plant_utilization", {})
     pu_util_std = pu_util_cfg.get("std", 0)
-    if pu_util_std > 0:
+    if pu_util_std > 0 or "dist_id" in pu_util_cfg:
         pu_util_mean = plant.plant_utilization
-        pu_util_min = pu_util_cfg.get(
-            "min", max(0.0, pu_util_mean - 2 * pu_util_std)
+        (util_id, util_loc, util_scale, util_shape,
+         util_min, util_max) = _resolve_dist_params(
+            pu_util_cfg,
+            default_loc=pu_util_mean,
+            default_scale=pu_util_std,
+            default_min=max(0.0, pu_util_mean - 2 * pu_util_std),
+            default_max=min(1.0, pu_util_mean + 2 * pu_util_std),
         )
-        pu_util_max = pu_util_cfg.get(
-            "max", min(1.0, pu_util_mean + 2 * pu_util_std)
-        )
-        plant_utilizations = _truncated_normal_samples(
-            pu_util_mean, pu_util_std, pu_util_min, pu_util_max, num_samples
+        plant_utilizations = sample_distribution(
+            util_id, num_samples, loc=util_loc, scale=util_scale,
+            shape=util_shape, minimum=util_min, maximum=util_max,
+            random_state=rng,
         )
     else:
         plant_utilizations = None
 
     tr_cfg = pu.get("tax_rate", {})
     tr_std = tr_cfg.get("std", 0)
-    if tr_std > 0:
+    if tr_std > 0 or "dist_id" in tr_cfg:
         tr_mean = plant.tax_rate
-        tr_min = tr_cfg.get("min", max(0.0, tr_mean - 2 * tr_std))
-        tr_max = tr_cfg.get("max", min(1.0, tr_mean + 2 * tr_std))
-        tax_rates = _truncated_normal_samples(
-            tr_mean, tr_std, tr_min, tr_max, num_samples
+        (tr_id, tr_loc, tr_scale, tr_shape,
+         tr_min, tr_max) = _resolve_dist_params(
+            tr_cfg,
+            default_loc=tr_mean,
+            default_scale=tr_std,
+            default_min=max(0.0, tr_mean - 2 * tr_std),
+            default_max=min(1.0, tr_mean + 2 * tr_std),
+        )
+        tax_rates = sample_distribution(
+            tr_id, num_samples, loc=tr_loc, scale=tr_scale,
+            shape=tr_shape, minimum=tr_min, maximum=tr_max,
+            random_state=rng,
         )
     else:
         tax_rates = None
 
-    # ---- Allocate all input distributions ----
+    # ---- Operator hourly rate ----
     op_cfg = plant.operator_hourly_rate
-    op_mean = op_cfg.get("rate", 38.11)
-    op_std = op_cfg.get("std", 20 / 2)
-    op_min = op_cfg.get("min", 10)
-    op_max = op_cfg.get("max", 100)
+    op_id, op_loc, op_scale, op_shape, op_min, op_max = _resolve_dist_params(
+        op_cfg, default_loc=38.11, default_scale=10, default_min=10, default_max=100,
+    )
 
     # ---- Sample ALL inputs once ----
-    fixed_capitals = _truncated_normal_samples(
-        1, fc_std, fc_min, fc_max, num_samples
+    fixed_capitals = sample_distribution(
+        fc_id, num_samples, loc=fc_loc, scale=fc_scale, shape=fc_shape,
+        minimum=fc_min, maximum=fc_max, random_state=rng,
     )
 
-    fixed_opexs = _truncated_normal_samples(
-        1, fo_std, fo_min, fo_max, num_samples
+    fixed_opexs = sample_distribution(
+        fo_id, num_samples, loc=fo_loc, scale=fo_scale, shape=fo_shape,
+        minimum=fo_min, maximum=fo_max, random_state=rng,
     )
 
-    operator_hourlys = _truncated_normal_samples(
-        op_mean, op_std, op_min, op_max, num_samples
+    operator_hourlys = sample_distribution(
+        op_id, num_samples, loc=op_loc, scale=op_scale, shape=op_shape,
+        minimum=op_min, maximum=op_max, random_state=rng,
     )
 
-    project_lifetimes = _truncated_normal_samples(
-        plant.project_lifetime, lt_std, lt_min, lt_max, num_samples,
+    project_lifetimes = sample_distribution(
+        lt_id, num_samples, loc=lt_loc, scale=lt_scale, shape=lt_shape,
+        minimum=lt_min, maximum=lt_max, random_state=rng,
     )
 
-    interests = _truncated_normal_samples(
-        plant.interest_rate, ir_std, ir_min, ir_max, num_samples,
+    interests = sample_distribution(
+        ir_id, num_samples, loc=ir_loc, scale=ir_scale, shape=ir_shape,
+        minimum=ir_min, maximum=ir_max, random_state=rng,
     )
 
     variable_opex_price_samples = {}
     for item, props in plant.variable_opex_inputs.items():
-        mean, std, min_, max_ = _get_sampling_params(props)
-        variable_opex_price_samples[item] = _truncated_normal_samples(
-            mean, std, min_, max_, num_samples
+        (v_id, v_loc, v_scale, v_shape,
+         v_min, v_max) = _resolve_dist_params(props)
+        variable_opex_price_samples[item] = sample_distribution(
+            v_id, num_samples, loc=v_loc, scale=v_scale, shape=v_shape,
+            minimum=v_min, maximum=v_max, random_state=rng,
         )
 
     have_product_prices = all(
@@ -825,9 +1079,11 @@ def monte_carlo(plant,
     product_price_samples = {}
     if have_product_prices:
         for prod, props in plant.plant_products.items():
-            mean, std, min_, max_ = _get_sampling_params(props)
-            product_price_samples[prod] = _truncated_normal_samples(
-                mean, std, min_, max_, num_samples
+            (p_id, p_loc, p_scale, p_shape,
+             p_min, p_max) = _resolve_dist_params(props)
+            product_price_samples[prod] = sample_distribution(
+                p_id, num_samples, loc=p_loc, scale=p_scale, shape=p_shape,
+                minimum=p_min, maximum=p_max, random_state=rng,
             )
 
     # ---- Batch calculation loop ----
