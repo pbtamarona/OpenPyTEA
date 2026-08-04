@@ -16,7 +16,8 @@ from .plotting import (plot_stacked_bar, plot_cash_flow,
                        plot_monte_carlo_inputs,
                        plot_multiple_monte_carlo)
 
-from .io import (load_results, run_equipment, run_plant, run_tea)
+from .io import (load_results, load_openpytea_config,
+                 run_equipment, run_plant, run_tea, run_openpytea)
 
 __version__ = "2.1.0"
 __author__ = "Panji B. Tamarona"
@@ -49,7 +50,9 @@ __all__ = [
     "plot_monte_carlo_inputs",
     "plot_multiple_monte_carlo",
     "load_results",
+    "load_openpytea_config",
     "run_equipment",
     "run_plant",
-    "run_tea"
+    "run_tea",
+    "run_openpytea"
 ]

@@ -25,6 +25,15 @@
         "pct": false
       }
     },
+    "levelized_cost": {
+      "run": true,
+      "args": {
+        "pct": false
+      }
+    },
+    "cash_flow": {
+      "run": true
+    },
     "sensitivity": {
       "run": true,
       "cases": [
@@ -56,11 +65,12 @@
     "monte_carlo": {
       "run": true,
       "args": {
-        "num_samples": 1000000,
+        "num_samples": 100000,
         "batch_size": 10000,
         "additional_capex": false
       },
-      "metric": ["LCOP", "NPV"]
+      "metric": ["LCOP", "NPV"],
+      "plot_inputs": true
     }
   },
   "output": {

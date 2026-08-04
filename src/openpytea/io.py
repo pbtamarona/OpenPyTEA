@@ -3,6 +3,8 @@ from pathlib import Path
 from datetime import datetime, timezone
 from importlib.metadata import version
 
+import matplotlib.pyplot as plt
+
 from openpytea.equipment import Equipment
 from openpytea.plant import Plant
 from openpytea.analysis import (
@@ -10,15 +12,19 @@ from openpytea.analysis import (
     fixed_capital_data,
     fixed_opex_data,
     variable_opex_data,
+    levelized_cost_data,
+    cash_flow_data,
     sensitivity_data,
     tornado_data,
     monte_carlo
     )
 from openpytea.plotting import (
     plot_stacked_bar,
+    plot_cash_flow,
     plot_sensitivity,
     plot_tornado,
-    plot_monte_carlo
+    plot_monte_carlo,
+    plot_monte_carlo_inputs,
 )
 from openpytea.helpers import (
     _to_jsonable,
@@ -56,7 +62,17 @@ def load_equipment_config(filepath):
           'cost_year', 'cost_func', 'target_year'
     """
     data = _read_json(filepath)
+    return _build_equipment_list(data)
 
+
+def _build_equipment_list(data):
+    """
+    Build a list of Equipment objects from an already-parsed config dict.
+
+    Shared by :func:`load_equipment_config` (single-file workflow) and
+    :func:`load_openpytea_config` (combined-file workflow) so both paths
+    apply identical validation.
+    """
     if "equipment" not in data:
         raise ValueError(
             "JSON file must contain a top-level 'equipment' key."
@@ -132,7 +148,17 @@ def load_plant_config(filepath, equipment_list):
         >>> plant = load_plant_config('plant_config.json', equipment)
     """
     data = _read_json(filepath)
+    return _build_plant(data, equipment_list)
 
+
+def _build_plant(data, equipment_list):
+    """
+    Build a Plant object from an already-parsed config dict.
+
+    Shared by :func:`load_plant_config` (single-file workflow) and
+    :func:`load_openpytea_config` (combined-file workflow) so both paths
+    apply identical validation.
+    """
     if "plant" not in data:
         raise ValueError("JSON file must contain a top-level 'plant' key.")
 
@@ -163,6 +189,55 @@ def load_analysis_config(filepath):
 
     if "analysis" not in data:
         raise ValueError("analysis.json must contain 'analysis' key")
+
+    return data
+
+
+def load_openpytea_config(filepath):
+    """
+    Load a single, combined OpenPyTEA configuration file.
+
+    This is the CLI-facing counterpart to :func:`load_equipment_config`,
+    :func:`load_plant_config`, and :func:`load_analysis_config`: instead of
+    three separate files, one JSON file carries the top-level 'equipment',
+    'plant', and 'analysis' keys (plus the optional 'output' key normally
+    nested under 'analysis.json'). See :func:`run_openpytea`.
+
+    Parameters
+    ----------
+    filepath : str or Path
+        Path to the combined JSON configuration file.
+
+    Returns
+    -------
+    dict
+        The parsed JSON data, containing at least 'equipment', 'plant',
+        and 'analysis' keys.
+
+    Raises
+    ------
+    ValueError
+        If the file is missing any of the 'equipment', 'plant', or
+        'analysis' top-level keys.
+    FileNotFoundError
+        If the specified filepath does not exist.
+    json.JSONDecodeError
+        If the file is not valid JSON.
+
+    Examples
+    --------
+    >>> config = load_openpytea_config('config.json')
+    >>> print(config['plant']['plant_name'])
+    """
+    data = _read_json(filepath)
+
+    required = ["equipment", "plant", "analysis"]
+    missing = [k for k in required if k not in data]
+    if missing:
+        raise ValueError(
+            "Combined config file must contain top-level "
+            f"key(s): {missing}."
+        )
 
     return data
 
@@ -424,8 +499,11 @@ def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
         - "fixed_capital": Fixed capital cost breakdown
         - "fixed_opex": Fixed operating expenditure breakdown
         - "variable_opex": Variable operating expenditure breakdown
+        - "levelized_cost": Levelized cost of production (LCOP) breakdown
+        - "cash_flow": Cumulative cash flow diagram data
         - "tornado": Tornado/sensitivity analysis results
         - "monte_carlo": Monte Carlo simulation results with metrics
+          and sampled input distributions
         - "sensitivity": Dictionary of sensitivity analysis cases
     Raises
     ------
@@ -441,7 +519,83 @@ def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
         analysis configuration file
     """
     # --- Load inputs ---
+    equipment_list = load_equipment_config(equipment_input_path)
     analysis_cfg = load_analysis_config(analysis_input_path)
+    plant = load_plant_config(plant_input_path, equipment_list)
+
+    return _run_analyses(equipment_list, plant, analysis_cfg, output_dir)
+
+
+def run_openpytea(config_path, output_dir="results"):
+    """
+    Execute a complete Techno-Economic Analysis (TEA) workflow from a
+    single, combined JSON configuration file.
+
+    This is the single-file counterpart to :func:`run_tea`, intended for
+    CLI use: instead of three separate input files, one JSON file carries
+    the 'equipment', 'plant', 'analysis', and (optional) 'output' blocks
+    that would otherwise live in ``equipment.json``, ``plant.json``, and
+    ``analysis.json``. See :func:`load_openpytea_config` for the expected
+    file structure. Aside from the input loading step, the pipeline
+    (calculations, JSON exports, and optional plots) is identical to
+    :func:`run_tea`.
+
+    Parameters
+    ----------
+    config_path : str or Path
+        Path to the combined configuration file, with top-level
+        'equipment', 'plant', and 'analysis' keys (and optionally
+        'output').
+    output_dir : str or Path, optional
+        Directory where results will be saved. If None, uses the
+        directory specified under the config's 'output' key. Defaults to
+        "results".
+
+    Returns
+    -------
+    dict
+        Same structure as returned by :func:`run_tea`.
+
+    Examples
+    --------
+    >>> results = run_openpytea('config.json', output_dir='outputs')
+    >>> results["monte_carlo"]["metrics"]["LCOP"]
+    """
+    config = load_openpytea_config(config_path)
+
+    equipment_list = _build_equipment_list(config)
+    plant = _build_plant(config, equipment_list)
+
+    return _run_analyses(equipment_list, plant, config, output_dir)
+
+
+def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
+    """
+    Run the configured analyses for a loaded plant/equipment pair and
+    export results (and optionally plots) to ``output_dir``.
+
+    This holds the shared pipeline behind :func:`run_tea` and
+    :func:`run_openpytea`, which differ only in how they load their
+    inputs.
+
+    Parameters
+    ----------
+    equipment_list : list[Equipment]
+        Equipment objects associated with the plant.
+    plant : Plant
+        A loaded (but not yet calculated) Plant object.
+    analysis_cfg : dict
+        Parsed analysis configuration, containing 'analysis' and
+        (optionally) 'output' keys.
+    output_dir : str, Path, or None
+        Directory where results will be saved. If None, uses the
+        directory specified in ``analysis_cfg['output']``.
+
+    Returns
+    -------
+    dict
+        Same structure as returned by :func:`run_tea`.
+    """
     analysis_block = analysis_cfg.get("analysis", {})
     output_cfg = analysis_cfg.get("output", {})
 
@@ -457,8 +611,6 @@ def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
     if save_json or save_plots:
         output_dir.mkdir(parents=True, exist_ok=True)
 
-    equipment_list = load_equipment_config(equipment_input_path)
-    plant = load_plant_config(plant_input_path, equipment_list)
     plant.calculate_all()
 
     results = {}
@@ -468,6 +620,8 @@ def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
         "fixed_capital": fixed_capital_data,
         "fixed_opex": fixed_opex_data,
         "variable_opex": variable_opex_data,
+        "levelized_cost": levelized_cost_data,
+        "cash_flow": cash_flow_data,
         "tornado": tornado_data,
         "monte_carlo": monte_carlo,
     }
@@ -513,73 +667,96 @@ def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
     # ======================================================
     if save_plots:
         if "direct_costs" in results:
-            ax = plot_stacked_bar(
+            fig, ax = plot_stacked_bar(
                 results["direct_costs"], show=False
             )
-            ax.figure.savefig(
+            fig.savefig(
                 output_dir / f"{plant.name}_direct_costs.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
-            ax.figure.clf()  # Clear figure to free memory
+            plt.close(fig)  # Free the figure
 
         if "fixed_capital" in results:
-            ax = plot_stacked_bar(
+            fig, ax = plot_stacked_bar(
                 results["fixed_capital"], show=False
             )
-            ax.figure.savefig(
+            fig.savefig(
                 output_dir / f"{plant.name}_fixed_capital.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
-            ax.figure.clf()  # Clear figure to free memory
+            plt.close(fig)  # Free the figure
 
         if "fixed_opex" in results:
-            ax = plot_stacked_bar(
+            fig, ax = plot_stacked_bar(
                 results["fixed_opex"], show=False
             )
-            ax.figure.savefig(
+            fig.savefig(
                 output_dir / f"{plant.name}_fixed_opex.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
-            ax.figure.clf()  # Clear figure to free memory
+            plt.close(fig)  # Free the figure
 
         if "variable_opex" in results:
-            ax = plot_stacked_bar(
+            fig, ax = plot_stacked_bar(
                 results["variable_opex"], show=False
             )
-            ax.figure.savefig(
+            fig.savefig(
                 output_dir / f"{plant.name}_variable_opex.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
-            ax.figure.clf()  # Clear figure to free memory
+            plt.close(fig)  # Free the figure
+
+        if "levelized_cost" in results:
+            fig, ax = plot_stacked_bar(
+                results["levelized_cost"], show=False
+            )
+            fig.savefig(
+                output_dir / f"{plant.name}_levelized_cost.{plot_format}",
+                dpi=dpi,
+                bbox_inches="tight",
+            )
+            plt.close(fig)  # Free the figure
+
+        if "cash_flow" in results:
+            fig, ax = plot_cash_flow(
+                results["cash_flow"], show=False
+            )
+            fig.savefig(
+                output_dir / f"{plant.name}_cash_flow.{plot_format}",
+                dpi=dpi,
+                bbox_inches="tight",
+            )
+            plt.close(fig)  # Free the figure
 
         if "sensitivity" in results:
             for name, data in results["sensitivity"].items():
-                ax = plot_sensitivity(data, show=False)
-                ax.figure.savefig(
+                fig, ax = plot_sensitivity(data, show=False)
+                fig.savefig(
                     output_dir /
                     f"{plant.name}_sensitivity_{name}.{plot_format}",
                     dpi=dpi,
                     bbox_inches="tight",
                 )
-                ax.figure.clf()  # Clear figure to free memory
+                plt.close(fig)  # Free the figure
 
         if "tornado" in results:
-            ax = plot_tornado(
+            fig, ax = plot_tornado(
                 results["tornado"], show=False
             )
-            ax.figure.savefig(
+            fig.savefig(
                 output_dir / f"{plant.name}_tornado.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
-            ax.figure.clf()  # Clear figure to free memory
+            plt.close(fig)  # Free the figure
 
         if "monte_carlo" in results:
-            mc_metrics = results["monte_carlo"]["metrics"]
+            mc_results = results["monte_carlo"]
+            mc_metrics = mc_results["metrics"]
             mc_cfg = analysis_block.get("monte_carlo", {})
             requested_metrics = mc_cfg.get("metric")
 
@@ -598,9 +775,8 @@ def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
                         f"Available metrics: {available}"
                     )
 
-                values = mc_metrics[metric_name]
-                ax = plot_monte_carlo(
-                    values,
+                fig, ax = plot_monte_carlo(
+                    mc_results,
                     metric=metric_name,
                     show=False,
                 )
@@ -609,12 +785,24 @@ def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
                     f"{plant.name}_monte_carlo_"
                     f"{metric_name.lower()}.{plot_format}"
                 )
-                ax.figure.savefig(
+                fig.savefig(
                     output_dir / filename,
                     dpi=dpi,
                     bbox_inches="tight",
                 )
 
-                ax.figure.clf()  # Clear figure to free memory
+                plt.close(fig)  # Free the figure
+
+            if mc_cfg.get("plot_inputs", False):
+                fig, axes = plot_monte_carlo_inputs(
+                    mc_results, show=False
+                )
+                fig.savefig(
+                    output_dir /
+                    f"{plant.name}_monte_carlo_inputs.{plot_format}",
+                    dpi=dpi,
+                    bbox_inches="tight",
+                )
+                plt.close(fig)  # Free the figure
 
     return results

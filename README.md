@@ -323,8 +323,17 @@ Key functionalities include:
 - `run_equipment()`: evaluate equipment costs from JSON input
 - `run_plant()`: construct and evaluate a plant configuration
 - `run_tea()`: execute full TEA, including cost breakdowns, sensitivity, and uncertainty analysis
+- `run_openpytea()`: single-file counterpart to `run_tea()` — runs the same pipeline from one combined JSON file (`equipment` + `plant` + `analysis` blocks), intended for CLI use
 
 This workflow is demonstrated in `case_study_1_with_JSON.ipynb` in the example folder.
+
+Installing **OpenPyTEA** also installs an `openpytea` command-line tool, so the same combined-file workflow can be run without writing any Python:
+
+```bash
+openpytea run project/config.json --output-dir outputs/tea_results
+```
+
+`openpytea equipment`, `openpytea plant`, and `openpytea tea` (the three-file variant of `run_tea()`) are also available — run `openpytea --help` for the full command list. See the [JSON Workflow guide](docs/user_guide/io_workflow.rst) for details.
 
 ---
 ## ▶️ Tutorials

@@ -1,9 +1,9 @@
 import json
-from openpytea import run_tea
+from openpytea import run_tea, run_openpytea
 
 
-def test_run_tea_minimal_workflow(tmp_path):
-    equipment_data = {
+def _equipment_data():
+    return {
         "equipment": [
             {
                 "name": "Reactor",
@@ -24,7 +24,9 @@ def test_run_tea_minimal_workflow(tmp_path):
         ]
     }
 
-    plant_data = {
+
+def _plant_data():
+    return {
         "plant": {
             "plant_name": "Test Plant",
             "process_type": "Fluids",
@@ -70,12 +72,23 @@ def test_run_tea_minimal_workflow(tmp_path):
         }
     }
 
-    analysis_data = {
+
+def _analysis_data(output_dir=None):
+    output = {
+        "save_json": True,
+        "save_plots": True,
+    }
+    if output_dir is not None:
+        output["directory"] = str(output_dir)
+
+    return {
         "analysis": {
             "direct_costs": {"run": True},
             "fixed_capital": {"run": True},
             "fixed_opex": {"run": True},
             "variable_opex": {"run": True},
+            "levelized_cost": {"run": True},
+            "cash_flow": {"run": True},
             "tornado": {
                 "run": True,
                 "args": {
@@ -105,22 +118,67 @@ def test_run_tea_minimal_workflow(tmp_path):
                     "additional_capex": False,
                 },
                 "metric": ["LCOP"],
+                "plot_inputs": True,
             },
         },
-        "output": {
-            "save_json": True,
-            "save_plots": False,
-        },
+        "output": output,
     }
+
+
+def _assert_results(results, output_dir):
+    assert isinstance(results, dict)
+
+    assert "direct_costs" in results
+    assert "fixed_capital" in results
+    assert "fixed_opex" in results
+    assert "variable_opex" in results
+    assert "levelized_cost" in results
+    assert "cash_flow" in results
+    assert "tornado" in results
+    assert "sensitivity" in results
+    assert "monte_carlo" in results
+
+    assert "interest_rate_case" in results["sensitivity"]
+    assert "metrics" in results["monte_carlo"]
+    assert "LCOP" in results["monte_carlo"]["metrics"]
+    assert "inputs" in results["monte_carlo"]
+
+    assert (output_dir / "Test Plant_equipment_results.json").exists()
+    assert (output_dir / "Test Plant_plant_results.json").exists()
+    assert (output_dir / "Test Plant_analysis_results.json").exists()
+
+    plot_format = "png"
+    for stem in (
+        "direct_costs",
+        "fixed_capital",
+        "fixed_opex",
+        "variable_opex",
+        "levelized_cost",
+        "cash_flow",
+        "tornado",
+        "sensitivity_interest_rate_case",
+        "monte_carlo_lcop",
+        "monte_carlo_inputs",
+    ):
+        assert (
+            output_dir / f"Test Plant_{stem}.{plot_format}"
+        ).exists()
+
+
+def test_run_tea_minimal_workflow(tmp_path):
+    output_dir = tmp_path / "results"
 
     equipment_path = tmp_path / "equipment.json"
     plant_path = tmp_path / "plant.json"
     analysis_path = tmp_path / "analysis.json"
-    output_dir = tmp_path / "results"
 
-    equipment_path.write_text(json.dumps(equipment_data), encoding="utf-8")
-    plant_path.write_text(json.dumps(plant_data), encoding="utf-8")
-    analysis_path.write_text(json.dumps(analysis_data), encoding="utf-8")
+    equipment_path.write_text(
+        json.dumps(_equipment_data()), encoding="utf-8"
+    )
+    plant_path.write_text(json.dumps(_plant_data()), encoding="utf-8")
+    analysis_path.write_text(
+        json.dumps(_analysis_data()), encoding="utf-8"
+    )
 
     results = run_tea(
         equipment_input_path=equipment_path,
@@ -129,20 +187,41 @@ def test_run_tea_minimal_workflow(tmp_path):
         output_dir=output_dir,
     )
 
-    assert isinstance(results, dict)
+    _assert_results(results, output_dir)
 
-    assert "direct_costs" in results
-    assert "fixed_capital" in results
-    assert "fixed_opex" in results
-    assert "variable_opex" in results
-    assert "tornado" in results
-    assert "sensitivity" in results
-    assert "monte_carlo" in results
 
-    assert "interest_rate_case" in results["sensitivity"]
-    assert "metrics" in results["monte_carlo"]
-    assert "LCOP" in results["monte_carlo"]["metrics"]
+def test_run_openpytea_minimal_workflow(tmp_path):
+    output_dir = tmp_path / "results"
 
-    assert (output_dir / "Test Plant_equipment_results.json").exists()
-    assert (output_dir / "Test Plant_plant_results.json").exists()
-    assert (output_dir / "Test Plant_analysis_results.json").exists()
+    config = {
+        **_equipment_data(),
+        **_plant_data(),
+        **_analysis_data(),
+    }
+
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+
+    results = run_openpytea(
+        config_path=config_path,
+        output_dir=output_dir,
+    )
+
+    _assert_results(results, output_dir)
+
+
+def test_run_openpytea_uses_output_directory_from_config(tmp_path):
+    output_dir = tmp_path / "config_results"
+
+    config = {
+        **_equipment_data(),
+        **_plant_data(),
+        **_analysis_data(output_dir=output_dir),
+    }
+
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+
+    results = run_openpytea(config_path=config_path, output_dir=None)
+
+    _assert_results(results, output_dir)
