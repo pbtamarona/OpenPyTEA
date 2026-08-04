@@ -283,6 +283,81 @@ def fixed_opex_data(plants, pct=False):
                            "Annual fixed OPEX", currency, pct)
 
 
+def levelized_cost_data(plants, pct=False):
+    """
+    Generate levelized cost of production (LCOP) breakdown data for one or
+    more plants.
+    This function discounts capital costs, cash costs, side-product revenue,
+    and production over each plant's project lifetime at its interest rate
+    (mirroring ``Plant.calculate_levelized_cost``), then divides the
+    discounted CAPEX, OPEX, and side revenue by the discounted production so
+    each component is expressed per unit of main product. Side revenue is
+    negated (since it is subtracted from the LCOP numerator), so the
+    components sum directly to the plant's LCOP: CAPEX + OPEX +
+    Side revenue = LCOP.
+    Parameters
+    ----------
+    plants : Plant or list of Plant
+        A single plant object or a list of plant objects for which to build
+        the levelized cost breakdown.
+    pct : bool, optional
+        If True, return the breakdown as percentages of the total. If False
+        (default), return absolute values.
+    Returns
+    -------
+    dict
+        A dictionary containing structured bar chart data with keys:
+        - CAPEX
+        - OPEX
+        - Side revenue
+        (each expressed per unit of main product), along with plant names,
+        currency, and formatting information.
+    Notes
+    -----
+    - Only the scalar (non-Monte Carlo) case is supported; each plant's
+      ``project_lifetime`` and ``interest_rate`` must be scalar values.
+    Examples
+    --------
+    >>> data = levelized_cost_data(plant1)
+    >>> data = levelized_cost_data([plant1, plant2], pct=True)
+    """
+    plants = _ensure_list(plants)
+    base_currency = plants[0].currency if plants else r"\$"
+    currency = rf"{base_currency}$\cdot$unit$^{{-1}}$"
+
+    components_list = []
+    xlabels = []
+
+    for plant in plants:
+        plant.calculate_levelized_cost()
+
+        n_years = int(plant.project_lifetime)
+        years = np.arange(1, n_years + 1, dtype=float)
+        discount_factors = (1 + plant.interest_rate) ** years
+
+        capital_cost = np.asarray(plant.capital_cost_array, dtype=float)[0, :n_years]
+        cash_cost = np.asarray(plant.cash_cost_array, dtype=float)[0, :n_years]
+        side_rev = np.asarray(plant.side_revenue_array, dtype=float)[0, :n_years]
+        prod = np.asarray(plant.prod_array, dtype=float)[0, :n_years]
+
+        disc_capex = float(np.sum(capital_cost / discount_factors))
+        disc_opex = float(np.sum(cash_cost / discount_factors))
+        disc_side_rev = float(np.sum(side_rev / discount_factors))
+        disc_prod = float(np.sum(prod / discount_factors))
+
+        components = {
+            "CAPEX": disc_capex / disc_prod,
+            "OPEX": disc_opex / disc_prod,
+            "Side revenue": -(disc_side_rev / disc_prod),
+        }
+
+        components_list.append(components)
+        xlabels.append(plant.name)
+
+    return _build_bar_data(components_list, xlabels,
+                           "Levelized cost", currency, pct)
+
+
 def sensitivity_data(plants,
                      parameter,
                      plus_minus_value,

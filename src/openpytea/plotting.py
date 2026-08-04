@@ -26,15 +26,24 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     This function generates a stacked bar chart where components are sorted
     by their total values across all bars in descending order. Components are
     color-coded and displayed with a legend.
+
+    As a special case (used by
+    :func:`openpytea.analysis.levelized_cost_data`), a component named
+    "Side revenue" (expected to hold a negative value, since it is
+    subtracted from the total) forms the base of the stack below zero: the
+    remaining components stack on top of it, so the top of each bar reads
+    as the correct net total (e.g., the LCOP). It is drawn last (on top,
+    z-order-wise) so it stays visible where it overlaps the other
+    components, and reuses the color of the largest stacked component
+    (distinguished only by a hatch pattern) so the CAPEX/OPEX color ratio
+    remains easy to read.
     Parameters
     ----------
     data : dict
         Dictionary containing the following keys:
-        - "values" : list of lists
-            List of lists where each inner list contains values for a component
-            across all bars.
-        - "labels" : tuple or list
-            Labels for each component/stack in the bar chart.
+        - "components" : list of dict
+            List of dictionaries (one per bar) mapping component names to
+            their values.
         - "xlabels" : list
             Labels for the x-axis (one per bar).
         - "currency" : str
@@ -68,30 +77,46 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     - The legend is positioned to the right of the plot area.
     - When pct=True and n_bars=1, the percentage value is appended to the
         component label.
+    - When pct=True, percentages are relative to the sum of the stacked
+        (non-side-revenue) components in each bar.
     """
-
-    values = data["values"]
-    labels = data["labels"]
+    components_list = data["components"]
     xlabels = data["xlabels"]
     currency = data["currency"]
     pct = data["pct"]
+    ylabel = data["ylabel"]
 
-    n_bars = len(values)
+    side_key = "Side revenue"
 
-    # sort by first plant's values so order is stable across all bars
-    sorted_idx = np.argsort(values[0])[::-1]
+    n_bars = len(components_list)
 
-    # reorder labels and values
-    labels_sorted = [labels[0][i] for i in sorted_idx]
-    values_sorted = [[v[i] for i in sorted_idx] for v in values]
+    # sort stacked components (excluding side revenue) by their total value
+    # across all bars, descending, so order is stable
+    labels_sorted = sorted(
+        {k for c in components_list for k in c if k != side_key},
+        key=lambda lab: -sum(c.get(lab, 0.0) for c in components_list),
+    )
 
-    x = np.arange(n_bars)
-    bottoms = np.zeros(n_bars)
+    values_sorted = [
+        [c.get(lab, 0.0) for lab in labels_sorted] for c in components_list
+    ]
+    side_values = [c.get(side_key, 0.0) for c in components_list]
+    has_side_rev = any(v != 0 for v in side_values)
+
+    if pct:
+        totals = [sum(row) for row in values_sorted]
+        values_sorted = [
+            [v / t * 100 if t != 0 else 0.0 for v in row]
+            for row, t in zip(values_sorted, totals)
+        ]
+        side_values = [
+            v / t * 100 if t != 0 else 0.0
+            for v, t in zip(side_values, totals)
+        ]
 
     spacing = 0.75  # < 1.0 pulls bars together
     bar_width = 0.45
     x = np.arange(n_bars) * spacing
-    bottoms = np.zeros(n_bars, dtype=float)
 
     # --- Ax/fig handling ---
     created_fig = None
@@ -108,20 +133,39 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
             figsize=(auto_width, base_h)
         )
 
-    colors = [cmap(i) for i in np.linspace(0.15, 0.95, len(labels_sorted))]
+    # cap how far into the colormap we sample for few components, so e.g.
+    # a 2-component chart lands on magenta rather than plasma's pale yellow
+    # (the cap relaxes back to the full 0.15-0.95 range by 5+ components,
+    # matching the previous behavior for larger charts)
+    n_labels = len(labels_sorted)
+    color_end = 0.15 + min(0.8, 0.25 * max(0, n_labels - 1))
+    colors = [cmap(i) for i in np.linspace(0.15, color_end, n_labels)]
     color_map = dict(zip(labels_sorted, colors))
+    if has_side_rev:
+        # side revenue sits directly below the first (largest) stacked
+        # component, so reuse its color -- keeping only the CAPEX/OPEX
+        # colors on screen preserves their ratio at a glance
+        color_map[side_key] = colors[0] if colors else cmap(0.15)
 
     if pct:
-        ax.set_ylabel(data["ylabel"] + r" / [\%]")
+        ax.set_ylabel(ylabel + r" / [\%]")
         plot_labels = [
             rf"{lab} ({values_sorted[0][i]:.1f}\%)" if n_bars == 1 else lab
             for i, lab in enumerate(labels_sorted)
         ]
     else:
-        ax.set_ylabel(data["ylabel"] + " / [" + currency + "]")
+        ax.set_ylabel(ylabel + " / [" + currency + "]")
         plot_labels = labels_sorted
 
-    # --- use sorted data ---
+    # --- Remaining components stack starting from the side-revenue
+    # baseline (so the final top reads as the correct net total), drawn
+    # first so the side-revenue bar can be drawn on top of them below ---
+    bottoms = (
+        np.array(side_values, dtype=float)
+        if has_side_rev
+        else np.zeros(n_bars, dtype=float)
+    )
+
     for i in range(len(labels_sorted)):
         vals = [v[i] for v in values_sorted]
         ax.bar(
@@ -136,8 +180,42 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
         )
         bottoms += vals
 
-    max_height = max(np.sum(v) for v in values_sorted)
-    ax.set_ylim(0, max_height * 1.1)
+    top = max(bottoms) if n_bars else 0.0
+
+    # --- Side revenue (if any) drawn last, on top of the stack, so its
+    # hatch pattern remains visible over the region it overlaps below zero
+    if has_side_rev:
+        side_label = (
+            rf"{side_key} ({side_values[0]:.1f}\%)"
+            if pct and n_bars == 1
+            else side_key
+        )
+        side_bars = ax.bar(
+            x,
+            side_values,
+            bottom=0,
+            width=bar_width,
+            label=side_label,
+            color=color_map[side_key],
+            edgecolor="black",
+            linewidth=0.3,
+            hatch="////",
+        )
+        # matplotlib ties hatch-line color to edgecolor by default, which
+        # reads poorly on the dark plasma tones (e.g. black-on-purple); set
+        # a lighter, semi-transparent hatch color directly on the patches
+        # so the border stays black but the hatch lines stand out less
+        for patch in side_bars:
+            patch._hatch_color = (1.0, 1.0, 1.0, 0.6)
+            patch._hatch_linewidth = 0.6
+        ax.axhline(0, color="black", linewidth=0.5)
+
+    if has_side_rev:
+        bottom = min(side_values)
+        span = top - bottom if top != bottom else max(abs(top), 1.0)
+        ax.set_ylim(bottom - 0.1 * span, top + 0.1 * span)
+    else:
+        ax.set_ylim(0, top * 1.1)
 
     ax.set_xticks(x)
     ax.set_xticklabels(xlabels)
