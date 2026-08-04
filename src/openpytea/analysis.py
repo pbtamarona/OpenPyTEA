@@ -358,6 +358,115 @@ def levelized_cost_data(plants, pct=False):
                            "Levelized cost", currency, pct)
 
 
+def cash_flow_data(plants):
+    """
+    Prepare cumulative cash flow data for one or more plants, for plotting
+    the classic project cash flow diagram (cumulative cash position vs.
+    time): a dip into debt during construction/start-up, a minimum
+    ("maximum investment"), a break-even point where the curve crosses
+    back above zero, and a rise into profit for the remainder of the
+    project life.
+
+    Parameters
+    ----------
+    plants : Plant or list of Plant
+        A single plant object or a list of plant objects to build the
+        cash flow diagram data for. Each plant's ``calculate_cash_flow``
+        is (re)run to ensure the underlying annual cash flow array is
+        up to date.
+
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - "curves" : list of dict
+            One entry per plant, each containing:
+            - "plant" : str
+                Plant name.
+            - "years" : ndarray
+                Time axis from 0 (project start) to the project
+                lifetime, one point per year.
+            - "cumulative" : ndarray
+                Cumulative cash position at each year in ``years``.
+            - "max_investment" : float
+                Depth of the deepest point of the cumulative cash flow
+                curve (0 if the curve never goes negative).
+            - "max_investment_year" : float
+                Year at which ``max_investment`` occurs.
+            - "breakeven_year" : float or None
+                Year at which the cumulative cash flow first crosses
+                back above zero after having been negative (linearly
+                interpolated between the two surrounding years). None
+                if the project never goes into debt or never recovers.
+            - "payback_time" : float or None
+                Alias of ``breakeven_year``.
+            - "project_life" : float
+                Final year in ``years`` (the plant's project lifetime).
+        - "xlabel" : str
+            Label for the x-axis.
+        - "ylabel" : str
+            Label for the y-axis (excluding currency units).
+        - "currency" : str
+            Currency symbol, taken from the first plant.
+
+    Notes
+    -----
+    - Only the scalar (non-Monte Carlo) case is supported; if a plant's
+      ``cash_flow`` has multiple rows (vectorised inputs), the first row
+      is used.
+    - The cumulative cash flow already reflects the plant's CAPEX ramp,
+      working capital draw/release, production ramp, depreciation, and
+      tax lag, as computed by ``Plant.calculate_cash_flow``.
+
+    Examples
+    --------
+    >>> data = cash_flow_data(plant)
+    >>> data = cash_flow_data([plant_a, plant_b])
+    """
+    plants = _ensure_list(plants)
+    currency = plants[0].currency if plants else r"\$"
+
+    curves = []
+    for plant in plants:
+        plant.calculate_cash_flow()
+
+        cash_flow = np.asarray(plant.cash_flow, dtype=float)[0]
+        n_years = cash_flow.shape[0]
+
+        years = np.arange(0, n_years + 1, dtype=float)
+        cumulative = np.concatenate(([0.0], np.cumsum(cash_flow)))
+
+        min_idx = int(np.argmin(cumulative))
+        max_investment = max(0.0, -float(cumulative[min_idx]))
+        max_investment_year = float(years[min_idx])
+
+        breakeven_year = None
+        for i in range(1, len(cumulative)):
+            if cumulative[i - 1] < 0 <= cumulative[i]:
+                span = cumulative[i] - cumulative[i - 1]
+                frac = (-cumulative[i - 1] / span) if span != 0 else 0.0
+                breakeven_year = float(years[i - 1] + frac)
+                break
+
+        curves.append({
+            "plant": plant.name,
+            "years": years,
+            "cumulative": cumulative,
+            "max_investment": max_investment,
+            "max_investment_year": max_investment_year,
+            "breakeven_year": breakeven_year,
+            "payback_time": breakeven_year,
+            "project_life": float(years[-1]),
+        })
+
+    return {
+        "curves": curves,
+        "xlabel": "Time / [years]",
+        "ylabel": "Cumulative cash flow",
+        "currency": currency,
+    }
+
+
 def sensitivity_data(plants,
                      parameter,
                      plus_minus_value,

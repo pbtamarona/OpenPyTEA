@@ -2,9 +2,11 @@ import matplotlib
 import matplotlib.pyplot as plt
 from openpytea import (
     direct_costs_data,
+    cash_flow_data,
     sensitivity_data,
     tornado_data,
     plot_stacked_bar,
+    plot_cash_flow,
     plot_sensitivity,
     plot_tornado,
 )
@@ -16,6 +18,22 @@ plt.rcParams["text.usetex"] = False
 def test_plot_stacked_bar_runs(test_plant):
     data = direct_costs_data(test_plant)
     fig, ax = plot_stacked_bar(data, show=False)
+
+    assert fig is not None
+    assert ax is not None
+
+
+def test_plot_cash_flow_runs(test_plant):
+    data = cash_flow_data(test_plant)
+    fig, ax = plot_cash_flow(data, show=False)
+
+    assert fig is not None
+    assert ax is not None
+
+
+def test_plot_cash_flow_multi_runs(test_plant, test_plant_b):
+    data = cash_flow_data([test_plant, test_plant_b])
+    fig, ax = plot_cash_flow(data, show=False)
 
     assert fig is not None
     assert ax is not None

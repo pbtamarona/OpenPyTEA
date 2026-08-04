@@ -424,6 +424,118 @@ def plot_tornado(
     return ax.figure, ax
 
 
+def plot_cash_flow(data, figsize=(3.6, 2.6), ax=None, show=True):
+    """
+    Plot a project cash flow diagram (cumulative cash position vs. time).
+
+    Draws the classic cumulative cash flow curve used to visualize capital
+    recovery over a project's life: the curve dips into debt during
+    construction/start-up as CAPEX and working capital are spent, bottoms
+    out at the "maximum investment", crosses back above zero at the
+    break-even point, and then climbs as operating profit accumulates.
+
+    Parameters
+    ----------
+    data : dict
+        Dictionary as returned by
+        :func:`openpytea.analysis.cash_flow_data`, containing a "curves"
+        list (one entry per plant with "years", "cumulative",
+        "breakeven_year", "max_investment", and "max_investment_year"),
+        plus "xlabel", "ylabel", and "currency".
+    figsize : tuple, optional
+        Figure size as (width, height) in inches. Default is (3.6, 2.6).
+    ax : matplotlib.axes.Axes, optional
+        Existing axes object to plot on. If None, a new figure and axes
+        are created. Default is None.
+    show : bool, optional
+        If True and a new figure is created, display the plot using
+        plt.show(). Default is True.
+
+    Returns
+    -------
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the cash flow diagram.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
+
+    Notes
+    -----
+    - For every plant, the region where its cumulative cash flow is
+      negative is shaded (hatched) as debt, and its break-even point
+      (if any) is marked with a dashed vertical line in the same
+      color as its curve.
+    """
+    curves = data["curves"]
+    currency = data.get("currency", r"\$")
+    xlabel = data.get("xlabel", "Time / [years]")
+    ylabel = data.get("ylabel", "Cumulative cash flow") + " / [" + currency + "]"
+
+    created_fig = None
+    if ax is None:
+        created_fig, ax = plt.subplots(figsize=figsize)
+
+    line_colors = cycle(plt.cm.Set2.colors)
+    all_cumulative = []
+
+    for curve in curves:
+        color = next(line_colors)
+        years = curve["years"]
+        cumulative = curve["cumulative"]
+        breakeven = curve["breakeven_year"]
+        all_cumulative.append(cumulative)
+
+        ax.plot(
+            years,
+            cumulative,
+            linewidth=1.2,
+            color=color,
+            label=curve["plant"],
+            zorder=3,
+            linestyle="-"
+        )
+
+        ax.fill_between(
+            years,
+            cumulative,
+            0,
+            where=(cumulative < 0),
+            interpolate=True,
+            color=color,
+            alpha=0.25,
+            hatch="////",
+            edgecolor=color,
+            linewidth=0.0,
+            zorder=1,
+        )
+
+        if breakeven is not None:
+            ax.axvline(
+                breakeven, color=color, linestyle="--",
+                linewidth=0.6, zorder=2,
+            )
+
+    ax.axhline(0, color="black", linewidth=0.6, zorder=2)
+    ax.set_xlim(left=0)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
+    ymin = float(np.min(np.concatenate(all_cumulative)))
+    ymax = float(np.max(np.concatenate(all_cumulative)))
+    span = ymax - ymin if ymax != ymin else max(abs(ymax), 1.0)
+
+    ax.set_ylim(ymin - 0.15 * span, ymax + 0.15 * span)
+    ax.legend(loc="best", fontsize="x-small")
+
+    if created_fig is not None:
+        created_fig.tight_layout()
+        if show:
+            plt.show()
+    else:
+        if show:
+            ax.figure.canvas.draw_idle()
+
+    return ax.figure, ax
+
+
 def plot_monte_carlo(
     data,
     metric: str = None,

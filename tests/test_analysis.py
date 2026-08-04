@@ -3,6 +3,7 @@ from openpytea import (
     fixed_capital_data,
     fixed_opex_data,
     variable_opex_data,
+    cash_flow_data,
     sensitivity_data,
     tornado_data,
     monte_carlo
@@ -20,6 +21,23 @@ def test_cost_breakdown_data(test_plant):
         assert "values" in result
         assert "labels" in result
         assert "xlabels" in result
+
+
+def test_cash_flow_data(test_plant):
+    result = cash_flow_data(test_plant)
+
+    assert isinstance(result, dict)
+    assert "curves" in result
+    assert len(result["curves"]) == 1
+
+    curve = result["curves"][0]
+    assert curve["years"][0] == 0
+    assert curve["years"][-1] == curve["project_life"]
+    assert len(curve["years"]) == len(curve["cumulative"])
+    assert curve["max_investment"] >= 0
+
+    if curve["breakeven_year"] is not None:
+        assert 0 <= curve["breakeven_year"] <= curve["project_life"]
 
 
 def test_sensitivity_data(test_plant):
