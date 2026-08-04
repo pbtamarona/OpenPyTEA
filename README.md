@@ -42,7 +42,8 @@ Lunch, snacks, coffee, and drinks will be provided!
 ## ✨ Key Features
 - **Modular architecture:** clean separation of cost correlations, equipment objects, plant economics, and uncertainty analysis.  
 - **Transparent and reproducible:** all algorithms, equations, and assumptions are openly available for full traceability.
-- **Cost breakdown visualization:** built-in functions to plot stacked bar charts of equipment costs, fixed capital, and operating costs.
+- **Cost breakdown visualization:** built-in functions to plot stacked bar charts of equipment costs, fixed capital, operating costs, and levelized cost of production (LCOP).
+- **Cash flow diagrams:** visualize a project's cumulative cash flow over time, including its maximum investment and pay-back point, with support for overlaying multiple plants.
 - **Built-in uncertainty tools:** automatic generation of sensitivity plots and Monte Carlo simulations.
 - **Workflow using JSON configuration files:** standardized input/output structure via `io.py` for reproducible analyses and multi-scenario evaluation.
 - **Flexible analysis and visualization:** separation of data processing (`analysis.py`) and plotting (`plotting.py`) allows users to apply custom visualization tools.
@@ -208,32 +209,32 @@ Multiple equipment objects can be grouped into a `Plant` instance for full TEA
 from openpytea.plant import Plant
 
 ammonia_plant = Plant({
-    'name':'Ammonia Production Plant', 
-    'country':'Netherlands',
-    'process_type':'Fluids', 
-    'equipment'=[compressor],
-    'interest_rate':0.09, 
-    'plant_utilization':0.95, 
-    'project_lifetime':20,  # in years
+    'plant_name': 'Ammonia Production Plant',
+    'country': 'Netherlands',
+    'process_type': 'Fluids',
+    'equipment': [compressor],
+    'interest_rate': 0.09,
+    'plant_utilization': 0.95,
+    'project_lifetime': 20,  # in years
     'plant_products': {  # Here we define the product(s) of the plant
         'ammonia': {
-            'production':125_000, # Daily production in kg/day,
+            'production': 125_000,  # Daily production in kg/day
         }
     },
-    'variable_opex_inputs':{
-        'electricity':{
-            'consumption': 110,  # Daily consumption, in MWh 
+    'variable_opex_inputs': {
+        'electricity': {
+            'consumption': 110,  # Daily consumption, in MWh
             'price': 75  # US$/MWh
         },
-        'hydrogen':{
+        'hydrogen': {
             'consumption': 22_000,  # Daily consumption, in kg/day
             'price': 2  # US$/kg
         },
     },
 })
 
-plant.calculate_cash_flow(print_results=True)
-plant.calculate_levelized_cost()
+ammonia_plant.calculate_cash_flow(print_results=True)
+ammonia_plant.calculate_levelized_cost()
 ```
 Main outputs include:
 - Capital expenditures (CAPEX): inside/outside battery limits, engineering, contingency, and location factors
@@ -242,54 +243,79 @@ Main outputs include:
 
 ### 3. **CAPEX and OPEX breakdown plots**
 
-OpenPyTEA includes convenience functions for visualizing the economic structure of a process plant using stacked bar plots:
+Following a `data` + `plot` pattern used throughout the package, OpenPyTEA includes convenience functions for visualizing the economic structure of one or more plants as stacked bar charts:
 
-- `plot_direct_costs_bar(plant)`: direct equipment costs (per equipment item).  
-- `plot_fixed_capital_bar(plant)`: fixed capital components (ISBL, OSBL, design & engineering, contingency).  
-- `plot_variable_opex_bar(plant)`: variable operating costs by input mass and energy stream.  
-- `plot_fixed_opex_bar(plant)`: fixed operating expenses, including labor, supervision, maintenance, overhead, R&D, and more.
+- `direct_costs_data()` + `plot_stacked_bar()`: direct equipment costs (per equipment item).  
+- `fixed_capital_data()` + `plot_stacked_bar()`: fixed capital components (ISBL, OSBL, design & engineering, contingency).  
+- `variable_opex_data()` + `plot_stacked_bar()`: variable operating costs by input mass and energy stream.  
+- `fixed_opex_data()` + `plot_stacked_bar()`: fixed operating expenses, including labor, supervision, maintenance, overhead, R&D, and more.  
+- `levelized_cost_data()` + `plot_stacked_bar()`: levelized cost of production (LCOP), broken down into discounted CAPEX, OPEX, and side-product revenue.
 
-These plots provide a quick visual breakdown of the main CAPEX and OPEX contributors in a flowsheet.
+```python
+from openpytea.analysis import direct_costs_data, levelized_cost_data
+from openpytea.plotting import plot_stacked_bar
 
-### 4. **Sensitivity and uncertainty analysis**
+direct_costs = direct_costs_data(ammonia_plant)
+fig, ax = plot_stacked_bar(direct_costs)
+
+lcop = levelized_cost_data(ammonia_plant)
+fig, ax = plot_stacked_bar(lcop)
+```
+
+Each `*_data()` function also accepts a **list of plants**, in which case `plot_stacked_bar` draws one bar per plant side-by-side for direct comparison. Separating data preparation (`analysis.py`) from plotting (`plotting.py`) means you can also feed the returned dictionaries into your own custom visualization code.
+
+### 4. **Cash flow diagram**
+
+`cash_flow_data()` and `plot_cash_flow()` visualize a project's cumulative cash flow over time: the dip into debt during construction, the point of maximum investment, the break-even (pay-back) point, and the eventual climb into profit.
+
+```python
+from openpytea.analysis import cash_flow_data
+from openpytea.plotting import plot_cash_flow
+
+cash_flow = cash_flow_data(ammonia_plant)
+fig, ax = plot_cash_flow(cash_flow)
+```
+
+As with the cost breakdowns, passing a **list of plants** overlays their cumulative cash flow curves — each with its own shaded debt region and break-even line — for direct comparison. The returned dictionary also carries the underlying figures (`max_investment`, `max_investment_year`, `breakeven_year`/`payback_time`) for use outside the plot, e.g. in reports.
+
+### 5. **Sensitivity and uncertainty analysis**
 
 **OpenPyTEA** provides integrated tools for visual sensitivity and probabilistic analysis of cost and performance drivers.
 
 One-Way Sensitivity Line Plot
 ```python
-from openpytea.analysis import sensitivity_plot
+from openpytea.analysis import sensitivity_data
+from openpytea.plotting import plot_sensitivity
 
-results = sensitivity_plot(
-    plant, 
-    parameter="electricity", 
-    plus_minus_value =0.5
-    )
+results = sensitivity_data(
+    ammonia_plant,
+    parameter="electricity",
+    plus_minus_value=0.5,
+)
+fig, ax = plot_sensitivity(results)
 ```
-The `plant` input may also be a list of `Plant` objects to generate comparison plots.
+The `plants` input may also be a list of `Plant` objects to generate comparison plots.
 
 Tornado Plot (One-at-a-Time Sensitivity)
 ```python
-from openpytea.analysis import tornado_plot
+from openpytea.analysis import tornado_data
+from openpytea.plotting import plot_tornado
 
-tornado_plot(
-    plant,
-    plus_minus_value = 0.5,
-)
+results = tornado_data(ammonia_plant, plus_minus_value=0.5)
+fig, ax = plot_tornado(results)
 ```
 
 Monte Carlo Simulation
 ```python
 from openpytea.analysis import monte_carlo
+from openpytea.plotting import plot_monte_carlo
 
-results = monte_carlo(
-    plant,
-    num_samples=1_000_000
-)
-
+results = monte_carlo(ammonia_plant, num_samples=1_000_000)
+fig, ax = plot_monte_carlo(results)
 ```
-Outputs include probability distributions and confidence intervals for LCOP or NPV—supporting uncertainty-informed decision-making. With `plot_multiple_monte_carlo`, **OpenPyTEA** can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons.
+Outputs include probability distributions and confidence intervals for LCOP, NPV, ROI, and payback time—supporting uncertainty-informed decision-making. With `plot_multiple_monte_carlo`, **OpenPyTEA** can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons.
 
-### 5. **Workflow using JSON configuration files**
+### 6. **Workflow using JSON configuration files**
 
 **OpenPyTEA** supports a workflow using structured JSON input files via the `io.py` module. This enables standardized, reproducible, and scalable TEA studies.
 

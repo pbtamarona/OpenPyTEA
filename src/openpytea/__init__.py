@@ -7,7 +7,7 @@ from .plant import Plant
 from .equipment import Equipment
 from .analysis import (direct_costs_data, fixed_capital_data,
                        fixed_opex_data, variable_opex_data,
-                       cash_flow_data,
+                       levelized_cost_data, cash_flow_data,
                        sensitivity_data, tornado_data,
                        monte_carlo)
 from .plotting import (plot_stacked_bar, plot_cash_flow,
@@ -36,6 +36,7 @@ __all__ = [
     "fixed_capital_data",
     "fixed_opex_data",
     "variable_opex_data",
+    "levelized_cost_data",
     "cash_flow_data",
     "sensitivity_data",
     "tornado_data",
