@@ -1,5 +1,5 @@
-JSON Workflow
-=============
+Config Files & CLI
+===================
 
 OpenPyTEA supports a fully declarative, JSON-based workflow that makes studies
 **reproducible**, **shareable**, and easy to version-control.

@@ -5,6 +5,8 @@ The :mod:`openpytea.analysis` module provides tools for understanding cost
 structure and how uncertain inputs affect financial outcomes:
 
 * **Cost breakdowns** — prepare equipment-level and plant-level CAPEX/OPEX data
+* **Levelized cost breakdown** — split the LCOP into discounted CAPEX, OPEX, and side revenue
+* **Cash flow diagram** — track a project's cumulative cash position over time
 * **One-way sensitivity** — vary one parameter across a range and observe the metric
 * **Tornado diagram** — rank all parameters by their ±impact on a single metric
 * **Monte Carlo simulation** — propagate all uncertainties simultaneously
@@ -20,8 +22,8 @@ To see the outputs of all code examples below, refer to the
 
    from openpytea.analysis import (
        direct_costs_data, fixed_capital_data,
-       fixed_opex_data, variable_opex_data,
-       sensitivity_data, tornado_data, monte_carlo,
+       fixed_opex_data, variable_opex_data, levelized_cost_data,
+       cash_flow_data, sensitivity_data, tornado_data, monte_carlo,
    )
 
 CAPEX and OPEX breakdowns
@@ -31,7 +33,7 @@ Cost breakdowns are produced in two steps: the analysis functions prepare
 structured data, and the plotting functions render it. This separation lets
 you reuse the data in custom visualizations or export it directly.
 
-The four data-preparation functions and their outputs:
+The five data-preparation functions and their outputs:
 
 .. list-table::
    :header-rows: 1
@@ -47,6 +49,8 @@ The four data-preparation functions and their outputs:
      - Each fixed OPEX component (absolute or as % of total).
    * - ``variable_opex_data(plants)``
      - Each variable OPEX item.
+   * - ``levelized_cost_data(plants)``
+     - Discounted CAPEX, OPEX, and side revenue per unit of main product.
 
 Basic usage (single plant):
 
@@ -88,6 +92,85 @@ more configurations side-by-side:
 
    variable_opex = variable_opex_data(plants=[plant, plant_b])
    # pass to plot_stacked_bar() for a side-by-side chart
+
+Levelized cost breakdown
+--------------------------
+
+:func:`~openpytea.analysis.levelized_cost_data` follows the same ``data`` +
+``plot_stacked_bar()`` pattern as the CAPEX/OPEX breakdowns above, but
+mirrors the discounting logic in
+:meth:`~openpytea.plant.Plant.calculate_levelized_cost`: capital cost, cash
+cost, side-product revenue, and production are each discounted over the
+project lifetime at the plant's interest rate, then divided by discounted
+production to express every component per unit of main product.
+
+.. code-block:: python
+
+   from openpytea.analysis import levelized_cost_data
+   from openpytea.plotting import plot_stacked_bar
+
+   lcop = levelized_cost_data(plants=plant)
+   fig, ax = plot_stacked_bar(lcop)
+
+Side revenue is stored as a **negative** value (since it is subtracted from
+the LCOP numerator), so the three components sum directly to the plant's
+LCOP: ``CAPEX + OPEX + Side revenue = LCOP``. ``plot_stacked_bar()`` renders
+it as a waterfall-style base below zero rather than stacking it like a
+normal cost, so the top of the bar still reads as the true net LCOP — see
+:doc:`plotting` for the rendering details.
+
+As with the other breakdowns, pass a list of plants to compare their LCOP
+composition side-by-side, and ``pct=True`` to express components as a
+percentage of the total instead of absolute values. Only the scalar
+(non-Monte Carlo) case is supported — each plant's ``project_lifetime`` and
+``interest_rate`` must be a single value, not a sampled array.
+
+Cash flow diagram
+--------------------------
+
+:func:`~openpytea.analysis.cash_flow_data` prepares the data behind the
+classic project cash flow diagram: cumulative cash position vs. time,
+including the dip into debt during construction/start-up, the point of
+deepest ("maximum") investment, the break-even (pay-back) point where the
+curve first crosses back above zero, and the eventual climb into profit.
+It (re)runs each plant's
+:meth:`~openpytea.plant.Plant.calculate_cash_flow` to ensure the underlying
+annual cash flow array is up to date.
+
+.. code-block:: python
+
+   from openpytea.analysis import cash_flow_data
+   from openpytea.plotting import plot_cash_flow
+
+   cash_flow = cash_flow_data(plant)
+   fig, ax = plot_cash_flow(cash_flow)
+
+The returned dict has one entry per plant under ``"curves"``, each carrying
+the cumulative curve itself (``"years"``, ``"cumulative"``) alongside the
+derived figures ``"max_investment"``, ``"max_investment_year"``,
+``"breakeven_year"`` (``None`` if the project never recovers), and its alias
+``"payback_time"`` — useful for pulling numbers into a report without
+re-deriving them from the curve:
+
+.. code-block:: python
+
+   curve = cash_flow["curves"][0]
+   print(f"Max investment: {curve['max_investment']:,.0f} in year {curve['max_investment_year']:.0f}")
+   print(f"Break-even: year {curve['breakeven_year']:.1f}")
+
+Comparing multiple plants
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pass a list of plants to overlay their cumulative cash flow curves, each
+with its own shaded debt region and break-even line:
+
+.. code-block:: python
+
+   cash_flow_multi = cash_flow_data([plant, plant_b])
+   fig, ax = plot_cash_flow(cash_flow_multi, figsize=(4.5, 3))
+
+Only the scalar (non-Monte Carlo) case is supported; if a plant's
+``cash_flow`` has multiple rows (vectorised inputs), the first row is used.
 
 One-way sensitivity analysis
 -----------------------------

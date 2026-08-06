@@ -315,7 +315,7 @@ fig, ax = plot_monte_carlo(results)
 ```
 Outputs include probability distributions and confidence intervals for LCOP, NPV, ROI, and payback time—supporting uncertainty-informed decision-making. With `plot_multiple_monte_carlo`, **OpenPyTEA** can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons.
 
-### 6. **Workflow using JSON configuration files**
+### 6. **Workflow using JSON config files and command-line interface**
 
 **OpenPyTEA** supports a workflow using structured JSON input files via the `io.py` module. This enables standardized, reproducible, and scalable TEA studies.
 

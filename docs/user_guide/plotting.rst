@@ -55,6 +55,70 @@ helper functions in :mod:`openpytea.analysis`.
      - .. image:: ../_static/plotting/variable_opex.png
           :width: 100%
 
+Levelized cost breakdown
+-------------------------
+
+:func:`~openpytea.analysis.levelized_cost_data` feeds the same
+``plot_stacked_bar()`` function, but its "Side revenue" component (stored
+as a negative value) is rendered as a waterfall-style base below zero
+instead of stacking like a normal cost — so CAPEX and OPEX still stack up
+to the true net LCOP at the top of the bar. The side-revenue segment reuses
+the color of the largest stacked component, distinguished only by a hatch
+pattern, so the CAPEX/OPEX ratio stays easy to read.
+
+.. code-block:: python
+
+   from openpytea.analysis import levelized_cost_data
+   from openpytea.plotting import plot_stacked_bar
+
+   lcop = levelized_cost_data(plants=plant)
+   fig, ax = plot_stacked_bar(lcop)
+
+.. image:: ../_static/plotting/levelized_cost.png
+   :width: 320px
+   :align: center
+
+Cash flow diagram
+-------------------------
+
+:func:`~openpytea.plotting.plot_cash_flow` draws the classic cumulative
+cash flow curve: a dip into debt during construction/start-up, a minimum
+("maximum investment"), a break-even point where the curve crosses back
+above zero, and a climb into profit for the remainder of the project life.
+The region where the cumulative cash flow is negative is shaded (hatched)
+as debt, and the break-even point (if any) is marked with a dashed
+vertical line in the same color as the curve.
+
+.. code-block:: python
+
+   from openpytea.analysis import cash_flow_data
+   from openpytea.plotting import plot_cash_flow
+
+   cash_flow = cash_flow_data(plant)
+   fig, ax = plot_cash_flow(cash_flow)
+
+   fig.savefig("cash_flow.pdf")
+
+.. image:: ../_static/plotting/cash_flow.png
+   :width: 450px
+   :align: center
+
+Comparing multiple plants
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pass a list of plants to :func:`~openpytea.analysis.cash_flow_data` to
+overlay their cumulative cash flow curves — each with its own shaded debt
+region and break-even line — for direct comparison:
+
+.. code-block:: python
+
+   cash_flow_multi = cash_flow_data([plant, plant_b])
+   fig, ax = plot_cash_flow(cash_flow_multi, figsize=(4.5, 3))
+
+.. image:: ../_static/plotting/cash_flow_multi.png
+   :width: 450px
+   :align: center
+
 Sensitivity plots
 -----------------
 
