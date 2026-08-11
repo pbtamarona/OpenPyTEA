@@ -6,3 +6,4 @@ for_publication/
 frontend/dist/
 CLAUDE.md
 docs/_build/
+docs/_static/cost_correlations_table.csv

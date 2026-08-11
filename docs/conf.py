@@ -1,5 +1,7 @@
+import csv
 import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("../src"))
 
@@ -17,6 +19,8 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinxcontrib.youtube",
+    "sphinxcontrib.jquery",
+    "sphinx_datatables",
 ]
 
 templates_path = ["_templates"]
@@ -95,3 +99,124 @@ intersphinx_mapping = {
 
 copybutton_prompt_text = r">>> |\.\.\. |\$ "
 copybutton_prompt_is_regexp = True
+
+datatables_class = "sphinx-datatable"
+datatables_options = {
+    "order": [],
+    "pageLength": 10,
+    "lengthMenu": [10, 25, 50, 100],
+    "scrollX": True,
+    "fixedColumns": {"start": 2},
+}
+# Combined DataTables + FixedColumns bundle (freezes the Category/Type
+# columns while scrolling horizontally through the rest of the table).
+datatables_js = "https://cdn.datatables.net/v/dt/dt-2.3.5/fc-5.0.4/datatables.min.js"
+datatables_css = "https://cdn.datatables.net/v/dt/dt-2.3.5/fc-5.0.4/datatables.min.css"
+
+# --- Generate the searchable cost-correlations table shown in the user
+# guide from the package's bundled CSV, so the docs never drift out of
+# sync with the actual database. Row order follows the source CSV
+# (datatables_options["order"] is left empty so it isn't re-sorted).
+_COST_DB_COLUMNS = [
+    "category",
+    "type",
+    "units",
+    "s_lower",
+    "s_upper",
+    "form",
+    "cost_year",
+    "source",
+    "Remarks",
+    "key",
+]
+_COST_DB_HEADERS = [
+    "Category",
+    "Type",
+    "Units",
+    "Min size",
+    "Max size",
+    "Form",
+    "Year",
+    "Source",
+    "Remarks",
+    "Key",
+]
+
+
+def _superscript_units(units: str) -> str:
+    """Render ``^`` in unit strings (e.g. ``m^3``) as reST superscript."""
+    out = []
+    for i, ch in enumerate(units):
+        if ch == "^" and i + 1 < len(units):
+            continue
+        if i > 0 and units[i - 1] == "^":
+            needs_boundary = bool(out) and out[-1][-1] not in " ([{"
+            if needs_boundary:
+                out.append("\\ ")
+            out.append(f":sup:`{ch}`")
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
+def _format_size(value: str) -> str:
+    """Format a size bound with thousands separators, e.g. 30000 -> 30,000."""
+    value = value.strip()
+    if not value:
+        return ""
+    num = float(value)
+    if num == int(num):
+        return f"{int(num):,}"
+    return f"{num:,}"
+
+
+def _link_for_source(raw_link: str) -> str | None:
+    """Normalize the CSV's doi/link column into a single usable URL."""
+    first = raw_link.split(" / ")[0].strip()
+    if not first:
+        return None
+    if first.startswith("http://") or first.startswith("https://"):
+        return first
+    if first.startswith("doi:"):
+        return "https://doi.org/" + first[len("doi:") :]
+    if first.startswith("doi.org/"):
+        return "https://" + first
+    return None
+
+
+def _generate_cost_correlations_table(app):
+    src = (
+        Path(app.confdir)
+        / ".."
+        / "src"
+        / "openpytea"
+        / "data"
+        / "cost_correlations.csv"
+    )
+    dst = Path(app.confdir) / "_static" / "cost_correlations_table.csv"
+
+    with open(src, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        rows = []
+        for row in reader:
+            cells = {col: row.get(col, "") or "" for col in _COST_DB_COLUMNS}
+            cells["category"] = f"**{cells['category'].strip()}**"
+            cells["type"] = f"**{cells['type'].strip()}**"
+            cells["units"] = _superscript_units(cells["units"])
+            cells["s_lower"] = _format_size(cells["s_lower"])
+            cells["s_upper"] = _format_size(cells["s_upper"])
+            link = _link_for_source(row.get("doi /  link", ""))
+            if link:
+                cells["source"] = f"`{cells['source']} <{link}>`__"
+            cells["key"] = f"``{cells['key']}``"
+            rows.append([cells[col] for col in _COST_DB_COLUMNS])
+
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    with open(dst, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(_COST_DB_HEADERS)
+        writer.writerows(rows)
+
+
+def setup(app):
+    app.connect("builder-inited", _generate_cost_correlations_table)
