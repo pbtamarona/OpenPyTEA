@@ -78,8 +78,9 @@ class CostCorrelationDB:
     Database interface for equipment cost correlations.
 
     Manages cost estimation correlations for equipment based on size/capacity
-    parameters. Supports multiple correlation forms (power-law, quad log-log)
-    and handles equipment parallelization when capacity limits are exceeded.
+    parameters. Supports multiple correlation forms (offset power-law,
+    log-log quadratic, power-sizing) and handles equipment parallelization
+    when capacity limits are exceeded.
 
     Attributes
     ----------
@@ -187,18 +188,23 @@ class CostCorrelationDB:
         form = r.get("form", "linear")
         year = int(r["cost_year"])
 
-        if form == "power-law":
+        if form == "offset power-law":
             a, b, n = r["a"], r["b"], r["n"]
             ce = a + b * (s_adj**n)
             purchased = ce * units
 
-        elif form == "quad log-log":
+        elif form == "log-log quadratic":
             K1, K2, K3 = r["k1"], r["k2"], r["k3"]
 
             logS = np.log10(s_adj)
             logCe = K1 + K2 * logS + K3 * (logS**2)
 
             ce = 10**logCe
+            purchased = ce * units
+
+        elif form == "power-sizing":
+            C0, S0, f = r["c0"], r["s0"], r["f"]
+            ce = C0 * (s_adj / S0) ** f
             purchased = ce * units
 
         else:

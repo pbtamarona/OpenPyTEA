@@ -51,7 +51,8 @@ Each row defines one correlation:
    * - ``type``
      - Sub-type (e.g., ``"Centrifugal"``)
    * - ``form``
-     - Correlation form: ``"power"`` or ``"quad_log"``
+     - Correlation form: ``"offset power-law"``, ``"log-log quadratic"``,
+       or ``"power-sizing"``
    * - ``s_lower``
      - Minimum valid size parameter
    * - ``s_upper``
@@ -59,9 +60,12 @@ Each row defines one correlation:
    * - ``upper_parallel``
      - Maximum total size (triggers parallelization above ``s_upper``)
    * - ``a``, ``b``, ``n``
-     - Power-law coefficients (:math:`C = a + b \cdot S^n`)
+     - Offset power-law coefficients (:math:`C = a + b \cdot S^n`)
    * - ``k1``, ``k2``, ``k3``
-     - Quad log-log coefficients (:math:`\log C = k_1 + k_2\log S + k_3(\log S)^2`)
+     - Log-log quadratic coefficients (:math:`\log C = k_1 + k_2\log S + k_3(\log S)^2`)
+   * - ``s0``, ``c0``, ``f``
+     - Power-sizing reference size, reference cost, and exponent
+       (:math:`C = C_0 \cdot (S / S_0)^f`)
    * - ``cost_year``
      - Reference year for the correlation (used for CEPCI adjustment)
 

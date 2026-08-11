@@ -11,23 +11,30 @@ How costs are estimated
 Purchased cost correlations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Two correlation forms are supported:
+Three correlation forms are supported:
 
-**Power-law**
+**Offset power-law**
 
 .. math::
 
    C_p = a + b \cdot S^n
 
-**Quadratic log-log**
+**Log-log quadratic**
 
 .. math::
 
    \log_{10} C_p = K_1 + K_2 \log_{10} S + K_3 \left(\log_{10} S\right)^2
 
+**Power-sizing**
+
+.. math::
+
+   C_p = C_0 \left( \frac{S}{S_0} \right)^f
+
 where :math:`S` is the equipment size parameter (e.g., shaft power in kW,
 heat transfer area in m²) and :math:`C_p` is the purchased cost in the
-correlation's reference year (USD).
+correlation's reference year (USD). For the power-sizing form, :math:`S_0`
+and :math:`C_0` are a reference size and its corresponding cost.
 
 All correlations and their coefficients are stored in
 :download:`cost_correlations.csv <../../src/openpytea/data/cost_correlations.csv>`.
