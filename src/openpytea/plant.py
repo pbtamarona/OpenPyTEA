@@ -72,6 +72,11 @@ class Plant:
             operators_per_shift (int or None): Manual input or auto-calculated.
             operators_hired (int or None): Total operators needed;
                                             auto-calculated if None.
+            production_type (str): "continuous" or "batch". Only affects
+                calculate_operators_per_shift, applying the chart's minimum
+                of 3 operators/shift for batch processes. Does not change
+                capital, OPEX, or cash-flow calculations elsewhere, which are
+                indifferent to production mode. Default: "continuous".
             operator_hourly_rate (dict or float): Wage rate for operators.
             working_weeks_per_year (int): Annual working weeks. Default: 49.
             working_shifts_per_week (int): Shifts per week. Default: 5.
@@ -222,6 +227,9 @@ class Plant:
         self.operators_hired = configuration.get(
             "operators_hired", None
         )
+        self.production_type = configuration.get(
+            "production_type", "continuous"
+        )
         self.working_weeks_per_year = configuration.get(
             "working_weeks_per_year", 49
         )
@@ -347,6 +355,9 @@ class Plant:
         )
         self.operators_hired = configuration.get(
             "operators_hired", self.operators_hired
+        )
+        self.production_type = configuration.get(
+            "production_type", self.production_type
         )
         self.working_weeks_per_year = configuration.get(
             "working_weeks_per_year",
@@ -882,60 +893,82 @@ class Plant:
         return count
 
     def calculate_operators_per_shift(
-        self, no_fluid_process=None, no_solid_process=None
+        self,
+        no_fluid_process=None,
+        no_solid_process=None,
     ):
         """
-        Calculate the number of operators required per shift.
+        Estimate the number of operators required per shift.
 
-        Uses the empirical correlation from Turton et al. based on fluid and
-        solid process step counts. Returns ``operators_per_shift`` directly if
-        it was set manually on the plant.
+        Uses the empirical correlation from Turton et al. where it is valid
+        (no_solid_process <= 2), and falls back to the rule-based method from
+        Towler & Sinnott, *Chemical Engineering Design* (Fig. 8.12) for
+        processes with more than 2 solids-handling sections. For batch
+        processes (``self.production_type == "batch"``), the chart specifies
+        a minimum of 3 operators per shift rather than a formula — this is
+        applied as a floor on top of the correlation, not a replacement for
+        it.
+
+        Note ``self.production_type`` only affects this staffing estimate.
+        It does not make the rest of the package (fixed capital, variable/
+        fixed OPEX, cash flow, NPV/IRR, LCOP) batch-aware — those all operate
+        on annualized quantities and are indifferent to production mode.
+        Batch-specific effects like parallel trains or cycle-time-driven
+        equipment sizing are not modeled here and must be reflected by the
+        user directly in ``equipment_list``.
 
         Parameters
         ----------
         no_fluid_process : int or None, optional
-            Number of fluid/mixed process steps. Auto-counted if None.
+            Number of fluid (gas or liquid) / mixed process steps. Auto-counted
+            if None.
         no_solid_process : int or None, optional
-            Number of solid/mixed process steps (max 2). Auto-counted if None.
+            Number of solid/mixed process steps. Auto-counted if None.
 
         Returns
         -------
         float
             Estimated operators per shift.
-
-        Raises
-        ------
-        ValueError
-            If ``no_solid_process`` exceeds 2.
         """
         if self.operators_per_shift is not None:
             return self.operators_per_shift
+
+        if self.production_type not in ("continuous", "batch"):
+            raise ValueError(
+                f"Unsupported production_type '{self.production_type}'. "
+                "Expected 'continuous' or 'batch'."
+            )
+        is_batch = self.production_type == "batch"
+
+        if no_fluid_process is None:
+            no_fluid_process = self.count_process_steps(
+                self.equipment_list,
+                {"Fluids", "Mixed"},
+                {"Pumps", "Pressure vessels"},
+            )
+        if no_solid_process is None:
+            no_solid_process = self.count_process_steps(
+                self.equipment_list,
+                {"Solids", "Mixed"},
+                {"Pumps", "Pressure vessels"},
+            )
+
+        # --- Beyond Turton's validated range: fall back to chart rule
+        # "3 shift positions + 1 for every solids-handling section"
+        if no_solid_process > 2:
+            operators_per_shift = 3.0 + no_solid_process
         else:
-            if no_fluid_process is None:
-                no_fluid_process = self.count_process_steps(
-                    self.equipment_list,
-                    {"Fluids", "Mixed"},
-                    {"Pumps", "Pressure vessels"},
-                )
-            if no_solid_process is None:
-                no_solid_process = self.count_process_steps(
-                    self.equipment_list,
-                    {"Solids", "Mixed"},
-                    {"Pumps", "Pressure vessels"},
-                )
-
-            if no_solid_process > 2:
-                raise ValueError(
-                    "Number of solid processes needs "
-                    "to be less than or equal to 2."
-                )
-
-            operators_per_shifts = (
-                6.29
-                + 31.7 * (no_solid_process**2)
-                + 0.23 * no_fluid_process
+            # --- Turton et al. correlation
+            operators_per_shift = (
+                6.29 + 31.7 * (no_solid_process ** 2) + 0.23 * no_fluid_process
             ) ** 0.5
-            return operators_per_shifts
+
+        # --- Batch processes: minimum of 3, but never lower than the
+        # correlation/rule-based estimate above
+        if is_batch:
+            operators_per_shift = max(3.0, operators_per_shift)
+
+        return operators_per_shift
 
     def calculate_operators_hired(
         self, no_fluid_process=None, no_solid_process=None
@@ -2127,6 +2160,7 @@ class Plant:
                 "operator_hourly_rate": deepcopy(self.operator_hourly_rate),
                 "operators_per_shift": self.operators_per_shift,
                 "operators_hired": self.operators_hired,
+                "production_type": self.production_type,
                 "working_weeks_per_year": self.working_weeks_per_year,
                 "working_shifts_per_week": self.working_shifts_per_week,
                 "operating_shifts_per_day": self.operating_shifts_per_day,

@@ -172,6 +172,12 @@ Configuration reference
    * - ``operators_per_shift``
      - auto
      - Operators per shift. Computed automatically; override to fix.
+   * - ``production_type``
+     - ``"continuous"``
+     - ``"continuous"`` or ``"batch"``. Only affects the auto-calculated
+       ``operators_per_shift`` (applies the chart's minimum of 3
+       operators/shift for batch processes); does not change capital, OPEX,
+       or cash-flow calculations elsewhere.
    * - ``fixed_capital_factors``
      - ``{}``
      - Per-key overrides for OSBL, D&E, and contingency factors.
@@ -420,14 +426,37 @@ Operating labor cost is calculated as:
 where :math:`H_{\text{year}} = W_{\text{weeks}} \times W_{\text{shifts}} \times (24 / S_{\text{day}})` is
 the working hours per operator per year and :math:`r` is the hourly rate (default **$38.11/hr**).
 
-**Operators per shift** is estimated from the equipment list using an empirical correlation:
+**Operators per shift** is estimated from the equipment list. For processes with at most 2
+solids-handling sections (:math:`N_{\text{solid}} \leq 2`), the Turton et al. empirical
+correlation applies:
 
 .. math::
 
    N_{\text{shift}} = \sqrt{6.29 + 31.7 \cdot N_{\text{solid}}^2 + 0.23 \cdot N_{\text{fluid}}}
 
 where :math:`N_{\text{solid}}` and :math:`N_{\text{fluid}}` are the numbers of solid-handling
-and fluid-handling process steps respectively (:math:`N_{\text{solid}} \leq 2`).
+and fluid-handling process steps respectively (pumps and pressure vessels excluded).
+
+Beyond that range (:math:`N_{\text{solid}} > 2`), the correlation is no longer valid and the
+package falls back to the rule-based chart method instead:
+
+.. math::
+
+   N_{\text{shift}} = 3 + N_{\text{solid}}
+
+*Source:  Towler & Sinnott (2022)*
+
+For **batch processes** (``production_type: "batch"`` in the plant config), the chart gives
+no formula for staffing — only a minimum of 3 operators per shift, properly determined from
+the batch sequence and degree of automation. OpenPyTEA applies that minimum as a floor on top
+of whichever estimate above applies:
+
+.. math::
+
+   N_{\text{shift}} \leftarrow \max(3, N_{\text{shift}})
+
+``production_type`` defaults to ``"continuous"`` and only affects this staffing estimate — it
+does not change capital, OPEX, or cash-flow calculations elsewhere.
 
 **Total operators hired** accounts for the continuous plant schedule versus each operator's
 working schedule:
