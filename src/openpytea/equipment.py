@@ -79,14 +79,15 @@ class CostCorrelationDB:
 
     Manages cost estimation correlations for equipment based on size/capacity
     parameters. Supports multiple correlation forms (offset power-law,
-    log-log quadratic, power-sizing) and handles equipment parallelization
-    when capacity limits are exceeded.
+    log-log quadratic, ln-ln quartic, power-sizing, 2-var power-law) and
+    handles equipment parallelization when capacity limits are exceeded.
 
     Attributes
     ----------
     df : pd.DataFrame
         Cost correlation data with columns: key, category, type, form,
-        s_lower, s_upper, upper_parallel, a, b, n, k1, k2, k3, cost_year.
+        s_lower, s_upper, s2_lower, s2_upper, upper_parallel, a, b, n, n2,
+        k1, k2, k3, k4, k5, s0, c0, f, cost_year.
     """
 
     def __init__(self, df=COST_DB_DF):
@@ -104,10 +105,13 @@ class CostCorrelationDB:
         for col in [
             "s_lower",
             "s_upper",
+            "s2_lower",
+            "s2_upper",
             "upper_parallel",
             "a",
             "b",
             "n",
+            "n2",
             "s0",
             "c0",
             "f",
@@ -141,7 +145,7 @@ class CostCorrelationDB:
             return units, s / units
         return 1, s
 
-    def evaluate(self, key: str, s: float):
+    def evaluate(self, key: str, s: float, s2: float | None = None):
         """
         Calculate purchased equipment cost based on correlation key and size.
 
@@ -151,6 +155,11 @@ class CostCorrelationDB:
             Unique identifier for the cost correlation.
         s : float
             Equipment size/capacity parameter.
+        s2 : float | None, optional
+            Second size/capacity parameter, required by two-parameter
+            correlation forms such as ``"2-var power-law"``. Validated
+            against ``s2_lower``/``s2_upper`` but never parallelized.
+            Default is None.
 
         Returns
         -------
@@ -162,7 +171,9 @@ class CostCorrelationDB:
         KeyError
             If correlation key not found in database.
         ValueError
-            If size is below the lower bound or the correlation form is unsupported.
+            If size (or ``s2``) is outside its valid bounds, the
+            correlation form is unsupported, or the form requires ``s2``
+            and none was given.
         """
         row = self.df.loc[self.df["key"] == key]
         if row.empty:
@@ -184,6 +195,18 @@ class CostCorrelationDB:
                 f"s={s} below lower bound {s_lower} for key '{key}'"
             )
 
+        if s2 is not None:
+            s2_lower = r.get("s2_lower")
+            s2_upper = r.get("s2_upper")
+            if pd.notna(s2_lower) and s2 < s2_lower:
+                raise ValueError(
+                    f"s2={s2} below lower bound {s2_lower} for key '{key}'"
+                )
+            if pd.notna(s2_upper) and s2 > s2_upper:
+                raise ValueError(
+                    f"s2={s2} above upper bound {s2_upper} for key '{key}'"
+                )
+
         units, s_adj = self._parallelize(s, cap)
         form = r.get("form", "linear")
         year = int(r["cost_year"])
@@ -195,16 +218,52 @@ class CostCorrelationDB:
 
         elif form == "log-log quadratic":
             K1, K2, K3 = r["k1"], r["k2"], r["k3"]
+            K4 = r.get("k4") if pd.notna(r.get("k4")) else 0.0
+            K5 = r.get("k5") if pd.notna(r.get("k5")) else 0.0
 
             logS = np.log10(s_adj)
-            logCe = K1 + K2 * logS + K3 * (logS**2)
+            logCe = (
+                K1
+                + K2 * logS
+                + K3 * (logS**2)
+                + K4 * (logS**3)
+                + K5 * (logS**4)
+            )
 
             ce = 10**logCe
+            purchased = ce * units
+
+        elif form == "ln-ln quadratic":
+            K1, K2, K3 = r["k1"], r["k2"], r["k3"]
+            K4 = r.get("k4") if pd.notna(r.get("k4")) else 0.0
+            K5 = r.get("k5") if pd.notna(r.get("k5")) else 0.0
+
+            lnS = np.log(s_adj)
+            lnCe = (
+                K1
+                + K2 * lnS
+                + K3 * (lnS**2)
+                + K4 * (lnS**3)
+                + K5 * (lnS**4)
+            )
+
+            ce = np.exp(lnCe)
             purchased = ce * units
 
         elif form == "power-sizing":
             C0, S0, f = r["c0"], r["s0"], r["f"]
             ce = C0 * (s_adj / S0) ** f
+            purchased = ce * units
+
+        elif form == "2-var power-law":
+            if s2 is None:
+                raise ValueError(
+                    f"Correlation '{key}' has form '2-var "
+                    f"power-law' and requires a second size parameter "
+                    f"(s2)."
+                )
+            a, b, n1, n2 = r["a"], r["b"], r["n"], r["n2"]
+            ce = a + b * (s_adj**n1) * (s2**n2)
             purchased = ce * units
 
         else:
@@ -273,8 +332,10 @@ class Equipment:
     ----------
     name : str
         Equipment identifier/name.
-    param : float
+    param : float | tuple[float, float] | list[float]
         Equipment parameter (size, capacity) for cost correlation lookup.
+        Pass a 2-element tuple/list ``(s1, s2)`` for two-parameter
+        correlation forms such as ``"2-var power-law"``.
     process_type : str
         Type of process ("Solids", "Fluids", "Mixed", or "Electrical").
     category : str
@@ -391,7 +452,7 @@ class Equipment:
     def __init__(
         self,
         name: str,
-        param: float,
+        param: float | tuple[float, float] | list[float],
         process_type: str,
         category: str,
         type: str | None = None,
@@ -529,8 +590,11 @@ class Equipment:
             Inflation-adjusted purchased equipment cost.
         """
         key = self._resolve_key()
-        s = self.param
-        purchased, units, year = self._db.evaluate(key, s)
+        if isinstance(self.param, (tuple, list)):
+            s, s2 = self.param
+        else:
+            s, s2 = self.param, None
+        purchased, units, year = self._db.evaluate(key, s, s2)
         self.num_units = self.num_units or units
         self.cost_year = year
         return inflation_adjustment(

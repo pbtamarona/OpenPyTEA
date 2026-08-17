@@ -11,7 +11,7 @@ How costs are estimated
 Purchased cost correlations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Three correlation forms are supported:
+Five correlation forms are supported:
 
 **Offset power-law**
 
@@ -24,6 +24,20 @@ Three correlation forms are supported:
 .. math::
 
    \log_{10} C_p = K_1 + K_2 \log_{10} S + K_3 \left(\log_{10} S\right)^2
+   + K_4 \left(\log_{10} S\right)^3 + K_5 \left(\log_{10} S\right)^4
+
+**Ln-ln quadratic**
+
+.. math::
+
+   \ln C_p = K_1 + K_2 \ln S + K_3 \left(\ln S\right)^2
+   + K_4 \left(\ln S\right)^3 + K_5 \left(\ln S\right)^4
+
+Same form as log-log quadratic but with natural rather than base-10
+logarithms. :math:`K_4` and :math:`K_5` are optional (default 0) and let
+either log-based form fit a cubic or quartic trend when the underlying
+data calls for it — the built-in correlations of both forms currently
+only use :math:`K_1`–:math:`K_3`.
 
 **Power-sizing**
 
@@ -31,10 +45,23 @@ Three correlation forms are supported:
 
    C_p = C_0 \left( \frac{S}{S_0} \right)^f
 
-where :math:`S` is the equipment size parameter (e.g., shaft power in kW,
-heat transfer area in m²) and :math:`C_p` is the purchased cost in the
-correlation's reference year (USD). For the power-sizing form, :math:`S_0`
-and :math:`C_0` are a reference size and its corresponding cost.
+**2-var power-law**
+
+.. math::
+
+   C_p = a + b \cdot S_1^{n} \cdot S_2^{n_2}
+
+For equipment priced off two independent size parameters (e.g., a belt
+conveyor's width and length). :math:`a` is typically 0 unless the
+correlation has a genuine offset term. Evaluating this form requires
+passing both sizes, e.g. ``Equipment(..., param=(S1, S2))`` — see
+Example 9 below.
+
+where :math:`S` (or :math:`S_1`, :math:`S_2`) is the equipment size
+parameter (e.g., shaft power in kW, heat transfer area in m²) and
+:math:`C_p` is the purchased cost in the correlation's reference year
+(USD). For the power-sizing form, :math:`S_0` and :math:`C_0` are a
+reference size and its corresponding cost.
 
 All correlations and their coefficients are stored in
 :download:`cost_correlations.csv <../../src/openpytea/data/cost_correlations.csv>`.
@@ -89,9 +116,9 @@ item via constructor keyword arguments** — see Example 8 for details.
 Equipment Cost Correlations
 ----------------------------
 
-``cost_correlations.csv`` bundles 211 correlations spanning 29 equipment
+``cost_correlations.csv`` bundles 327 correlations spanning 36 equipment
 categories (agitators, compressors, heat exchangers, pressure vessels,
-reactors, and more), pulled from several published sources:
+reactors, conveyors, and more), pulled from several published sources:
 
 * Turton et al., *Analysis, Synthesis, and Design of Chemical Processes*
   (2018) — log-log quadratic correlations.
@@ -99,20 +126,27 @@ reactors, and more), pulled from several published sources:
   power-law correlations.
 * Perry's Chemical Engineers' Handbook, Table 9-50 (1997) — power-sizing
   correlations, cost-escalated to 1996 via the Marshall & Swift index.
+* Seider et al., *Product and Process Design Principles*, 4th ed.
+  (2013) — ln-ln quadratic and offset/2-var power-law correlations for
+  solids-handling, size-enlargement, and separation equipment.
 * Ulrich (2003), ESDU 97006 (1997), and several process-specific studies
   (Manzolini, Kreutz, Parkinson, Towler, Nexant, NREL) covering
   compressors, furnaces, gas separation, and CO\ :sub:`2` capture
   equipment.
 
 Each row records the correlation's ``category``, ``type``, size
-``units``, valid size range (``s_lower``–``s_upper``), correlation
-``form``, reference ``cost_year``, its ``source`` (clickable, linking to
-the DOI or reference where available), any ``Remarks`` (basis of the
-quoted cost, e.g. free-on-board vs. installed, included/excluded motor,
-escalation notes), and the correlation ``key``. Use the ``key`` value as
-the ``cost_func`` argument when you need to pin a specific correlation
-(see Example 2 below), and the ``category``/``type`` values for the
-``Equipment`` constructor.
+``units``, valid size range (``s_lower``–``s_upper``, plus
+``s2_lower``–``s2_upper`` for two-parameter forms), correlation
+``form``, reference ``cost_year``, its ``default material`` (the
+construction material the quoted cost basis assumes, e.g. ``CS`` for
+carbon steel or ``SS`` for stainless steel — override via the
+``Equipment`` constructor's ``material`` argument), its ``source``
+(clickable, linking to the DOI or reference where available), any
+``Remarks`` (basis of the quoted cost, e.g. free-on-board vs. installed,
+included/excluded motor, escalation notes), and the correlation ``key``.
+Use the ``key`` value as the ``cost_func`` argument when you need to pin
+a specific correlation (see Example 2 below), and the
+``category``/``type`` values for the ``Equipment`` constructor.
 
 **The correlation coefficients themselves are not shown in this summary
 table** — download the full
@@ -128,7 +162,7 @@ through the remaining columns.
 .. csv-table:: Built-in equipment cost correlations
    :file: ../_static/cost_correlations_table.csv
    :header-rows: 1
-   :widths: 14, 16, 10, 6, 6, 10, 5, 15, 18, 14
+   :widths: 13, 15, 9, 6, 6, 9, 5, 9, 14, 17, 13
    :class: sphinx-datatable
 
 The ``Equipment`` class
@@ -161,10 +195,11 @@ Constructor parameters
      - str
      - Identifier for this equipment item (used in plots and reports).
    * - ``param``
-     - float
+     - float, or tuple/list of two floats
      - Size/capacity parameter. Units depend on the equipment type —
-       check ``cost_correlations.csv``. Ignored when ``purchased_cost``
-       is given.
+       check ``cost_correlations.csv``. Pass a 2-element ``(S1, S2)``
+       tuple/list for two-parameter forms such as ``"2-var power-law"``
+       (see Example 9). Ignored when ``purchased_cost`` is given.
    * - ``process_type``
      - str
      - ``"Solids"``, ``"Fluids"``, ``"Mixed"``, or ``"Electrical"`` —
@@ -381,6 +416,29 @@ defaults:
    )
    print(f"piping_factor   : {reactor.piping_factor}")
    print(f"material_factor : {reactor.material_factor}")
+
+Example 9 — Two-parameter correlations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Correlations with ``form = "2-var power-law"`` are priced off two
+independent size parameters. Pass both as a ``(S1, S2)`` tuple/list in
+``param`` — here, belt width (in) and belt length (ft):
+
+.. code-block:: python
+
+   belt = Equipment(
+       name="Belt conveyor BC-101",
+       param=(24, 150),                 # (width, in;  length, ft)
+       process_type="Solids",
+       category="Conveyors",
+       cost_func="belt_conveyor_seider_2013",
+   )
+   print(belt)
+
+``s2_lower``/``s2_upper`` in the CSV bound the second parameter the same
+way ``s_lower``/``s_upper`` bound the first, except exceeding
+``s2_upper`` always raises ``ValueError`` — it never triggers
+parallelization the way ``s_upper`` does.
 
 Listing available equipment
 ---------------------------

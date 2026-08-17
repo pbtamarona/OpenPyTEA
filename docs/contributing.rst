@@ -52,17 +52,39 @@ Each row defines one correlation:
      - Sub-type (e.g., ``"Centrifugal"``)
    * - ``form``
      - Correlation form: ``"offset power-law"``, ``"log-log quadratic"``,
-       or ``"power-sizing"``
+       ``"ln-ln quadratic"``, ``"power-sizing"``, or ``"2-var power-law"``
    * - ``s_lower``
      - Minimum valid size parameter
    * - ``s_upper``
      - Maximum size parameter for a single unit
+   * - ``s2_lower``, ``s2_upper``
+     - Valid range for the second size parameter (``s2``), used by
+       two-parameter forms such as ``"2-var power-law"``. Unlike
+       ``s_upper``, ``s2_upper`` is a hard bound only — exceeding it
+       raises ``ValueError`` rather than triggering parallelization.
    * - ``upper_parallel``
      - Maximum total size (triggers parallelization above ``s_upper``)
    * - ``a``, ``b``, ``n``
-     - Offset power-law coefficients (:math:`C = a + b \cdot S^n`)
-   * - ``k1``, ``k2``, ``k3``
-     - Log-log quadratic coefficients (:math:`\log C = k_1 + k_2\log S + k_3(\log S)^2`)
+     - Offset power-law coefficients (:math:`C = a + b \cdot S^n`), used by
+       the ``"offset power-law"`` form.
+   * - ``a``, ``b``, ``n``, ``n2``
+     - 2-var power-law coefficients
+       (:math:`C = a + b \cdot S_1^{n} \cdot S_2^{n2}`), used by the
+       ``"2-var power-law"`` form. ``a`` is typically 0 unless the
+       correlation has a genuine offset term. Evaluating this form
+       requires passing both size parameters, e.g.
+       ``Equipment(..., param=(S1, S2))`` or
+       ``CostCorrelationDB.evaluate(key, S1, S2)``.
+   * - ``k1``, ``k2``, ``k3``, ``k4``, ``k5``
+     - Log-log quadratic coefficients
+       (:math:`\log C = k_1 + k_2\log S + k_3(\log S)^2 + k_4(\log S)^3 + k_5(\log S)^4`),
+       used by the ``"log-log quadratic"`` form. ``k4`` and ``k5`` are
+       optional and default to 0 for correlations that only need up to the
+       quadratic term (all current ``"ln-ln quadratic"`` correlations do).
+       The same columns are reused by the ``"ln-ln quadratic"`` form
+       (:math:`C = \exp\{k_1 + k_2\ln S + k_3(\ln S)^2 + k_4(\ln S)^3 + k_5(\ln S)^4\}`),
+       which takes natural rather than base-10 logarithms and also
+       supports optional ``k4``/``k5`` cubic/quartic terms.
    * - ``s0``, ``c0``, ``f``
      - Power-sizing reference size, reference cost, and exponent
        (:math:`C = C_0 \cdot (S / S_0)^f`)
