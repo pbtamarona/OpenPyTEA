@@ -52,7 +52,8 @@ Each row defines one correlation:
      - Sub-type (e.g., ``"Centrifugal"``)
    * - ``form``
      - Correlation form: ``"offset power-law"``, ``"log-log quadratic"``,
-       ``"ln-ln quadratic"``, ``"power-sizing"``, or ``"2-var power-law"``
+       ``"ln-ln quadratic"``, ``"power-sizing"``, ``"2-var power-law"``, or
+       ``"exponential"``
    * - ``s_lower``
      - Minimum valid size parameter
    * - ``s_upper``
@@ -88,6 +89,9 @@ Each row defines one correlation:
    * - ``s0``, ``c0``, ``f``
      - Power-sizing reference size, reference cost, and exponent
        (:math:`C = C_0 \cdot (S / S_0)^f`)
+   * - ``a``, ``b``
+     - Exponential coefficients (:math:`C = a \cdot \exp(b \cdot S)`), used
+       by the ``"exponential"`` form.
    * - ``cost_year``
      - Reference year for the correlation (used for CEPCI adjustment)
 

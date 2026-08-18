@@ -11,7 +11,7 @@ How costs are estimated
 Purchased cost correlations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Five correlation forms are supported:
+Six correlation forms are supported:
 
 **Offset power-law**
 
@@ -44,6 +44,12 @@ only use :math:`K_1`–:math:`K_3`.
 .. math::
 
    C_p = C_0 \left( \frac{S}{S_0} \right)^f
+
+**Exponential**
+
+.. math::
+
+   C_p = a \cdot \exp(b \cdot S)
 
 **2-var power-law**
 
@@ -116,7 +122,7 @@ item via constructor keyword arguments** — see Example 8 for details.
 Equipment Cost Correlations
 ----------------------------
 
-``cost_correlations.csv`` bundles 327 correlations spanning 36 equipment
+``cost_correlations.csv`` bundles 419 correlations spanning 34 equipment
 categories (agitators, compressors, heat exchangers, pressure vessels,
 reactors, conveyors, and more), pulled from several published sources:
 
@@ -127,8 +133,9 @@ reactors, conveyors, and more), pulled from several published sources:
 * Perry's Chemical Engineers' Handbook, Table 9-50 (1997) — power-sizing
   correlations, cost-escalated to 1996 via the Marshall & Swift index.
 * Seider et al., *Product and Process Design Principles*, 4th ed.
-  (2013) — ln-ln quadratic and offset/2-var power-law correlations for
-  solids-handling, size-enlargement, and separation equipment.
+  (2013) — ln-ln quadratic, offset/2-var power-law, and exponential
+  correlations for solids-handling, size-enlargement, and separation
+  equipment.
 * Ulrich (2003), ESDU 97006 (1997), and several process-specific studies
   (Manzolini, Kreutz, Parkinson, Towler, Nexant, NREL) covering
   compressors, furnaces, gas separation, and CO\ :sub:`2` capture

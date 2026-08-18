@@ -216,6 +216,11 @@ class CostCorrelationDB:
             ce = a + b * (s_adj**n)
             purchased = ce * units
 
+        elif form == "exponential":
+            a, b = r["a"], r["b"]
+            ce = a * np.exp(b * s_adj)
+            purchased = ce * units
+
         elif form == "log-log quadratic":
             K1, K2, K3 = r["k1"], r["k2"], r["k3"]
             K4 = r.get("k4") if pd.notna(r.get("k4")) else 0.0
