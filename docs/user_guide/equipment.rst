@@ -61,7 +61,7 @@ For equipment priced off two independent size parameters (e.g., a belt
 conveyor's width and length). :math:`a` is typically 0 unless the
 correlation has a genuine offset term. Evaluating this form requires
 passing both sizes, e.g. ``Equipment(..., param=(S1, S2))`` — see
-Example 9 below.
+Example 10 below.
 
 where :math:`S` (or :math:`S_1`, :math:`S_2`) is the equipment size
 parameter (e.g., shaft power in kW, heat transfer area in m²) and
@@ -115,7 +115,7 @@ where :math:`f_m` is the material factor and :math:`f_p`, :math:`f_{er}`,
 piping, erection, electrical, instrumentation, civil, structural, and lagging
 factors respectively. Default installation factor values depend on the ``process_type``
 (see :ref:`process-factors` below). **All factors can be overridden per equipment
-item via constructor keyword arguments** — see Example 8 for details.
+item via constructor keyword arguments** — see Example 9 for details.
 
 *Source: Towler & Sinnott (2022)*
 
@@ -145,9 +145,9 @@ Each row records the correlation's ``category``, ``type``, size
 ``units``, valid size range (``s_lower``–``s_upper``, plus
 ``s2_lower``–``s2_upper`` for two-parameter forms), correlation
 ``form``, reference ``cost_year``, its ``default material`` (the
-construction material the quoted cost basis assumes, e.g. ``CS`` for
-carbon steel or ``SS`` for stainless steel — override via the
-``Equipment`` constructor's ``material`` argument), its ``source``
+construction material the quoted cost basis assumes, e.g. ``Carbon
+steel`` or ``Stainless steel`` — override via the ``Equipment``
+constructor's ``material`` argument), its ``source``
 (clickable, linking to the DOI or reference where available), any
 ``Remarks`` (basis of the quoted cost, e.g. free-on-board vs. installed,
 included/excluded motor, escalation notes), and the correlation ``key``.
@@ -206,7 +206,7 @@ Constructor parameters
      - Size/capacity parameter. Units depend on the equipment type —
        check ``cost_correlations.csv``. Pass a 2-element ``(S1, S2)``
        tuple/list for two-parameter forms such as ``"2-var power-law"``
-       (see Example 9). Ignored when ``purchased_cost`` is given.
+       (see Example 10). Ignored when ``purchased_cost`` is given.
    * - ``process_type``
      - str
      - ``"Solids"``, ``"Fluids"``, ``"Mixed"``, or ``"Electrical"`` —
@@ -220,9 +220,19 @@ Constructor parameters
      - Equipment sub-type within the category. Required when a category
        has multiple types.
    * - ``material``
-     - str
-     - Construction material — controls the material factor :math:`f_m`.
-       Default: ``"Carbon steel"``.
+     - str or None
+     - Construction material. Default: ``None``, which uses the
+       resolved correlation's ``default material`` (falling back to
+       ``"Carbon steel"`` if there's no match). A material that matches
+       this resolved default — whether auto-filled or passed explicitly
+       — always gets :math:`f_m = 1.0`, since the correlation's cost
+       already prices that material in. Passing a *different* material
+       instead uses the *ratio* of the two materials' factors from the
+       table below (target :math:`f_m` divided by default :math:`f_m`,
+       using 1.0 for a default material not in the table, e.g. "Cast
+       iron"), so the factor stays relative to the correlation's actual
+       cost basis instead of double-counting it. Raises if the target
+       material isn't found in the table.
    * - ``target_year``
      - int
      - Year to inflate costs to. Default: ``2024``.
@@ -247,7 +257,9 @@ Constructor parameters
      - Per-factor overrides. ``None`` uses the ``process_type`` default.
    * - ``material_factor``
      - float or None
-     - Override the material factor. ``None`` uses the material table.
+     - Override the material factor. ``None`` uses 1.0 when
+       ``material`` matches the resolved default, or the ratio of the
+       two materials' table factors otherwise.
 
 Usage examples
 --------------
@@ -369,7 +381,51 @@ Example 6 — Fixing the number of units manually
    )
    print(fridge)
 
-Example 7 — Comparing materials
+Example 7 — Automatic default material resolution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Leaving ``material`` unset resolves it from the matched correlation's own
+``default material`` column, with :math:`f_m = 1.0` — the correlation's
+quoted cost already prices in that material, so no extra multiplier is
+applied. This batch centrifuge correlation defaults to "Stainless steel":
+
+.. code-block:: python
+
+   centrifuge = Equipment(
+       name="Centrifuge C-101",
+       param=30,                        # bowl diameter, in
+       process_type="Fluids",
+       category="Centrifuges",
+       type="Batch, bottom-drive, vertical basket",
+   )
+   print(f"material        : {centrifuge.material}")         # Stainless steel
+   print(f"material_factor : {centrifuge.material_factor}")  # 1.0
+
+Passing a *different* material instead rescales the table's factor
+relative to the correlation's own default rather than the usual carbon
+steel baseline — requesting Inconel construction here applies the ratio
+of Inconel's factor to Stainless steel's factor (1.70 / 1.30 ≈ 1.31),
+not the raw 1.70, since the correlation's cost basis is already
+stainless steel rather than carbon steel:
+
+.. code-block:: python
+
+   centrifuge_inconel = Equipment(
+       name="Centrifuge C-101 (Inconel)",
+       param=30,
+       process_type="Fluids",
+       category="Centrifuges",
+       type="Batch, bottom-drive, vertical basket",
+       material="Inconel",
+   )
+   print(f"material_factor : {centrifuge_inconel.material_factor:.3f}")  # 1.308
+
+If the resolved default isn't recognized in ``material_factors`` (e.g.
+"Cast iron", "Ceramic"), it's still reported as ``material`` with
+:math:`f_m = 1.0`, and an explicit different material falls back to its
+raw table factor (an unrecognized default has no factor to divide out).
+
+Example 8 — Comparing materials
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The material factor :math:`f_m` multiplies the installed cost. Here the same
@@ -398,7 +454,7 @@ agitator is costed in carbon steel versus Hastelloy C:
    print(f"Carbon steel direct cost : ${mixer_cs.direct_cost:,.0f}")
    print(f"Hastelloy C direct cost  : ${mixer_alloy.direct_cost:,.0f}")
 
-Example 8 — Overriding installation factors
+Example 9 — Overriding installation factors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Individual installation factors can be overridden without affecting the rest.
@@ -424,7 +480,7 @@ defaults:
    print(f"piping_factor   : {reactor.piping_factor}")
    print(f"material_factor : {reactor.material_factor}")
 
-Example 9 — Two-parameter correlations
+Example 10 — Two-parameter correlations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Correlations with ``form = "2-var power-law"`` are priced off two
@@ -492,6 +548,8 @@ The table below lists the valid ``material`` strings and their factors
      - 1.07
    * - ``"Cast steel"``
      - 1.10
+   * - ``"Stainless steel"``
+     - 1.30
    * - ``"304 stainless steel"``
      - 1.30
    * - ``"316 stainless steel"``
@@ -506,6 +564,12 @@ The table below lists the valid ``material`` strings and their factors
      - 1.70
    * - ``"Inconel"``
      - 1.70
+
+``"Stainless steel"`` (no grade specified) is not part of the original
+Towler & Sinnott table — it's added here, set equal to
+``"304 stainless steel"`` since that's the most common general-purpose
+grade. This is also the value used in ``cost_correlations.csv`` for
+rows whose ``default material`` is unspecified-grade stainless steel.
 
 .. _process-factors:
 

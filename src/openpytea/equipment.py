@@ -314,6 +314,32 @@ class CostCorrelationDB:
 
         return cand.iloc[0]["key"]
 
+    def default_material_for_key(self, key: str) -> str | None:
+        """
+        Look up the cost basis's default construction material for a key.
+
+        Parameters
+        ----------
+        key : str
+            Correlation key.
+
+        Returns
+        -------
+        str | None
+            The ``default material`` value for the row, or None if the
+            key is not found, the column is absent, or the value is
+            unset (e.g. ``"n.a."``).
+        """
+        if "default material" not in self.df.columns:
+            return None
+        row = self.df.loc[self.df["key"] == key]
+        if row.empty:
+            return None
+        val = row.iloc[0]["default material"]
+        if pd.isna(val) or str(val).strip().lower() == "n.a.":
+            return None
+        return str(val).strip()
+
 
 class Equipment:
     """
@@ -347,8 +373,21 @@ class Equipment:
         Equipment category for database lookup.
     type : str | None, optional
         Equipment sub-type for database lookup. Default is None.
-    material : str, optional
-        Material of construction. Default is "Carbon steel".
+    material : str | None, optional
+        Material of construction. Default is None, which uses the
+        resolved cost correlation's ``default material`` column,
+        falling back to "Carbon steel" if there's no correlation match
+        or the value is unset (e.g. "n.a."). Since the correlation's
+        cost already prices in whatever material it defaults to, a
+        material that matches the resolved default (whether auto-filled
+        or passed explicitly) always uses a material factor of 1.0,
+        even if it's recognized in ``material_factors`` (e.g. "304
+        stainless steel"). Passing a different material instead uses
+        ``material_factors[material] / material_factors[default]``
+        (the default's own factor, or 1.0 if it has none) so the factor
+        is relative to the correlation's actual cost basis rather than
+        double-counting it, and raises ValueError if the material isn't
+        found in ``material_factors``.
     num_units : int | None, optional
         Number of identical units. Default is None (set to 1 when
         purchased_cost is provided).
@@ -379,7 +418,9 @@ class Equipment:
         Lagging & painting factor override. Default is None
         (use process_type table).
     material_factor : float | None, optional
-        Material factor override. Default is None (use material table).
+        Material factor override. Default is None (1.0 if ``material``
+        matches the resolved default material, else the ratio of the
+        two materials' ``material_factors`` values).
 
     Raises
     ------
@@ -445,6 +486,7 @@ class Equipment:
         "Aluminum": 1.07,
         "Bronze": 1.07,
         "Cast steel": 1.1,
+        "Stainless steel": 1.3,
         "304 stainless steel": 1.3,
         "316 stainless steel": 1.3,
         "321 stainless steel": 1.5,
@@ -461,7 +503,7 @@ class Equipment:
         process_type: str,
         category: str,
         type: str | None = None,
-        material: str = "Carbon steel",
+        material: str | None = None,
         num_units: int | None = None,
         purchased_cost: float | None = None,
         cost_year: int | None = None,
@@ -479,7 +521,6 @@ class Equipment:
         """Initialize equipment and compute purchased and direct costs."""
         self.name = name
         self.process_type = process_type
-        self.material = material
         self.param = (
             None if purchased_cost is not None else param
         )
@@ -493,6 +534,17 @@ class Equipment:
         self._cost_func = cost_func
         self._db = CostCorrelationDB()
 
+        resolved_default_material = (
+            self._default_material() or "Carbon steel"
+        )
+        material_was_auto = material is None
+        if material_was_auto:
+            material = resolved_default_material
+        self.material = material
+        uses_default_material = (
+            material_was_auto or material == resolved_default_material
+        )
+
         valid_process_types = list(self.process_factors.keys())
         if process_type not in self.process_factors:
             raise ValueError(
@@ -500,7 +552,10 @@ class Equipment:
                 f"Valid options are: {valid_process_types}"
             )
         valid_materials = list(self.material_factors.keys())
-        if material not in self.material_factors:
+        if (
+            material not in self.material_factors
+            and not uses_default_material
+        ):
             raise ValueError(
                 f"Invalid material '{material}'. "
                 f"Valid options are: {valid_materials}"
@@ -528,11 +583,25 @@ class Equipment:
         self.lagging_factor         = (
             lagging_factor         if lagging_factor         is not None else _pf["fl"]
         )
-        self.material_factor = (
-            material_factor
-            if material_factor is not None
-            else self.material_factors[material]
-        )
+        if material_factor is not None:
+            self.material_factor = material_factor
+        elif uses_default_material:
+            # The correlation's own default material is already priced
+            # into its cost, so no fm adjustment applies here.
+            self.material_factor = 1.0
+        else:
+            # material_factors is calibrated against a carbon steel
+            # base, but the correlation's cost is already priced for
+            # resolved_default_material. Dividing out that material's
+            # own factor (1.0 if it has none, e.g. "Cast iron") rescales
+            # the target factor to be relative to the correlation's
+            # actual cost basis instead of double-counting it.
+            default_fm = self.material_factors.get(
+                resolved_default_material, 1.0
+            )
+            self.material_factor = (
+                self.material_factors[material] / default_fm
+            )
 
         if purchased_cost is not None:
             self.purchased_cost = purchased_cost
@@ -580,6 +649,25 @@ class Equipment:
                 f"Add a row to the CSV or specify cost_func manually."
             )
         return key
+
+    def _default_material(self) -> str | None:
+        """
+        Resolve the default construction material from the correlation DB.
+
+        Returns
+        -------
+        str | None
+            The resolved correlation's ``default material`` value, or
+            None if there is no correlation match or the value is unset
+            (e.g. "n.a."). Names not recognized in ``material_factors``
+            (e.g. "Cast iron", "Ceramic") are still returned as-is; the
+            caller applies a material factor of 1.0 for those.
+        """
+        try:
+            key = self._resolve_key()
+        except KeyError:
+            return None
+        return self._db.default_material_for_key(key)
 
     def _calc_purchased_cost(self) -> float:
         """

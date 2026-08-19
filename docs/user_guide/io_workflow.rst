@@ -53,7 +53,9 @@ For single-file / CLI use, the same three blocks (``equipment``, ``plant``,
 
 Each entry requires ``name``, ``process_type``, ``category``, and either
 ``param`` (size/capacity parameter) or ``purchased_cost`` (manual override).
-All other fields are optional.
+All other fields are optional — omitting ``material``, as shown below,
+resolves it from the matched correlation's own default material instead
+of assuming carbon steel (see :ref:`materials`).
 
 .. code-block:: json
 
@@ -72,11 +74,13 @@ All other fields are optional.
          "param": 31.87,
          "process_type": "Fluids",
          "category": "Heat Exchangers",
-         "type": "U-tube shell & tube",
-         "material": "Carbon steel"
+         "type": "U-tube shell & tube"
        }
      ]
    }
+
+``HX-1`` omits ``material`` entirely, so it resolves to the matched
+correlation's own default material with a material factor of 1.0.
 
 ``plant.json``
 --------------

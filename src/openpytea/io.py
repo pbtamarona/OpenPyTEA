@@ -57,7 +57,8 @@ def load_equipment_config(filepath):
     Notes:
         - Required keys per equipment entry: 'name', 'process_type', 'category'
         - Each entry must specify either 'param' or 'purchased_cost'
-        - Default values: material='Carbon steel', target_year=2024
+        - Default values: material=resolved cost correlation's default
+          material (falls back to 'Carbon steel'), target_year=2024
         - Optional keys: 'type', 'material', 'num_units', 'purchased_cost',
           'cost_year', 'cost_func', 'target_year'
     """
@@ -110,7 +111,7 @@ def _build_equipment_list(data):
             process_type=entry["process_type"],
             category=entry["category"],
             type=entry.get("type"),
-            material=entry.get("material", "Carbon steel"),
+            material=entry.get("material"),
             num_units=entry.get("num_units"),
             purchased_cost=entry.get("purchased_cost"),
             cost_year=entry.get("cost_year"),
