@@ -16,6 +16,6 @@
     {"name": "REACTOR", "param": 147.26, "process_type": "Mixed", "category": "Reactors", "type": "Indirect fluidized-bed", "material": "316 stainless steel"},
     {"name": "FURNACE", "param": 22608, "process_type": "Fluids", "category": "Boilers, heaters, & furnaces", "type": "Pyrolysis furnace", "material": "316 stainless steel"},
     {"name": "CYCLONE", "param": 36.70, "process_type": "Mixed", "category": "Dust collectors", "type": "Gas multi-cyclone", "material": "316 stainless steel"},
-    {"name": "PSA", "param": 1017.98, "process_type": "Fluids", "category": "Gas separation", "type": "Pressure-swing adsorber", "material": "Carbon steel"}
+    {"name": "PSA", "param": 1017.98, "process_type": "Fluids", "category": "Adsorption & membrane separation", "type": "Pressure-swing adsorber", "material": "Carbon steel", "purchased_cost": 283266.07, "cost_year": 1994}
   ]
 }
