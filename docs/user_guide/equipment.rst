@@ -122,7 +122,7 @@ item via constructor keyword arguments** — see Example 9 for details.
 Equipment Cost Correlations
 ----------------------------
 
-``cost_correlations.csv`` bundles 419 correlations spanning 34 equipment
+``cost_correlations.csv`` bundles 417 correlations spanning 34 equipment
 categories (agitators, compressors, heat exchangers, pressure vessels,
 reactors, conveyors, and more), pulled from several published sources:
 
