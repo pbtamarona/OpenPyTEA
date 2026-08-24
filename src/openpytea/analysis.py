@@ -1056,10 +1056,11 @@ def monte_carlo(plant,
 
     Samples every configured uncertain input (project-level factors such as
     fixed capital/OPEX, project lifetime, and interest rate; optionally
-    plant utilization and tax rate; variable OPEX item prices; and product
-    prices) and re-evaluates the plant's economics ``num_samples`` times,
-    producing a distribution of outcomes for LCOP and, when product prices
-    are configured, NPV, ROI, and payback time.
+    plant utilization and tax rate; variable OPEX item prices and,
+    optionally, consumption rates; and product prices and, optionally,
+    production rates) and re-evaluates the plant's economics ``num_samples``
+    times, producing a distribution of outcomes for LCOP and, when product
+    prices are configured, NPV, ROI, and payback time.
 
     Parameters
     ----------
@@ -1071,6 +1072,17 @@ def monte_carlo(plant,
         format. The plant is first baseline-initialized (fixed capital,
         variable/fixed OPEX, cash flow, levelized cost) but is not mutated
         by the simulation itself; each batch operates on a deep copy.
+
+        Each entry in ``variable_opex_inputs`` samples its ``"price"`` by
+        default (as before); adding a ``"consumption_uncertainty"`` dict
+        (with the same ``std``/``min``/``max``/``dist_id`` fields used
+        elsewhere) opts that item's ``"consumption"`` into sampling as well,
+        around its configured baseline value. Likewise, each entry in
+        ``plant_products`` samples ``"price"`` when all products have one
+        configured, and opts ``"production"`` into sampling via a
+        ``"production_uncertainty"`` dict. Both uncertainty sub-blocks are
+        opt-in — omitted, they leave consumption/production fixed at their
+        baseline values as before.
     num_samples : int, optional
         Total number of Monte Carlo draws. Default is 1,000,000.
     batch_size : int, optional
@@ -1246,6 +1258,7 @@ def monte_carlo(plant,
     )
 
     variable_opex_price_samples = {}
+    variable_opex_consumption_samples = {}
     for item, props in plant.variable_opex_inputs.items():
         (v_id, v_loc, v_scale, v_shape,
          v_min, v_max) = _resolve_dist_params(props)
@@ -1253,6 +1266,23 @@ def monte_carlo(plant,
             v_id, num_samples, loc=v_loc, scale=v_scale, shape=v_shape,
             minimum=v_min, maximum=v_max, random_state=rng,
         )
+
+        cons_cfg = props.get("consumption_uncertainty", {})
+        cons_std = cons_cfg.get("std", 0)
+        if cons_std > 0 or "dist_id" in cons_cfg:
+            cons_baseline = props.get("consumption", 0)
+            (c_id, c_loc, c_scale, c_shape,
+             c_min, c_max) = _resolve_dist_params(
+                cons_cfg,
+                default_loc=cons_baseline,
+                default_scale=cons_std,
+                default_min=max(0.0, cons_baseline - 2 * cons_std),
+                default_max=cons_baseline + 2 * cons_std,
+            )
+            variable_opex_consumption_samples[item] = sample_distribution(
+                c_id, num_samples, loc=c_loc, scale=c_scale, shape=c_shape,
+                minimum=c_min, maximum=c_max, random_state=rng,
+            )
 
     have_product_prices = all(
         "price" in props for props in plant.plant_products.values()
@@ -1266,6 +1296,25 @@ def monte_carlo(plant,
             product_price_samples[prod] = sample_distribution(
                 p_id, num_samples, loc=p_loc, scale=p_scale, shape=p_shape,
                 minimum=p_min, maximum=p_max, random_state=rng,
+            )
+
+    product_production_samples = {}
+    for prod, props in plant.plant_products.items():
+        prod_cfg = props.get("production_uncertainty", {})
+        prod_std = prod_cfg.get("std", 0)
+        if prod_std > 0 or "dist_id" in prod_cfg:
+            prod_baseline = props.get("production", 0)
+            (pp_id, pp_loc, pp_scale, pp_shape,
+             pp_min, pp_max) = _resolve_dist_params(
+                prod_cfg,
+                default_loc=prod_baseline,
+                default_scale=prod_std,
+                default_min=max(0.0, prod_baseline - 2 * prod_std),
+                default_max=prod_baseline + 2 * prod_std,
+            )
+            product_production_samples[prod] = sample_distribution(
+                pp_id, num_samples, loc=pp_loc, scale=pp_scale, shape=pp_shape,
+                minimum=pp_min, maximum=pp_max, random_state=rng,
             )
 
     # ---- Batch calculation loop ----
@@ -1293,12 +1342,21 @@ def monte_carlo(plant,
             plant_copy.variable_opex_inputs[item]["price"] = (
                 variable_opex_price_samples[item][start:end]
             )
+            if item in variable_opex_consumption_samples:
+                plant_copy.variable_opex_inputs[item]["consumption"] = (
+                    variable_opex_consumption_samples[item][start:end]
+                )
 
         if have_product_prices:
             for prod in plant.plant_products:
                 plant_copy.plant_products[prod]["price"] = (
                     product_price_samples[prod][start:end]
                 )
+
+        for prod in product_production_samples:
+            plant_copy.plant_products[prod]["production"] = (
+                product_production_samples[prod][start:end]
+            )
 
         # ---- Economic calculations ----
         plant_copy.calculate_fixed_capital(fc=fixed_capitals[start:end])
@@ -1337,8 +1395,16 @@ def monte_carlo(plant,
             for k, v in variable_opex_price_samples.items()
         },
         **{
+            f"{k.replace('_', ' ').title()} consumption": v
+            for k, v in variable_opex_consumption_samples.items()
+        },
+        **{
             f"{k.replace('_', ' ').title()} product price": v
             for k, v in product_price_samples.items()
+        },
+        **{
+            f"{k.replace('_', ' ').title()} production": v
+            for k, v in product_production_samples.items()
         },
     }
 

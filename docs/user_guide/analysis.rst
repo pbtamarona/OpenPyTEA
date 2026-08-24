@@ -309,6 +309,55 @@ by adding ``std``, ``min``, and ``max`` fields to each item:
        },
    })
 
+**Consumption and production quantities** can be given their own uncertainty
+too, independent of price. This is opt-in: nest a ``"consumption_uncertainty"``
+dict inside a ``variable_opex_inputs`` item, or a ``"production_uncertainty"``
+dict inside a ``plant_products`` item, using the same ``std``/``min``/``max``/
+``dist_id`` fields as everywhere else. The baseline ``"consumption"`` /
+``"production"`` value is used as the sampling mean unless overridden with
+``loc``/``mean`` inside the sub-dict. Items without one of these sub-dicts
+keep their consumption/production fixed at the baseline value, exactly as
+before.
+
+.. code-block:: python
+
+   plant.update_configuration({
+       "variable_opex_inputs": {
+           "electricity": {
+               "consumption": 1.4e6,
+               "price": 0.10,
+               "std": 0.035,          # price uncertainty
+               "min": 0.025,
+               "max": 0.175,
+               "consumption_uncertainty": {
+                   "std": 1.4e5,      # 10% of baseline consumption
+                   "min": 1.0e6,
+                   "max": 1.8e6,
+               },
+           },
+       },
+       "plant_products": {
+           "methanol": {
+               "production": 150_000,
+               "price": 1.75,
+               "std": 0.25,           # price uncertainty
+               "min": 1.25,
+               "max": 2.25,
+               "production_uncertainty": {
+                   "std": 15_000,     # 10% of baseline production
+                   "min": 100_000,
+                   "max": 200_000,
+               },
+           },
+       },
+   })
+
+Sampled consumption/production values show up in the Monte Carlo results
+under display names like ``"Electricity consumption"`` and ``"Methanol
+production"``. Production uncertainty is applied even when product prices
+aren't configured, since production also drives LCOP directly (not just
+revenue).
+
 **Project-level financial uncertainties** are set through the
 ``project_uncertainties`` key:
 
