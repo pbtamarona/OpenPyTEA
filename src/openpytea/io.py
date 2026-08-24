@@ -795,15 +795,22 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 plt.close(fig)  # Free the figure
 
             if mc_cfg.get("plot_inputs", False):
-                fig, axes = plot_monte_carlo_inputs(
+                fig_process, _, fig_economic, _ = plot_monte_carlo_inputs(
                     mc_results, show=False
                 )
-                fig.savefig(
-                    output_dir /
-                    f"{plant.name}_monte_carlo_inputs.{plot_format}",
-                    dpi=dpi,
-                    bbox_inches="tight",
-                )
-                plt.close(fig)  # Free the figure
+                for group_name, fig in (
+                    ("process", fig_process),
+                    ("economic", fig_economic),
+                ):
+                    if fig is None:
+                        continue  # no inputs sampled for this group
+                    fig.savefig(
+                        output_dir /
+                        f"{plant.name}_monte_carlo_inputs_"
+                        f"{group_name}.{plot_format}",
+                        dpi=dpi,
+                        bbox_inches="tight",
+                    )
+                    plt.close(fig)  # Free the figure
 
     return results

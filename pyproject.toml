@@ -38,6 +38,7 @@ test = [
 ]
 ipython = [
     "ipython>=8.0",
+    "ipywidgets>=8.0",
 ]
 
 [urls]

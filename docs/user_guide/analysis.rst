@@ -316,8 +316,11 @@ dict inside a ``plant_products`` item, using the same ``std``/``min``/``max``/
 ``dist_id`` fields as everywhere else. The baseline ``"consumption"`` /
 ``"production"`` value is used as the sampling mean unless overridden with
 ``loc``/``mean`` inside the sub-dict. Items without one of these sub-dicts
-keep their consumption/production fixed at the baseline value, exactly as
-before.
+keep their consumption/production fixed at the baseline value — but every
+item's consumption and every product's production is still included in
+``"inputs"`` (as a constant), so the full set of process parameters always
+shows up in :func:`~openpytea.plotting.plot_monte_carlo_inputs`, whether or
+not it actually varies.
 
 .. code-block:: python
 
@@ -357,6 +360,52 @@ under display names like ``"Electricity consumption"`` and ``"Methanol
 production"``. Production uncertainty is applied even when product prices
 aren't configured, since production also drives LCOP directly (not just
 revenue).
+
+**Dependencies between consumption/production quantities.** Rather than
+carrying its own uncertainty, a ``"consumption"`` or ``"production"`` value
+can be defined as a deterministic function of *another* sampled quantity —
+e.g. electricity consumption scaling with production via a specific-energy
+factor. Set ``"consumption_dependency"`` (on a ``variable_opex_inputs``
+item) or ``"production_dependency"`` (on a ``plant_products`` item) to a
+dict with:
+
+* ``"depends_on"`` — ``"production:<product>"`` or ``"consumption:<item>"``,
+  naming the driver quantity.
+* ``"factor"`` — multiplier applied to the driver (default ``1.0``).
+* ``"offset"`` — constant added after scaling (default ``0.0``).
+
+giving ``dependent = factor * driver + offset``. A dependent item must
+**not** also define the matching ``*_uncertainty`` block — its variability
+comes entirely from the driver, not from noise of its own — doing so raises
+a ``ValueError``. Chains (a dependent whose driver is itself another
+dependent) are resolved automatically; a cycle or a ``depends_on`` naming an
+unknown item also raises a ``ValueError``.
+
+.. code-block:: python
+
+   plant.update_configuration({
+       "plant_products": {
+           "methanol": {
+               "production": 150_000,
+               "price": 1.75,
+               "production_uncertainty": {"std": 15_000},
+           },
+       },
+       "variable_opex_inputs": {
+           "electricity": {
+               "consumption": 1.4e6,
+               "price": 0.10,
+               "consumption_dependency": {
+                   "depends_on": "production:methanol",
+                   "factor": 9.333,   # kWh per kg methanol
+               },
+           },
+       },
+   })
+
+Here, electricity consumption is never sampled independently — every draw
+of methanol production is multiplied by the fixed specific-consumption
+factor, so the two move together instead of varying independently.
 
 **Project-level financial uncertainties** are set through the
 ``project_uncertainties`` key:
@@ -576,8 +625,14 @@ Pass the plant (or ``mc_results``) to the plotting functions:
    # Distribution of the LCOP
    fig, ax = plot_monte_carlo(plant, metric="LCOP", bins=30)
 
-   # Verify input distributions (useful for checking std/min/max settings)
-   fig, axes = plot_monte_carlo_inputs(mc_results, bins=40)
+   # Verify input distributions (useful for checking std/min/max settings).
+   # category="both" (default) returns one figure for process quantities
+   # (consumption/production) and one for economic quantities (prices,
+   # rates, project-level factors); pass category="process"/"economic" to
+   # get just one back as a plain (fig, axes) pair.
+   fig_process, axes_process, fig_economic, axes_economic = plot_monte_carlo_inputs(
+       mc_results, bins=40
+   )
 
 See :doc:`plotting` for full plotting options.
 

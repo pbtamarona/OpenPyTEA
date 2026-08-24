@@ -205,13 +205,20 @@ whether results and plots are saved, and in what format.
 
 The ``"metric"`` list under ``monte_carlo`` controls which metrics are
 rendered as histogram plots when ``save_plots`` is ``true``. Setting
-``"plot_inputs": true`` additionally renders a grid of histograms (via
-:func:`~openpytea.plotting.plot_monte_carlo_inputs`) showing the sampled
-distribution of every uncertain input (project-level factors from
-``plant.project_uncertainties``, plus any priced ``variable_opex_inputs``,
-``plant_products``, and ``operator_hourly_rate``), saved as
-``{plant_name}_monte_carlo_inputs.{plot_format}``. The ``args`` dict maps
-directly to :func:`~openpytea.analysis.monte_carlo` keyword arguments.
+``"plot_inputs": true`` additionally renders two grids of histograms (via
+:func:`~openpytea.plotting.plot_monte_carlo_inputs`) showing every input:
+one for **process** quantities (every ``variable_opex_inputs`` item's
+consumption and every ``plant_products`` item's production -- shown as a
+constant when no ``consumption_uncertainty``/``production_uncertainty``/
+dependency is configured for it) and one for **economic** quantities
+(project-level factors from ``plant.project_uncertainties``, plus every
+priced ``variable_opex_inputs``, ``plant_products``, and
+``operator_hourly_rate``), saved as
+``{plant_name}_monte_carlo_inputs_process.{plot_format}`` and
+``{plant_name}_monte_carlo_inputs_economic.{plot_format}`` respectively. A
+group is only skipped if the plant genuinely has nothing in it (e.g. no
+``variable_opex_inputs`` or ``plant_products`` at all). The ``args`` dict
+maps directly to :func:`~openpytea.analysis.monte_carlo` keyword arguments.
 
 Running a study
 ---------------

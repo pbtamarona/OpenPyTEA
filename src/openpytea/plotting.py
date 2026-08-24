@@ -757,68 +757,35 @@ def plot_monte_carlo(
     return ax.figure, ax
 
 
-def plot_monte_carlo_inputs(
-    data,
-    figsize=None,
-    bins: int = 50,
-    show: bool = True,
-):
+def _is_process_monte_carlo_input(label):
     """
-    Plot histograms of Monte Carlo input parameters.
-    This function creates a grid of histograms visualizing the distribution of
-    input parameters from a Monte Carlo simulation. Each parameter is
-    displayed in its own subplot, arranged in a grid layout with 3 columns.
-    Parameters
-    ----------
-    data : dict or dict-like
-        Input data containing Monte Carlo parameters. Can be either:
-        - A dictionary with an "inputs" key containing the parameters dict
-        - A dictionary directly mapping parameter names to arrays of values
-    inputs : dict
-        Dictionary where keys are parameter names (str) and values are array
-        like objects containing the parameter samples.
-    figsize : tuple of (float, float), optional
-        Figure size as (width, height) in inches. If None, automatically
-        calculated based on number of parameters (default: None).
-    bins : int, optional
-        Number of histogram bins for each parameter (default: 50).
-    show : bool, optional
-        If True, displays the figure and calls tight_layout(). If False, only
-        returns the axes without displaying (default: True).
-    Returns
-    -------
-    tuple of (matplotlib.figure.Figure, numpy.ndarray)
-        The figure and an array of Axes objects (one per subplot).
-        For a single parameter the array has length 1; for multiple
-        parameters it is a flattened 1-D array of subplots.
-    Notes
-    -----
-    - Histograms are plotted with density normalization enabled
-    - Unused subplots (when n_params is not a multiple of 3) are hidden
-    - Each histogram is displayed with black edges and 70% transparency
+    True if a Monte Carlo input display name is a process quantity
+    (consumption or production) rather than an economic one (price, rate,
+    factor, etc.). OpenPyTEA always generates these labels itself (e.g.
+    ``"Electricity consumption"``, ``"Methanol production"``), so a simple
+    suffix check is reliable.
     """
-    if isinstance(data, dict) and "inputs" in data:
-        inputs = data["inputs"]
-    else:
-        inputs = data
+    normalized = label.strip().lower()
+    return normalized.endswith("consumption") or normalized.endswith("production")
 
+
+def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title, show):
+    """
+    Build one figure of histograms (one subplot per input, 3 columns) for
+    the given ``{label: samples}`` dict, with a bold suptitle. Shared by the
+    "process"/"economic" groups in :func:`plot_monte_carlo_inputs`.
+    """
     n_params = len(inputs)
     n_cols = 3
     n_rows = (n_params + n_cols - 1) // n_cols
 
-    if figsize is None:
-        figsize = (n_cols * 5, n_rows * 3)
-
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
+    fig_size = figsize if figsize is not None else (n_cols * 5, n_rows * 3)
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=fig_size)
 
     if n_params == 1:
         axes = np.array([axes])
     else:
         axes = np.asarray(axes).flatten()
-
-    color_cycle = cycle(plt.cm.tab10.colors)
-    hist_color = next(color_cycle)
-    hist_color = next(color_cycle)
 
     for idx, (label, arr) in enumerate(inputs.items()):
         ax = axes[idx]
@@ -833,7 +800,7 @@ def plot_monte_carlo_inputs(
                 f"Filtered {n_filtered} non-finite value(s) from "
                 f"Monte Carlo input '{label}' before plotting.",
                 RuntimeWarning,
-                stacklevel=2,
+                stacklevel=3,
             )
 
         if values.size == 0:
@@ -876,11 +843,132 @@ def plot_monte_carlo_inputs(
     for i in range(n_params, len(axes)):
         axes[i].axis("off")
 
+    fig.suptitle(title, fontsize=14, fontweight="bold")
     if show:
-        fig.tight_layout()
-        plt.show()
+        # Reserve a top margin sized to fit the suptitle in absolute
+        # inches rather than a fixed fraction of figure height -- a flat
+        # fraction leaves a disproportionately large gap on tall,
+        # many-row grids (e.g. the economic-parameters figure once
+        # project-level factors and every priced item are included).
+        # tight_layout is given this budget up front (via `rect`) so it
+        # can fit each subplot's own title within the remaining space in
+        # the same pass, rather than being squeezed after the fact.
+        reserved_inches = 0.1
+        top = max(0.5, min(0.97, 1 - reserved_inches / fig_size[1]))
+        fig.tight_layout(rect=[0, 0, 1, top])
 
     return fig, axes
+
+
+def plot_monte_carlo_inputs(
+    data,
+    category: str = "both",
+    figsize=None,
+    bins: int = 50,
+    show: bool = True,
+):
+    """
+    Plot histograms of Monte Carlo input parameters.
+
+    This function creates a grid of histograms visualizing the distribution
+    of input parameters from a Monte Carlo simulation. Each parameter is
+    displayed in its own subplot, arranged in a grid layout with 3 columns.
+    Inputs are split into two categories: **process** parameters
+    (consumption/production quantities) and **economic** parameters
+    (prices, rates, and project-level financial factors).
+
+    Parameters
+    ----------
+    data : dict or dict-like
+        Input data containing Monte Carlo parameters. Can be either:
+        - A dictionary with an "inputs" key containing the parameters dict
+        - A dictionary directly mapping parameter names to arrays of values
+    category : {"both", "process", "economic"}, optional
+        Which group of inputs to plot. ``"process"`` covers consumption and
+        production quantities; ``"economic"`` covers everything else
+        (prices, operator rate, interest rate, and the other
+        ``project_uncertainties`` factors). ``"both"`` (default) builds one
+        figure per group and returns both. If a requested group has no
+        matching inputs, a ``RuntimeWarning`` is issued and ``(None, None)``
+        is returned for that group instead of an empty figure.
+    figsize : tuple of (float, float), optional
+        Figure size as (width, height) in inches, applied to each figure
+        produced. If None, automatically calculated from that figure's
+        number of parameters (default: None).
+    bins : int, optional
+        Number of histogram bins for each parameter (default: 50).
+    show : bool, optional
+        If True, calls ``tight_layout()`` on each figure and displays them.
+        If False, only returns the figures/axes without displaying
+        (default: True).
+
+    Returns
+    -------
+    tuple
+        For ``category="process"`` or ``category="economic"``:
+        ``(fig, axes)``, matching the previous single-figure API — ``axes``
+        is a flattened 1-D array of subplots (length 1 for a single
+        parameter). For ``category="both"`` (default):
+        ``(fig_process, axes_process, fig_economic, axes_economic)``.
+
+    Notes
+    -----
+    - Histograms are plotted with density normalization enabled
+    - Unused subplots (when a group's parameter count is not a multiple of
+      3) are hidden
+    - Each histogram is displayed with black edges and 70% transparency
+    """
+    if category not in ("both", "process", "economic"):
+        raise ValueError(
+            f"Invalid category {category!r}; must be 'both', 'process', "
+            "or 'economic'."
+        )
+
+    if isinstance(data, dict) and "inputs" in data:
+        inputs = data["inputs"]
+    else:
+        inputs = data
+
+    process_inputs = {
+        label: arr for label, arr in inputs.items()
+        if _is_process_monte_carlo_input(label)
+    }
+    economic_inputs = {
+        label: arr for label, arr in inputs.items()
+        if not _is_process_monte_carlo_input(label)
+    }
+
+    color_cycle = cycle(plt.cm.tab10.colors)
+    next(color_cycle)
+    hist_color = next(color_cycle)
+
+    def _build(group_inputs, title):
+        if not group_inputs:
+            warnings.warn(
+                f"No {title.lower()} to plot.", RuntimeWarning, stacklevel=3,
+            )
+            return None, None
+        return _plot_input_histogram_grid(
+            group_inputs, figsize, bins, hist_color, title, show
+        )
+
+    if category == "process":
+        fig, axes = _build(process_inputs, "Process Parameters")
+        if show and fig is not None:
+            plt.show()
+        return fig, axes
+
+    if category == "economic":
+        fig, axes = _build(economic_inputs, "Economic Parameters")
+        if show and fig is not None:
+            plt.show()
+        return fig, axes
+
+    fig_process, axes_process = _build(process_inputs, "Process Parameters")
+    fig_economic, axes_economic = _build(economic_inputs, "Economic Parameters")
+    if show:
+        plt.show()
+    return fig_process, axes_process, fig_economic, axes_economic
 
 
 def plot_multiple_monte_carlo(

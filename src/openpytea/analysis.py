@@ -1,5 +1,5 @@
 from copy import deepcopy
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from scipy import stats
 import numpy as np
 
@@ -1046,6 +1046,129 @@ def _resolve_dist_params(cfg, default_loc=0.0, default_scale=0.0,
     return dist_id, loc, scale, shape, minimum, maximum
 
 
+def _parse_dependency_driver(spec, context):
+    """
+    Parse a ``"depends_on"`` string into a ``(kind, name)`` pair.
+
+    Parameters
+    ----------
+    spec : str
+        Expected form ``"production:<product>"`` or
+        ``"consumption:<item>"``, referencing a ``plant_products`` or
+        ``variable_opex_inputs`` entry respectively.
+    context : str
+        Human-readable description of where ``spec`` came from, used in the
+        error message.
+
+    Returns
+    -------
+    tuple
+        ``(kind, name)`` where ``kind`` is ``"production"`` or
+        ``"consumption"``.
+    """
+    if not isinstance(spec, str) or ":" not in spec:
+        raise ValueError(
+            f"Invalid 'depends_on' value {spec!r} for {context}; expected "
+            "'production:<product>' or 'consumption:<item>'."
+        )
+    kind, name = spec.split(":", 1)
+    if kind not in ("production", "consumption"):
+        raise ValueError(
+            f"Invalid 'depends_on' kind {kind!r} for {context}; must be "
+            "'production' or 'consumption'."
+        )
+    return kind, name
+
+
+def _resolve_quantity_dependencies(plant, consumption_samples,
+                                    production_samples):
+    """
+    Resolve consumption/production quantities defined as a linear function
+    of another quantity, adding them to ``consumption_samples`` /
+    ``production_samples`` in place.
+
+    An item opts in by setting ``"consumption_dependency"`` (on a
+    ``variable_opex_inputs`` entry) or ``"production_dependency"`` (on a
+    ``plant_products`` entry) to a dict with a ``"depends_on"`` string
+    (``"production:<product>"`` or ``"consumption:<item>"``), plus optional
+    ``"factor"`` (default 1.0) and ``"offset"`` (default 0.0):
+    ``dependent = factor * driver + offset``. Such "dependent" quantities
+    carry no noise of their own — their variability comes entirely from the
+    driver they reference, directly or transitively — so they must not also
+    define ``"consumption_uncertainty"``/``"production_uncertainty"``
+    (enforced by the caller before this runs).
+
+    Parameters
+    ----------
+    plant : Plant
+        The plant being simulated; read-only here.
+    consumption_samples : dict
+        ``variable_opex_inputs`` samples for every non-dependent item
+        (sampled if ``"consumption_uncertainty"`` was set, otherwise a
+        constant at baseline); mutated in place with resolved dependents.
+    production_samples : dict
+        ``plant_products`` samples for every non-dependent item (sampled if
+        ``"production_uncertainty"`` was set, otherwise a constant at
+        baseline); mutated in place with resolved dependents.
+
+    Raises
+    ------
+    ValueError
+        If a ``"depends_on"`` reference is malformed, points at an unknown
+        item, or the dependency graph has a cycle.
+    """
+    pending = []
+    for item, props in plant.variable_opex_inputs.items():
+        dep = props.get("consumption_dependency")
+        if dep is not None:
+            pending.append(("consumption", item, dep))
+    for prod, props in plant.plant_products.items():
+        dep = props.get("production_dependency")
+        if dep is not None:
+            pending.append(("production", prod, dep))
+
+    if not pending:
+        return
+
+    # ---- Seed the driver pool from the already-sampled non-dependent
+    # items (the caller guarantees every one of those has an entry) ----
+    driver_pool = {}
+    for name, arr in consumption_samples.items():
+        driver_pool[("consumption", name)] = arr
+    for name, arr in production_samples.items():
+        driver_pool[("production", name)] = arr
+
+    # ---- Resolve dependents against the pool, allowing chains ----
+    while pending:
+        progressed = False
+        still_pending = []
+        for kind, name, dep in pending:
+            driver_key = _parse_dependency_driver(
+                dep.get("depends_on"),
+                f"{kind}_dependency on '{name}'",
+            )
+            if driver_key in driver_pool:
+                factor = dep.get("factor", 1.0)
+                offset = dep.get("offset", 0.0)
+                values = factor * driver_pool[driver_key] + offset
+                driver_pool[(kind, name)] = values
+                (consumption_samples if kind == "consumption"
+                 else production_samples)[name] = values
+                progressed = True
+            else:
+                still_pending.append((kind, name, dep))
+        pending = still_pending
+        if not progressed and pending:
+            unresolved = ", ".join(f"{k}:{n}" for k, n, _ in pending)
+            raise ValueError(
+                "Could not resolve consumption/production dependency(ies) "
+                f"for: {unresolved}. Each 'depends_on' must reference a "
+                "known variable_opex_inputs/plant_products item (directly "
+                "or transitively), and the dependency graph must not "
+                "contain a cycle."
+            )
+
+
 def monte_carlo(plant,
                  num_samples: int = 1_000_000,
                  batch_size: int = 1000,
@@ -1076,13 +1199,29 @@ def monte_carlo(plant,
         Each entry in ``variable_opex_inputs`` samples its ``"price"`` by
         default (as before); adding a ``"consumption_uncertainty"`` dict
         (with the same ``std``/``min``/``max``/``dist_id`` fields used
-        elsewhere) opts that item's ``"consumption"`` into sampling as well,
-        around its configured baseline value. Likewise, each entry in
+        elsewhere) additionally samples that item's ``"consumption"`` around
+        its configured baseline value. Likewise, each entry in
         ``plant_products`` samples ``"price"`` when all products have one
-        configured, and opts ``"production"`` into sampling via a
-        ``"production_uncertainty"`` dict. Both uncertainty sub-blocks are
-        opt-in — omitted, they leave consumption/production fixed at their
-        baseline values as before.
+        configured, and a ``"production_uncertainty"`` dict additionally
+        samples its ``"production"``. Both uncertainty sub-blocks are
+        opt-in for actual *variability* — omitted, consumption/production
+        stay fixed at their baseline value — but every item's consumption
+        and every product's production is always included in
+        ``"inputs"`` (as a constant when no uncertainty is configured), so
+        the full set of process parameters is always visible, e.g. via
+        :func:`~openpytea.plotting.plot_monte_carlo_inputs`.
+
+        Instead of its own uncertainty, a ``"consumption"``/``"production"``
+        value can be made a deterministic function of another quantity via
+        ``"consumption_dependency"``/``"production_dependency"``: a dict
+        with ``"depends_on"`` (``"production:<product>"`` or
+        ``"consumption:<item>"``), plus optional ``"factor"`` (default 1.0)
+        and ``"offset"`` (default 0.0), giving
+        ``dependent = factor * driver + offset``. Chains of dependencies
+        are resolved automatically; a dependent item must not also define
+        the matching ``*_uncertainty`` block (raises ``ValueError``), since
+        its variability comes entirely from the driver it references. See
+        :func:`_resolve_quantity_dependencies`.
     num_samples : int, optional
         Total number of Monte Carlo draws. Default is 1,000,000.
     batch_size : int, optional
@@ -1269,8 +1408,20 @@ def monte_carlo(plant,
 
         cons_cfg = props.get("consumption_uncertainty", {})
         cons_std = cons_cfg.get("std", 0)
-        if cons_std > 0 or "dist_id" in cons_cfg:
-            cons_baseline = props.get("consumption", 0)
+        has_cons_uncertainty = cons_std > 0 or "dist_id" in cons_cfg
+
+        if "consumption_dependency" in props:
+            if has_cons_uncertainty:
+                raise ValueError(
+                    f"variable_opex_inputs['{item}'] defines both "
+                    "'consumption_dependency' and "
+                    "'consumption_uncertainty'; a dependent quantity "
+                    "cannot also carry its own noise."
+                )
+            continue  # resolved later by _resolve_quantity_dependencies
+
+        cons_baseline = props.get("consumption", 0)
+        if has_cons_uncertainty:
             (c_id, c_loc, c_scale, c_shape,
              c_min, c_max) = _resolve_dist_params(
                 cons_cfg,
@@ -1282,6 +1433,13 @@ def monte_carlo(plant,
             variable_opex_consumption_samples[item] = sample_distribution(
                 c_id, num_samples, loc=c_loc, scale=c_scale, shape=c_shape,
                 minimum=c_min, maximum=c_max, random_state=rng,
+            )
+        else:
+            # No uncertainty configured: still report a constant so this
+            # process parameter always shows up alongside its price in the
+            # Monte Carlo inputs/plots (dist_id 1 is a no-op for `rng`).
+            variable_opex_consumption_samples[item] = sample_distribution(
+                1, num_samples, loc=cons_baseline, random_state=rng,
             )
 
     have_product_prices = all(
@@ -1302,8 +1460,20 @@ def monte_carlo(plant,
     for prod, props in plant.plant_products.items():
         prod_cfg = props.get("production_uncertainty", {})
         prod_std = prod_cfg.get("std", 0)
-        if prod_std > 0 or "dist_id" in prod_cfg:
-            prod_baseline = props.get("production", 0)
+        has_prod_uncertainty = prod_std > 0 or "dist_id" in prod_cfg
+
+        if "production_dependency" in props:
+            if has_prod_uncertainty:
+                raise ValueError(
+                    f"plant_products['{prod}'] defines both "
+                    "'production_dependency' and "
+                    "'production_uncertainty'; a dependent quantity "
+                    "cannot also carry its own noise."
+                )
+            continue  # resolved later by _resolve_quantity_dependencies
+
+        prod_baseline = props.get("production", 0)
+        if has_prod_uncertainty:
             (pp_id, pp_loc, pp_scale, pp_shape,
              pp_min, pp_max) = _resolve_dist_params(
                 prod_cfg,
@@ -1316,6 +1486,19 @@ def monte_carlo(plant,
                 pp_id, num_samples, loc=pp_loc, scale=pp_scale, shape=pp_shape,
                 minimum=pp_min, maximum=pp_max, random_state=rng,
             )
+        else:
+            # No uncertainty configured: still report a constant so this
+            # process parameter always shows up alongside its price in the
+            # Monte Carlo inputs/plots (dist_id 1 is a no-op for `rng`).
+            product_production_samples[prod] = sample_distribution(
+                1, num_samples, loc=prod_baseline, random_state=rng,
+            )
+
+    _resolve_quantity_dependencies(
+        plant,
+        variable_opex_consumption_samples,
+        product_production_samples,
+    )
 
     # ---- Batch calculation loop ----
     for b in tqdm(range(num_batches), desc="Monte Carlo"):
@@ -1342,10 +1525,9 @@ def monte_carlo(plant,
             plant_copy.variable_opex_inputs[item]["price"] = (
                 variable_opex_price_samples[item][start:end]
             )
-            if item in variable_opex_consumption_samples:
-                plant_copy.variable_opex_inputs[item]["consumption"] = (
-                    variable_opex_consumption_samples[item][start:end]
-                )
+            plant_copy.variable_opex_inputs[item]["consumption"] = (
+                variable_opex_consumption_samples[item][start:end]
+            )
 
         if have_product_prices:
             for prod in plant.plant_products:

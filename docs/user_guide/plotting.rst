@@ -218,13 +218,23 @@ Visualizing input distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use :func:`~openpytea.plotting.plot_monte_carlo_inputs` to verify that the
-``std``/``min``/``max`` settings produce the intended input distributions:
+``std``/``min``/``max`` settings produce the intended input distributions.
+Inputs are split into two categories: **process** parameters (consumption
+and production quantities) and **economic** parameters (prices, rates, and
+the other ``project_uncertainties`` factors). The default ``category="both"``
+builds one figure per group and returns both; pass ``category="process"`` or
+``category="economic"`` to get just one back as a plain ``(fig, axes)`` pair:
 
 .. code-block:: python
 
    from openpytea.plotting import plot_monte_carlo_inputs
 
-   fig, axes = plot_monte_carlo_inputs(mc_results, bins=40)
+   fig_process, axes_process, fig_economic, axes_economic = plot_monte_carlo_inputs(
+       mc_results, bins=40
+   )
+
+   # Or select a single group:
+   fig, axes = plot_monte_carlo_inputs(mc_results, category="process", bins=40)
 
 .. image:: ../_static/plotting/monte_carlo_inputs.png
    :width: 700px

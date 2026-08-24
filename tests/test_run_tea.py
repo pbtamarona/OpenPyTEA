@@ -158,7 +158,12 @@ def _assert_results(results, output_dir):
         "tornado",
         "sensitivity_interest_rate_case",
         "monte_carlo_lcop",
-        "monte_carlo_inputs",
+        # Every item's consumption/production is always reported (as a
+        # constant when no *_uncertainty is configured), so "process" is
+        # produced here too even though the fixture only sets price/rate
+        # uncertainty.
+        "monte_carlo_inputs_process",
+        "monte_carlo_inputs_economic",
     ):
         assert (
             output_dir / f"Test Plant_{stem}.{plot_format}"
