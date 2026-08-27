@@ -991,6 +991,37 @@ def sample_distribution(dist_id, size, loc=None, scale=None, shape=None,
     return out
 
 
+def _resolve_scale(cfg, default_scale=0.0):
+    """
+    Extract the scale/std/noise parameter from an uncertainty config dict.
+
+    ``"noise"``, ``"std"``, and ``"scale"`` are all read here as spellings
+    of the same underlying parameter -- this function alone doesn't know
+    whether ``cfg`` belongs to a dependent or not, so it accepts all three.
+    For a *dependent's* own uncertainty block specifically, the caller
+    (:func:`_collect_dependency_nodes`, via
+    :func:`_reject_std_scale_for_dependent`) requires ``"noise"`` and
+    rejects ``"std"``/``"scale"`` before this function is ever reached for
+    that block: there, this value is the standard deviation of the *noise*
+    added on top of the item's DAG-implied mean, not the standard deviation
+    of the item's own absolute value (which the dependency determines), so
+    ``"std"``/``"scale"`` would be actively misleading rather than just an
+    alternate spelling. Independent items are unaffected and keep accepting
+    all three interchangeably.
+    """
+    return cfg.get("scale", cfg.get("std", cfg.get("noise", default_scale)))
+
+
+def _has_uncertainty(cfg):
+    """
+    True if an uncertainty config dict actually specifies variability: a
+    nonzero scale/std/noise value, or an explicit ``dist_id`` (which can
+    describe a distribution, like Uniform, that has no separate scale
+    parameter of its own at all).
+    """
+    return _resolve_scale(cfg) > 0 or "dist_id" in cfg
+
+
 def _resolve_dist_params(cfg, default_loc=0.0, default_scale=0.0,
                           default_min=0, default_max=99999, default_id=3):
     """
@@ -998,9 +1029,9 @@ def _resolve_dist_params(cfg, default_loc=0.0, default_scale=0.0,
 
     Lets Monte Carlo input blocks use whichever field name reads naturally
     for that input (e.g. ``"price"`` or ``"rate"`` instead of ``"loc"``,
-    ``"std"`` instead of ``"scale"``, ``"min"``/``"max"`` instead of
-    ``"minimum"``/``"maximum"``) while normalizing them to the positional
-    arguments expected by :func:`make_distribution` /
+    ``"std"``/``"noise"`` instead of ``"scale"``, ``"min"``/``"max"``
+    instead of ``"minimum"``/``"maximum"``) while normalizing them to the
+    positional arguments expected by :func:`make_distribution` /
     :func:`sample_distribution`.
 
     Parameters
@@ -1009,14 +1040,14 @@ def _resolve_dist_params(cfg, default_loc=0.0, default_scale=0.0,
         Uncertainty configuration for one input, e.g. an entry from
         ``plant.project_uncertainties``, ``plant.variable_opex_inputs``, or
         ``plant.plant_products``. Recognized keys: ``dist_id``, ``loc``,
-        ``mean``, ``price``, ``rate``, ``scale``, ``std``, ``shape``,
-        ``minimum``, ``min``, ``maximum``, ``max``.
+        ``mean``, ``price``, ``rate``, ``scale``, ``std``, ``noise``,
+        ``shape``, ``minimum``, ``min``, ``maximum``, ``max``.
     default_loc : float, optional
         Fallback for ``loc`` when none of ``loc``/``mean``/``price``/``rate``
         is present in ``cfg``. Default is 0.0.
     default_scale : float, optional
-        Fallback for ``scale`` when neither ``scale`` nor ``std`` is present
-        in ``cfg``. Default is 0.0.
+        Fallback for ``scale`` when none of ``scale``/``std``/``noise`` is
+        present in ``cfg``. Default is 0.0.
     default_min : float, optional
         Fallback for ``minimum`` when neither ``minimum`` nor ``min`` is
         present in ``cfg``. Default is 0.
@@ -1034,16 +1065,70 @@ def _resolve_dist_params(cfg, default_loc=0.0, default_scale=0.0,
         as arguments to :func:`make_distribution` or
         :func:`sample_distribution`. ``shape`` is ``None`` unless ``cfg``
         sets it explicitly.
+
+    See Also
+    --------
+    _resolve_scale : Just the scale/std/noise extraction, used on its own
+        where the rest of the distribution config isn't needed yet.
     """
     dist_id = cfg.get("dist_id", default_id)
     loc = cfg.get(
         "loc", cfg.get("mean", cfg.get("price", cfg.get("rate", default_loc)))
     )
-    scale = cfg.get("scale", cfg.get("std", default_scale))
+    scale = _resolve_scale(cfg, default_scale)
     shape = cfg.get("shape")
     minimum = cfg.get("minimum", cfg.get("min", default_min))
     maximum = cfg.get("maximum", cfg.get("max", default_max))
     return dist_id, loc, scale, shape, minimum, maximum
+
+
+def _resolve_price_dist_params(props):
+    """
+    Extract price-uncertainty ``(dist_id, loc, scale, shape, minimum,
+    maximum)`` for one ``variable_opex_inputs``/``plant_products`` item.
+
+    Preferred form: a nested ``"price_uncertainty"`` sub-dict (same
+    ``std``/``min``/``max``/``dist_id`` fields as ``consumption_uncertainty``/
+    ``production_uncertainty``), mirroring how every other per-item
+    uncertainty block is namespaced. ``"loc"``/``"mean"`` inside it default
+    to the item's own ``"price"``.
+
+    Backward-compatible fallback: if ``"price_uncertainty"`` is absent, the
+    distribution fields are read directly off ``props`` instead (the
+    pre-``price_uncertainty`` layout, where ``dist_id``/``std``/``min``/
+    ``max`` sat alongside ``"price"`` at the top level of the item). This
+    keeps configs written before ``price_uncertainty`` existed working
+    unchanged; it is not the recommended layout for new configs.
+
+    Parameters
+    ----------
+    props : dict
+        One item's full config dict (e.g. ``plant.variable_opex_inputs["electricity"]``
+        or ``plant.plant_products["methanol"]``).
+
+    Returns
+    -------
+    tuple
+        ``(dist_id, loc, scale, shape, minimum, maximum)``, as returned by
+        :func:`_resolve_dist_params`.
+    """
+    price_cfg = props.get("price_uncertainty")
+    if price_cfg is not None:
+        return _resolve_dist_params(
+            price_cfg, default_loc=props.get("price", 0.0),
+        )
+    return _resolve_dist_params(props)
+
+
+# The seven economic "scalar" parameters that can participate in the
+# dependency DAG as ("project", <name>) nodes: the six plant.project_uncertainties
+# entries plus operator_hourly_rate (which lives in its own config dict but
+# is otherwise treated identically). Unlike process parameters, these don't
+# come from a per-item collection, so there is exactly one node per name.
+_PROJECT_SCALAR_PARAMS = (
+    "fixed_capital_factor", "fixed_opex_factor", "project_lifetime",
+    "interest_rate", "plant_utilization", "tax_rate", "operator_hourly_rate",
+)
 
 
 def _parse_dependency_driver(spec, context):
@@ -1053,9 +1138,10 @@ def _parse_dependency_driver(spec, context):
     Parameters
     ----------
     spec : str
-        Expected form ``"production:<product>"`` or
-        ``"consumption:<item>"``, referencing a ``plant_products`` or
-        ``variable_opex_inputs`` entry respectively.
+        Expected form ``"production:<product>"``, ``"consumption:<item>"``,
+        or ``"project:<param>"``, referencing a ``plant_products`` entry, a
+        ``variable_opex_inputs`` entry, or one of the economic scalars in
+        :data:`_PROJECT_SCALAR_PARAMS` respectively.
     context : str
         Human-readable description of where ``spec`` came from, used in the
         error message.
@@ -1063,45 +1149,288 @@ def _parse_dependency_driver(spec, context):
     Returns
     -------
     tuple
-        ``(kind, name)`` where ``kind`` is ``"production"`` or
-        ``"consumption"``.
+        ``(kind, name)`` where ``kind`` is ``"production"``,
+        ``"consumption"``, or ``"project"``.
     """
     if not isinstance(spec, str) or ":" not in spec:
         raise ValueError(
             f"Invalid 'depends_on' value {spec!r} for {context}; expected "
-            "'production:<product>' or 'consumption:<item>'."
+            "'production:<product>', 'consumption:<item>', or "
+            "'project:<param>'."
         )
     kind, name = spec.split(":", 1)
-    if kind not in ("production", "consumption"):
+    if kind not in ("production", "consumption", "project"):
         raise ValueError(
             f"Invalid 'depends_on' kind {kind!r} for {context}; must be "
-            "'production' or 'consumption'."
+            "'production', 'consumption', or 'project'."
+        )
+    if kind == "project" and name not in _PROJECT_SCALAR_PARAMS:
+        raise ValueError(
+            f"Invalid 'depends_on' reference 'project:{name}' for "
+            f"{context}; 'project:' must name one of "
+            f"{sorted(_PROJECT_SCALAR_PARAMS)}."
         )
     return kind, name
 
 
-def _resolve_quantity_dependencies(plant, consumption_samples,
-                                    production_samples):
-    """
-    Resolve consumption/production quantities defined as a linear function
-    of another quantity, adding them to ``consumption_samples`` /
-    ``production_samples`` in place.
+def _describe_dependency_node(kind, name):
+    """Human-readable description of a ``(kind, name)`` DAG node, for errors."""
+    if kind == "consumption":
+        return f"variable_opex_inputs['{name}']'s consumption_uncertainty"
+    if kind == "production":
+        return f"plant_products['{name}']'s production_uncertainty"
+    if name == "operator_hourly_rate":
+        return "operator_hourly_rate's uncertainty fields"
+    return f"project_uncertainties['{name}']'s uncertainty fields"
 
-    An item opts in by setting ``"consumption_dependency"`` (on a
-    ``variable_opex_inputs`` entry) or ``"production_dependency"`` (on a
-    ``plant_products`` entry) to a dict with a ``"depends_on"`` string
-    (``"production:<product>"`` or ``"consumption:<item>"``), plus optional
-    ``"factor"`` (default 1.0) and ``"offset"`` (default 0.0):
-    ``dependent = factor * driver + offset``. Such "dependent" quantities
-    carry no noise of their own — their variability comes entirely from the
-    driver they reference, directly or transitively — so they must not also
-    define ``"consumption_uncertainty"``/``"production_uncertainty"``
-    (enforced by the caller before this runs).
+
+def _reject_std_scale_for_dependent(cfg, kind, name):
+    """
+    Raise ``ValueError`` if a dependent's own uncertainty block sets
+    ``"std"``/``"scale"`` -- only ``"noise"`` is accepted there.
+
+    For a dependent, this value is the standard deviation of the noise
+    added on top of its DAG-implied mean, not the item's own standard
+    deviation (the dependency, not this field, determines that), so
+    ``"std"``/``"scale"`` would be actively misleading rather than just an
+    alternate spelling of the same thing. Independent items are unaffected:
+    their uncertainty still accepts ``"std"``/``"scale"``/``"noise"``
+    interchangeably via :func:`_resolve_scale`.
+    """
+    bad_keys = sorted(set(cfg) & {"std", "scale"})
+    if bad_keys:
+        raise ValueError(
+            f"{_describe_dependency_node(kind, name)} sets {bad_keys}, but "
+            "a dependent's own noise must be specified via \"noise\" "
+            "instead of \"std\"/\"scale\" -- those describe an item's own "
+            "absolute value, which no longer applies once a dependency is "
+            "defined."
+        )
+
+
+def _collect_dependency_nodes(plant):
+    """
+    Scan the plant for every dependency-capable node, returning
+    ``(dependents, noise_cfg)`` dicts keyed by ``(kind, name)``.
+
+    A node opts in as a dependent by setting ``"consumption_dependency"``/
+    ``"production_dependency"`` (on a ``variable_opex_inputs``/
+    ``plant_products`` item) or ``"dependency"`` (on a
+    ``plant.project_uncertainties`` entry or ``plant.operator_hourly_rate``,
+    for the seven economic scalars in :data:`_PROJECT_SCALAR_PARAMS`) to a
+    dict with ``"depends_on"``/``"offset"``.
+
+    A dependent's own noise reuses whichever uncertainty fields that kind
+    already has: the matching ``"consumption_uncertainty"``/
+    ``"production_uncertainty"`` sub-dict for process nodes, or the
+    ``noise``/``dist_id``/etc. fields already sitting alongside
+    ``"dependency"`` for project nodes (there is no separate
+    ``"project_uncertainty"`` sub-block). Only ``"noise"`` is accepted for
+    the scale parameter there -- ``"std"``/``"scale"`` raise ``ValueError``
+    (see :func:`_reject_std_scale_for_dependent`).
+    """
+    dependents = {}
+    noise_cfg = {}
+
+    for item, props in plant.variable_opex_inputs.items():
+        dep = props.get("consumption_dependency")
+        if dep is not None:
+            key = ("consumption", item)
+            dependents[key] = dep
+            unc = props.get("consumption_uncertainty", {})
+            _reject_std_scale_for_dependent(unc, "consumption", item)
+            if _has_uncertainty(unc):
+                noise_cfg[key] = unc
+
+    for prod, props in plant.plant_products.items():
+        dep = props.get("production_dependency")
+        if dep is not None:
+            key = ("production", prod)
+            dependents[key] = dep
+            unc = props.get("production_uncertainty", {})
+            _reject_std_scale_for_dependent(unc, "production", prod)
+            if _has_uncertainty(unc):
+                noise_cfg[key] = unc
+
+    pu = plant.project_uncertainties
+    for name in _PROJECT_SCALAR_PARAMS:
+        props = (plant.operator_hourly_rate if name == "operator_hourly_rate"
+                 else pu.get(name, {}))
+        dep = props.get("dependency")
+        if dep is not None:
+            key = ("project", name)
+            dependents[key] = dep
+            _reject_std_scale_for_dependent(props, "project", name)
+            if _has_uncertainty(props):
+                noise_cfg[key] = props
+
+    return dependents, noise_cfg
+
+
+def _ensure_driver_available(plant, key, num_samples, driver_pool):
+    """
+    True if ``key`` is (or was just lazily seeded as) present in
+    ``driver_pool``.
+
+    ``plant_utilization`` and ``tax_rate`` are opt-in: unless configured
+    with their own uncertainty (or a dependency), they're never
+    independently sampled, so a *reference* to one from another node's
+    ``depends_on`` falls back here to a constant at the plant's baseline
+    value. Every other node kind is always independently sampled by the
+    caller before dependency resolution runs, so it's always already in
+    ``driver_pool`` by the time this is reached.
+    """
+    if key in driver_pool:
+        return True
+    kind, name = key
+    if kind == "project" and name == "plant_utilization":
+        driver_pool[key] = np.full(num_samples, plant.plant_utilization)
+        return True
+    if kind == "project" and name == "tax_rate":
+        driver_pool[key] = np.full(num_samples, plant.tax_rate)
+        return True
+    return False
+
+
+def _apply_correlated_dependency_noise(unit, means, noise_cfg, correlations,
+                                        num_samples, rng):
+    """
+    Jointly sample correlated Normal noise for a group of dependents whose
+    DAG-implied (parents-only) means are already known, returning
+    ``{key: final_value}`` with each member's noise added on top of its
+    mean.
+
+    Every member's own noise must be Normal (``dist_id`` 0, 1, or the
+    default 3) and untruncated — a multivariate Normal draw can't honor an
+    arbitrary marginal family or a min/max bound on one component without
+    breaking the requested correlation. Pairs within ``unit`` not named in
+    ``correlations`` default to zero correlation.
+
+    Parameters
+    ----------
+    unit : list of (str, str)
+        ``(kind, name)`` keys of the correlated group, fixing column order.
+    means : dict
+        ``{key: array}`` DAG-implied mean for each member (pre-noise).
+    noise_cfg : dict
+        ``{key: uncertainty_dict}`` for every noise-bearing dependent.
+    correlations : dict
+        ``{frozenset({key_a, key_b}): correlation}`` for named pairs.
+    num_samples : int
+        Number of Monte Carlo draws.
+    rng : numpy.random.Generator
+        Shared RNG, advanced by this call.
+
+    Raises
+    ------
+    ValueError
+        If a member's noise isn't a plain (untruncated) Normal, or the
+        pairwise correlations don't form a valid (positive semi-definite)
+        covariance matrix.
+    """
+    locs, stds = [], []
+    for key in unit:
+        kind, name = key
+        unc = noise_cfg[key]
+        dist_id, loc, scale, _, _, _ = _resolve_dist_params(
+            unc, default_loc=0.0, default_scale=0.0,
+        )
+        if dist_id not in (0, 1, 3):
+            raise ValueError(
+                f"{_describe_dependency_node(kind, name)} uses "
+                f"dist_id={dist_id}, but correlated dependency noise (via "
+                "dependency_noise_correlations) only supports the Normal "
+                "family (dist_id 3, the default) for every item in a "
+                "correlated group."
+            )
+        if any(k in unc for k in ("min", "max", "minimum", "maximum")):
+            raise ValueError(
+                f"{_describe_dependency_node(kind, name)} sets a min/max "
+                "truncation bound, which is not supported for correlated "
+                "dependency noise (via dependency_noise_correlations)."
+            )
+        locs.append(loc)
+        stds.append(scale)
+
+    n = len(unit)
+    cov = np.diag(np.square(stds).astype(float))
+    for i in range(n):
+        for j in range(i + 1, n):
+            r = correlations.get(frozenset((unit[i], unit[j])), 0.0)
+            cov[i, j] = cov[j, i] = r * stds[i] * stds[j]
+
+    try:
+        draws = rng.multivariate_normal(
+            mean=locs, cov=cov, size=num_samples, check_valid="raise",
+        )
+    except ValueError as e:
+        names = ", ".join(f"{k}:{n}" for k, n in unit)
+        raise ValueError(
+            f"The correlations specified for the noise group ({names}) "
+            "do not form a valid covariance matrix (must be positive "
+            f"semi-definite): {e}"
+        ) from e
+
+    return {key: means[key] + draws[:, i] for i, key in enumerate(unit)}
+
+
+def _resolve_quantity_dependencies(plant, num_samples, consumption_samples,
+                                    production_samples, project_samples, rng):
+    """
+    Resolve quantities defined as a function of one or more other
+    quantities, adding them to ``consumption_samples``/
+    ``production_samples``/``project_samples`` in place.
+
+    This is a small structural causal model over the plant's process *and*
+    economic parameters: nodes are ``variable_opex_inputs`` consumption,
+    ``plant_products`` production, and the seven economic scalars in
+    :data:`_PROJECT_SCALAR_PARAMS` (``plant.project_uncertainties`` entries
+    plus ``operator_hourly_rate``) — any of them can be a parent, a
+    dependent, or both, e.g. a higher production capacity driving up
+    ``fixed_capital_factor``. A node becomes a dependent ("child") by
+    setting ``"consumption_dependency"``/``"production_dependency"`` (process
+    nodes) or ``"dependency"`` (economic scalars) to a dict with:
+
+    - ``"depends_on"``: a non-empty dict mapping one or more parent
+      references (``"production:<product>"``, ``"consumption:<item>"``, or
+      ``"project:<param>"``) to their linear weight, e.g.
+      ``{"production:methanol": 9.3}``.
+    - ``"offset"`` (default 0.0).
+
+    giving ``dependent = sum(weight_i * parent_i) + offset``, where each
+    ``parent_i`` is that parent's own *final* value (its DAG mean plus its
+    own noise, if any) — noise therefore propagates downstream through the
+    graph. Parents are resolved before their children via repeated passes
+    over the pending set (a node/group becomes resolvable once every one of
+    its parents already has a final value); a pass that makes no progress
+    means the remainder is unresolvable, due to an unknown reference or a
+    cycle. ``plant_utilization``/``tax_rate`` are the only nodes not always
+    already sampled going in (they're opt-in); a reference to one that
+    isn't independently varying falls back to a constant at its baseline
+    (see :func:`_ensure_driver_available`).
+
+    A dependent may *also* define its matching uncertainty fields: unlike a
+    non-dependent (whose uncertainty parameterizes its absolute value,
+    ``loc`` defaulting to its baseline), for a dependent this is additive
+    noise on top of the DAG mean, with ``loc`` defaulting to 0 and the
+    scale parameter required as ``"noise"`` rather than ``"std"``/``"scale"``
+    (which raise ``ValueError`` there -- see
+    :func:`_reject_std_scale_for_dependent`). Process nodes read this from
+    their separate ``"consumption_uncertainty"``/``"production_uncertainty"``
+    sub-dict; economic scalars reuse whichever ``noise``/``dist_id``/etc.
+    fields already sit alongside ``"dependency"`` (see
+    :func:`_collect_dependency_nodes`). By default each dependent's
+    noise is independent; entries in ``plant.dependency_noise_correlations``
+    (see :func:`_apply_correlated_dependency_noise`) instead draw a whole
+    connected group's noise jointly from a multivariate Normal, so e.g. two
+    utilities' consumption can move together.
 
     Parameters
     ----------
     plant : Plant
         The plant being simulated; read-only here.
+    num_samples : int
+        Number of Monte Carlo draws.
     consumption_samples : dict
         ``variable_opex_inputs`` samples for every non-dependent item
         (sampled if ``"consumption_uncertainty"`` was set, otherwise a
@@ -1110,62 +1439,181 @@ def _resolve_quantity_dependencies(plant, consumption_samples,
         ``plant_products`` samples for every non-dependent item (sampled if
         ``"production_uncertainty"`` was set, otherwise a constant at
         baseline); mutated in place with resolved dependents.
+    project_samples : dict
+        Samples for every independently-varying economic scalar (see
+        :data:`_PROJECT_SCALAR_PARAMS`) already sampled by the caller, keyed
+        by param name (``plant_utilization``/``tax_rate`` may be absent if
+        not independently configured); mutated in place with resolved
+        dependents.
+    rng : numpy.random.Generator
+        Shared RNG, advanced by this call for any dependents' own noise.
 
     Raises
     ------
     ValueError
-        If a ``"depends_on"`` reference is malformed, points at an unknown
-        item, or the dependency graph has a cycle.
+        If a ``"depends_on"`` entry is malformed or points at an unknown
+        item, the dependency graph has a cycle, or
+        ``dependency_noise_correlations`` is malformed or invalid (see
+        :func:`_apply_correlated_dependency_noise`).
     """
-    pending = []
-    for item, props in plant.variable_opex_inputs.items():
-        dep = props.get("consumption_dependency")
-        if dep is not None:
-            pending.append(("consumption", item, dep))
-    for prod, props in plant.plant_products.items():
-        dep = props.get("production_dependency")
-        if dep is not None:
-            pending.append(("production", prod, dep))
+    dependents, noise_cfg = _collect_dependency_nodes(plant)
 
-    if not pending:
+    if not dependents:
         return
 
+    # ---- Group dependents by noise-correlation connectivity (union-find);
+    # a dependent named in no correlation entry ends up alone in its own
+    # group, resolved/noised independently ----
+    uf_parent = {key: key for key in dependents}
+
+    def _find(x):
+        while uf_parent[x] != x:
+            uf_parent[x] = uf_parent[uf_parent[x]]
+            x = uf_parent[x]
+        return x
+
+    def _union(a, b):
+        ra, rb = _find(a), _find(b)
+        if ra != rb:
+            uf_parent[ra] = rb
+
+    correlations = {}
+    for entry in (plant.dependency_noise_correlations or []):
+        spec_a, spec_b = entry["between"]
+        key_a = _parse_dependency_driver(spec_a, "dependency_noise_correlations entry")
+        key_b = _parse_dependency_driver(spec_b, "dependency_noise_correlations entry")
+        for key, spec in ((key_a, spec_a), (key_b, spec_b)):
+            if key not in noise_cfg:
+                raise ValueError(
+                    f"dependency_noise_correlations references {spec!r}, "
+                    "which must be a dependent node (has a "
+                    "consumption_dependency/production_dependency/"
+                    "dependency) that also defines its own uncertainty."
+                )
+        correlations[frozenset((key_a, key_b))] = entry["correlation"]
+        _union(key_a, key_b)
+
+    groups = {}
+    for key in dependents:
+        groups.setdefault(_find(key), []).append(key)
+
     # ---- Seed the driver pool from the already-sampled non-dependent
-    # items (the caller guarantees every one of those has an entry) ----
+    # nodes (the caller guarantees every one of those has an entry, except
+    # possibly plant_utilization/tax_rate -- see _ensure_driver_available) ----
     driver_pool = {}
     for name, arr in consumption_samples.items():
         driver_pool[("consumption", name)] = arr
     for name, arr in production_samples.items():
         driver_pool[("production", name)] = arr
+    for name, arr in project_samples.items():
+        driver_pool[("project", name)] = arr
 
-    # ---- Resolve dependents against the pool, allowing chains ----
-    while pending:
+    # ---- Resolve one unit (a single dependent, or a correlated group of
+    # them) at a time, once every member's parents already have a final
+    # value, allowing chains of arbitrary depth and multi-parent nodes ----
+    pending_units = list(groups.values())
+    while pending_units:
         progressed = False
         still_pending = []
-        for kind, name, dep in pending:
-            driver_key = _parse_dependency_driver(
-                dep.get("depends_on"),
-                f"{kind}_dependency on '{name}'",
-            )
-            if driver_key in driver_pool:
-                factor = dep.get("factor", 1.0)
+        for unit in pending_units:
+            member_parents = {}
+            ready = True
+            for key in unit:
+                kind, name = key
+                dep = dependents[key]
+                weights = dep.get("depends_on")
+                context = (
+                    f"the 'dependency' block for project parameter '{name}'"
+                    if kind == "project" else f"{kind}_dependency on '{name}'"
+                )
+                if not isinstance(weights, dict) or not weights:
+                    raise ValueError(
+                        f"'depends_on' for {context} must be a non-empty "
+                        "dict mapping driver references to factors, e.g. "
+                        "{'production:methanol': 9.3}."
+                    )
+                parsed = {}
+                for spec, factor in weights.items():
+                    if not isinstance(factor, (int, float)):
+                        raise ValueError(
+                            f"'depends_on' factor for {spec!r} in "
+                            f"{context} must be a number, got {factor!r}."
+                        )
+                    parsed[_parse_dependency_driver(spec, context)] = factor
+                member_parents[key] = parsed
+                if not all(
+                    _ensure_driver_available(plant, pk, num_samples, driver_pool)
+                    for pk in parsed
+                ):
+                    ready = False
+
+            if not ready:
+                still_pending.append(unit)
+                continue
+
+            means = {}
+            for key in unit:
+                dep = dependents[key]
                 offset = dep.get("offset", 0.0)
-                values = factor * driver_pool[driver_key] + offset
-                driver_pool[(kind, name)] = values
-                (consumption_samples if kind == "consumption"
-                 else production_samples)[name] = values
-                progressed = True
+                value = None
+                for parent_key, factor in member_parents[key].items():
+                    term = factor * driver_pool[parent_key]
+                    value = term if value is None else value + term
+                means[key] = value + offset
+
+            if len(unit) == 1:
+                key = unit[0]
+                if key in noise_cfg:
+                    unc = noise_cfg[key]
+                    noise_std = _resolve_scale(unc)
+                    dist_id, loc, scale, shape, minimum, maximum = (
+                        _resolve_dist_params(
+                            unc,
+                            default_loc=0.0,
+                            default_scale=noise_std,
+                            default_min=-2 * noise_std,
+                            default_max=2 * noise_std,
+                        )
+                    )
+                    noise = sample_distribution(
+                        dist_id, num_samples, loc=loc, scale=scale,
+                        shape=shape, minimum=minimum, maximum=maximum,
+                        random_state=rng,
+                    )
+                    finals = {key: means[key] + noise}
+                else:
+                    finals = means
             else:
-                still_pending.append((kind, name, dep))
-        pending = still_pending
-        if not progressed and pending:
-            unresolved = ", ".join(f"{k}:{n}" for k, n, _ in pending)
+                finals = _apply_correlated_dependency_noise(
+                    unit, means, noise_cfg, correlations, num_samples, rng,
+                )
+
+            for key, value in finals.items():
+                driver_pool[key] = value
+                kind, name = key
+                if kind == "consumption":
+                    consumption_samples[name] = value
+                elif kind == "production":
+                    production_samples[name] = value
+                else:
+                    project_samples[name] = value
+            progressed = True
+
+        pending_units = still_pending
+        if not progressed and pending_units:
+            unresolved = ", ".join(
+                f"{k}:{n}" for unit in pending_units for k, n in unit
+            )
             raise ValueError(
-                "Could not resolve consumption/production dependency(ies) "
-                f"for: {unresolved}. Each 'depends_on' must reference a "
-                "known variable_opex_inputs/plant_products item (directly "
-                "or transitively), and the dependency graph must not "
-                "contain a cycle."
+                "Could not resolve consumption/production/project "
+                f"dependency(ies) for: {unresolved}. Each 'depends_on' "
+                "entry must reference a known variable_opex_inputs/"
+                "plant_products item or one of "
+                f"{sorted(_PROJECT_SCALAR_PARAMS)} (directly or "
+                "transitively), and the dependency DAG must not contain a "
+                "cycle (a correlated noise pair that also has a direct "
+                "dependency relationship counts as a cycle here, since "
+                "both would need to be resolved before the other)."
             )
 
 
@@ -1211,17 +1659,43 @@ def monte_carlo(plant,
         the full set of process parameters is always visible, e.g. via
         :func:`~openpytea.plotting.plot_monte_carlo_inputs`.
 
-        Instead of its own uncertainty, a ``"consumption"``/``"production"``
-        value can be made a deterministic function of another quantity via
+        A ``"consumption"``/``"production"`` value can also be made a
+        function of one or more *other* quantities via
         ``"consumption_dependency"``/``"production_dependency"``: a dict
-        with ``"depends_on"`` (``"production:<product>"`` or
-        ``"consumption:<item>"``), plus optional ``"factor"`` (default 1.0)
-        and ``"offset"`` (default 0.0), giving
-        ``dependent = factor * driver + offset``. Chains of dependencies
-        are resolved automatically; a dependent item must not also define
-        the matching ``*_uncertainty`` block (raises ``ValueError``), since
-        its variability comes entirely from the driver it references. See
-        :func:`_resolve_quantity_dependencies`.
+        with ``"depends_on"`` — a non-empty dict mapping one or more parent
+        references to their linear weight — plus an optional ``"offset"``
+        (default 0.0), giving ``dependent = sum(weight_i * parent_i) +
+        offset``. A parent reference is ``"production:<product>"``,
+        ``"consumption:<item>"``, or ``"project:<param>"`` — the last
+        naming one of the seven economic scalars in
+        :data:`_PROJECT_SCALAR_PARAMS` (the six ``project_uncertainties``
+        entries plus ``operator_hourly_rate``), which are dependency-capable
+        the same way via a ``"dependency"`` key of their own — so a process
+        parameter and an economic one can drive each other in either
+        direction, e.g. ``fixed_capital_factor`` scaling up with production
+        capacity. Together, every dependent (process or economic) forms a
+        small DAG (nodes are these parameters, edges are the ``depends_on``
+        references) that's resolved in topological order — chains and
+        multi-parent nodes work automatically, using each parent's own
+        *final* value (its mean plus any noise of its own), so noise
+        propagates downstream through the graph; a cycle raises
+        ``ValueError``. A dependent may *also* define its matching
+        uncertainty fields (the ``*_uncertainty`` sub-dict for process
+        nodes; the same ``noise``/``dist_id``/etc. fields already sitting
+        alongside ``"dependency"`` for economic scalars): unlike a
+        non-dependent, this becomes additive noise on top of the DAG-implied
+        mean (``loc`` defaults to 0, not the baseline, and the scale
+        parameter must be ``"noise"`` — ``"std"``/``"scale"`` raise
+        ``ValueError`` for a dependent). By default each
+        dependent's noise is independent; ``plant.dependency_noise_correlations``
+        — a list of ``{"between": [node_a, node_b], "correlation": r}``
+        entries pairing two noise-bearing dependents by the same
+        ``"kind:name"`` references used in ``depends_on`` — instead draws a
+        connected group's noise jointly from a multivariate Normal (both
+        members must use the Normal family, untruncated). See
+        :func:`_resolve_quantity_dependencies`,
+        :func:`_collect_dependency_nodes`, and
+        :func:`_apply_correlated_dependency_noise`.
     num_samples : int, optional
         Total number of Monte Carlo draws. Default is 1,000,000.
     batch_size : int, optional
@@ -1305,7 +1779,7 @@ def monte_carlo(plant,
     )
 
     lt_cfg = pu.get("project_lifetime", {})
-    lt_std_default = lt_cfg.get("std", 5)
+    lt_std_default = _resolve_scale(lt_cfg, 5)
     lt_id, lt_loc, lt_scale, lt_shape, lt_min, lt_max = _resolve_dist_params(
         lt_cfg,
         default_loc=plant.project_lifetime,
@@ -1315,7 +1789,7 @@ def monte_carlo(plant,
     )
 
     ir_cfg = pu.get("interest_rate", {})
-    ir_std_default = ir_cfg.get("std", 0.03)
+    ir_std_default = _resolve_scale(ir_cfg, 0.03)
     ir_id, ir_loc, ir_scale, ir_shape, ir_min, ir_max = _resolve_dist_params(
         ir_cfg,
         default_loc=plant.interest_rate,
@@ -1324,9 +1798,17 @@ def monte_carlo(plant,
         default_max=plant.interest_rate + 2 * ir_std_default,
     )
 
+    # ---- project_samples collects every independently-sampled economic
+    # scalar (see _PROJECT_SCALAR_PARAMS), feeding the dependency DAG below
+    # both as potential drivers and to receive any of these seven that are
+    # themselves dependents. A param with its own "dependency" key skips
+    # sampling here entirely -- _resolve_quantity_dependencies fills it in.
+    project_samples = {}
+
     pu_util_cfg = pu.get("plant_utilization", {})
-    pu_util_std = pu_util_cfg.get("std", 0)
-    if pu_util_std > 0 or "dist_id" in pu_util_cfg:
+    pu_util_std = _resolve_scale(pu_util_cfg, 0)
+    pu_util_is_dependent = pu_util_cfg.get("dependency") is not None
+    if not pu_util_is_dependent and _has_uncertainty(pu_util_cfg):
         pu_util_mean = plant.plant_utilization
         (util_id, util_loc, util_scale, util_shape,
          util_min, util_max) = _resolve_dist_params(
@@ -1336,17 +1818,16 @@ def monte_carlo(plant,
             default_min=max(0.0, pu_util_mean - 2 * pu_util_std),
             default_max=min(1.0, pu_util_mean + 2 * pu_util_std),
         )
-        plant_utilizations = sample_distribution(
+        project_samples["plant_utilization"] = sample_distribution(
             util_id, num_samples, loc=util_loc, scale=util_scale,
             shape=util_shape, minimum=util_min, maximum=util_max,
             random_state=rng,
         )
-    else:
-        plant_utilizations = None
 
     tr_cfg = pu.get("tax_rate", {})
-    tr_std = tr_cfg.get("std", 0)
-    if tr_std > 0 or "dist_id" in tr_cfg:
+    tr_std = _resolve_scale(tr_cfg, 0)
+    tr_is_dependent = tr_cfg.get("dependency") is not None
+    if not tr_is_dependent and _has_uncertainty(tr_cfg):
         tr_mean = plant.tax_rate
         (tr_id, tr_loc, tr_scale, tr_shape,
          tr_min, tr_max) = _resolve_dist_params(
@@ -1356,13 +1837,11 @@ def monte_carlo(plant,
             default_min=max(0.0, tr_mean - 2 * tr_std),
             default_max=min(1.0, tr_mean + 2 * tr_std),
         )
-        tax_rates = sample_distribution(
+        project_samples["tax_rate"] = sample_distribution(
             tr_id, num_samples, loc=tr_loc, scale=tr_scale,
             shape=tr_shape, minimum=tr_min, maximum=tr_max,
             random_state=rng,
         )
-    else:
-        tax_rates = None
 
     # ---- Operator hourly rate ----
     op_cfg = plant.operator_hourly_rate
@@ -1370,55 +1849,56 @@ def monte_carlo(plant,
         op_cfg, default_loc=38.11, default_scale=10, default_min=10, default_max=100,
     )
 
-    # ---- Sample ALL inputs once ----
-    fixed_capitals = sample_distribution(
-        fc_id, num_samples, loc=fc_loc, scale=fc_scale, shape=fc_shape,
-        minimum=fc_min, maximum=fc_max, random_state=rng,
-    )
+    # ---- Sample ALL inputs once (skipping any that are themselves a
+    # dependent, deferred to _resolve_quantity_dependencies below) ----
+    if pu.get("fixed_capital_factor", {}).get("dependency") is None:
+        project_samples["fixed_capital_factor"] = sample_distribution(
+            fc_id, num_samples, loc=fc_loc, scale=fc_scale, shape=fc_shape,
+            minimum=fc_min, maximum=fc_max, random_state=rng,
+        )
 
-    fixed_opexs = sample_distribution(
-        fo_id, num_samples, loc=fo_loc, scale=fo_scale, shape=fo_shape,
-        minimum=fo_min, maximum=fo_max, random_state=rng,
-    )
+    if pu.get("fixed_opex_factor", {}).get("dependency") is None:
+        project_samples["fixed_opex_factor"] = sample_distribution(
+            fo_id, num_samples, loc=fo_loc, scale=fo_scale, shape=fo_shape,
+            minimum=fo_min, maximum=fo_max, random_state=rng,
+        )
 
-    operator_hourlys = sample_distribution(
-        op_id, num_samples, loc=op_loc, scale=op_scale, shape=op_shape,
-        minimum=op_min, maximum=op_max, random_state=rng,
-    )
+    if op_cfg.get("dependency") is None:
+        project_samples["operator_hourly_rate"] = sample_distribution(
+            op_id, num_samples, loc=op_loc, scale=op_scale, shape=op_shape,
+            minimum=op_min, maximum=op_max, random_state=rng,
+        )
 
-    project_lifetimes = sample_distribution(
-        lt_id, num_samples, loc=lt_loc, scale=lt_scale, shape=lt_shape,
-        minimum=lt_min, maximum=lt_max, random_state=rng,
-    )
+    if pu.get("project_lifetime", {}).get("dependency") is None:
+        project_samples["project_lifetime"] = sample_distribution(
+            lt_id, num_samples, loc=lt_loc, scale=lt_scale, shape=lt_shape,
+            minimum=lt_min, maximum=lt_max, random_state=rng,
+        )
 
-    interests = sample_distribution(
-        ir_id, num_samples, loc=ir_loc, scale=ir_scale, shape=ir_shape,
-        minimum=ir_min, maximum=ir_max, random_state=rng,
-    )
+    if pu.get("interest_rate", {}).get("dependency") is None:
+        project_samples["interest_rate"] = sample_distribution(
+            ir_id, num_samples, loc=ir_loc, scale=ir_scale, shape=ir_shape,
+            minimum=ir_min, maximum=ir_max, random_state=rng,
+        )
 
     variable_opex_price_samples = {}
     variable_opex_consumption_samples = {}
     for item, props in plant.variable_opex_inputs.items():
         (v_id, v_loc, v_scale, v_shape,
-         v_min, v_max) = _resolve_dist_params(props)
+         v_min, v_max) = _resolve_price_dist_params(props)
         variable_opex_price_samples[item] = sample_distribution(
             v_id, num_samples, loc=v_loc, scale=v_scale, shape=v_shape,
             minimum=v_min, maximum=v_max, random_state=rng,
         )
 
         cons_cfg = props.get("consumption_uncertainty", {})
-        cons_std = cons_cfg.get("std", 0)
-        has_cons_uncertainty = cons_std > 0 or "dist_id" in cons_cfg
+        cons_std = _resolve_scale(cons_cfg, 0)
+        has_cons_uncertainty = _has_uncertainty(cons_cfg)
 
         if "consumption_dependency" in props:
-            if has_cons_uncertainty:
-                raise ValueError(
-                    f"variable_opex_inputs['{item}'] defines both "
-                    "'consumption_dependency' and "
-                    "'consumption_uncertainty'; a dependent quantity "
-                    "cannot also carry its own noise."
-                )
-            continue  # resolved later by _resolve_quantity_dependencies
+            # Deterministic (DAG) mean, plus any noise on top of it, is
+            # resolved later by _resolve_quantity_dependencies.
+            continue
 
         cons_baseline = props.get("consumption", 0)
         if has_cons_uncertainty:
@@ -1450,7 +1930,7 @@ def monte_carlo(plant,
     if have_product_prices:
         for prod, props in plant.plant_products.items():
             (p_id, p_loc, p_scale, p_shape,
-             p_min, p_max) = _resolve_dist_params(props)
+             p_min, p_max) = _resolve_price_dist_params(props)
             product_price_samples[prod] = sample_distribution(
                 p_id, num_samples, loc=p_loc, scale=p_scale, shape=p_shape,
                 minimum=p_min, maximum=p_max, random_state=rng,
@@ -1459,18 +1939,13 @@ def monte_carlo(plant,
     product_production_samples = {}
     for prod, props in plant.plant_products.items():
         prod_cfg = props.get("production_uncertainty", {})
-        prod_std = prod_cfg.get("std", 0)
-        has_prod_uncertainty = prod_std > 0 or "dist_id" in prod_cfg
+        prod_std = _resolve_scale(prod_cfg, 0)
+        has_prod_uncertainty = _has_uncertainty(prod_cfg)
 
         if "production_dependency" in props:
-            if has_prod_uncertainty:
-                raise ValueError(
-                    f"plant_products['{prod}'] defines both "
-                    "'production_dependency' and "
-                    "'production_uncertainty'; a dependent quantity "
-                    "cannot also carry its own noise."
-                )
-            continue  # resolved later by _resolve_quantity_dependencies
+            # Deterministic (DAG) mean, plus any noise on top of it, is
+            # resolved later by _resolve_quantity_dependencies.
+            continue
 
         prod_baseline = props.get("production", 0)
         if has_prod_uncertainty:
@@ -1496,9 +1971,23 @@ def monte_carlo(plant,
 
     _resolve_quantity_dependencies(
         plant,
+        num_samples,
         variable_opex_consumption_samples,
         product_production_samples,
+        project_samples,
+        rng,
     )
+
+    # ---- Every param in _PROJECT_SCALAR_PARAMS is now resolved in
+    # project_samples, either sampled independently above or as a DAG
+    # dependent; plant_utilization/tax_rate stay absent (None) if neither ----
+    fixed_capitals = project_samples["fixed_capital_factor"]
+    fixed_opexs = project_samples["fixed_opex_factor"]
+    operator_hourlys = project_samples["operator_hourly_rate"]
+    project_lifetimes = project_samples["project_lifetime"]
+    interests = project_samples["interest_rate"]
+    plant_utilizations = project_samples.get("plant_utilization")
+    tax_rates = project_samples.get("tax_rate")
 
     # ---- Batch calculation loop ----
     for b in tqdm(range(num_batches), desc="Monte Carlo"):

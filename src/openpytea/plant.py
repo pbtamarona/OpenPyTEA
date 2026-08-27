@@ -256,6 +256,12 @@ class Plant:
             "project_uncertainties", {}
         )
         _validate_project_uncertainties(self.project_uncertainties)
+        self.dependency_noise_correlations = configuration.get(
+            "dependency_noise_correlations", []
+        )
+        _validate_dependency_noise_correlations(
+            self.dependency_noise_correlations
+        )
         self.variable_opex_inputs = configuration.get(
             "variable_opex_inputs", {}
         )
@@ -427,12 +433,50 @@ class Plant:
                 else:
                     original[key] = value
 
+        def clear_superseded_uncertainty(original, updates,
+                                          dep_key, unc_key=None):
+            """
+            Drop an entry's pre-existing *absolute-value* uncertainty spec
+            when ``updates`` turns it into a dependency-driven one.
+
+            Merging (rather than replacing) is right for ordinary config,
+            but an item's absolute-value uncertainty stops being meaningful
+            the moment it becomes a dependent: its value is then set by the
+            dependency, and its uncertainty block is reinterpreted as
+            *additive noise* around that. Leftover ``std``/``scale`` would
+            raise a confusing error naming a key the caller never wrote,
+            and leftover ``min``/``max`` would silently be re-read as
+            noise-band bounds -- shifting the dependent off its DAG line
+            with no warning at all. So a call that introduces ``dep_key``
+            clears the stale keys first, leaving only what that call
+            itself specifies.
+
+            ``unc_key`` names the nested sub-dict holding the spec for
+            process items (e.g. ``"consumption_uncertainty"``); economic
+            scalars keep those fields inline, so it is ``None`` for them.
+            """
+            for name, incoming in updates.items():
+                if not isinstance(incoming, dict) or dep_key not in incoming:
+                    continue
+                existing = original.get(name)
+                if not isinstance(existing, dict):
+                    continue
+                if unc_key is None:
+                    for stale in _ABSOLUTE_UNCERTAINTY_KEYS:
+                        existing.pop(stale, None)
+                elif isinstance(existing.get(unc_key), dict):
+                    for stale in _ABSOLUTE_UNCERTAINTY_KEYS:
+                        existing[unc_key].pop(stale, None)
+
         if "variable_opex_inputs" in configuration:
             if (
                 not hasattr(self, "variable_opex_inputs")
                 or self.variable_opex_inputs is None
             ):
                 self.variable_opex_inputs = {}
+            clear_superseded_uncertainty(
+                self.variable_opex_inputs, configuration["variable_opex_inputs"], "consumption_dependency", "consumption_uncertainty",
+            )
             recursive_update(
                 self.variable_opex_inputs,
                 configuration["variable_opex_inputs"],
@@ -452,6 +496,9 @@ class Plant:
                 or self.plant_products is None
             ):
                 self.plant_products = {}
+            clear_superseded_uncertainty(
+                self.plant_products, configuration["plant_products"], "production_dependency", "production_uncertainty",
+            )
             recursive_update(
                 self.plant_products,
                 configuration["plant_products"],
@@ -471,6 +518,11 @@ class Plant:
                 or self.operator_hourly_rate is None
             ):
                 self.operator_hourly_rate = {}
+            clear_superseded_uncertainty(
+                {"operator_hourly_rate": self.operator_hourly_rate},
+                {"operator_hourly_rate": configuration["operator_hourly_rate"]},
+                "dependency",
+            )
             recursive_update(
                 self.operator_hourly_rate,
                 configuration["operator_hourly_rate"],
@@ -490,6 +542,9 @@ class Plant:
                 or self.project_uncertainties is None
             ):
                 self.project_uncertainties = {}
+            clear_superseded_uncertainty(
+                self.project_uncertainties, configuration["project_uncertainties"], "dependency",
+            )
             recursive_update(
                 self.project_uncertainties,
                 configuration["project_uncertainties"],
@@ -502,6 +557,17 @@ class Plant:
                 configuration["project_uncertainties"],
             )
             _validate_project_uncertainties(self.project_uncertainties)
+
+        if "dependency_noise_correlations" in configuration:
+            self.dependency_noise_correlations = configuration[
+                "dependency_noise_correlations"
+            ]
+            self.config["dependency_noise_correlations"] = configuration[
+                "dependency_noise_correlations"
+            ]
+            _validate_dependency_noise_correlations(
+                self.dependency_noise_correlations
+            )
 
     def calculate_purchased_cost(self, print_results=False):
         """
@@ -2491,8 +2557,22 @@ _UNCERTAINTY_KEYS = {
     "plant_utilization",
     "tax_rate",
 }
+# Uncertainty fields that describe an item's own *absolute* value. They stop
+# being meaningful once that item becomes a dependent (its value then comes
+# from the dependency, and its uncertainty block means additive noise), so a
+# config update that introduces a dependency clears any left over from before
+# -- see Plant.update_configuration.clear_superseded_uncertainty.
+_ABSOLUTE_UNCERTAINTY_KEYS = {
+    "dist_id", "loc", "mean", "scale", "std", "shape",
+    "min", "max", "minimum", "maximum",
+}
+
 _UNCERTAINTY_SUB_KEYS = {"std", "min", "max"} | {
-    "dist_id", "loc", "scale", "shape", "minimum", "maximum"
+    "dist_id", "loc", "scale", "shape", "minimum", "maximum", "dependency",
+    # Scale parameter spelled for a dependent's own additive noise; required
+    # in place of "std"/"scale" once "dependency" is set (see
+    # analysis._reject_std_scale_for_dependent).
+    "noise",
 }
 # Parameters whose values must stay within [0, 1]
 _UNIT_INTERVAL_PARAMS = {"plant_utilization", "tax_rate"}
@@ -2526,6 +2606,16 @@ def _validate_project_uncertainties(cfg: dict) -> None:
                 f"Valid keys: {sorted(_UNCERTAINTY_SUB_KEYS)}."
             )
         for key, val in sub.items():
+            if key == "dependency":
+                # A DAG dependency block ({"depends_on": ..., "offset": ...});
+                # its shape is validated by analysis._resolve_quantity_dependencies,
+                # which has the full plant to resolve references against.
+                if not isinstance(val, dict):
+                    raise TypeError(
+                        f"'project_uncertainties['{param}']['dependency']' "
+                        f"must be a dict, got {type(val).__name__}."
+                    )
+                continue
             if not isinstance(val, (int, float)):
                 raise TypeError(
                     f"'project_uncertainties['{param}']['{key}']' must be "
@@ -2552,6 +2642,13 @@ def _validate_project_uncertainties(cfg: dict) -> None:
                 f"({sub['minimum']}) must be less than 'maximum' "
                 f"({sub['maximum']})."
             )
+        # The range checks below assume min/max bound the parameter's own
+        # absolute value. For a dependent that value comes from the
+        # dependency instead, and min/max bound its additive *noise* around
+        # zero -- so they legitimately go negative, and these rules would
+        # reject every valid noise band. Skip them for dependents.
+        if "dependency" in sub:
+            continue
         if param in ("fixed_capital_factor", "fixed_opex_factor"):
             for bound in ("min", "max", "minimum", "maximum"):
                 if bound in sub and sub[bound] <= 0:
@@ -2580,6 +2677,67 @@ def _validate_project_uncertainties(cfg: dict) -> None:
                         f"'project_uncertainties['{param}']['{bound}']' "
                         f"must be between 0 and 1, got {sub[bound]}."
                     )
+
+
+def _validate_dependency_noise_correlations(entries) -> None:
+    """
+    Structural validation of ``plant.dependency_noise_correlations``.
+
+    Only checks shape (a list of ``{"between": [a, b], "correlation": r}``
+    dicts, ``r`` in ``[-1, 1]``, no item paired with itself, no pair listed
+    twice) — cross-referencing against which items are actually dependents
+    with their own noise happens in
+    :func:`~openpytea.analysis._resolve_dependency_noise`, which has the
+    full picture of ``variable_opex_inputs``/``plant_products``.
+    """
+    if not entries:
+        return
+    if not isinstance(entries, list):
+        raise TypeError(
+            "'dependency_noise_correlations' must be a list of "
+            "{'between': [item, item], 'correlation': r} dicts, got "
+            f"{type(entries).__name__}."
+        )
+    seen_pairs = set()
+    for i, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            raise TypeError(
+                f"'dependency_noise_correlations[{i}]' must be a dict, "
+                f"got {type(entry).__name__}."
+            )
+        between = entry.get("between")
+        if (
+            not isinstance(between, (list, tuple))
+            or len(between) != 2
+            or not all(isinstance(b, str) for b in between)
+        ):
+            raise ValueError(
+                f"'dependency_noise_correlations[{i}][\"between\"]' must "
+                "be a list of exactly two 'kind:name' strings, e.g. "
+                "['production:methanol', 'consumption:cooling_water']."
+            )
+        if between[0] == between[1]:
+            raise ValueError(
+                f"'dependency_noise_correlations[{i}]' names the same "
+                f"item twice: {between[0]!r}."
+            )
+        correlation = entry.get("correlation")
+        if (
+            not isinstance(correlation, (int, float))
+            or isinstance(correlation, bool)
+            or not (-1.0 <= correlation <= 1.0)
+        ):
+            raise ValueError(
+                f"'dependency_noise_correlations[{i}][\"correlation\"]' "
+                f"must be a number in [-1, 1], got {correlation!r}."
+            )
+        pair_key = frozenset(between)
+        if pair_key in seen_pairs:
+            raise ValueError(
+                "'dependency_noise_correlations' specifies the pair "
+                f"{sorted(between)} more than once."
+            )
+        seen_pairs.add(pair_key)
 
 
 def _normalize_dep_config(

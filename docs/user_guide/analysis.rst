@@ -269,9 +269,10 @@ of outcomes for each financial metric.
 Configuring input uncertainties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Variable OPEX and product price uncertainties** are defined inline in the
-existing ``variable_opex_inputs`` and ``plant_products`` configuration keys
-by adding ``std``, ``min``, and ``max`` fields to each item:
+**Variable OPEX and product price uncertainties** are defined via a
+``"price_uncertainty"`` sub-dict on each item in the existing
+``variable_opex_inputs`` and ``plant_products`` configuration keys, using
+``std``, ``min``, and ``max`` fields:
 
 .. code-block:: python
 
@@ -280,9 +281,11 @@ by adding ``std``, ``min``, and ``max`` fields to each item:
            "methanol": {
                "production": 150_000,
                "price": 1.75,
-               "std": 0.25,    # standard deviation
-               "min": 1.25,    # lower truncation bound
-               "max": 2.25,    # upper truncation bound
+               "price_uncertainty": {
+                   "std": 0.25,    # standard deviation
+                   "min": 1.25,    # lower truncation bound
+                   "max": 2.25,    # upper truncation bound
+               },
            },
        },
        "operator_hourly_rate": {
@@ -295,16 +298,20 @@ by adding ``std``, ``min``, and ``max`` fields to each item:
            "electricity": {
                "consumption": 1.4e6,
                "price": 0.10,
-               "std": 0.035,
-               "min": 0.025,
-               "max": 0.175,
+               "price_uncertainty": {
+                   "std": 0.035,
+                   "min": 0.025,
+                   "max": 0.175,
+               },
            },
            "natural_gas": {
                "consumption": 1.0e5,
                "price": 0.05,
-               "std": 0.03,
-               "min": 0.001,
-               "max": 0.10,
+               "price_uncertainty": {
+                   "std": 0.03,
+                   "min": 0.001,
+                   "max": 0.10,
+               },
            },
        },
    })
@@ -329,9 +336,11 @@ not it actually varies.
            "electricity": {
                "consumption": 1.4e6,
                "price": 0.10,
-               "std": 0.035,          # price uncertainty
-               "min": 0.025,
-               "max": 0.175,
+               "price_uncertainty": {
+                   "std": 0.035,
+                   "min": 0.025,
+                   "max": 0.175,
+               },
                "consumption_uncertainty": {
                    "std": 1.4e5,      # 10% of baseline consumption
                    "min": 1.0e6,
@@ -343,9 +352,11 @@ not it actually varies.
            "methanol": {
                "production": 150_000,
                "price": 1.75,
-               "std": 0.25,           # price uncertainty
-               "min": 1.25,
-               "max": 2.25,
+               "price_uncertainty": {
+                   "std": 0.25,
+                   "min": 1.25,
+                   "max": 2.25,
+               },
                "production_uncertainty": {
                    "std": 15_000,     # 10% of baseline production
                    "min": 100_000,
@@ -361,25 +372,45 @@ production"``. Production uncertainty is applied even when product prices
 aren't configured, since production also drives LCOP directly (not just
 revenue).
 
-**Dependencies between consumption/production quantities.** Rather than
-carrying its own uncertainty, a ``"consumption"`` or ``"production"`` value
-can be defined as a deterministic function of *another* sampled quantity —
-e.g. electricity consumption scaling with production via a specific-energy
-factor. Set ``"consumption_dependency"`` (on a ``variable_opex_inputs``
-item) or ``"production_dependency"`` (on a ``plant_products`` item) to a
-dict with:
+Dependencies between process and economic parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* ``"depends_on"`` — ``"production:<product>"`` or ``"consumption:<item>"``,
-  naming the driver quantity.
-* ``"factor"`` — multiplier applied to the driver (default ``1.0``).
-* ``"offset"`` — constant added after scaling (default ``0.0``).
+Rather than carrying its own uncertainty, a ``"consumption"``/``"production"``
+value — or one of the seven economic scalars (the six
+``project_uncertainties`` entries plus ``operator_hourly_rate``) — can be
+defined as a function of *other* sampled quantities. This covers process
+parameters driving each other (e.g. electricity consumption scaling with
+production via a specific-energy factor) just as well as **process and
+economic parameters driving each other**, in either direction — e.g. a
+higher production capacity requiring more fixed capital. Together, every
+such dependency forms a small **DAG** (directed acyclic graph): nodes are
+these parameters, edges are ``depends_on`` references, and OpenPyTEA
+resolves the whole graph in topological order every Monte Carlo run.
 
-giving ``dependent = factor * driver + offset``. A dependent item must
-**not** also define the matching ``*_uncertainty`` block — its variability
-comes entirely from the driver, not from noise of its own — doing so raises
-a ``ValueError``. Chains (a dependent whose driver is itself another
-dependent) are resolved automatically; a cycle or a ``depends_on`` naming an
-unknown item also raises a ``ValueError``.
+Set ``"consumption_dependency"`` (on a ``variable_opex_inputs`` item),
+``"production_dependency"`` (on a ``plant_products`` item), or
+``"dependency"`` (on a ``project_uncertainties`` entry or
+``operator_hourly_rate``) to a dict with:
+
+* ``"depends_on"`` — a non-empty dict mapping one or more parent references
+  to their linear weight, e.g. ``{"production:methanol": 9.3}``. A
+  reference is ``"production:<product>"``, ``"consumption:<item>"``, or
+  ``"project:<param>"`` (naming one of ``fixed_capital_factor``,
+  ``fixed_opex_factor``, ``project_lifetime``, ``interest_rate``,
+  ``plant_utilization``, ``tax_rate``, ``operator_hourly_rate``). Multiple
+  entries combine linearly — a dependent can have more than one parent, of
+  either kind.
+* ``"offset"`` — constant added after the weighted sum (default ``0.0``).
+
+giving ``dependent = sum(weight_i * parent_i) + offset``. Chains and
+multi-parent nodes are resolved automatically, always using each parent's
+own *final* value (its mean plus any noise of its own — see below), so
+noise propagates downstream through the graph rather than being computed
+against some idealized noiseless prediction. A cycle, or a ``depends_on``
+entry naming an unknown item, raises a ``ValueError``. ``plant_utilization``
+and ``tax_rate`` are opt-in and so aren't always independently sampled —
+referencing one as a parent while it isn't falls back to a constant at its
+baseline value.
 
 .. code-block:: python
 
@@ -396,8 +427,7 @@ unknown item also raises a ``ValueError``.
                "consumption": 1.4e6,
                "price": 0.10,
                "consumption_dependency": {
-                   "depends_on": "production:methanol",
-                   "factor": 9.333,   # kWh per kg methanol
+                   "depends_on": {"production:methanol": 9.333},  # kWh per kg methanol
                },
            },
        },
@@ -406,6 +436,94 @@ unknown item also raises a ``ValueError``.
 Here, electricity consumption is never sampled independently — every draw
 of methanol production is multiplied by the fixed specific-consumption
 factor, so the two move together instead of varying independently.
+
+**Economic parameters as dependents.** The same mechanism applies to the
+seven economic scalars via ``"dependency"``. For example, tying
+``fixed_capital_factor`` to production capacity:
+
+.. code-block:: python
+
+   plant.update_configuration({
+       "project_uncertainties": {
+           "fixed_capital_factor": {
+               "dependency": {
+                   "depends_on": {"production:methanol": 5e-6},  # scales up with capacity
+                   "offset": 0.8,
+               },
+           },
+       },
+   })
+
+Process and economic parameters can drive each other in either
+direction — a ``consumption_dependency``/``production_dependency`` can just
+as well name a ``"project:<param>"`` parent.
+
+**A dependent's own noise.** Unlike an independent item, a dependent may
+*also* define its matching ``*_uncertainty`` block — this no longer raises
+an error. For a dependent, the uncertainty block becomes **additive noise**
+on top of the DAG-implied mean instead of parameterizing an absolute value,
+so ``"loc"``/``"mean"`` default to ``0`` (not the item's baseline). Since
+this value is no longer the item's own standard deviation — the dependency,
+not this field, determines that — it must be written as ``"noise"``:
+``"std"``/``"scale"`` still work fine for an independent item's uncertainty
+(where they really do mean the item's own standard deviation), but for a
+dependent they raise ``ValueError`` instead of being silently reinterpreted
+(see :func:`~openpytea.analysis._reject_std_scale_for_dependent`):
+
+.. code-block:: python
+
+   plant.update_configuration({
+       "variable_opex_inputs": {
+           "cooling_water": {
+               "consumption": 1.6e6,
+               "price": 0.0008,
+               "consumption_dependency": {
+                   "depends_on": {"production:methanol": 10.67},
+               },
+               "consumption_uncertainty": {
+                   "noise": 5.0e4,   # noise around the DAG-implied mean, not the item's own std
+               },
+           },
+       },
+   })
+
+``cooling_water``'s consumption is now ``10.67 * methanol_production +
+noise``, with ``noise ~ Normal(0, 5.0e4²)`` (truncated to ±2·std by default,
+same convention as everywhere else — set ``"min"``/``"max"`` explicitly to
+override).
+
+**Correlated noise between dependents.** By default each dependent's noise
+is drawn independently. To make two dependents' noise move together — e.g.
+two utilities whose variability shares a common root cause, or two economic
+scalars like ``fixed_capital_factor`` and ``fixed_opex_factor`` — set
+``plant.dependency_noise_correlations`` to a list of
+``{"between": [node_a, node_b], "correlation": r}`` entries, using the same
+``"kind:name"`` references (including ``"project:<param>"``) as
+``depends_on``:
+
+.. code-block:: python
+
+   plant.update_configuration({
+       "dependency_noise_correlations": [
+           {
+               "between": ["consumption:cooling_water", "consumption:steam"],
+               "correlation": 0.6,
+           },
+       ],
+   })
+
+Both items named in an entry must be dependents that also define their own
+``*_uncertainty`` (raises ``ValueError`` otherwise); a group of 3+ mutually
+correlated items is expressed as multiple pairwise entries, with any pair
+left unspecified defaulting to zero correlation. The noise is then drawn
+jointly from a multivariate Normal (Cholesky/``multivariate_normal``),
+which requires every member of a correlated group to use the Normal family
+(``dist_id`` 3, the default) with **no** ``min``/``max`` truncation — a
+mismatched family or a truncation bound raises ``ValueError``, as does a
+set of correlations that doesn't form a valid (positive semi-definite)
+covariance matrix. A correlated pair also can't have a direct
+``depends_on`` relationship between them — that counts as a dependency
+cycle, since each would need the other resolved first.
 
 **Project-level financial uncertainties** are set through the
 ``project_uncertainties`` key:
@@ -463,9 +581,13 @@ its ``std`` (and, if given, ``min``/``max`` truncation bounds). Add a
 ``dist_id`` field to any uncertainty block — in ``variable_opex_inputs``,
 ``plant_products``, ``operator_hourly_rate``, or ``project_uncertainties`` —
 to draw from a different family instead. Field names are reused across
-families (``loc``/``mean``/``price``/``rate``, ``scale``/``std``, ``shape``,
-``minimum``/``min``, ``maximum``/``max``); which ones apply depends on
-``dist_id``.
+families (``loc``/``mean``/``price``/``rate``, ``scale``/``std``,
+``shape``, ``minimum``/``min``, ``maximum``/``max``); which ones apply
+depends on ``dist_id``. ``"noise"`` is a separate spelling of the same
+scale parameter, required instead of ``"std"``/``"scale"`` for a
+dependent's own uncertainty block (see "A dependent's own noise" above),
+where the value is the standard deviation of the noise added on top of
+its DAG-implied mean rather than the item's own standard deviation.
 
 Under the hood every family is a frozen `scipy.stats
 <https://docs.scipy.org/doc/scipy/reference/stats.html>`_ distribution, so
@@ -537,9 +659,11 @@ mathematical definition:
            "methanol": {
                "production": 150_000,
                "price": 1.75,
-               "dist_id": 5,     # Triangular; "price" doubles as the mode
-               "min": 1.25,
-               "max": 2.50,
+               "price_uncertainty": {
+                   "dist_id": 5,     # Triangular; "price" doubles as the mode
+                   "min": 1.25,
+                   "max": 2.50,
+               },
            },
        },
        "project_uncertainties": {

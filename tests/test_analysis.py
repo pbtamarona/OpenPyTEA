@@ -1,3 +1,8 @@
+from copy import deepcopy
+
+import numpy as np
+import pytest
+
 from openpytea import (
     direct_costs_data,
     fixed_capital_data,
@@ -70,7 +75,10 @@ def test_tornado_data(test_plant):
 
 
 def test_monte_carlo_data(test_plant):
-    # Configure price uncertainty directly on the plant attributes (new API)
+    # Legacy (pre-price_uncertainty) layout: price dist fields sit directly
+    # on the item, alongside "price" -- kept working for backward
+    # compatibility (see test_monte_carlo_price_uncertainty_backward_compatible
+    # below for a direct comparison against the new nested layout).
     test_plant.variable_opex_inputs["electricity"].update(
         {"std": 0.01, "min": 0.05, "max": 0.12}
     )
@@ -103,6 +111,49 @@ def test_monte_carlo_data(test_plant):
     assert "Hydrogen product price" in result["inputs"]
 
 
+def test_monte_carlo_price_uncertainty_nested(test_plant):
+    # Preferred layout: price dist fields nested under "price_uncertainty",
+    # mirroring consumption_uncertainty/production_uncertainty
+    test_plant.variable_opex_inputs["electricity"]["price_uncertainty"] = {
+        "std": 0.01, "min": 0.05, "max": 0.12,
+    }
+    test_plant.plant_products["hydrogen"]["price_uncertainty"] = {
+        "std": 0.5, "min": 4.0, "max": 6.0,
+    }
+
+    result = monte_carlo(test_plant, num_samples=1000, batch_size=1000)
+
+    assert "Electricity price" in result["inputs"]
+    assert "Hydrogen product price" in result["inputs"]
+    elec_price = result["inputs"]["Electricity price"]
+    assert elec_price.min() >= 0.05 and elec_price.max() <= 0.12
+
+
+def test_monte_carlo_price_uncertainty_backward_compatible(test_plant):
+    # The legacy flat layout and the new nested "price_uncertainty" layout
+    # must draw identically for the same seed
+    flat_plant = test_plant
+    flat_plant.variable_opex_inputs["electricity"].update(
+        {"dist_id": 5, "min": 0.05, "max": 0.12}
+    )
+
+    nested_plant = deepcopy(test_plant)
+    nested_plant.variable_opex_inputs["electricity"].pop("dist_id")
+    nested_plant.variable_opex_inputs["electricity"].pop("min")
+    nested_plant.variable_opex_inputs["electricity"].pop("max")
+    nested_plant.variable_opex_inputs["electricity"]["price_uncertainty"] = {
+        "dist_id": 5, "min": 0.05, "max": 0.12,
+    }
+
+    r_flat = monte_carlo(flat_plant, num_samples=500, batch_size=500, random_seed=42)
+    r_nested = monte_carlo(nested_plant, num_samples=500, batch_size=500, random_seed=42)
+
+    assert np.allclose(
+        r_flat["inputs"]["Electricity price"],
+        r_nested["inputs"]["Electricity price"],
+    )
+
+
 def test_monte_carlo_utilization_tax_uncertainty(test_plant):
     # plant_utilization and tax_rate only appear in inputs when std > 0
     test_plant.project_uncertainties = {
@@ -129,3 +180,298 @@ def test_monte_carlo_no_price_variation(test_plant):
     # plant_utilization and tax_rate should NOT be in inputs by default
     assert "Plant utilization" not in result["inputs"]
     assert "Tax rate" not in result["inputs"]
+
+
+def test_monte_carlo_dependency_multi_parent(test_plant):
+    # water's consumption depends on BOTH hydrogen production and
+    # electricity consumption -- a linear combination of two parents
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {"std": 10}
+    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
+        "depends_on": {
+            "production:hydrogen": 2.0,
+            "consumption:electricity": 0.1,
+        },
+    }
+
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=500, random_seed=1)
+    inputs = result["inputs"]
+    hydrogen = np.array(inputs["Hydrogen production"])
+    electricity = np.array(inputs["Electricity consumption"])
+    water = np.array(inputs["Water consumption"])
+
+    assert np.allclose(water, 2.0 * hydrogen + 0.1 * electricity)
+
+
+def test_monte_carlo_dependency_own_noise(test_plant):
+    # A dependent can now also carry its own additive noise on top of its
+    # DAG-implied mean instead of being perfectly deterministic
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
+        "depends_on": {"production:hydrogen": 2.0},
+    }
+    test_plant.variable_opex_inputs["water"]["consumption_uncertainty"] = {"noise": 3.0}
+
+    result = monte_carlo(test_plant, num_samples=20000, batch_size=5000, random_seed=2)
+    inputs = result["inputs"]
+    hydrogen = np.array(inputs["Hydrogen production"])
+    water = np.array(inputs["Water consumption"])
+
+    residual = water - 2.0 * hydrogen
+    assert abs(residual.mean()) < 1.0
+    assert residual.std() > 0
+
+
+def test_monte_carlo_dependency_std_scale_rejected(test_plant):
+    # "std"/"scale" describe an item's own absolute value; once it's a
+    # dependent, its own uncertainty must use "noise" instead -- "std"/
+    # "scale" now raise ValueError rather than being silently accepted as
+    # aliases (this feature is unreleased, so no backward compatibility
+    # with the old std/scale/noise-interchangeable behavior is kept here)
+    def configure(plant, field):
+        plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+        plant.variable_opex_inputs["water"]["consumption_dependency"] = {
+            "depends_on": {"production:hydrogen": 2.0},
+        }
+        plant.variable_opex_inputs["water"]["consumption_uncertainty"] = {field: 3.0}
+        return plant
+
+    for field in ("std", "scale"):
+        plant = deepcopy(test_plant)
+        with pytest.raises(ValueError, match='"noise" instead of "std"/"scale"'):
+            monte_carlo(configure(plant, field), num_samples=100,
+                        batch_size=100, random_seed=9)
+
+    # "noise" itself must still work and actually vary
+    result = monte_carlo(configure(deepcopy(test_plant), "noise"),
+                          num_samples=2000, batch_size=1000, random_seed=9)
+    assert np.std(result["inputs"]["Water consumption"]) > 0
+
+
+def test_monte_carlo_dependency_noise_propagates_downstream(test_plant):
+    # electricity depends on hydrogen and carries its own noise; water
+    # chains onto electricity, so it must track electricity's *actual*
+    # (noisy) value exactly, not just the noiseless hydrogen-implied mean
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
+        "depends_on": {"production:hydrogen": 2.0},
+    }
+    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {"noise": 3.0}
+    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
+        "depends_on": {"consumption:electricity": 0.5},
+    }
+
+    result = monte_carlo(test_plant, num_samples=500, batch_size=500, random_seed=3)
+    inputs = result["inputs"]
+    electricity = np.array(inputs["Electricity consumption"])
+    water = np.array(inputs["Water consumption"])
+
+    assert np.allclose(water, 0.5 * electricity)
+
+
+def test_monte_carlo_dependency_noise_correlation(test_plant):
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
+        "depends_on": {"production:hydrogen": 2.0},
+    }
+    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {"noise": 10.0}
+    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
+        "depends_on": {"production:hydrogen": 0.2},
+    }
+    test_plant.variable_opex_inputs["water"]["consumption_uncertainty"] = {"noise": 3.0}
+    test_plant.dependency_noise_correlations = [
+        {"between": ["consumption:electricity", "consumption:water"], "correlation": 0.7},
+    ]
+
+    result = monte_carlo(test_plant, num_samples=30000, batch_size=5000, random_seed=4)
+    inputs = result["inputs"]
+    hydrogen = np.array(inputs["Hydrogen production"])
+    electricity = np.array(inputs["Electricity consumption"])
+    water = np.array(inputs["Water consumption"])
+
+    elec_residual = electricity - 2.0 * hydrogen
+    water_residual = water - 0.2 * hydrogen
+    corr = np.corrcoef(elec_residual, water_residual)[0, 1]
+    assert 0.6 < corr < 0.8
+
+
+def test_monte_carlo_dependency_correlation_requires_normal(test_plant):
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
+        "depends_on": {"production:hydrogen": 2.0},
+    }
+    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {
+        "dist_id": 8, "loc": 0.0, "noise": 5.0, "shape": 2.0,
+    }
+    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
+        "depends_on": {"production:hydrogen": 0.2},
+    }
+    test_plant.variable_opex_inputs["water"]["consumption_uncertainty"] = {"noise": 3.0}
+    test_plant.dependency_noise_correlations = [
+        {"between": ["consumption:electricity", "consumption:water"], "correlation": 0.5},
+    ]
+
+    with pytest.raises(ValueError, match="Normal family"):
+        monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
+
+
+def test_monte_carlo_dependency_correlation_rejects_truncation(test_plant):
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
+        "depends_on": {"production:hydrogen": 2.0},
+    }
+    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {
+        "noise": 5.0, "min": -10.0, "max": 10.0,
+    }
+    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
+        "depends_on": {"production:hydrogen": 0.2},
+    }
+    test_plant.variable_opex_inputs["water"]["consumption_uncertainty"] = {"noise": 3.0}
+    test_plant.dependency_noise_correlations = [
+        {"between": ["consumption:electricity", "consumption:water"], "correlation": 0.5},
+    ]
+
+    with pytest.raises(ValueError, match="truncation bound"):
+        monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
+
+
+def test_monte_carlo_dependency_correlation_requires_dependent_with_noise(test_plant):
+    # electricity is NOT a dependent, only water is -- correlating them
+    # should be rejected
+    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {"std": 5.0}
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
+        "depends_on": {"production:hydrogen": 0.2},
+    }
+    test_plant.variable_opex_inputs["water"]["consumption_uncertainty"] = {"noise": 3.0}
+    test_plant.dependency_noise_correlations = [
+        {"between": ["consumption:electricity", "consumption:water"], "correlation": 0.5},
+    ]
+
+    with pytest.raises(ValueError, match="must be a dependent node"):
+        monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
+
+
+def test_monte_carlo_dependency_project_scalar(test_plant):
+    # An economic scalar (fixed_capital_factor) can depend on a process
+    # parameter -- e.g. higher production capacity needs more fixed capital
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.project_uncertainties["fixed_capital_factor"] = {
+        "dependency": {"depends_on": {"production:hydrogen": 0.01}, "offset": 0.5},
+    }
+
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=500, random_seed=1)
+    inputs = result["inputs"]
+    hydrogen = np.array(inputs["Hydrogen production"])
+    fc = np.array(inputs["Fixed capital factor"])
+
+    assert np.allclose(fc, 0.01 * hydrogen + 0.5)
+
+
+def test_monte_carlo_dependency_project_own_noise(test_plant):
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.project_uncertainties["fixed_capital_factor"] = {
+        "dependency": {"depends_on": {"production:hydrogen": 0.01}, "offset": 0.5},
+        "noise": 0.05,
+    }
+
+    result = monte_carlo(test_plant, num_samples=20000, batch_size=5000, random_seed=2)
+    inputs = result["inputs"]
+    hydrogen = np.array(inputs["Hydrogen production"])
+    fc = np.array(inputs["Fixed capital factor"])
+
+    residual = fc - (0.01 * hydrogen + 0.5)
+    assert abs(residual.mean()) < 0.01
+    assert residual.std() > 0
+
+
+def test_monte_carlo_dependency_reverse_direction(test_plant):
+    # A process parameter can equally depend on an economic scalar
+    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
+        "depends_on": {"project:interest_rate": 1000.0}, "offset": 50.0,
+    }
+
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=500, random_seed=3)
+    inputs = result["inputs"]
+    interest_rate = np.array(inputs["Interest rate"])
+    electricity = np.array(inputs["Electricity consumption"])
+
+    assert np.allclose(electricity, 1000.0 * interest_rate + 50.0)
+
+
+def test_monte_carlo_dependency_operator_hourly_rate(test_plant):
+    # operator_hourly_rate lives in its own config dict (not
+    # project_uncertainties) but is dependency-capable the same way
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.operator_hourly_rate["dependency"] = {
+        "depends_on": {"production:hydrogen": 0.1}, "offset": 20.0,
+    }
+
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=500, random_seed=4)
+    inputs = result["inputs"]
+    hydrogen = np.array(inputs["Hydrogen production"])
+    op_rate = np.array(inputs["Operator hourly rate"])
+
+    assert np.allclose(op_rate, 0.1 * hydrogen + 20.0)
+
+
+def test_monte_carlo_dependency_makes_opt_in_scalar_visible(test_plant):
+    # plant_utilization/tax_rate normally stay absent from "inputs" unless
+    # independently configured; becoming a dependent opts them in too
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.project_uncertainties["tax_rate"] = {
+        "dependency": {"depends_on": {"production:hydrogen": 0.001}, "offset": 0.2},
+    }
+
+    result = monte_carlo(test_plant, num_samples=200, batch_size=200, random_seed=5)
+
+    assert "Tax rate" in result["inputs"]
+    assert "Plant utilization" not in result["inputs"]
+
+
+def test_monte_carlo_dependency_unknown_project_param(test_plant):
+    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
+        "depends_on": {"project:nonexistent": 1.0},
+    }
+
+    with pytest.raises(ValueError, match="must name one of"):
+        monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
+
+
+def test_monte_carlo_dependency_project_correlation(test_plant):
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.project_uncertainties["fixed_capital_factor"] = {
+        "dependency": {"depends_on": {"production:hydrogen": 0.01}, "offset": 0.5},
+        "noise": 0.05,
+    }
+    test_plant.project_uncertainties["fixed_opex_factor"] = {
+        "dependency": {"depends_on": {"production:hydrogen": 0.005}, "offset": 0.6},
+        "noise": 0.03,
+    }
+    test_plant.dependency_noise_correlations = [
+        {"between": ["project:fixed_capital_factor", "project:fixed_opex_factor"],
+         "correlation": 0.6},
+    ]
+
+    result = monte_carlo(test_plant, num_samples=30000, batch_size=5000, random_seed=6)
+    inputs = result["inputs"]
+    hydrogen = np.array(inputs["Hydrogen production"])
+    fc = np.array(inputs["Fixed capital factor"])
+    fo = np.array(inputs["Fixed opex factor"])
+
+    fc_residual = fc - (0.01 * hydrogen + 0.5)
+    fo_residual = fo - (0.005 * hydrogen + 0.6)
+    corr = np.corrcoef(fc_residual, fo_residual)[0, 1]
+    assert 0.5 < corr < 0.7
+
+
+def test_monte_carlo_dependency_cycle(test_plant):
+    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
+        "depends_on": {"consumption:water": 1.0},
+    }
+    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
+        "depends_on": {"consumption:electricity": 1.0},
+    }
+
+    with pytest.raises(ValueError, match="cycle"):
+        monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
