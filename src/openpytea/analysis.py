@@ -1292,88 +1292,6 @@ def _ensure_driver_available(plant, key, num_samples, driver_pool):
     return False
 
 
-def _apply_correlated_dependency_noise(unit, means, noise_cfg, correlations,
-                                        num_samples, rng):
-    """
-    Jointly sample correlated Normal noise for a group of dependents whose
-    DAG-implied (parents-only) means are already known, returning
-    ``{key: final_value}`` with each member's noise added on top of its
-    mean.
-
-    Every member's own noise must be Normal (``dist_id`` 0, 1, or the
-    default 3) and untruncated — a multivariate Normal draw can't honor an
-    arbitrary marginal family or a min/max bound on one component without
-    breaking the requested correlation. Pairs within ``unit`` not named in
-    ``correlations`` default to zero correlation.
-
-    Parameters
-    ----------
-    unit : list of (str, str)
-        ``(kind, name)`` keys of the correlated group, fixing column order.
-    means : dict
-        ``{key: array}`` DAG-implied mean for each member (pre-noise).
-    noise_cfg : dict
-        ``{key: uncertainty_dict}`` for every noise-bearing dependent.
-    correlations : dict
-        ``{frozenset({key_a, key_b}): correlation}`` for named pairs.
-    num_samples : int
-        Number of Monte Carlo draws.
-    rng : numpy.random.Generator
-        Shared RNG, advanced by this call.
-
-    Raises
-    ------
-    ValueError
-        If a member's noise isn't a plain (untruncated) Normal, or the
-        pairwise correlations don't form a valid (positive semi-definite)
-        covariance matrix.
-    """
-    locs, stds = [], []
-    for key in unit:
-        kind, name = key
-        unc = noise_cfg[key]
-        dist_id, loc, scale, _, _, _ = _resolve_dist_params(
-            unc, default_loc=0.0, default_scale=0.0,
-        )
-        if dist_id not in (0, 1, 3):
-            raise ValueError(
-                f"{_describe_dependency_node(kind, name)} uses "
-                f"dist_id={dist_id}, but correlated dependency noise (via "
-                "dependency_noise_correlations) only supports the Normal "
-                "family (dist_id 3, the default) for every item in a "
-                "correlated group."
-            )
-        if any(k in unc for k in ("min", "max", "minimum", "maximum")):
-            raise ValueError(
-                f"{_describe_dependency_node(kind, name)} sets a min/max "
-                "truncation bound, which is not supported for correlated "
-                "dependency noise (via dependency_noise_correlations)."
-            )
-        locs.append(loc)
-        stds.append(scale)
-
-    n = len(unit)
-    cov = np.diag(np.square(stds).astype(float))
-    for i in range(n):
-        for j in range(i + 1, n):
-            r = correlations.get(frozenset((unit[i], unit[j])), 0.0)
-            cov[i, j] = cov[j, i] = r * stds[i] * stds[j]
-
-    try:
-        draws = rng.multivariate_normal(
-            mean=locs, cov=cov, size=num_samples, check_valid="raise",
-        )
-    except ValueError as e:
-        names = ", ".join(f"{k}:{n}" for k, n in unit)
-        raise ValueError(
-            f"The correlations specified for the noise group ({names}) "
-            "do not form a valid covariance matrix (must be positive "
-            f"semi-definite): {e}"
-        ) from e
-
-    return {key: means[key] + draws[:, i] for i, key in enumerate(unit)}
-
-
 def _resolve_quantity_dependencies(plant, num_samples, consumption_samples,
                                     production_samples, project_samples, rng):
     """
@@ -1419,11 +1337,8 @@ def _resolve_quantity_dependencies(plant, num_samples, consumption_samples,
     their separate ``"consumption_uncertainty"``/``"production_uncertainty"``
     sub-dict; economic scalars reuse whichever ``noise``/``dist_id``/etc.
     fields already sit alongside ``"dependency"`` (see
-    :func:`_collect_dependency_nodes`). By default each dependent's
-    noise is independent; entries in ``plant.dependency_noise_correlations``
-    (see :func:`_apply_correlated_dependency_noise`) instead draw a whole
-    connected group's noise jointly from a multivariate Normal, so e.g. two
-    utilities' consumption can move together.
+    :func:`_collect_dependency_nodes`). Each dependent's noise is drawn
+    independently.
 
     Parameters
     ----------
@@ -1452,50 +1367,12 @@ def _resolve_quantity_dependencies(plant, num_samples, consumption_samples,
     ------
     ValueError
         If a ``"depends_on"`` entry is malformed or points at an unknown
-        item, the dependency graph has a cycle, or
-        ``dependency_noise_correlations`` is malformed or invalid (see
-        :func:`_apply_correlated_dependency_noise`).
+        item, or the dependency graph has a cycle.
     """
     dependents, noise_cfg = _collect_dependency_nodes(plant)
 
     if not dependents:
         return
-
-    # ---- Group dependents by noise-correlation connectivity (union-find);
-    # a dependent named in no correlation entry ends up alone in its own
-    # group, resolved/noised independently ----
-    uf_parent = {key: key for key in dependents}
-
-    def _find(x):
-        while uf_parent[x] != x:
-            uf_parent[x] = uf_parent[uf_parent[x]]
-            x = uf_parent[x]
-        return x
-
-    def _union(a, b):
-        ra, rb = _find(a), _find(b)
-        if ra != rb:
-            uf_parent[ra] = rb
-
-    correlations = {}
-    for entry in (plant.dependency_noise_correlations or []):
-        spec_a, spec_b = entry["between"]
-        key_a = _parse_dependency_driver(spec_a, "dependency_noise_correlations entry")
-        key_b = _parse_dependency_driver(spec_b, "dependency_noise_correlations entry")
-        for key, spec in ((key_a, spec_a), (key_b, spec_b)):
-            if key not in noise_cfg:
-                raise ValueError(
-                    f"dependency_noise_correlations references {spec!r}, "
-                    "which must be a dependent node (has a "
-                    "consumption_dependency/production_dependency/"
-                    "dependency) that also defines its own uncertainty."
-                )
-        correlations[frozenset((key_a, key_b))] = entry["correlation"]
-        _union(key_a, key_b)
-
-    groups = {}
-    for key in dependents:
-        groups.setdefault(_find(key), []).append(key)
 
     # ---- Seed the driver pool from the already-sampled non-dependent
     # nodes (the caller guarantees every one of those has an entry, except
@@ -1508,102 +1385,79 @@ def _resolve_quantity_dependencies(plant, num_samples, consumption_samples,
     for name, arr in project_samples.items():
         driver_pool[("project", name)] = arr
 
-    # ---- Resolve one unit (a single dependent, or a correlated group of
-    # them) at a time, once every member's parents already have a final
-    # value, allowing chains of arbitrary depth and multi-parent nodes ----
-    pending_units = list(groups.values())
-    while pending_units:
+    # ---- Resolve one dependent at a time, once all its parents already
+    # have a final value, allowing chains of arbitrary depth and
+    # multi-parent nodes ----
+    pending_keys = list(dependents)
+    while pending_keys:
         progressed = False
         still_pending = []
-        for unit in pending_units:
-            member_parents = {}
-            ready = True
-            for key in unit:
-                kind, name = key
-                dep = dependents[key]
-                weights = dep.get("depends_on")
-                context = (
-                    f"the 'dependency' block for project parameter '{name}'"
-                    if kind == "project" else f"{kind}_dependency on '{name}'"
+        for key in pending_keys:
+            kind, name = key
+            dep = dependents[key]
+            weights = dep.get("depends_on")
+            context = (
+                f"the 'dependency' block for project parameter '{name}'"
+                if kind == "project" else f"{kind}_dependency on '{name}'"
+            )
+            if not isinstance(weights, dict) or not weights:
+                raise ValueError(
+                    f"'depends_on' for {context} must be a non-empty "
+                    "dict mapping driver references to factors, e.g. "
+                    "{'production:methanol': 9.3}."
                 )
-                if not isinstance(weights, dict) or not weights:
+            parents = {}
+            for spec, factor in weights.items():
+                if not isinstance(factor, (int, float)):
                     raise ValueError(
-                        f"'depends_on' for {context} must be a non-empty "
-                        "dict mapping driver references to factors, e.g. "
-                        "{'production:methanol': 9.3}."
+                        f"'depends_on' factor for {spec!r} in "
+                        f"{context} must be a number, got {factor!r}."
                     )
-                parsed = {}
-                for spec, factor in weights.items():
-                    if not isinstance(factor, (int, float)):
-                        raise ValueError(
-                            f"'depends_on' factor for {spec!r} in "
-                            f"{context} must be a number, got {factor!r}."
-                        )
-                    parsed[_parse_dependency_driver(spec, context)] = factor
-                member_parents[key] = parsed
-                if not all(
-                    _ensure_driver_available(plant, pk, num_samples, driver_pool)
-                    for pk in parsed
-                ):
-                    ready = False
+                parents[_parse_dependency_driver(spec, context)] = factor
 
-            if not ready:
-                still_pending.append(unit)
+            if not all(
+                _ensure_driver_available(plant, pk, num_samples, driver_pool)
+                for pk in parents
+            ):
+                still_pending.append(key)
                 continue
 
-            means = {}
-            for key in unit:
-                dep = dependents[key]
-                offset = dep.get("offset", 0.0)
-                value = None
-                for parent_key, factor in member_parents[key].items():
-                    term = factor * driver_pool[parent_key]
-                    value = term if value is None else value + term
-                means[key] = value + offset
+            value = None
+            for parent_key, factor in parents.items():
+                term = factor * driver_pool[parent_key]
+                value = term if value is None else value + term
+            value = value + dep.get("offset", 0.0)
 
-            if len(unit) == 1:
-                key = unit[0]
-                if key in noise_cfg:
-                    unc = noise_cfg[key]
-                    noise_std = _resolve_scale(unc)
-                    dist_id, loc, scale, shape, minimum, maximum = (
-                        _resolve_dist_params(
-                            unc,
-                            default_loc=0.0,
-                            default_scale=noise_std,
-                            default_min=-2 * noise_std,
-                            default_max=2 * noise_std,
-                        )
+            if key in noise_cfg:
+                unc = noise_cfg[key]
+                noise_std = _resolve_scale(unc)
+                dist_id, loc, scale, shape, minimum, maximum = (
+                    _resolve_dist_params(
+                        unc,
+                        default_loc=0.0,
+                        default_scale=noise_std,
+                        default_min=-2 * noise_std,
+                        default_max=2 * noise_std,
                     )
-                    noise = sample_distribution(
-                        dist_id, num_samples, loc=loc, scale=scale,
-                        shape=shape, minimum=minimum, maximum=maximum,
-                        random_state=rng,
-                    )
-                    finals = {key: means[key] + noise}
-                else:
-                    finals = means
-            else:
-                finals = _apply_correlated_dependency_noise(
-                    unit, means, noise_cfg, correlations, num_samples, rng,
+                )
+                value = value + sample_distribution(
+                    dist_id, num_samples, loc=loc, scale=scale,
+                    shape=shape, minimum=minimum, maximum=maximum,
+                    random_state=rng,
                 )
 
-            for key, value in finals.items():
-                driver_pool[key] = value
-                kind, name = key
-                if kind == "consumption":
-                    consumption_samples[name] = value
-                elif kind == "production":
-                    production_samples[name] = value
-                else:
-                    project_samples[name] = value
+            driver_pool[key] = value
+            if kind == "consumption":
+                consumption_samples[name] = value
+            elif kind == "production":
+                production_samples[name] = value
+            else:
+                project_samples[name] = value
             progressed = True
 
-        pending_units = still_pending
-        if not progressed and pending_units:
-            unresolved = ", ".join(
-                f"{k}:{n}" for unit in pending_units for k, n in unit
-            )
+        pending_keys = still_pending
+        if not progressed and pending_keys:
+            unresolved = ", ".join(f"{k}:{n}" for k, n in pending_keys)
             raise ValueError(
                 "Could not resolve consumption/production/project "
                 f"dependency(ies) for: {unresolved}. Each 'depends_on' "
@@ -1611,9 +1465,7 @@ def _resolve_quantity_dependencies(plant, num_samples, consumption_samples,
                 "plant_products item or one of "
                 f"{sorted(_PROJECT_SCALAR_PARAMS)} (directly or "
                 "transitively), and the dependency DAG must not contain a "
-                "cycle (a correlated noise pair that also has a direct "
-                "dependency relationship counts as a cycle here, since "
-                "both would need to be resolved before the other)."
+                "cycle."
             )
 
 
@@ -1686,16 +1538,9 @@ def monte_carlo(plant,
         non-dependent, this becomes additive noise on top of the DAG-implied
         mean (``loc`` defaults to 0, not the baseline, and the scale
         parameter must be ``"noise"`` — ``"std"``/``"scale"`` raise
-        ``ValueError`` for a dependent). By default each
-        dependent's noise is independent; ``plant.dependency_noise_correlations``
-        — a list of ``{"between": [node_a, node_b], "correlation": r}``
-        entries pairing two noise-bearing dependents by the same
-        ``"kind:name"`` references used in ``depends_on`` — instead draws a
-        connected group's noise jointly from a multivariate Normal (both
-        members must use the Normal family, untruncated). See
-        :func:`_resolve_quantity_dependencies`,
-        :func:`_collect_dependency_nodes`, and
-        :func:`_apply_correlated_dependency_noise`.
+        ``ValueError`` for a dependent). Each dependent's noise is drawn
+        independently. See :func:`_resolve_quantity_dependencies` and
+        :func:`_collect_dependency_nodes`.
     num_samples : int, optional
         Total number of Monte Carlo draws. Default is 1,000,000.
     batch_size : int, optional

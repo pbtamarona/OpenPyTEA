@@ -256,12 +256,6 @@ class Plant:
             "project_uncertainties", {}
         )
         _validate_project_uncertainties(self.project_uncertainties)
-        self.dependency_noise_correlations = configuration.get(
-            "dependency_noise_correlations", []
-        )
-        _validate_dependency_noise_correlations(
-            self.dependency_noise_correlations
-        )
         self.variable_opex_inputs = configuration.get(
             "variable_opex_inputs", {}
         )
@@ -557,17 +551,6 @@ class Plant:
                 configuration["project_uncertainties"],
             )
             _validate_project_uncertainties(self.project_uncertainties)
-
-        if "dependency_noise_correlations" in configuration:
-            self.dependency_noise_correlations = configuration[
-                "dependency_noise_correlations"
-            ]
-            self.config["dependency_noise_correlations"] = configuration[
-                "dependency_noise_correlations"
-            ]
-            _validate_dependency_noise_correlations(
-                self.dependency_noise_correlations
-            )
 
     def calculate_purchased_cost(self, print_results=False):
         """
@@ -2677,67 +2660,6 @@ def _validate_project_uncertainties(cfg: dict) -> None:
                         f"'project_uncertainties['{param}']['{bound}']' "
                         f"must be between 0 and 1, got {sub[bound]}."
                     )
-
-
-def _validate_dependency_noise_correlations(entries) -> None:
-    """
-    Structural validation of ``plant.dependency_noise_correlations``.
-
-    Only checks shape (a list of ``{"between": [a, b], "correlation": r}``
-    dicts, ``r`` in ``[-1, 1]``, no item paired with itself, no pair listed
-    twice) — cross-referencing against which items are actually dependents
-    with their own noise happens in
-    :func:`~openpytea.analysis._resolve_dependency_noise`, which has the
-    full picture of ``variable_opex_inputs``/``plant_products``.
-    """
-    if not entries:
-        return
-    if not isinstance(entries, list):
-        raise TypeError(
-            "'dependency_noise_correlations' must be a list of "
-            "{'between': [item, item], 'correlation': r} dicts, got "
-            f"{type(entries).__name__}."
-        )
-    seen_pairs = set()
-    for i, entry in enumerate(entries):
-        if not isinstance(entry, dict):
-            raise TypeError(
-                f"'dependency_noise_correlations[{i}]' must be a dict, "
-                f"got {type(entry).__name__}."
-            )
-        between = entry.get("between")
-        if (
-            not isinstance(between, (list, tuple))
-            or len(between) != 2
-            or not all(isinstance(b, str) for b in between)
-        ):
-            raise ValueError(
-                f"'dependency_noise_correlations[{i}][\"between\"]' must "
-                "be a list of exactly two 'kind:name' strings, e.g. "
-                "['production:methanol', 'consumption:cooling_water']."
-            )
-        if between[0] == between[1]:
-            raise ValueError(
-                f"'dependency_noise_correlations[{i}]' names the same "
-                f"item twice: {between[0]!r}."
-            )
-        correlation = entry.get("correlation")
-        if (
-            not isinstance(correlation, (int, float))
-            or isinstance(correlation, bool)
-            or not (-1.0 <= correlation <= 1.0)
-        ):
-            raise ValueError(
-                f"'dependency_noise_correlations[{i}][\"correlation\"]' "
-                f"must be a number in [-1, 1], got {correlation!r}."
-            )
-        pair_key = frozenset(between)
-        if pair_key in seen_pairs:
-            raise ValueError(
-                "'dependency_noise_correlations' specifies the pair "
-                f"{sorted(between)} more than once."
-            )
-        seen_pairs.add(pair_key)
 
 
 def _normalize_dep_config(

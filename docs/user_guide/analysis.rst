@@ -492,39 +492,6 @@ noise``, with ``noise ~ Normal(0, 5.0e4²)`` (truncated to ±2·std by default,
 same convention as everywhere else — set ``"min"``/``"max"`` explicitly to
 override).
 
-**Correlated noise between dependents.** By default each dependent's noise
-is drawn independently. To make two dependents' noise move together — e.g.
-two utilities whose variability shares a common root cause, or two economic
-scalars like ``fixed_capital_factor`` and ``fixed_opex_factor`` — set
-``plant.dependency_noise_correlations`` to a list of
-``{"between": [node_a, node_b], "correlation": r}`` entries, using the same
-``"kind:name"`` references (including ``"project:<param>"``) as
-``depends_on``:
-
-.. code-block:: python
-
-   plant.update_configuration({
-       "dependency_noise_correlations": [
-           {
-               "between": ["consumption:cooling_water", "consumption:steam"],
-               "correlation": 0.6,
-           },
-       ],
-   })
-
-Both items named in an entry must be dependents that also define their own
-``*_uncertainty`` (raises ``ValueError`` otherwise); a group of 3+ mutually
-correlated items is expressed as multiple pairwise entries, with any pair
-left unspecified defaulting to zero correlation. The noise is then drawn
-jointly from a multivariate Normal (Cholesky/``multivariate_normal``),
-which requires every member of a correlated group to use the Normal family
-(``dist_id`` 3, the default) with **no** ``min``/``max`` truncation — a
-mismatched family or a truncation bound raises ``ValueError``, as does a
-set of correlations that doesn't form a valid (positive semi-definite)
-covariance matrix. A correlated pair also can't have a direct
-``depends_on`` relationship between them — that counts as a dependency
-cycle, since each would need the other resolved first.
-
 **Project-level financial uncertainties** are set through the
 ``project_uncertainties`` key:
 

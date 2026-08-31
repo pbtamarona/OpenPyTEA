@@ -269,89 +269,6 @@ def test_monte_carlo_dependency_noise_propagates_downstream(test_plant):
     assert np.allclose(water, 0.5 * electricity)
 
 
-def test_monte_carlo_dependency_noise_correlation(test_plant):
-    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
-    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
-        "depends_on": {"production:hydrogen": 2.0},
-    }
-    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {"noise": 10.0}
-    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
-        "depends_on": {"production:hydrogen": 0.2},
-    }
-    test_plant.variable_opex_inputs["water"]["consumption_uncertainty"] = {"noise": 3.0}
-    test_plant.dependency_noise_correlations = [
-        {"between": ["consumption:electricity", "consumption:water"], "correlation": 0.7},
-    ]
-
-    result = monte_carlo(test_plant, num_samples=30000, batch_size=5000, random_seed=4)
-    inputs = result["inputs"]
-    hydrogen = np.array(inputs["Hydrogen production"])
-    electricity = np.array(inputs["Electricity consumption"])
-    water = np.array(inputs["Water consumption"])
-
-    elec_residual = electricity - 2.0 * hydrogen
-    water_residual = water - 0.2 * hydrogen
-    corr = np.corrcoef(elec_residual, water_residual)[0, 1]
-    assert 0.6 < corr < 0.8
-
-
-def test_monte_carlo_dependency_correlation_requires_normal(test_plant):
-    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
-    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
-        "depends_on": {"production:hydrogen": 2.0},
-    }
-    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {
-        "dist_id": 8, "loc": 0.0, "noise": 5.0, "shape": 2.0,
-    }
-    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
-        "depends_on": {"production:hydrogen": 0.2},
-    }
-    test_plant.variable_opex_inputs["water"]["consumption_uncertainty"] = {"noise": 3.0}
-    test_plant.dependency_noise_correlations = [
-        {"between": ["consumption:electricity", "consumption:water"], "correlation": 0.5},
-    ]
-
-    with pytest.raises(ValueError, match="Normal family"):
-        monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
-
-
-def test_monte_carlo_dependency_correlation_rejects_truncation(test_plant):
-    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
-    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
-        "depends_on": {"production:hydrogen": 2.0},
-    }
-    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {
-        "noise": 5.0, "min": -10.0, "max": 10.0,
-    }
-    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
-        "depends_on": {"production:hydrogen": 0.2},
-    }
-    test_plant.variable_opex_inputs["water"]["consumption_uncertainty"] = {"noise": 3.0}
-    test_plant.dependency_noise_correlations = [
-        {"between": ["consumption:electricity", "consumption:water"], "correlation": 0.5},
-    ]
-
-    with pytest.raises(ValueError, match="truncation bound"):
-        monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
-
-
-def test_monte_carlo_dependency_correlation_requires_dependent_with_noise(test_plant):
-    # electricity is NOT a dependent, only water is -- correlating them
-    # should be rejected
-    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {"std": 5.0}
-    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
-    test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
-        "depends_on": {"production:hydrogen": 0.2},
-    }
-    test_plant.variable_opex_inputs["water"]["consumption_uncertainty"] = {"noise": 3.0}
-    test_plant.dependency_noise_correlations = [
-        {"between": ["consumption:electricity", "consumption:water"], "correlation": 0.5},
-    ]
-
-    with pytest.raises(ValueError, match="must be a dependent node"):
-        monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
-
-
 def test_monte_carlo_dependency_project_scalar(test_plant):
     # An economic scalar (fixed_capital_factor) can depend on a process
     # parameter -- e.g. higher production capacity needs more fixed capital
@@ -436,33 +353,6 @@ def test_monte_carlo_dependency_unknown_project_param(test_plant):
 
     with pytest.raises(ValueError, match="must name one of"):
         monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
-
-
-def test_monte_carlo_dependency_project_correlation(test_plant):
-    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
-    test_plant.project_uncertainties["fixed_capital_factor"] = {
-        "dependency": {"depends_on": {"production:hydrogen": 0.01}, "offset": 0.5},
-        "noise": 0.05,
-    }
-    test_plant.project_uncertainties["fixed_opex_factor"] = {
-        "dependency": {"depends_on": {"production:hydrogen": 0.005}, "offset": 0.6},
-        "noise": 0.03,
-    }
-    test_plant.dependency_noise_correlations = [
-        {"between": ["project:fixed_capital_factor", "project:fixed_opex_factor"],
-         "correlation": 0.6},
-    ]
-
-    result = monte_carlo(test_plant, num_samples=30000, batch_size=5000, random_seed=6)
-    inputs = result["inputs"]
-    hydrogen = np.array(inputs["Hydrogen production"])
-    fc = np.array(inputs["Fixed capital factor"])
-    fo = np.array(inputs["Fixed opex factor"])
-
-    fc_residual = fc - (0.01 * hydrogen + 0.5)
-    fo_residual = fo - (0.005 * hydrogen + 0.6)
-    corr = np.corrcoef(fc_residual, fo_residual)[0, 1]
-    assert 0.5 < corr < 0.7
 
 
 def test_monte_carlo_dependency_cycle(test_plant):

@@ -173,53 +173,6 @@ def test_project_uncertainties_dependency_must_be_dict(test_plant):
         })
 
 
-def test_dependency_noise_correlations_valid(test_plant):
-    test_plant.update_configuration({
-        "dependency_noise_correlations": [
-            {"between": ["consumption:electricity", "consumption:water"],
-             "correlation": 0.6},
-        ]
-    })
-    assert test_plant.dependency_noise_correlations[0]["correlation"] == 0.6
-
-
-def test_dependency_noise_correlations_default_empty(test_plant):
-    assert test_plant.dependency_noise_correlations == []
-
-
-def test_dependency_noise_correlations_invalid_correlation_range(test_plant):
-    with pytest.raises(ValueError, match=r"in \[-1, 1\]"):
-        Plant({
-            **test_plant.config,
-            "dependency_noise_correlations": [
-                {"between": ["consumption:electricity", "consumption:water"],
-                 "correlation": 1.5},
-            ],
-        })
-
-
-def test_dependency_noise_correlations_same_item_twice(test_plant):
-    with pytest.raises(ValueError, match="names the same item twice"):
-        test_plant.update_configuration({
-            "dependency_noise_correlations": [
-                {"between": ["consumption:electricity", "consumption:electricity"],
-                 "correlation": 0.5},
-            ]
-        })
-
-
-def test_dependency_noise_correlations_duplicate_pair(test_plant):
-    with pytest.raises(ValueError, match="more than once"):
-        test_plant.update_configuration({
-            "dependency_noise_correlations": [
-                {"between": ["consumption:electricity", "consumption:water"],
-                 "correlation": 0.5},
-                {"between": ["consumption:water", "consumption:electricity"],
-                 "correlation": -0.2},
-            ]
-        })
-
-
 def test_capex_ramp_custom(test_plant):
     # Custom 2-year build schedule should produce a valid fixed_capital
     test_plant.capex_ramp = [0.5, 0.5]
