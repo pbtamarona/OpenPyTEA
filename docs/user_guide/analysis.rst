@@ -216,7 +216,8 @@ can also pass directly when a shorthand would be ambiguous.
 If the plant configures parameter dependencies, they are honoured here as
 well as in Monte Carlo: varying a driver moves its dependents with it, and
 a parameter that *is* a dependent cannot be varied. See
-:ref:`dependencies-sensitivity-tornado`.
+:ref:`Dependencies apply to sensitivity and tornado too
+<dependencies-sensitivity-tornado>`.
 
 Supported ``metric`` values:
 
@@ -293,9 +294,13 @@ and switching them on does not require one.
 If the plant does configure dependencies, they are honoured either way: each
 bar shows the effect propagated through everything downstream of that factor,
 and a parameter that is *set by* a dependency is never a factor, since it has
-no value of its own to vary. See :ref:`dependencies-sensitivity-tornado`.
+no value of its own to vary. See
+:ref:`Dependencies apply to sensitivity and tornado too
+<dependencies-sensitivity-tornado>`.
 
 Pass ``td`` to ``plot_tornado()`` — see :doc:`plotting`.
+
+.. _uncertainty-keys:
 
 Monte Carlo simulation
 -----------------------
@@ -506,7 +511,7 @@ not this field, determines that — it must be written as ``"noise"``:
 ``"std"``/``"scale"`` still work fine for an independent item's uncertainty
 (where they really do mean the item's own standard deviation), but for a
 dependent they raise ``ValueError`` instead of being silently reinterpreted
-(see :func:`~openpytea.analysis._reject_std_scale_for_dependent`):
+(see ``_reject_std_scale_for_dependent`` in ``analysis.py``):
 
 .. code-block:: python
 

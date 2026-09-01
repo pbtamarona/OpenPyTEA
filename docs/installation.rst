@@ -72,7 +72,8 @@ Optional extras
 
 .. code-block:: bash
 
-   # Jupyter / IPython kernel support
+   # Jupyter / IPython kernel support, including the ipywidgets
+   # progress bar shown while a Monte Carlo run is in progress
    pip install "OpenPyTEA[ipython]"
 
    # Development / testing

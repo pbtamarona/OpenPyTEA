@@ -151,12 +151,25 @@ Configuration reference
    * - ``plant_products``
      - ``{}``
      - Products dict. First entry is the main product for LCOP; others are co-products.
+       Each entry takes ``production`` (units/yr) and ``price`` (USD/unit), plus the
+       optional Monte Carlo keys ``price_uncertainty``, ``production_uncertainty``,
+       and ``production_dependency`` — see :ref:`uncertainty-keys`.
    * - ``variable_opex_inputs``
      - ``{}``
-     - Utilities and raw materials, each with ``consumption`` (units/yr) and ``price`` (USD/unit).
+     - Utilities and raw materials, each with ``consumption`` (units/yr) and ``price`` (USD/unit),
+       plus the optional Monte Carlo keys ``price_uncertainty``,
+       ``consumption_uncertainty``, and ``consumption_dependency`` — see
+       :ref:`uncertainty-keys`.
+   * - ``project_uncertainties``
+     - ``{}``
+     - Per-parameter uncertainty for the six project-level scalars
+       (``fixed_capital_factor``, ``fixed_opex_factor``, ``project_lifetime``,
+       ``interest_rate``, ``plant_utilization``, ``tax_rate``). Read by
+       :func:`~openpytea.analysis.monte_carlo` only — see :ref:`uncertainty-keys`.
    * - ``operator_hourly_rate``
      - ``{"rate": 38.11}``
-     - Operator wage in USD/hr.
+     - Operator wage in USD/hr, under ``"rate"``. Also accepts the uncertainty
+       and ``dependency`` keys of a project-level scalar.
    * - ``working_weeks_per_year``
      - ``49``
      - Annual working weeks per operator.

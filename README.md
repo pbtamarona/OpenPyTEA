@@ -44,7 +44,8 @@ Lunch, snacks, coffee, and drinks will be provided!
 - **Transparent and reproducible:** all algorithms, equations, and assumptions are openly available for full traceability.
 - **Cost breakdown visualization:** built-in functions to plot stacked bar charts of equipment costs, fixed capital, operating costs, and levelized cost of production (LCOP).
 - **Cash flow diagrams:** visualize a project's cumulative cash flow over time, including its maximum investment and pay-back point, with support for overlaying multiple plants.
-- **Built-in uncertainty tools:** automatic generation of sensitivity plots and Monte Carlo simulations.
+- **Built-in uncertainty tools:** automatic generation of sensitivity plots and Monte Carlo simulations, covering process quantities (consumption and production rates) as well as prices and financial assumptions.
+- **Parameter dependencies:** declare how quantities depend on one another — cooling water scaling with production, a byproduct's yield tracking the main product, capital cost scaling with capacity — and every analysis honours the same graph.
 - **Workflow using JSON configuration files:** standardized input/output structure via `io.py` for reproducible analyses and multi-scenario evaluation.
 - **Flexible analysis and visualization:** separation of data processing (`analysis.py`) and plotting (`plotting.py`) allows users to apply custom visualization tools.
 - **Interoperable and extensible:** easy integration with process simulators, optimization frameworks, and LCA tools.  
@@ -296,6 +297,8 @@ fig, ax = plot_sensitivity(results)
 ```
 The `plants` input may also be a list of `Plant` objects to generate comparison plots.
 
+Besides prices and financial assumptions, `parameter` also accepts a **process quantity** — `"electricity.consumption"` or `"ammonia.production"` — to sweep the physical side of the plant.
+
 Tornado Plot (One-at-a-Time Sensitivity)
 ```python
 from openpytea.analysis import tornado_data
@@ -304,6 +307,7 @@ from openpytea.plotting import plot_tornado
 results = tornado_data(ammonia_plant, plus_minus_value=0.5)
 fig, ax = plot_tornado(results)
 ```
+Pass `include_process_params=True` to rank consumption and production quantities alongside the prices and financial assumptions.
 
 Monte Carlo Simulation
 ```python
@@ -313,7 +317,25 @@ from openpytea.plotting import plot_monte_carlo
 results = monte_carlo(ammonia_plant, num_samples=1_000_000)
 fig, ax = plot_monte_carlo(results)
 ```
-Outputs include probability distributions and confidence intervals for LCOP, NPV, ROI, and payback time—supporting uncertainty-informed decision-making. With `plot_multiple_monte_carlo`, **OpenPyTEA** can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons.
+Outputs include probability distributions and confidence intervals for LCOP, NPV, ROI, and payback time—supporting uncertainty-informed decision-making. With `plot_multiple_monte_carlo`, **OpenPyTEA** can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons. `plot_monte_carlo_inputs` shows the sampled inputs themselves, split into **process** and **economic** figures, to confirm each distribution came out as intended.
+
+Uncertainty is configured per item: `price_uncertainty` on any `variable_opex_inputs` or `plant_products` entry, `consumption_uncertainty`/`production_uncertainty` for the quantities, and `project_uncertainties` for the project-level scalars.
+
+Parameter Dependencies
+```python
+ammonia_plant.update_configuration({
+    "variable_opex_inputs": {
+        "hydrogen": {
+            "consumption_dependency": {
+                "depends_on": {"production:ammonia": 0.176},  # kg H2 per kg NH3
+            },
+        },
+    },
+})
+```
+Rather than varying independently, a quantity can be defined as a linear function of one or more others — `dependent = Σ wᵢ · parentᵢ + offset`. Here the hydrogen feed follows ammonia production instead of drifting away from it. Process and economic parameters can drive each other in either direction (a byproduct's yield tracking the main product, `fixed_capital_factor` scaling with capacity), chains and multi-parent nodes resolve automatically, and cycles raise an error. A dependent may carry its own additive `noise` on top of the implied mean.
+
+Because dependencies live on the `Plant`, **all three analyses honour them**: Monte Carlo samples through the graph, while `sensitivity_data` and `tornado_data` propagate each perturbation through it and refuse to vary a parameter that a dependency already determines. See the Analysis user guide in the [documentation](https://openpytea.readthedocs.io) for the full configuration format.
 
 ### 6. **Workflow using JSON config files and command-line interface**
 
