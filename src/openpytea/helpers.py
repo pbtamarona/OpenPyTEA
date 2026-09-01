@@ -123,13 +123,414 @@ def _build_tornado_labels(plant, factors):
         "operator_hourly_rate": "Operator hourly rate",
     }
 
+    # "consumption"/"production" are abbreviated: these sit in the y-tick
+    # labels of a tornado plot, where the full words crowd out the axes.
     for var in plant.variable_opex_inputs:
         label_map[f"variable_opex_inputs.{var}"] = f"{_make_label(var)} price"
+        label_map[f"variable_opex_inputs.{var}.consumption"] = (
+            f"{_make_label(var)} cons."
+        )
 
     for prod in plant.plant_products:
         label_map[f"plant_products.{prod}"] = f"{_make_label(prod)} price"
+        label_map[f"plant_products.{prod}.production"] = (
+            f"{_make_label(prod)} prod."
+        )
 
     return [label_map.get(f, _make_label(f)) for f in factors]
+
+
+# ======================================================
+# PARAMETER DEPENDENCY GRAPH
+# ======================================================
+# Shared by every analysis that re-evaluates the plant under changed
+# inputs: Monte Carlo (stochastic, arrays + noise) and the deterministic
+# sensitivity/tornado analyses (scalars, no noise). The graph itself --
+# which parameters exist as nodes, how a "depends_on" spec is parsed, and
+# the topological resolution order -- is defined once here so that a
+# dependency configured on a plant means the same thing in all of them.
+
+# The seven economic "scalar" parameters that can participate in the
+# dependency DAG as ("project", <name>) nodes: the six
+# plant.project_uncertainties entries plus operator_hourly_rate (which
+# lives in its own config dict but is otherwise treated identically).
+# Unlike process parameters, these don't come from a per-item collection,
+# so there is exactly one node per name.
+_PROJECT_SCALAR_PARAMS = (
+    "fixed_capital_factor", "fixed_opex_factor", "project_lifetime",
+    "interest_rate", "plant_utilization", "tax_rate", "operator_hourly_rate",
+)
+
+# Sensitivity/tornado factor key -> DAG node, for the factors that name an
+# economic scalar. Prices ("variable_opex_inputs.<item>" /
+# "plant_products.<product>") are deliberately absent: they are not DAG
+# nodes, so they neither drive nor are driven by a dependency.
+_TOP_LEVEL_DEPENDENCY_NODES = {
+    "fixed_capital": ("project", "fixed_capital_factor"),
+    "fixed_opex": ("project", "fixed_opex_factor"),
+    "project_lifetime": ("project", "project_lifetime"),
+    "interest_rate": ("project", "interest_rate"),
+    "operator_hourly_rate": ("project", "operator_hourly_rate"),
+    "plant_utilization": ("project", "plant_utilization"),
+    "tax_rate": ("project", "tax_rate"),
+}
+
+
+def _parse_dependency_driver(spec, context):
+    """
+    Parse a ``"depends_on"`` string into a ``(kind, name)`` pair.
+
+    Parameters
+    ----------
+    spec : str
+        Expected form ``"production:<product>"``, ``"consumption:<item>"``,
+        or ``"project:<param>"``, referencing a ``plant_products`` entry, a
+        ``variable_opex_inputs`` entry, or one of the economic scalars in
+        :data:`_PROJECT_SCALAR_PARAMS` respectively.
+    context : str
+        Human-readable description of where ``spec`` came from, used in the
+        error message.
+
+    Returns
+    -------
+    tuple
+        ``(kind, name)`` where ``kind`` is ``"production"``,
+        ``"consumption"``, or ``"project"``.
+    """
+    if not isinstance(spec, str) or ":" not in spec:
+        raise ValueError(
+            f"Invalid 'depends_on' value {spec!r} for {context}; expected "
+            "'production:<product>', 'consumption:<item>', or "
+            "'project:<param>'."
+        )
+    kind, name = spec.split(":", 1)
+    if kind not in ("production", "consumption", "project"):
+        raise ValueError(
+            f"Invalid 'depends_on' kind {kind!r} for {context}; must be "
+            "'production', 'consumption', or 'project'."
+        )
+    if kind == "project" and name not in _PROJECT_SCALAR_PARAMS:
+        raise ValueError(
+            f"Invalid 'depends_on' reference 'project:{name}' for "
+            f"{context}; 'project:' must name one of "
+            f"{sorted(_PROJECT_SCALAR_PARAMS)}."
+        )
+    return kind, name
+
+
+def _describe_dependency_node(kind, name):
+    """Human-readable description of a ``(kind, name)`` node, for errors."""
+    if kind == "consumption":
+        return f"variable_opex_inputs['{name}']'s consumption_uncertainty"
+    if kind == "production":
+        return f"plant_products['{name}']'s production_uncertainty"
+    if name == "operator_hourly_rate":
+        return "operator_hourly_rate's uncertainty fields"
+    return f"project_uncertainties['{name}']'s uncertainty fields"
+
+
+def _dependency_context(kind, name):
+    """Description of the block a dependency was declared in, for errors."""
+    if kind == "project":
+        return f"the 'dependency' block for project parameter '{name}'"
+    return f"{kind}_dependency on '{name}'"
+
+
+def _collect_dependency_specs(plant):
+    """
+    Map every dependency-driven node to its dependency block.
+
+    A node opts in as a dependent by setting ``"consumption_dependency"``/
+    ``"production_dependency"`` (on a ``variable_opex_inputs``/
+    ``plant_products`` item) or ``"dependency"`` (on a
+    ``plant.project_uncertainties`` entry or ``plant.operator_hourly_rate``,
+    for the seven economic scalars in :data:`_PROJECT_SCALAR_PARAMS`).
+
+    Only the graph *structure* is read here -- the ``"depends_on"``/
+    ``"offset"`` block itself -- not the node's uncertainty configuration,
+    which is Monte-Carlo-specific (see
+    :func:`~openpytea.analysis._collect_dependency_nodes`).
+
+    Returns
+    -------
+    dict
+        ``{(kind, name): dependency_block}``, in plant configuration order.
+    """
+    specs = {}
+
+    for item, props in plant.variable_opex_inputs.items():
+        dep = props.get("consumption_dependency")
+        if dep is not None:
+            specs[("consumption", item)] = dep
+
+    for prod, props in plant.plant_products.items():
+        dep = props.get("production_dependency")
+        if dep is not None:
+            specs[("production", prod)] = dep
+
+    pu = getattr(plant, "project_uncertainties", None) or {}
+    for name in _PROJECT_SCALAR_PARAMS:
+        props = (plant.operator_hourly_rate if name == "operator_hourly_rate"
+                 else pu.get(name, {}))
+        if isinstance(props, dict) and props.get("dependency") is not None:
+            specs[("project", name)] = props["dependency"]
+
+    return specs
+
+
+def _dependency_parents(dep, key):
+    """
+    Parse and validate one dependency block's ``"depends_on"`` mapping.
+
+    Parameters
+    ----------
+    dep : dict
+        The dependency block, with a non-empty ``"depends_on"`` dict mapping
+        parent references to their linear weights.
+    key : tuple
+        The ``(kind, name)`` node this block belongs to, for error messages.
+
+    Returns
+    -------
+    dict
+        ``{(kind, name): weight}`` for every parent of this node.
+    """
+    context = _dependency_context(*key)
+    weights = dep.get("depends_on") if isinstance(dep, dict) else None
+    if not isinstance(weights, dict) or not weights:
+        raise ValueError(
+            f"'depends_on' for {context} must be a non-empty "
+            "dict mapping driver references to factors, e.g. "
+            "{'production:methanol': 9.3}."
+        )
+
+    parents = {}
+    for spec, factor in weights.items():
+        if not isinstance(factor, (int, float)):
+            raise ValueError(
+                f"'depends_on' factor for {spec!r} in "
+                f"{context} must be a number, got {factor!r}."
+            )
+        parents[_parse_dependency_driver(spec, context)] = factor
+    return parents
+
+
+def _resolve_dependency_dag(dependents, driver_pool,
+                            seed_missing=None, noise=None):
+    """
+    Resolve every dependent in topological order.
+
+    Each dependent's value is ``sum(weight_i * parent_i) + offset``, where
+    each ``parent_i`` is that parent's own *final* value -- so a parent's
+    noise (Monte Carlo) or perturbation (sensitivity/tornado) propagates
+    downstream through the graph. Parents are resolved before their
+    children via repeated passes over the pending set: a node becomes
+    resolvable once every one of its parents already has a final value, and
+    a pass that makes no progress means the remainder is unresolvable, due
+    to an unknown reference or a cycle.
+
+    The arithmetic is plain linear algebra over whatever ``driver_pool``
+    holds, so the same walk serves scalar (deterministic) and array
+    (Monte Carlo) values alike.
+
+    Parameters
+    ----------
+    dependents : dict
+        ``{(kind, name): dependency_block}``, from
+        :func:`_collect_dependency_specs`.
+    driver_pool : dict
+        ``{(kind, name): value}`` for the nodes that already have a final
+        value; mutated in place as dependents are resolved.
+    seed_missing : callable, optional
+        ``seed_missing(key) -> bool``, called for a parent absent from
+        ``driver_pool`` to lazily add it; returning False marks it
+        unresolvable.
+    noise : callable, optional
+        ``noise(key, value) -> value``, applied to each dependent's
+        resolved value (Monte Carlo adds the node's own noise here).
+
+    Returns
+    -------
+    dict
+        ``{(kind, name): value}`` for the resolved dependents only.
+
+    Raises
+    ------
+    ValueError
+        If a ``"depends_on"`` entry is malformed or points at an unknown
+        item, or the dependency graph has a cycle.
+    """
+    resolved = {}
+    pending_keys = list(dependents)
+
+    while pending_keys:
+        progressed = False
+        still_pending = []
+        for key in pending_keys:
+            dep = dependents[key]
+            parents = _dependency_parents(dep, key)
+
+            if not all(
+                pk in driver_pool
+                or (seed_missing is not None and seed_missing(pk))
+                for pk in parents
+            ):
+                still_pending.append(key)
+                continue
+
+            value = None
+            for parent_key, factor in parents.items():
+                term = factor * driver_pool[parent_key]
+                value = term if value is None else value + term
+            value = value + dep.get("offset", 0.0)
+
+            if noise is not None:
+                value = noise(key, value)
+
+            driver_pool[key] = value
+            resolved[key] = value
+            progressed = True
+
+        pending_keys = still_pending
+        if not progressed and pending_keys:
+            unresolved = ", ".join(f"{k}:{n}" for k, n in pending_keys)
+            raise ValueError(
+                "Could not resolve consumption/production/project "
+                f"dependency(ies) for: {unresolved}. Each 'depends_on' "
+                "entry must reference a known variable_opex_inputs/"
+                "plant_products item or one of "
+                f"{sorted(_PROJECT_SCALAR_PARAMS)} (directly or "
+                "transitively), and the dependency DAG must not contain a "
+                "cycle."
+            )
+
+    return resolved
+
+
+def _dependency_node_value(plant, key):
+    """Current (baseline) value of a ``(kind, name)`` DAG node on ``plant``."""
+    kind, name = key
+    if kind == "consumption":
+        return plant.variable_opex_inputs[name].get("consumption", 0.0)
+    if kind == "production":
+        return plant.plant_products[name].get("production", 0.0)
+
+    # Economic scalars. fixed_capital_factor/fixed_opex_factor are the
+    # multipliers `plant.fc`/`plant.fp`, which stand for 1.0 when unset.
+    if name == "fixed_capital_factor":
+        return 1.0 if plant.fc is None else plant.fc
+    if name == "fixed_opex_factor":
+        return 1.0 if plant.fp is None else plant.fp
+    if name == "operator_hourly_rate":
+        current = getattr(plant, "operator_hourly_rate", None)
+        if isinstance(current, dict):
+            return current.get("rate", 0.0)
+        return 0.0 if current is None else float(current)
+    return getattr(plant, name)
+
+
+def _set_dependency_node_value(plant, key, value):
+    """
+    Write a resolved value back onto ``plant`` -- the inverse of
+    :func:`_dependency_node_value`.
+    """
+    kind, name = key
+    if kind == "consumption":
+        plant.variable_opex_inputs[name]["consumption"] = value
+    elif kind == "production":
+        plant.plant_products[name]["production"] = value
+    elif name == "fixed_capital_factor":
+        plant.fc = value
+    elif name == "fixed_opex_factor":
+        plant.fp = value
+    elif name == "operator_hourly_rate":
+        if isinstance(getattr(plant, "operator_hourly_rate", None), dict):
+            plant.operator_hourly_rate["rate"] = value
+        else:
+            plant.operator_hourly_rate = value
+    else:
+        setattr(plant, name, value)
+
+
+def _apply_dependencies(plant):
+    """
+    Recompute every dependency-driven parameter on ``plant``, in place.
+
+    This is the deterministic counterpart of
+    :func:`~openpytea.analysis._resolve_quantity_dependencies`: the same
+    DAG, resolved from the plant's *current* parameter values with no noise
+    added. Calling it after a parameter has been perturbed makes that
+    perturbation cascade to everything downstream of it, which is what lets
+    sensitivity and tornado analyses honour dependencies the way Monte
+    Carlo does.
+
+    A no-op (and free) for a plant with no dependencies configured.
+
+    Parameters
+    ----------
+    plant : Plant
+        Mutated in place. Pass a copy unless you mean to change the plant.
+    """
+    dependents = _collect_dependency_specs(plant)
+    if not dependents:
+        return
+
+    driver_pool = {}
+    for item in plant.variable_opex_inputs:
+        key = ("consumption", item)
+        if key not in dependents:
+            driver_pool[key] = _dependency_node_value(plant, key)
+    for prod in plant.plant_products:
+        key = ("production", prod)
+        if key not in dependents:
+            driver_pool[key] = _dependency_node_value(plant, key)
+    for name in _PROJECT_SCALAR_PARAMS:
+        key = ("project", name)
+        if key not in dependents:
+            driver_pool[key] = _dependency_node_value(plant, key)
+
+    for key, value in _resolve_dependency_dag(dependents, driver_pool).items():
+        _set_dependency_node_value(plant, key, value)
+
+
+def _sensitivity_key_node(key):
+    """
+    DAG node named by a sensitivity/tornado factor key, or None.
+
+    Maps ``"fixed_capital"`` -> ``("project", "fixed_capital_factor")``,
+    ``"variable_opex_inputs.<item>.consumption"`` ->
+    ``("consumption", "<item>")``, ``"plant_products.<product>.production"``
+    -> ``("production", "<product>")``, and so on. Returns None for a key
+    that isn't a DAG node at all -- notably the price keys
+    ``"variable_opex_inputs.<item>"`` / ``"plant_products.<product>"``.
+    """
+    if key in _TOP_LEVEL_DEPENDENCY_NODES:
+        return _TOP_LEVEL_DEPENDENCY_NODES[key]
+
+    parts = key.split(".")
+    if len(parts) == 3:
+        root, name, field = parts
+        if root == "variable_opex_inputs" and field == "consumption":
+            return ("consumption", name)
+        if root == "plant_products" and field == "production":
+            return ("production", name)
+    return None
+
+
+def _node_sensitivity_key(node):
+    """
+    Sensitivity/tornado factor key for a DAG node -- the inverse of
+    :func:`_sensitivity_key_node`.
+    """
+    kind, name = node
+    if kind == "consumption":
+        return f"variable_opex_inputs.{name}.consumption"
+    if kind == "production":
+        return f"plant_products.{name}.production"
+    for factor_key, factor_node in _TOP_LEVEL_DEPENDENCY_NODES.items():
+        if factor_node == node:
+            return factor_key
+    return name
 
 
 # For analysis
@@ -142,6 +543,12 @@ def _get_original_value(plant, full_key):
     When traversing dictionaries, it automatically extracts the "price" field
     from the accessed value. For objects, it retrieves attributes directly by
     name.
+
+    The two three-part quantity keys --
+    "variable_opex_inputs.<item>.consumption" and
+    "plant_products.<product>.production" -- name a dependency-graph node
+    rather than a price, and are read through
+    :func:`_dependency_node_value` instead.
 
     Args:
         plant: The root object or dictionary to traverse.
@@ -166,6 +573,10 @@ def _get_original_value(plant, full_key):
         >>> _get_original_value(plant, "level1.level2")
         250
     """
+    node = _sensitivity_key_node(full_key)
+    if node is not None and node[0] in ("consumption", "production"):
+        return _dependency_node_value(plant, node)
+
     keys = full_key.split(".")
     ref = plant
     for k in keys:
@@ -200,6 +611,10 @@ def _update_and_evaluate(
         - "fixed_opex": Updates fixed operating expenses
         - "variable_opex_inputs.<name>": Updates price of a variable input
         - "plant_products.<name>": Updates price of a plant product
+        - "variable_opex_inputs.<name>.consumption": Updates the consumption
+        rate of a variable input
+        - "plant_products.<name>.production": Updates the production rate of
+        a plant product
         - "operator_hourly_rate": Updates operator hourly rate
         - Any other top-level plant attribute (e.g., "interest_rate",
         "project_lifetime")
@@ -234,6 +649,10 @@ def _update_and_evaluate(
     -----
     - The original plant object is not modified; a deep copy is created
     internally.
+    - Any parameter dependencies configured on the plant are re-resolved
+    after the change and before the economics are recomputed, so a
+    perturbation cascades to everything downstream of it in the dependency
+    graph (see :func:`_apply_dependencies`).
     - All metric calculations trigger a recalculation of plant economics via
         calculate_levelized_cost().
     """
@@ -242,7 +661,19 @@ def _update_and_evaluate(
 
     # --- 1. Apply parameter change ---
 
-    if factor == "fixed_capital":
+    quantity_node = _sensitivity_key_node(factor)
+    if quantity_node is not None and quantity_node[0] != "project":
+        # "variable_opex_inputs.<name>.consumption" or
+        # "plant_products.<name>.production" -- a process quantity rather
+        # than a price, and a node of the dependency graph.
+        kind, name = quantity_node
+        root, field = (
+            ("variable_opex_inputs", "consumption") if kind == "consumption"
+            else ("plant_products", "production")
+        )
+        plant_copy.update_configuration({root: {name: {field: value}}})
+
+    elif factor == "fixed_capital":
         plant_copy.calculate_fixed_capital(fc=value)
 
     elif factor == "fixed_opex":
@@ -300,12 +731,19 @@ def _update_and_evaluate(
         config = {factor: value}
         plant_copy.update_configuration(config)
 
-    # --- 2. Recompute economics ---
+    # --- 2. Propagate the change through the dependency graph ---
+
+    # Anything tied to the changed parameter (directly or transitively)
+    # moves with it, exactly as it would in a Monte Carlo run. No-op when
+    # the plant has no dependencies configured.
+    _apply_dependencies(plant_copy)
+
+    # --- 3. Recompute economics ---
 
     # This builds fixed_capital, opex, revenue, cash_flow, etc.
     plant_copy.calculate_levelized_cost()
 
-    # --- 3. Return requested metric ---
+    # --- 4. Return requested metric ---
 
     if metric == "LCOP":
         return plant_copy.levelized_cost
@@ -470,7 +908,34 @@ def _evaluate_metric(plant, metric, additional_capex=False):
         raise ValueError(f"Unsupported metric '{metric}'")
 
 
-def _collect_sensitivity_keys(plant, metric):
+def _evaluate_baseline_metric(plant, metric, additional_capex=False):
+    """
+    Evaluate a metric at the plant's unperturbed baseline, with any
+    configured parameter dependencies resolved first.
+
+    Sensitivity and tornado analyses compare perturbed cases -- which run
+    through :func:`_update_and_evaluate` and therefore resolve the
+    dependency graph -- against this baseline, so the baseline has to be
+    resolved the same way or a plant whose dependencies don't exactly
+    reproduce its configured values would show a spurious offset at 0 %.
+
+    Unlike :func:`_evaluate_metric`, which recomputes on the plant it is
+    given, this never mutates ``plant``: it works on a copy whenever there
+    is a dependency to resolve, and otherwise falls straight through.
+    """
+    if not _collect_dependency_specs(plant):
+        return _evaluate_metric(plant, metric, additional_capex)
+
+    plant_copy = deepcopy(plant)
+    _apply_dependencies(plant_copy)
+    # Resolving the graph can move the plant's inputs off the values its
+    # cached levelized_cost was computed from, and _evaluate_metric reuses
+    # that cache for "LCOP" rather than recomputing.
+    plant_copy.calculate_levelized_cost()
+    return _evaluate_metric(plant_copy, metric, additional_capex)
+
+
+def _collect_sensitivity_keys(plant, metric, include_process_params=False):
     """
     Collect sensitivity analysis keys for a given plant and metric.
     This function identifies which parameters should be included in sensitivity
@@ -481,6 +946,10 @@ def _collect_sensitivity_keys(plant, metric):
                 plant_products attributes with their respective keys.
         metric (str): The metric type for sensitivity analysis.
                     Either "LCOP" or another metric type.
+        include_process_params (bool): Whether to also return a factor for
+                    each process quantity -- every item's consumption and
+                    every product's production. Default False, which keeps
+                    the factor set to prices and economic scalars.
     Returns:
         tuple: A tuple containing:
             - all_keys (list): Complete list of all sensitivity keys including
@@ -494,6 +963,21 @@ def _collect_sensitivity_keys(plant, metric):
     Notes:
         Top-level keys always included: fixed_capital, fixed_opex,
         project_lifetime, interest_rate, operator_hourly_rate.
+
+        ``include_process_params=True`` additionally returns
+        "variable_opex_inputs.<item>.consumption" and
+        "plant_products.<product>.production" for every item and product.
+        These are ordinary economic drivers -- a plant's production rate
+        moves LCOP whether or not anything is tied to it -- so the flag is
+        independent of the dependency graph: it neither requires
+        dependencies nor is implied by them.
+
+        Only the *dependency* structure narrows the result, and only for
+        correctness: a parameter set by a dependency has no value of its
+        own to vary, so it is never a factor. That drops dependent process
+        quantities from what ``include_process_params`` would otherwise
+        add, and drops an economic scalar (e.g. "fixed_capital" when
+        ``fixed_capital_factor`` is a dependent) from the top-level keys.
     """
     top_level_keys = [
         "fixed_capital",
@@ -509,7 +993,28 @@ def _collect_sensitivity_keys(plant, metric):
 
     nested = var_keys if metric == "LCOP" else (var_keys + prod_keys)
 
-    return top_level_keys + nested, nested
+    dependents = _collect_dependency_specs(plant)
+    if not dependents and not include_process_params:
+        return top_level_keys + nested, nested
+
+    top_level_keys = [
+        k for k in top_level_keys
+        if _sensitivity_key_node(k) not in dependents
+    ]
+
+    quantity_keys = []
+    if include_process_params:
+        quantity_keys = [
+            _node_sensitivity_key(("consumption", item))
+            for item in plant.variable_opex_inputs
+            if ("consumption", item) not in dependents
+        ] + [
+            _node_sensitivity_key(("production", prod))
+            for prod in plant.plant_products
+            if ("production", prod) not in dependents
+        ]
+
+    return top_level_keys + nested + quantity_keys, nested
 
 
 def _run_tornado_sensitivity(plant, keys, nested_keys,

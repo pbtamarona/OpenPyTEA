@@ -197,11 +197,26 @@ selected metric at each point.
 
 * A key from ``variable_opex_inputs`` — varies that item's *price*
 * A key from ``plant_products`` — varies that product's *price*
+* ``"{key}.consumption"`` — varies a ``variable_opex_inputs`` item's
+  *consumption rate*
+* ``"{key}.production"`` — varies a ``plant_products`` entry's *production
+  rate*
 * ``"fixed_capital"`` — scales total installed CAPEX
 * ``"fixed_opex"`` — scales total fixed OPEX
 * ``"interest_rate"`` — discount rate
 * ``"project_lifetime"`` — project duration
 * ``"operator_hourly_rate"`` — labor wage
+* ``"plant_utilization"`` — on-stream factor
+* ``"tax_rate"`` — corporate tax rate
+
+Each shorthand above resolves to a full path
+(``"variable_opex_inputs.electricity.consumption"`` and so on), which you
+can also pass directly when a shorthand would be ambiguous.
+
+If the plant configures parameter dependencies, they are honoured here as
+well as in Monte Carlo: varying a driver moves its dependents with it, and
+a parameter that *is* a dependent cannot be varied. See
+:ref:`dependencies-sensitivity-tornado`.
 
 Supported ``metric`` values:
 
@@ -256,6 +271,29 @@ impact on the chosen metric.
 
    # Profit-oriented metric — product prices are included automatically
    td_roi = tornado_data(plant=plant, plus_minus_value=0.5, metric="ROI")
+
+By default the factor list covers prices and economic scalars. Pass
+``include_process_params=True`` to rank the plant's **process** parameters
+alongside them — every ``variable_opex_inputs`` item's consumption and every
+``plant_products`` entry's production:
+
+.. code-block:: python
+
+   td_process = tornado_data(
+       plant=plant,
+       plus_minus_value=0.5,
+       include_process_params=True,
+   )
+
+This is independent of the dependency graph. Process quantities are ordinary
+economic drivers — a plant's production rate moves LCOP whether or not
+anything is tied to it — so configuring a dependency does not switch them on,
+and switching them on does not require one.
+
+If the plant does configure dependencies, they are honoured either way: each
+bar shows the effect propagated through everything downstream of that factor,
+and a parameter that is *set by* a dependency is never a factor, since it has
+no value of its own to vary. See :ref:`dependencies-sensitivity-tornado`.
 
 Pass ``td`` to ``plot_tornado()`` — see :doc:`plotting`.
 
@@ -491,6 +529,35 @@ dependent they raise ``ValueError`` instead of being silently reinterpreted
 noise``, with ``noise ~ Normal(0, 5.0e4²)`` (truncated to ±2·std by default,
 same convention as everywhere else — set ``"min"``/``"max"`` explicitly to
 override).
+
+.. _dependencies-sensitivity-tornado:
+
+**Dependencies apply to sensitivity and tornado too.** A dependency is a
+property of the plant, not of the Monte Carlo run, so
+:func:`~openpytea.analysis.sensitivity_data` and
+:func:`~openpytea.analysis.tornado_data` resolve the same graph — minus the
+noise, which is Monte Carlo's alone. Three things follow.
+
+*Perturbations propagate.* Varying a parameter that drives others moves
+them with it, and anything downstream of *those*, before the economics are
+recomputed. The curve or bar therefore shows the combined effect of the
+whole sub-graph, not the parameter in isolation — with the electricity
+dependency above, a ±50 % sweep of methanol production carries electricity
+consumption along with it. The baseline is resolved the same way, so it
+still lines up with the 0 % point of the curve.
+
+*Dependents can't be varied.* A parameter set by a dependency has no value
+of its own to hold everything else constant against, so it is never a
+tornado factor, and naming it in ``sensitivity_data`` raises ``ValueError``.
+Vary one of its parents instead — the change reaches it.
+
+*Which parameters are ranked is a separate question.* Dependencies do not
+add factors to the tornado. To see a process quantity ranked — including
+one that drives a dependency — pass ``include_process_params=True`` to
+:func:`~openpytea.analysis.tornado_data`; ``sensitivity_data`` reaches any
+of them by name regardless. So a plant with no dependencies configured
+keeps exactly the factor list it had before, and so does one with
+dependencies until you ask for process parameters.
 
 **Project-level financial uncertainties** are set through the
 ``project_uncertainties`` key:

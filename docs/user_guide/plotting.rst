@@ -195,6 +195,22 @@ Tornado diagrams
      - .. image:: ../_static/plotting/tornado_roi.png
           :width: 100%
 
+The figure height is chosen from the number of factors, so a long factor
+list — a plant with many utilities, or ``include_process_params=True`` on
+:func:`~openpytea.analysis.tornado_data` — produces a taller figure rather
+than a more crowded one. Pass an explicit ``figsize`` to override:
+
+.. code-block:: python
+
+   td = tornado_data(plant=plant, plus_minus_value=0.5,
+                     include_process_params=True)
+   fig, ax = plot_tornado(td, figsize=(4, 6))
+
+Consumption and production factors are labelled ``"<item> cons."`` and
+``"<product> prod."`` to keep the y-axis readable. The Monte Carlo input
+names (``"Electricity consumption"``, ``"Methanol production"`` — see
+:func:`~openpytea.plotting.plot_monte_carlo_inputs`) are unabbreviated.
+
 Monte Carlo histograms
 -----------------------
 

@@ -13,6 +13,7 @@ from openpytea import (
     tornado_data,
     monte_carlo
 )
+from openpytea.helpers import _apply_dependencies
 
 
 def test_cost_breakdown_data(test_plant):
@@ -365,3 +366,213 @@ def test_monte_carlo_dependency_cycle(test_plant):
 
     with pytest.raises(ValueError, match="cycle"):
         monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
+
+
+# ---------------------------------------------------------------------
+# Dependencies in the deterministic analyses (sensitivity / tornado).
+# The same "depends_on" configuration Monte Carlo honours above must also
+# be honoured here -- see openpytea.helpers._apply_dependencies.
+# ---------------------------------------------------------------------
+
+
+def _tie_water_to_hydrogen(plant, factor=0.2):
+    # water consumption = factor * hydrogen production. At the fixture's
+    # baseline (hydrogen 50, water 10) factor=0.2 reproduces it exactly,
+    # so only the *response* to a perturbation changes, not the baseline.
+    plant.update_configuration({
+        "variable_opex_inputs": {
+            "water": {
+                "consumption_dependency": {
+                    "depends_on": {"production:hydrogen": factor},
+                },
+            },
+        },
+    })
+    return plant
+
+
+def test_apply_dependencies_propagates_through_a_chain(test_plant):
+    # electricity follows hydrogen, water follows electricity
+    test_plant.update_configuration({
+        "variable_opex_inputs": {
+            "electricity": {"consumption_dependency": {
+                "depends_on": {"production:hydrogen": 2.0}}},
+            "water": {"consumption_dependency": {
+                "depends_on": {"consumption:electricity": 0.5}}},
+        },
+        "project_uncertainties": {
+            "fixed_capital_factor": {"dependency": {
+                "depends_on": {"production:hydrogen": 0.01}, "offset": 0.5}},
+        },
+    })
+    test_plant.plant_products["hydrogen"]["production"] = 80
+    _apply_dependencies(test_plant)
+
+    assert test_plant.variable_opex_inputs["electricity"]["consumption"] == 160
+    assert test_plant.variable_opex_inputs["water"]["consumption"] == 80
+    assert test_plant.fc == pytest.approx(1.3)
+
+
+def test_sensitivity_reflects_dependency(test_plant):
+    # Varying a driver must move its dependents too, so the curve differs
+    # from the same sweep on an otherwise identical independent plant
+    independent = deepcopy(test_plant)
+    dependent = _tie_water_to_hydrogen(test_plant)
+
+    kwargs = dict(parameter="hydrogen.production", plus_minus_value=0.5,
+                  n_points=5, metric="LCOP")
+    dep_curve = sensitivity_data(dependent, **kwargs)["curves"][0]
+    ind_curve = sensitivity_data(independent, **kwargs)["curves"][0]
+
+    # Same baseline (the dependency reproduces it), different response
+    assert dep_curve["baseline"] == pytest.approx(ind_curve["baseline"])
+    assert dep_curve["y"][2] == pytest.approx(dep_curve["baseline"])
+    assert not np.allclose(dep_curve["y"], ind_curve["y"])
+
+
+def test_sensitivity_quantity_parameter_labels(test_plant):
+    result = sensitivity_data(test_plant, parameter="electricity.consumption",
+                              plus_minus_value=0.2, n_points=3)
+
+    assert result["parameter"] == "variable_opex_inputs.electricity.consumption"
+    assert "Electricity consumption" in result["xlabel"]
+    assert "price" not in result["xlabel"]
+
+
+def test_sensitivity_rejects_a_dependent_parameter(test_plant):
+    _tie_water_to_hydrogen(test_plant)
+
+    with pytest.raises(ValueError, match="set by a dependency"):
+        sensitivity_data(test_plant, parameter="water.consumption",
+                         plus_minus_value=0.5, n_points=3)
+
+
+def test_sensitivity_baseline_resolves_dependencies(test_plant):
+    # A dependency that does NOT reproduce the configured value must move
+    # the baseline, not just the perturbed points
+    test_plant.calculate_levelized_cost()
+    unresolved = test_plant.levelized_cost
+
+    # water consumption becomes 50, not the configured 10
+    _tie_water_to_hydrogen(test_plant, factor=1.0)
+    curve = sensitivity_data(test_plant, parameter="hydrogen.production",
+                             plus_minus_value=0.5, n_points=3)["curves"][0]
+
+    assert curve["baseline"] != pytest.approx(unresolved)
+    assert curve["baseline"] == pytest.approx(curve["y"][1])
+
+
+def test_tornado_factors_default_to_prices_and_scalars(test_plant):
+    baseline = {
+        "fixed_capital", "fixed_opex", "project_lifetime", "interest_rate",
+        "operator_hourly_rate", "variable_opex_inputs.electricity",
+        "variable_opex_inputs.water",
+    }
+    assert set(tornado_data(
+        test_plant, plus_minus_value=0.1, metric="LCOP")["factors"]) == baseline
+
+    # Configuring a dependency must NOT switch process parameters on: the
+    # two are independent knobs
+    _tie_water_to_hydrogen(test_plant)
+    factors = set(tornado_data(
+        test_plant, plus_minus_value=0.1, metric="LCOP")["factors"])
+
+    assert "plant_products.hydrogen.production" not in factors
+    assert "variable_opex_inputs.electricity.consumption" not in factors
+    # ...except that the dependent itself can no longer be varied, so a
+    # dependent economic scalar still drops out
+    assert factors == baseline
+
+
+def test_tornado_include_process_params_without_dependencies(test_plant):
+    # No dependency anywhere -- process parameters are still available,
+    # because they are ordinary economic drivers in their own right
+    factors = set(tornado_data(test_plant, plus_minus_value=0.1,
+                               metric="LCOP",
+                               include_process_params=True)["factors"])
+
+    assert "variable_opex_inputs.electricity.consumption" in factors
+    assert "variable_opex_inputs.water.consumption" in factors
+    assert "plant_products.hydrogen.production" in factors
+    # Prices and scalars are still there alongside them
+    assert "variable_opex_inputs.electricity" in factors
+    assert "fixed_capital" in factors
+
+
+def test_tornado_include_process_params_excludes_dependents(test_plant):
+    # water's consumption is set by hydrogen production, and
+    # fixed_capital_factor by it too -- neither can be varied on its own
+    test_plant.update_configuration({
+        "variable_opex_inputs": {
+            "water": {"consumption_dependency": {
+                "depends_on": {"production:hydrogen": 0.2}}},
+        },
+        "project_uncertainties": {
+            "fixed_capital_factor": {"dependency": {
+                "depends_on": {"production:hydrogen": 0.004}}},
+        },
+    })
+
+    result = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP",
+                          include_process_params=True)
+    factors = set(result["factors"])
+
+    # Independent process parameters are ranked
+    assert "plant_products.hydrogen.production" in factors
+    assert "variable_opex_inputs.electricity.consumption" in factors
+    # Dependents are not, whether process or economic
+    assert "variable_opex_inputs.water.consumption" not in factors
+    assert "fixed_capital" not in factors
+    # Prices are untouched by the graph
+    assert "variable_opex_inputs.water" in factors
+
+    # Quantity labels are abbreviated to keep the y-axis readable
+    labels = dict(zip(result["factors"], result["labels"]))
+    assert labels["plant_products.hydrogen.production"] == "Hydrogen prod."
+    assert (labels["variable_opex_inputs.electricity.consumption"]
+            == "Electricity cons.")
+
+
+def test_tornado_dependency_widens_the_driver_bar(test_plant):
+    # With water tied to hydrogen, perturbing hydrogen production also
+    # moves water consumption, so the driver's bar spans more than it
+    # would if the same parameter moved alone
+    independent = deepcopy(test_plant)
+    dependent = _tie_water_to_hydrogen(test_plant)
+
+    dep = tornado_data(dependent, plus_minus_value=0.5, metric="LCOP",
+                       include_process_params=True)
+    dep_i = dep["factors"].index("plant_products.hydrogen.production")
+    dep_span = abs(dep["highs"][dep_i] - dep["lows"][dep_i])
+
+    ind = tornado_data(independent, plus_minus_value=0.5, metric="LCOP",
+                       include_process_params=True)
+    ind_i = ind["factors"].index("plant_products.hydrogen.production")
+    ind_span = abs(ind["highs"][ind_i] - ind["lows"][ind_i])
+
+    assert dep_span != pytest.approx(ind_span)
+    assert dep["base_value"] == pytest.approx(ind["base_value"])
+
+
+def test_tornado_never_ranks_opt_in_economic_scalars(test_plant):
+    # plant_utilization/tax_rate are not tornado factors, and a dependency
+    # referencing one does not make them into factors either
+    assert "plant_utilization" not in tornado_data(
+        test_plant, plus_minus_value=0.1)["factors"]
+
+    test_plant.update_configuration({
+        "variable_opex_inputs": {
+            "water": {"consumption_dependency": {
+                "depends_on": {"project:plant_utilization": 11.0},
+                "offset": 0.1}},
+        },
+    })
+
+    factors = tornado_data(test_plant, plus_minus_value=0.1,
+                           include_process_params=True)["factors"]
+    assert "plant_utilization" not in factors
+    assert "tax_rate" not in factors
+    # Vary them by name through sensitivity_data instead
+    curve = sensitivity_data(test_plant, parameter="plant_utilization",
+                             plus_minus_value=0.1, n_points=3)["curves"][0]
+    assert not np.allclose(curve["y"], curve["y"][0])

@@ -306,9 +306,26 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
     return ax.figure, ax
 
 
+# Tornado figure height, in inches, as a function of the number of bars:
+# ``_TORNADO_BASE_HEIGHT + _TORNADO_HEIGHT_PER_BAR * n``, floored at
+# ``_TORNADO_MIN_HEIGHT``. Calibrated so a nine-factor plot comes out at
+# ~2.4 in, the fixed default this replaced, while a long factor list (a
+# plant with many utilities, or ``include_process_params=True``) grows
+# instead of squeezing its bars together.
+_TORNADO_BASE_HEIGHT = 0.7
+_TORNADO_HEIGHT_PER_BAR = 0.19
+_TORNADO_MIN_HEIGHT = 1.5
+
+
+def _tornado_figsize(n_factors, width=3.4):
+    """Figure size for a tornado plot with ``n_factors`` bars."""
+    height = _TORNADO_BASE_HEIGHT + _TORNADO_HEIGHT_PER_BAR * n_factors
+    return width, max(height, _TORNADO_MIN_HEIGHT)
+
+
 def plot_tornado(
     data,
-    figsize=(3.4, 2.4),
+    figsize=None,
     ax=None,
     show=True,
 ):
@@ -333,7 +350,12 @@ def plot_tornado(
         - 'plus_minus_value' : float, optional
             Percentage variation value displayed in legend (e.g., 0.1 for 10%).
     figsize : tuple, optional
-        Figure size as (width, height) in inches. Default is (3.4, 2.4).
+        Figure size as (width, height) in inches. Default is None, which
+        sizes the figure to the number of factors: the width is 3.4 in and
+        the height grows with each bar, so a long factor list gets a taller
+        figure rather than a more crowded one. A nine-factor plot comes out
+        at roughly (3.4, 2.4) in, the fixed default this replaced. Pass an
+        explicit tuple to override. Ignored when *ax* is given.
     ax : matplotlib.axes.Axes, optional
         Existing axes object to plot on. If None, a new figure and axes are
         created. Default is None.
@@ -364,6 +386,8 @@ def plot_tornado(
 
     created_fig = None
     if ax is None:
+        if figsize is None:
+            figsize = _tornado_figsize(len(labels_sorted))
         created_fig, ax = plt.subplots(figsize=figsize)
 
     for i in range(len(y_pos)):

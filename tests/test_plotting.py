@@ -63,3 +63,29 @@ def test_plot_tornado_runs(test_plant):
 
     assert fig is not None
     assert ax is not None
+
+
+def test_plot_tornado_height_grows_with_factor_count(test_plant):
+    """A longer factor list gets a taller figure, not thinner bars."""
+    short = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP")
+    tall = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP",
+                        include_process_params=True)
+    assert len(tall["factors"]) > len(short["factors"])
+
+    fig_short, _ = plot_tornado(short, show=False)
+    fig_tall, _ = plot_tornado(tall, show=False)
+
+    h_short = fig_short.get_size_inches()[1]
+    h_tall = fig_tall.get_size_inches()[1]
+    assert h_tall > h_short
+    # Width is unaffected
+    assert (fig_short.get_size_inches()[0]
+            == fig_tall.get_size_inches()[0] == 3.4)
+
+
+def test_plot_tornado_explicit_figsize_still_wins(test_plant):
+    data = tornado_data(test_plant, plus_minus_value=0.1,
+                        include_process_params=True)
+    fig, _ = plot_tornado(data, figsize=(5.0, 5.0), show=False)
+
+    assert tuple(fig.get_size_inches()) == (5.0, 5.0)
