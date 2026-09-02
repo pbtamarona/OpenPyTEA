@@ -240,6 +240,46 @@ def test_fixed_opex_components_override(test_plant):
     assert test_plant.maintenance_costs == 999_999
 
 
+def test_working_capital_tracks_fixed_capital(test_plant):
+    # Auto-computed working capital must follow fixed_capital on every
+    # recalculation, not freeze at its first computed value -- including
+    # monte_carlo's per-sample fc arrays applied to a plant that already
+    # ran a deterministic analysis.
+    test_plant.calculate_fixed_capital()
+    test_plant.calculate_variable_opex()
+    test_plant.calculate_fixed_opex()
+    assert np.isclose(
+        test_plant.working_capital, 0.15 * test_plant.fixed_capital
+    )
+
+    test_plant.calculate_fixed_capital(fc=2.0)
+    test_plant.calculate_fixed_opex()
+    assert np.isclose(
+        test_plant.working_capital, 0.15 * test_plant.fixed_capital
+    )
+
+    batch = deepcopy(test_plant)
+    fc_samples = np.array([0.5, 1.0, 1.5])
+    batch.calculate_fixed_capital(fc=fc_samples)
+    batch.calculate_fixed_opex()
+    assert np.asarray(batch.working_capital).shape == (3,)
+    assert np.allclose(
+        batch.working_capital, 0.15 * batch.fixed_capital
+    )
+
+
+def test_user_working_capital_is_preserved(test_plant):
+    test_plant.update_configuration({"working_capital": 123_456.0})
+    test_plant.calculate_fixed_capital()
+    test_plant.calculate_variable_opex()
+    test_plant.calculate_fixed_opex()
+    assert test_plant.working_capital == 123_456.0
+
+    test_plant.calculate_fixed_capital(fc=2.0)
+    test_plant.calculate_fixed_opex()
+    assert test_plant.working_capital == 123_456.0
+
+
 def test_vectorized_lifetimes_match_scalar_runs(test_plant):
     # Each sample in a vectorized (Monte Carlo) run must reproduce a
     # scalar run of its own lifetime: no revenue, costs, or taxes may

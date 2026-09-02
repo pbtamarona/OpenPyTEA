@@ -208,6 +208,11 @@ class Plant:
         self.working_capital = configuration.get(
             "working_capital", None
         )
+        # User-provided working capital is kept as-is; an auto-computed
+        # one must track fixed_capital on every recalculation
+        self._working_capital_fixed = (
+            self.working_capital is not None
+        )
         self.interest_rate = configuration.get(
             "interest_rate", 0.09
         )
@@ -335,9 +340,13 @@ class Plant:
         self.equipment_list = configuration.get(
             "equipment", self.equipment_list
         )
-        self.working_capital = configuration.get(
-            "working_capital", self.working_capital
-        )
+        if "working_capital" in configuration:
+            self.working_capital = configuration[
+                "working_capital"
+            ]
+            self._working_capital_fixed = (
+                self.working_capital is not None
+            )
         self.interest_rate = configuration.get(
             "interest_rate", self.interest_rate
         )
@@ -1211,15 +1220,17 @@ class Plant:
             ),
         )
 
-        if self.working_capital is not None:
-            self.interest_working_capital = (
-                self.working_capital * self.interest_rate
+        # Only a user-provided working capital is kept as-is; an
+        # auto-computed one is recomputed here so it tracks the
+        # current fixed_capital (which may have changed, or be a
+        # per-sample array in Monte Carlo runs)
+        if not getattr(self, "_working_capital_fixed", False):
+            self.working_capital = (
+                f["working_capital"] * self.fixed_capital
             )
-        else:
-            self.working_capital = f["working_capital"] * self.fixed_capital
-            self.interest_working_capital = (
-                self.working_capital * self.interest_rate
-            )
+        self.interest_working_capital = (
+            self.working_capital * self.interest_rate
+        )
 
         self.fixed_production_costs = (
             self.operating_labor_costs
