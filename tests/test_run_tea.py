@@ -230,3 +230,27 @@ def test_run_openpytea_uses_output_directory_from_config(tmp_path):
     results = run_openpytea(config_path=config_path, output_dir=None)
 
     _assert_results(results, output_dir)
+
+
+def test_plant_name_with_reserved_characters(tmp_path):
+    """A path-hostile plant name must not lose the run at save time."""
+    output_dir = tmp_path / "results"
+
+    config = {**_equipment_data(), **_plant_data()}
+    config["plant"]["plant_name"] = 'CO2/MeOH: "Case A"'
+    config["analysis"] = {"levelized_cost": {"run": True}}
+    config["output"] = {"save_json": True, "save_plots": False}
+
+    config_path = tmp_path / "openpytea.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+
+    results = run_openpytea(config_path, output_dir=output_dir)
+    assert "levelized_cost" in results
+
+    expected = output_dir / "CO2_MeOH_ _Case A__analysis_results.json"
+    assert expected.exists()
+    # the display name is untouched inside the results
+    saved = json.loads(expected.read_text(encoding="utf-8"))
+    assert saved["results"]["levelized_cost"]["xlabels"] == [
+        'CO2/MeOH: "Case A"'
+    ]

@@ -524,8 +524,11 @@ def plot_cash_flow(data, figsize=(3.6, 2.6), ax=None, show=True):
 
     for curve in curves:
         color = next(line_colors)
-        years = curve["years"]
-        cumulative = curve["cumulative"]
+        # Coerce like the other plot functions: results reloaded from
+        # JSON (load_results) arrive as plain lists, which would break
+        # the `cumulative < 0` mask below
+        years = np.asarray(curve["years"], dtype=float)
+        cumulative = np.asarray(curve["cumulative"], dtype=float)
         breakeven = curve["breakeven_year"]
         all_cumulative.append(cumulative)
 

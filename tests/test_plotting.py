@@ -128,3 +128,19 @@ def test_tornado_legend_has_no_literal_backslash(test_plant):
     labels = [t.get_text() for t in ax.get_legend().get_texts()]
     assert labels == ["-10%", "+10%"]
     plt.close(fig)
+
+
+def test_plot_cash_flow_accepts_round_tripped_results(test_plant):
+    """Results reloaded from JSON arrive as lists, not arrays."""
+    import json
+    from openpytea.helpers import _to_jsonable
+
+    data = cash_flow_data(test_plant)
+    round_tripped = json.loads(json.dumps(_to_jsonable(data)))
+    assert isinstance(
+        round_tripped["curves"][0]["cumulative"], list
+    )
+
+    fig, ax = plot_cash_flow(round_tripped, show=False)
+    assert ax.has_data()
+    plt.close(fig)

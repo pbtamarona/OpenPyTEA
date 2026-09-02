@@ -35,6 +35,22 @@ from openpytea.helpers import (
 __version__ = version("openpytea")
 
 
+def _safe_filename(name):
+    """
+    Return ``name`` with filesystem-reserved characters replaced by
+    ``_``, for use as an output-file stem.
+
+    Covers ``/ \\ : * ? " < > |`` (reserved on Windows; ``/`` everywhere)
+    and control characters. Only filenames are sanitized -- the plant's
+    display name stays untouched in titles, reports, and JSON contents.
+    """
+    cleaned = "".join(
+        "_" if (c in '/\\:*?"<>|' or ord(c) < 32) else c
+        for c in str(name)
+    ).strip()
+    return cleaned or "plant"
+
+
 def load_equipment_config(filepath):
     """
     Load equipment configuration from a JSON file.
@@ -604,6 +620,11 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
         output_dir = output_cfg.get("directory", "results")
     output_dir = Path(output_dir)
 
+    # Filename-safe form of the display name: characters like "/" or ":"
+    # in a plant name (e.g. "CO2/MeOH Plant") would otherwise make every
+    # save below fail -- after the full computation already ran
+    fname = _safe_filename(plant.name)
+
     save_json = output_cfg.get("save_json", True)
     save_plots = output_cfg.get("save_plots", False)
     plot_format = output_cfg.get("plot_format", "png")
@@ -644,11 +665,11 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
     if save_json:
         export_equipment_results(
             equipment_list,
-            output_dir / f"{plant.name}_equipment_results.json",
+            output_dir / f"{fname}_equipment_results.json",
         )
         export_plant_results(
             plant,
-            output_dir / f"{plant.name}_plant_results.json",
+            output_dir / f"{fname}_plant_results.json",
         )
 
         analysis_output = {
@@ -659,7 +680,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
             "results": _to_jsonable(results),
         }
 
-        results_file = output_dir / f"{plant.name}_analysis_results.json"
+        results_file = output_dir / f"{fname}_analysis_results.json"
         with results_file.open("w", encoding="utf-8") as f:
             json.dump(analysis_output, f, indent=4)
 
@@ -672,7 +693,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 results["direct_costs"], show=False
             )
             fig.savefig(
-                output_dir / f"{plant.name}_direct_costs.{plot_format}",
+                output_dir / f"{fname}_direct_costs.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
@@ -683,7 +704,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 results["fixed_capital"], show=False
             )
             fig.savefig(
-                output_dir / f"{plant.name}_fixed_capital.{plot_format}",
+                output_dir / f"{fname}_fixed_capital.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
@@ -694,7 +715,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 results["fixed_opex"], show=False
             )
             fig.savefig(
-                output_dir / f"{plant.name}_fixed_opex.{plot_format}",
+                output_dir / f"{fname}_fixed_opex.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
@@ -705,7 +726,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 results["variable_opex"], show=False
             )
             fig.savefig(
-                output_dir / f"{plant.name}_variable_opex.{plot_format}",
+                output_dir / f"{fname}_variable_opex.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
@@ -716,7 +737,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 results["levelized_cost"], show=False
             )
             fig.savefig(
-                output_dir / f"{plant.name}_levelized_cost.{plot_format}",
+                output_dir / f"{fname}_levelized_cost.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
@@ -727,7 +748,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 results["cash_flow"], show=False
             )
             fig.savefig(
-                output_dir / f"{plant.name}_cash_flow.{plot_format}",
+                output_dir / f"{fname}_cash_flow.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
@@ -738,7 +759,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 fig, ax = plot_sensitivity(data, show=False)
                 fig.savefig(
                     output_dir /
-                    f"{plant.name}_sensitivity_{name}.{plot_format}",
+                    f"{fname}_sensitivity_{name}.{plot_format}",
                     dpi=dpi,
                     bbox_inches="tight",
                 )
@@ -749,7 +770,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 results["tornado"], show=False
             )
             fig.savefig(
-                output_dir / f"{plant.name}_tornado.{plot_format}",
+                output_dir / f"{fname}_tornado.{plot_format}",
                 dpi=dpi,
                 bbox_inches="tight",
             )
@@ -783,7 +804,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 )
 
                 filename = (
-                    f"{plant.name}_monte_carlo_"
+                    f"{fname}_monte_carlo_"
                     f"{metric_name.lower()}.{plot_format}"
                 )
                 fig.savefig(
@@ -806,7 +827,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                         continue  # no inputs sampled for this group
                     fig.savefig(
                         output_dir /
-                        f"{plant.name}_monte_carlo_inputs_"
+                        f"{fname}_monte_carlo_inputs_"
                         f"{group_name}.{plot_format}",
                         dpi=dpi,
                         bbox_inches="tight",
