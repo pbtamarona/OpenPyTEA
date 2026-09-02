@@ -113,7 +113,7 @@ def test_tex_escape_follows_usetex():
     try:
         plt.rcParams["text.usetex"] = False
         assert _tex_escape("%") == "%"
-        assert "\%" not in _default_metric_label("USD", "roi")
+        assert r"\%" not in _default_metric_label("USD", "roi")
         plt.rcParams["text.usetex"] = True
         assert _tex_escape("%") == r"\%"
         assert r"[\%]" in _default_metric_label("USD", "roi")
@@ -122,7 +122,7 @@ def test_tex_escape_follows_usetex():
 
 
 def test_tornado_legend_has_no_literal_backslash(test_plant):
-    """With usetex off, legend labels must read -10%, not -10\%."""
+    r"""With usetex off, legend labels must read -10%, not -10\%."""
     data = tornado_data(test_plant, plus_minus_value=0.1)
     fig, ax = plot_tornado(data, show=False)
     labels = [t.get_text() for t in ax.get_legend().get_texts()]

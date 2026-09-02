@@ -147,7 +147,9 @@ def test_monte_carlo_price_uncertainty_backward_compatible(test_plant):
     }
 
     r_flat = monte_carlo(flat_plant, num_samples=500, batch_size=500, random_seed=42)
-    r_nested = monte_carlo(nested_plant, num_samples=500, batch_size=500, random_seed=42)
+    r_nested = monte_carlo(
+        nested_plant, num_samples=500, batch_size=500, random_seed=42
+    )
 
     assert np.allclose(
         r_flat["inputs"]["Electricity price"],
@@ -187,7 +189,9 @@ def test_monte_carlo_dependency_multi_parent(test_plant):
     # water's consumption depends on BOTH hydrogen production and
     # electricity consumption -- a linear combination of two parents
     test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
-    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {"std": 10}
+    test_plant.variable_opex_inputs["electricity"][
+        "consumption_uncertainty"
+    ] = {"std": 10}
     test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
         "depends_on": {
             "production:hydrogen": 2.0,
@@ -257,7 +261,9 @@ def test_monte_carlo_dependency_noise_propagates_downstream(test_plant):
     test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
         "depends_on": {"production:hydrogen": 2.0},
     }
-    test_plant.variable_opex_inputs["electricity"]["consumption_uncertainty"] = {"noise": 3.0}
+    test_plant.variable_opex_inputs["electricity"][
+        "consumption_uncertainty"
+    ] = {"noise": 3.0}
     test_plant.variable_opex_inputs["water"]["consumption_dependency"] = {
         "depends_on": {"consumption:electricity": 0.5},
     }

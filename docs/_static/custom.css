@@ -92,3 +92,9 @@ dt.sig {
     color: var(--color-foreground-primary) !important;
     border-color: var(--color-background-border) !important;
 }
+
+/* Inline emphasis for deadlines (rst role :red-bold:) */
+.red-bold {
+    color: #d32f2f;
+    font-weight: 700;
+}

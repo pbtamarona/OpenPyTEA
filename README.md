@@ -35,6 +35,7 @@ The workshop covers the full workflow from process design and simulation to econ
 - 📅 **Date:** November 6, 2026 | 09:30 – 18:00
 - 📍 **Location:** Process & Energy, TU Delft, Delft, The Netherlands
 - 📝 **Registration:** [aanmelder.nl/openpytea2026](https://aanmelder.nl/openpytea2026)
+- ⏰ **Deadline:** $${\color{red}\textbf{Registration closes on October 15, 2026}}$$
 
 Lunch, snacks, coffee, and drinks will be provided!
 
