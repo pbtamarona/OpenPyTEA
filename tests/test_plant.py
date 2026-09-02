@@ -1,3 +1,4 @@
+import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -238,6 +239,108 @@ def test_fixed_opex_components_override(test_plant):
     test_plant.fixed_opex_components = {"maintenance_costs": 999_999}
     test_plant.calculate_fixed_opex()
     assert test_plant.maintenance_costs == 999_999
+
+
+def test_bare_calculate_calls_keep_configured_fc_fp(test_plant):
+    # None means "keep the configured factor", not "reset to 1.0" -- a
+    # bare call (e.g. from the fixed_capital_data plotting helper) must
+    # not silently change the plant's economics
+    test_plant.fc = 1.3
+    test_plant.fp = 1.2
+
+    with_factors = test_plant.calculate_fixed_capital()
+    assert test_plant.fc == 1.3
+
+    test_plant.calculate_variable_opex()
+    test_plant.calculate_fixed_opex()
+    assert test_plant.fp == 1.2
+
+    plain = deepcopy(test_plant)
+    plain.fc = None
+    assert with_factors > plain.calculate_fixed_capital()
+    assert plain.fc == 1.0  # unset still defaults to 1.0
+
+    # An explicit argument still overrides
+    test_plant.calculate_fixed_capital(fc=2.0)
+    assert test_plant.fc == 2.0
+
+
+def test_plotting_helpers_do_not_change_economics(test_plant):
+    from openpytea import fixed_capital_data, fixed_opex_data
+
+    test_plant.fc = 1.3
+    test_plant.fp = 1.2
+    lcop_before = test_plant.calculate_levelized_cost()
+
+    fixed_capital_data(test_plant)
+    fixed_opex_data(test_plant)
+
+    assert test_plant.fc == 1.3
+    assert test_plant.fp == 1.2
+    assert np.isclose(test_plant.calculate_levelized_cost(), lcop_before)
+
+
+def test_update_configuration_currency_and_exchange_rate(test_plant):
+    base_cost = test_plant.calculate_purchased_cost()
+
+    test_plant.update_configuration(
+        {"currency": "EUR", "exchange_rate": 0.5}
+    )
+    assert test_plant.currency == "EUR"
+    assert test_plant.exchange_rate == 0.5
+    assert np.isclose(
+        test_plant.calculate_purchased_cost(), 0.5 * base_cost
+    )
+
+
+def test_straight_line_truncation_keeps_statutory_amounts():
+    from openpytea.plant import _straight_line_schedule
+
+    # Life longer than horizon: every year deducts the statutory annual
+    # amount and the tail is NOT dumped into the final year
+    sched = _straight_line_schedule(1200.0, 12, 0.0, 10)
+    assert np.allclose(sched, 100.0)
+    assert np.isclose(sched.sum(), 1000.0)
+
+    # Life within horizon: full write-off, exact to the last bit
+    sched = _straight_line_schedule(1000.0, 3, 0.0, 20)
+    assert np.isclose(sched.sum(), 1000.0)
+    assert np.allclose(sched[:3], 1000.0 / 3)
+    assert np.all(sched[3:] == 0)
+
+
+def test_declining_balance_truncation_not_topped_up():
+    from openpytea.plant import _declining_balance_schedule
+
+    full = _declining_balance_schedule(1000.0, 12, 2.0, 0.0, 12)
+    truncated = _declining_balance_schedule(1000.0, 12, 2.0, 0.0, 8)
+    # A truncated schedule is exactly the first years of the full one
+    assert np.allclose(truncated, full[:8])
+    assert truncated.sum() < 1000.0
+
+
+def test_default_depreciation_life_fits_usable_horizon():
+    from openpytea.plant import build_depreciation_array
+
+    # Default config on a short project: full write-off, uniform
+    # statutory amounts, no stranded value, no warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        dep = build_depreciation_array(12, {0: 1200.0})
+    assert np.isclose(dep.sum(), 1200.0)
+    # service starts year 2 -> default life = min(15, 12-2) = 10 years
+    assert np.allclose(dep[2:12], 120.0)
+    assert np.all(dep[:2] == 0)
+
+
+def test_user_depreciation_life_beyond_horizon_warns():
+    from openpytea.plant import build_depreciation_array
+
+    with pytest.warns(UserWarning, match="usable horizon"):
+        dep = build_depreciation_array(12, {0: 1200.0}, {"life": 15})
+    # 10 usable years at the statutory 1200/15 = 80/year, rest stranded
+    assert np.allclose(dep[2:12], 80.0)
+    assert np.isclose(dep.sum(), 800.0)
 
 
 def test_to_dict_serializes_equipment_purchased_cost(test_plant):

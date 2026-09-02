@@ -1,4 +1,6 @@
 import math
+import warnings
+
 import numpy as np
 import pandas as pd
 from copy import deepcopy
@@ -341,6 +343,12 @@ class Plant:
         )
         self.region = configuration.get(
             "region", self.region
+        )
+        self.currency = configuration.get(
+            "currency", self.currency
+        )
+        self.exchange_rate = configuration.get(
+            "exchange_rate", self.exchange_rate
         )
         self.equipment_list = configuration.get(
             "equipment", self.equipment_list
@@ -720,10 +728,12 @@ class Plant:
         ValueError
             If ``process_type`` is not one of the supported process types.
         """
-        if fc is None:
-            self.fc = 1.0
-        else:
+        # None means "keep the configured factor", not "reset to 1.0" --
+        # a bare call must not clobber a plant configured with fc != 1
+        if fc is not None:
             self.fc = fc
+        elif self.fc is None:
+            self.fc = 1.0
         self.calculate_isbl(self.fc)
 
         if self.process_type not in self.processTypes:
@@ -1152,10 +1162,11 @@ class Plant:
         float
             Total annual fixed OPEX in plant currency.
         """
-        if fp is None:
-            self.fp = 1.0
-        else:
+        # None means "keep the configured factor", not "reset to 1.0"
+        if fp is not None:
             self.fp = fp
+        elif self.fp is None:
+            self.fp = 1.0
 
         self.calculate_fixed_capital(fc=self.fc)
         self.calculate_variable_opex()
@@ -2730,8 +2741,10 @@ def _normalize_dep_config(
         ValueError: If the specified MACRS class is not supported.
             Only classes defined in _MACRS_HALF_YEAR are accepted.
     Notes:
-        - If cfg.life is not specified, it defaults to the minimum of
-            project_life and 15 years.
+        - If cfg.life is not specified, it defaults to
+            min(15, project_life - service_start_year) -- capped at the
+            usable horizon so the default configuration always fully
+            depreciates within the project.
         - Only the "half_year" MACRS convention is currently supported.
         - MACRS class validation only occurs when the depreciation
             method is "macrs".
@@ -2742,9 +2755,15 @@ def _normalize_dep_config(
             if hasattr(cfg, k):
                 setattr(cfg, k, v)
 
-    # Sensible defaults
+    # Sensible defaults: cap the default life at the usable horizon
+    # (assets enter service at service_start_year) so the out-of-the-box
+    # config never strands book value past the end of the project. A
+    # user-specified life is taken as-is -- a statutory life longer than
+    # the project is legitimate (see build_depreciation_array's warning).
     if cfg.life is None:
-        cfg.life = min(project_life, 15)
+        cfg.life = max(
+            1, min(15, project_life - cfg.service_start_year)
+        )
     if cfg.method == "macrs":
         if cfg.convention != "half_year":
             raise ValueError(
@@ -2785,8 +2804,11 @@ def _straight_line_schedule(
 
     Notes:
         - Depreciation is distributed equally across the asset's useful life.
-        - A rounding correction is applied to the final depreciation year to
-        ensure the sum of the schedule equals the total depreciable amount.
+        - When the full life fits within the horizon, a float-rounding
+        correction on the final depreciation year ensures the schedule sums
+        exactly to the total depreciable amount. A schedule truncated by the
+        horizon keeps only the statutory annual amounts -- the undepreciated
+        tail is not written off within the analysis.
     """
     salvage = basis * salvage_frac
     dep_total = basis - salvage
@@ -2794,10 +2816,15 @@ def _straight_line_schedule(
     sched = np.zeros(horizon, dtype=float)
     years = min(life, horizon)
     sched[:years] = annual
-    # Small rounding fix to ensure sum equals dep_total
-    diff = dep_total - sched.sum()
-    if abs(diff) > 1e-6 and years > 0:
-        sched[years - 1] += diff
+    # Float-rounding fix only, and only when the full life fits the
+    # horizon. A truncated schedule (horizon < life) must NOT be topped
+    # up: each year may deduct only the statutory annual amount, so the
+    # undepreciated tail is simply not written off within the project
+    # (build_depreciation_array warns when that happens).
+    if horizon >= life and years > 0:
+        diff = dep_total - sched.sum()
+        if abs(diff) > 1e-6:
+            sched[years - 1] += diff
     return sched
 
 
@@ -2848,8 +2875,10 @@ def _declining_balance_schedule(
         amount.
     - The schedule respects the salvage value, preventing
         depreciation below it.
-    - A rounding correction is applied to ensure the total depreciation equals
-        (basis - salvage) within numerical precision.
+    - When the full life fits within the horizon, a float-rounding
+        correction ensures the total depreciation equals (basis - salvage)
+        within numerical precision. A schedule truncated by the horizon is
+        not topped up with the un-recovered balance.
     """
     salvage = basis * salvage_frac
     remaining = basis
@@ -2870,13 +2899,16 @@ def _declining_balance_schedule(
         )  # cannot dip below salvage
         sched[y] = dep
         remaining -= dep
-    # Tiny rounding correction
-    diff = (basis - salvage) - sched.sum()
-    if abs(diff) > 1e-6:
-        last = (
-            np.nonzero(sched)[0][-1] if sched.any() else 0
-        )
-        sched[last] += diff
+    # Float-rounding correction only, and only when the full life fits
+    # the horizon -- a truncated schedule must not be topped up with the
+    # un-recovered balance (see _straight_line_schedule)
+    if horizon >= life:
+        diff = (basis - salvage) - sched.sum()
+        if abs(diff) > 1e-6:
+            last = (
+                np.nonzero(sched)[0][-1] if sched.any() else 0
+            )
+            sched[last] += diff
     return sched
 
 
@@ -2964,6 +2996,8 @@ def build_depreciation_array(
     """
     cfg = _normalize_dep_config(project_life, dep_cfg)
     dep = np.zeros(project_life, dtype=float)
+    expected_total = 0.0
+    written_off_total = 0.0
 
     for capex_year, amount in capex_by_year.items():
         # place-in-service timing
@@ -2996,6 +3030,27 @@ def build_depreciation_array(
                 f"Unknown depreciation method: {cfg.method}"
             )
 
+        if cfg.method == "macrs":
+            expected_total += amount
+        else:
+            expected_total += amount * (1.0 - cfg.salvage_fraction)
+        written_off_total += sched.sum()
+
         dep[start: start + len(sched)] += sched
+
+    stranded = expected_total - written_off_total
+    if stranded > max(1e-6, 1e-9 * expected_total):
+        # Message kept free of amounts so the default warnings filter
+        # collapses it to a single line across Monte Carlo samples
+        warnings.warn(
+            "Depreciation life exceeds the usable horizon (project "
+            "lifetime minus service start year), so part of the "
+            "depreciable basis is not written off within the project. "
+            "This is legitimate for a statutory life longer than the "
+            "project, but shorten the depreciation life or extend the "
+            "project lifetime if a full write-off is intended.",
+            UserWarning,
+            stacklevel=2,
+        )
 
     return dep
