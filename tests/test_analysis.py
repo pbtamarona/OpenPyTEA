@@ -333,6 +333,19 @@ def test_monte_carlo_dependency_operator_hourly_rate(test_plant):
     assert np.allclose(op_rate, 0.1 * hydrogen + 20.0)
 
 
+def test_tornado_baseline_not_stale_after_direct_edit(test_plant):
+    # The LCOP branch of _evaluate_metric must recompute like every
+    # other metric -- a cached levelized_cost is never invalidated, so
+    # trusting it de-centers the tornado baseline after a direct edit
+    test_plant.calculate_levelized_cost()  # populate the cache
+
+    test_plant.variable_opex_inputs["electricity"]["price"] *= 10
+    fresh_lcop = deepcopy(test_plant).calculate_levelized_cost()
+
+    data = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP")
+    assert np.isclose(data["base_value"], fresh_lcop)
+
+
 def test_sample_distribution_impossible_bounds_raises():
     from openpytea.analysis import sample_distribution
 

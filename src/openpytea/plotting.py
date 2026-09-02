@@ -1,11 +1,32 @@
+import shutil
 import warnings
 from itertools import cycle
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 import numpy as np
+
+
+def _latex_available():
+    """
+    True when a working LaTeX toolchain for matplotlib's ``text.usetex``
+    is on the PATH (``latex`` itself plus ``dvipng``, which the Agg
+    backend needs to rasterize the output).
+    """
+    return (
+        shutil.which("latex") is not None
+        and shutil.which("dvipng") is not None
+    )
+
+
 try:
     import scienceplots  # noqa: F401
-    plt.style.use(["science", "ieee"])
+    # Full LaTeX rendering when a toolchain is installed; otherwise the
+    # same style family with text.usetex off, so rendering never fails
+    # at savefig time on machines without LaTeX
+    _styles = ["science", "ieee"]
+    if not _latex_available():
+        _styles.append("no-latex")
+    plt.style.use(_styles)
 except (AttributeError, ImportError):
     warnings.warn(
         "scienceplots could not be loaded due to a matplotlib "
@@ -14,7 +35,7 @@ except (AttributeError, ImportError):
         stacklevel=2,
     )
 
-from openpytea.helpers import _default_metric_label
+from openpytea.helpers import _default_metric_label, _tex_escape
 cmap = plt.cm.plasma
 
 
@@ -148,9 +169,10 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
         color_map[side_key] = colors[0] if colors else cmap(0.15)
 
     if pct:
-        ax.set_ylabel(ylabel + r" / [\%]")
+        ax.set_ylabel(ylabel + f" / [{_tex_escape('%')}]")
         plot_labels = [
-            rf"{lab} ({values_sorted[0][i]:.1f}\%)" if n_bars == 1 else lab
+            f"{lab} ({values_sorted[0][i]:.1f}{_tex_escape('%')})"
+            if n_bars == 1 else lab
             for i, lab in enumerate(labels_sorted)
         ]
     else:
@@ -186,7 +208,7 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     # hatch pattern remains visible over the region it overlaps below zero
     if has_side_rev:
         side_label = (
-            rf"{side_key} ({side_values[0]:.1f}\%)"
+            f"{side_key} ({side_values[0]:.1f}{_tex_escape('%')})"
             if pct and n_bars == 1
             else side_key
         )
@@ -398,7 +420,7 @@ def plot_tornado(
             color="#87CEEB",
             edgecolor="black",
             linewidth=0.75,
-            label=(rf"-{int(pm * 100)}\%" if i == 0 else ""),
+            label=(f"-{int(pm * 100)}{_tex_escape('%')}" if i == 0 else ""),
         )
 
         ax.barh(
@@ -408,7 +430,7 @@ def plot_tornado(
             color="#FF9999",
             edgecolor="black",
             linewidth=0.75,
-            label=(rf"+{int(pm * 100)}\%" if i == 0 else ""),
+            label=(f"+{int(pm * 100)}{_tex_escape('%')}" if i == 0 else ""),
         )
 
     ax.axvline(base_value, color="black", linestyle="--", linewidth=0.5)
@@ -489,7 +511,7 @@ def plot_cash_flow(data, figsize=(3.6, 2.6), ax=None, show=True):
       color as its curve.
     """
     curves = data["curves"]
-    currency = data.get("currency", r"\$")
+    currency = data.get("currency", _tex_escape("$"))
     xlabel = data.get("xlabel", "Time / [years]")
     ylabel = data.get("ylabel", "Cumulative cash flow") + " / [" + currency + "]"
 
@@ -645,7 +667,7 @@ def plot_monte_carlo(
         values = np.asarray(data["metrics"][metric], dtype=float)
 
         if label is None:
-            currency = data.get("currency", r"\$")
+            currency = data.get("currency", _tex_escape("$"))
             label = _default_metric_label(currency, metric)
 
     # --- Case 2: Plant object(s) ---
@@ -672,12 +694,12 @@ def plot_monte_carlo(
             values_list.append(
                 np.asarray(plant.monte_carlo_metrics[metric], dtype=float)
             )
-            currencies.append(getattr(plant, "currency", r"\$"))
+            currencies.append(getattr(plant, "currency", _tex_escape("$")))
 
         values = np.concatenate(values_list)
 
         if label is None:
-            currency = currencies[0] if currencies else r"\$"
+            currency = currencies[0] if currencies else _tex_escape("$")
             label = _default_metric_label(currency, metric)
 
     # --- Case 3: Raw array ---
@@ -685,7 +707,7 @@ def plot_monte_carlo(
         values = np.asarray(data, dtype=float)
 
         if label is None:
-            label = _default_metric_label(r"\$", metric)
+            label = _default_metric_label(_tex_escape("$"), metric)
 
     n_total = values.size
     finite_mask = np.isfinite(values)
@@ -806,10 +828,10 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title, show):
     fig_size = figsize if figsize is not None else (n_cols * 5, n_rows * 3)
     fig, axes = plt.subplots(n_rows, n_cols, figsize=fig_size)
 
-    if n_params == 1:
-        axes = np.array([axes])
-    else:
-        axes = np.asarray(axes).flatten()
+    # plt.subplots always returns an array here (n_cols is fixed at 3),
+    # so flattening covers every n_params, including 1 -- the loop below
+    # then hides the unused axes
+    axes = np.asarray(axes).flatten()
 
     for idx, (label, arr) in enumerate(inputs.items()):
         ax = axes[idx]
@@ -1046,7 +1068,7 @@ def plot_multiple_monte_carlo(
             created_fig, ax = plt.subplots(figsize=figsize)
 
     color_cycle = cycle(plt.cm.tab10.colors)
-    currency = r"\$"
+    currency = _tex_escape("$")
     plotted_any = False
 
     for i, item in enumerate(data_list):

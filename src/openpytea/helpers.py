@@ -7,6 +7,22 @@ import re
 
 # HELPER FUNCTIONS
 # For plottings
+def _tex_escape(symbol: str) -> str:
+    """
+    Escape ``symbol`` (e.g. ``"%"`` or ``"$"``) for LaTeX only when
+    matplotlib's ``text.usetex`` is active.
+
+    Plot labels must emit ``\\%``/``\\$`` when a real LaTeX run consumes
+    them, but the bare symbol otherwise -- a hardcoded escape renders as
+    a literal backslash on machines without LaTeX.
+    """
+    import matplotlib.pyplot as plt
+
+    if plt.rcParams.get("text.usetex", False):
+        return "\\" + symbol
+    return symbol
+
+
 def _make_label(s: str) -> str:
     """
     Convert a string to a label format by replacing underscores with spaces
@@ -71,16 +87,19 @@ def _default_metric_label(currency: str, metric: str) -> str:
     --------
     >>> _default_metric_label('USD', 'lcop')
     'Levelized cost / [USD$\\cdot$unit$^{-1}$]'
-    >>> _default_metric_label('USD', 'roi')
-    'Return on investment / [\\%]'
     >>> _default_metric_label('USD', 'payback_time')
     'Payback time / [years]'
+
+    Notes
+    -----
+    The ``%`` in the ROI label is LaTeX-escaped only when matplotlib's
+    ``text.usetex`` is active (see :func:`_tex_escape`).
     """
     metric = metric.upper()
     if metric == "LCOP" or metric == "levelized_cost":
         return rf"Levelized cost / [{currency}$\cdot$unit$^{-1}$]"
     elif metric == "ROI":
-        return r"Return on investment / [\%]"
+        return f"Return on investment / [{_tex_escape('%')}]"
     elif metric == "NPV":
         return rf"Net present value / [{currency}]"
     elif metric in ("PBT", "PAYBACK", "PAYBACK_TIME"):
@@ -886,8 +905,11 @@ def _evaluate_metric(plant, metric, additional_capex=False):
             methods to calculate the requested metric.
     """
     if metric == "LCOP":
-        if not hasattr(plant, "levelized_cost"):
-            plant.calculate_levelized_cost()
+        # Always recompute, like every other metric branch: a cached
+        # levelized_cost is never invalidated, so trusting it here
+        # de-centers sensitivity/tornado baselines after any direct
+        # plant edit
+        plant.calculate_levelized_cost()
         return plant.levelized_cost
 
     elif metric == "ROI":
