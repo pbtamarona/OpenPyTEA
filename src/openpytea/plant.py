@@ -712,7 +712,8 @@ class Plant:
         Parameters
         ----------
         fc : float or None, optional
-            Installed cost multiplier. Defaults to 1.0 if None.
+            Installed cost multiplier. None keeps the plant's configured
+            multiplier (1.0 if never set).
         additional_capex : bool, optional
             Include additional CAPEX items in the printed summary. Default is False.
         print_results : bool, optional
@@ -1153,7 +1154,8 @@ class Plant:
         Parameters
         ----------
         fp : float or None, optional
-            Fixed OPEX multiplier applied to the total. Defaults to 1.0 if None.
+            Fixed OPEX multiplier applied to the total. None keeps the
+            plant's configured multiplier (1.0 if never set).
         print_results : bool, optional
             Print a full fixed OPEX breakdown. Default is False.
 

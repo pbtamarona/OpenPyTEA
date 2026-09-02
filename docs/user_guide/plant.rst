@@ -49,7 +49,7 @@ Creating a ``Plant``
        # Products — first entry is the main product for LCOP calculations
        "plant_products": {
            "methanol": {
-               "production": 125_000,               # units/yr
+               "production": 125_000,               # units/day
                "price": 2.5,                        # USD/unit (not needed for LCOP)
            },
            "hydrogen": {                            # co-product
@@ -60,7 +60,7 @@ Creating a ``Plant``
 
        # Variable OPEX — consumables and utilities
        "variable_opex_inputs": {
-           "electricity":   {"consumption": 2.2e6, "price": 0.08},   # units/yr, USD/unit
+           "electricity":   {"consumption": 2.2e6, "price": 0.08},   # units/day, USD/unit
            "cooling_water": {"consumption": 1.6e6, "price": 0.0007},
        },
 
@@ -151,12 +151,12 @@ Configuration reference
    * - ``plant_products``
      - ``{}``
      - Products dict. First entry is the main product for LCOP; others are co-products.
-       Each entry takes ``production`` (units/yr) and ``price`` (USD/unit), plus the
+       Each entry takes ``production`` (units/day) and ``price`` (USD/unit), plus the
        optional Monte Carlo keys ``price_uncertainty``, ``production_uncertainty``,
        and ``production_dependency`` — see :ref:`uncertainty-keys`.
    * - ``variable_opex_inputs``
      - ``{}``
-     - Utilities and raw materials, each with ``consumption`` (units/yr) and ``price`` (USD/unit),
+     - Utilities and raw materials, each with ``consumption`` (units/day) and ``price`` (USD/unit),
        plus the optional Monte Carlo keys ``price_uncertainty``,
        ``consumption_uncertainty``, and ``consumption_dependency`` — see
        :ref:`uncertainty-keys`.
@@ -168,8 +168,10 @@ Configuration reference
        :func:`~openpytea.analysis.monte_carlo` only — see :ref:`uncertainty-keys`.
    * - ``operator_hourly_rate``
      - ``{"rate": 38.11}``
-     - Operator wage in USD/hr, under ``"rate"``. Also accepts the uncertainty
-       and ``dependency`` keys of a project-level scalar.
+     - Operator wage in USD/hr, under ``"rate"``. Monte Carlo uncertainty
+       goes in a nested ``"rate_uncertainty"`` sub-dict (same fields as
+       ``price_uncertainty``; the legacy flat layout still works). Also
+       accepts the ``dependency`` key of a project-level scalar.
    * - ``working_weeks_per_year``
      - ``49``
      - Annual working weeks per operator.
@@ -528,8 +530,9 @@ Variable costs scale with production and are calculated as:
    C_{\text{var}} = \sum_i \text{consumption}_i \times \text{price}_i
    \times 365 \times \text{plant\_utilization}
 
-Each entry in ``variable_opex_inputs`` needs a ``consumption`` (annual
-quantity in any consistent unit) and a ``price`` (USD per unit):
+Each entry in ``variable_opex_inputs`` needs a ``consumption`` (daily
+quantity in any consistent unit; multiplied by 365 and the plant
+utilization internally) and a ``price`` (USD per unit):
 
 .. code-block:: python
 
@@ -607,13 +610,13 @@ A representative output for a 20-year project (values in USD, abbreviated):
 .. code-block:: text
 
    Year  Capital cost      Revenue      Cash cost    Gross profit  Depreciation  Taxable income    Tax paid     Cash flow
-      1   -15,000,000            0              0               0             0               0           0   -15,000,000
-      2   -30,000,000            0              0               0             0               0           0   -30,000,000
-      3    -5,000,000    8,000,000      4,500,000       3,500,000     2,500,000       1,000,000           0    -1,500,000
+      1    15,000,000            0              0               0             0               0           0   -15,000,000
+      2    30,000,000            0              0               0             0               0           0   -30,000,000
+      3     5,000,000    8,000,000      4,500,000       3,500,000     2,500,000       1,000,000           0    -1,500,000
       4             0   16,000,000      4,500,000      11,500,000     2,500,000       3,500,000     250,000    11,250,000
       5             0   20,000,000      4,500,000      15,500,000     2,500,000      11,500,000     875,000    14,625,000
     ...          ...          ...            ...             ...           ...             ...         ...           ...
-     20     5,000,000   20,000,000      4,500,000      15,500,000             0      15,500,000   3,875,000    16,625,000
+     20    -5,000,000   20,000,000      4,500,000      15,500,000             0      15,500,000   3,875,000    16,625,000
 
 
 
@@ -782,7 +785,7 @@ main-product production in year :math:`t`.
 Payback time (PBT)
 ~~~~~~~~~~~~~~~~~~~
 
-First year when cumulative undiscounted cash flow ≥ 0:
+Total fixed capital divided by the mean annual cash flow across revenue-generating years:
 
 .. math::
 

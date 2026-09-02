@@ -87,10 +87,14 @@ correlation's own default material with a material factor of 1.0.
 
 The ``plant`` object mirrors the configuration dict accepted by
 :class:`~openpytea.plant.Plant`. Monte Carlo uncertainty fields (``std``,
-``min``, ``max``) can be embedded directly in ``variable_opex_inputs``,
-``plant_products``, and ``operator_hourly_rate`` — they are ignored when
-running plant-only calculations and activated automatically when
-``run_tea()`` executes a Monte Carlo block. Uncertainty on project-level
+``min``, ``max``, ``dist_id``) go in a nested sub-dict per item:
+``price_uncertainty`` on ``variable_opex_inputs``/``plant_products``
+entries (plus ``consumption_uncertainty``/``production_uncertainty`` for
+the process quantities) and ``rate_uncertainty`` on
+``operator_hourly_rate`` — they are ignored when running plant-only
+calculations and activated automatically when ``run_tea()`` executes a
+Monte Carlo block. The legacy flat layout (the same fields directly
+alongside ``price``/``rate``) is still accepted for older files. Uncertainty on project-level
 factors (``fixed_capital_factor``, ``fixed_opex_factor``,
 ``project_lifetime``, ``interest_rate``, ``plant_utilization``,
 ``tax_rate``) is instead configured via the top-level
@@ -118,9 +122,11 @@ for it.
 
        "operator_hourly_rate": {
          "rate": 38.11,
-         "std": 10,
-         "min": 25,
-         "max": 50
+         "rate_uncertainty": {
+           "std": 10,
+           "min": 25,
+           "max": 50
+         }
        },
 
        "plant_products": {
@@ -134,16 +140,20 @@ for it.
          "electricity": {
            "consumption": 38293.44,
            "price": 0.05,
-           "std": 0.03,
-           "min": 0.01,
-           "max": 3
+           "price_uncertainty": {
+             "std": 0.03,
+             "min": 0.01,
+             "max": 3
+           }
          },
          "methane_feed": {
            "consumption": 219936,
            "price": 0.4,
-           "std": 0.25,
-           "min": 0,
-           "max": 5
+           "price_uncertainty": {
+             "std": 0.25,
+             "min": 0,
+             "max": 5
+           }
          }
        }
      }
@@ -327,7 +337,10 @@ It returns the same results dict, and writes the same
 ``{plant_name}_equipment_results.json``,
 ``{plant_name}_plant_results.json``, and
 ``{plant_name}_analysis_results.json`` files (plus optional plots) as
-``run_tea()`` — so :func:`~openpytea.io.load_results` and everything under
+``run_tea()`` — in every output filename, ``{plant_name}`` is a sanitized
+form of the plant's name (filesystem-reserved characters such as ``/`` or
+``:`` become ``_``; the display name is unchanged everywhere else) — so
+:func:`~openpytea.io.load_results` and everything under
 :ref:`Comparing multiple scenarios <comparing-multiple-scenarios>` work
 unchanged. Use :func:`~openpytea.io.load_openpytea_config` directly if you
 only need the parsed config dict (e.g. to validate a file before running

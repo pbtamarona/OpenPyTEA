@@ -73,14 +73,15 @@ or with `uv`:
 uv add git+https://github.com/pbtamarona/OpenPyTEA
 ```
 
-**OpenPyTEA** requires **Python ≥ 3.9**.  
+**OpenPyTEA** requires **Python ≥ 3.10**.  
 The main dependencies include:
 
 - `matplotlib`
 - `numpy`  
 - `pandas`
 - `scienceplots`  
-- `scipy`    
+- `scipy`  
+- `seaborn`  
 - `tqdm`  
 - `jinja2` 
 
@@ -98,7 +99,7 @@ src/openpytea/
 examples/                   # Example notebooks and case studies
 walkthrough.ipynb           # Walkthrough of the package
 
-backend/                    # FastAPI backend for the web GUI
+backend/                    # FastAPI backend for the web GUI (standalone-package branch only)
 ├── app/
 │   ├── main.py             # FastAPI app with CORS and router mounting
 │   ├── state.py            # In-memory session state
@@ -108,7 +109,7 @@ backend/                    # FastAPI backend for the web GUI
 │   └── presets/            # Example preset JSON files
 └── requirements.txt
 
-frontend/                   # React + TypeScript web GUI
+frontend/                   # React + TypeScript web GUI (standalone-package branch only)
 ├── src/
 │   ├── api/client.ts       # Typed API client
 │   ├── types/index.ts      # TypeScript interfaces
@@ -192,6 +193,7 @@ from openpytea.equipment import Equipment
 compressor = Equipment(
     name='COMP',
     param=5000,  # kW
+    process_type='Fluids',
     category='Compressors, fans, & Blowers',
     type='Compressor, centrifugal',
     material='Carbon steel'
@@ -393,7 +395,7 @@ Example notebooks are available in the `examples/` folder, including:
 
 Run any example via:
 ```bash
-jupyter notebook examples/hydrogen_liquefaction.ipynb
+jupyter notebook examples/case_study_1.ipynb
 ```
 Each notebook demonstrates:
 - Input definition and equipment configuration

@@ -333,9 +333,11 @@ Configuring input uncertainties
        },
        "operator_hourly_rate": {
            "rate": 38.11,
-           "std": 10.0,
-           "min": 20.0,
-           "max": 60.0,
+           "rate_uncertainty": {
+               "std": 10.0,
+               "min": 20.0,
+               "max": 60.0,
+           },
        },
        "variable_opex_inputs": {
            "electricity": {
@@ -617,9 +619,11 @@ sampling for it (the value collapses to its baseline).
 
 Every uncertain input above defaults to a **Normal** distribution built from
 its ``std`` (and, if given, ``min``/``max`` truncation bounds). Add a
-``dist_id`` field to any uncertainty block — in ``variable_opex_inputs``,
-``plant_products``, ``operator_hourly_rate``, or ``project_uncertainties`` —
-to draw from a different family instead. Field names are reused across
+``dist_id`` field to any uncertainty block — a ``price_uncertainty``/
+``consumption_uncertainty``/``production_uncertainty`` sub-dict in
+``variable_opex_inputs``/``plant_products``, the ``rate_uncertainty``
+sub-dict of ``operator_hourly_rate``, or a ``project_uncertainties``
+entry — to draw from a different family instead. Field names are reused across
 families (``loc``/``mean``/``price``/``rate``, ``scale``/``std``,
 ``shape``, ``minimum``/``min``, ``maximum``/``max``); which ones apply
 depends on ``dist_id``. ``"noise"`` is a separate spelling of the same

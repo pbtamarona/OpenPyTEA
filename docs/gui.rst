@@ -3,15 +3,15 @@ Web GUI
 
 .. note::
 
-   The GUI is available on the **gui-beta** branch. Before following the
+   The GUI is available on the **standalone-package** branch. Before following the
    instructions on this page, switch to that branch::
 
       git fetch origin
-      git checkout gui-beta
+      git checkout standalone-package
 
    If you cloned the repository and already have the branch locally::
 
-      git checkout gui-beta
+      git checkout standalone-package
 
    The ``main`` branch does not include the frontend or backend source files.
 
