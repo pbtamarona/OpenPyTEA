@@ -100,7 +100,12 @@ class CostCorrelationDB:
         ----------
         df : pd.DataFrame
             Cost correlation data. Defaults to the bundled CSV database.
+            The input is not modified; normalization happens on a copy.
         """
+        # Never normalize in place: df defaults to the shared
+        # module-level database, and a user-supplied frame must not be
+        # mutated as a construction side effect
+        df = df.copy()
         df.columns = [c.strip().lower() for c in df.columns]
         for col in [
             "s_lower",

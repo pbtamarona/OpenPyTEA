@@ -256,3 +256,33 @@ def test_plant_name_with_reserved_characters(tmp_path):
     assert saved["results"]["levelized_cost"]["xlabels"] == [
         'CO2/MeOH: "Case A"'
     ]
+
+
+def test_run_tea_python_api_honors_config_directory(tmp_path):
+    """Omitting output_dir must use the config's output.directory."""
+    config_dir = tmp_path / "from_config"
+
+    equipment_path = tmp_path / "equipment.json"
+    plant_path = tmp_path / "plant.json"
+    analysis_path = tmp_path / "analysis.json"
+
+    equipment_path.write_text(json.dumps(_equipment_data()), encoding="utf-8")
+    plant_path.write_text(json.dumps(_plant_data()), encoding="utf-8")
+    analysis = {
+        "analysis": {"levelized_cost": {"run": True}},
+        "output": {
+            "directory": str(config_dir),
+            "save_json": True,
+            "save_plots": False,
+        },
+    }
+    analysis_path.write_text(json.dumps(analysis), encoding="utf-8")
+
+    run_tea(
+        equipment_input_path=equipment_path,
+        plant_input_path=plant_path,
+        analysis_input_path=analysis_path,
+        # output_dir intentionally omitted
+    )
+
+    assert (config_dir / "Test Plant_analysis_results.json").exists()

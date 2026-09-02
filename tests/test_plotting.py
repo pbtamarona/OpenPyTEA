@@ -183,3 +183,15 @@ def test_input_histogram_grid_layout_independent_of_show():
     assert fig_saved.subplotpars.top != plt.rcParams["figure.subplot.top"]
     plt.close(fig_saved)
     plt.close(fig_shown)
+
+
+def test_plot_multiple_monte_carlo_returns_live_figure(test_plant, test_plant_b):
+    from openpytea import monte_carlo, plot_multiple_monte_carlo
+
+    r1 = monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
+    r2 = monte_carlo(test_plant_b, num_samples=100, batch_size=100, random_seed=1)
+
+    fig, _ = plot_multiple_monte_carlo([r1, r2], metric="LCOP", show=False)
+    # the returned figure must still be registered with pyplot
+    assert plt.fignum_exists(fig.number)
+    plt.close(fig)

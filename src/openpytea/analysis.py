@@ -176,11 +176,9 @@ def variable_opex_data(plants, pct=False):
             - Currency symbol or format
             - Data formatted as percentages if pct=True
     Notes:
-        - Cost values are determined from (in priority order):
-            1. "annual_cost" field
-            2. "cost" field
-            3. "consumption" * "price" calculation
-        - If none of these fields exist, the component is skipped.
+        - Each item's annual cost is computed as
+            consumption * price * 365 * plant_utilization.
+        - Items missing either "consumption" or "price" are skipped.
         - Component names are formatted via _make_label() function.
         - Currency is extracted from the first plant,
         defaulting to "$" if no plants provided.

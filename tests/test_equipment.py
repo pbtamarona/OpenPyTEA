@@ -27,3 +27,16 @@ def test_equipment_to_dict(test_equipment):
     assert equipment_dict["name"] == "Reactor"
     assert "purchased_cost" in equipment_dict
     assert "direct_cost" in equipment_dict
+
+
+def test_cost_db_does_not_mutate_input_dataframe():
+    from openpytea.equipment import COST_DB_DF, CostCorrelationDB
+
+    custom = COST_DB_DF.copy()
+    custom.columns = [c.upper() for c in custom.columns]
+    before = custom.columns.tolist()
+
+    db = CostCorrelationDB(custom)
+
+    assert custom.columns.tolist() == before  # caller's frame untouched
+    assert all(c == c.lower() for c in db.df.columns)  # copy normalized

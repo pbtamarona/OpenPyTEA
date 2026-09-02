@@ -492,7 +492,7 @@ def run_plant(plant_input_path, plant_output_path,
 
 
 def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
-            output_dir="results"):
+            output_dir=None):
     """
     Execute a complete Techno-Economic Analysis (TEA) workflow.
     This function orchestrates the entire TEA pipeline by loading
@@ -508,8 +508,9 @@ def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
         Path to the analysis configuration file specifying which analyses to
         run and their parameters.
     output_dir : str or Path, optional
-        Directory where results will be saved. If None, uses the directory
-        specified in the analysis configuration file. Defaults to "results".
+        Directory where results will be saved. Defaults to None: use the
+        directory specified in the analysis configuration file, falling
+        back to "results" when the config sets none.
     Returns
     -------
     dict
@@ -546,7 +547,7 @@ def run_tea(equipment_input_path, plant_input_path, analysis_input_path,
     return _run_analyses(equipment_list, plant, analysis_cfg, output_dir)
 
 
-def run_openpytea(config_path, output_dir="results"):
+def run_openpytea(config_path, output_dir=None):
     """
     Execute a complete Techno-Economic Analysis (TEA) workflow from a
     single, combined JSON configuration file.
@@ -567,9 +568,9 @@ def run_openpytea(config_path, output_dir="results"):
         'equipment', 'plant', and 'analysis' keys (and optionally
         'output').
     output_dir : str or Path, optional
-        Directory where results will be saved. If None, uses the
-        directory specified under the config's 'output' key. Defaults to
-        "results".
+        Directory where results will be saved. Defaults to None: use the
+        directory specified under the config's 'output' key, falling
+        back to "results" when the config sets none.
 
     Returns
     -------

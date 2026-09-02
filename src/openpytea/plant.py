@@ -1392,6 +1392,17 @@ class Plant:
         ValueError
             If ``project_lifetime < 3``, ``capex_ramp`` or
             ``production_ramp`` are invalid, or no plant products are defined.
+
+        Notes
+        -----
+        Income tax follows the Towler & Sinnott 1-year lag: tax on year
+        ``n``'s taxable income is paid in year ``n + 1``. Because the
+        table ends at the project lifetime, the tax on the final
+        operating year's profit would be settled one year *after* the
+        project ends and is therefore never included -- a deliberate
+        simplification of that convention which slightly flatters NPV.
+        Extend ``project_lifetime`` by one year if you need the last
+        settlement inside the analysis horizon.
         """
         # 0) Upstream calcs (capital, opex breakdowns)
         self.calculate_fixed_capital(fc=self.fc)

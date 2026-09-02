@@ -1223,7 +1223,9 @@ def plot_multiple_monte_carlo(
 
         if show:
             plt.show()
-        else:
-            plt.close(created_fig)
+        # show=False returns the live figure for the caller to
+        # customize, save, or show -- closing it here (unlike every
+        # sibling plot function) made plt.show() and Jupyter display
+        # silently render nothing
 
     return ax.figure, ax
