@@ -1099,7 +1099,8 @@ def sample_distribution(dist_id, size, loc=None, scale=None, shape=None,
 
     out = np.empty(size)
     filled = 0
-    while filled < size:
+    max_rounds = 200
+    for _ in range(max_rounds):
         remaining = size - filled
         draw = dist.rvs(size=remaining * 2, random_state=random_state)
         if minimum is not None:
@@ -1109,7 +1110,16 @@ def sample_distribution(dist_id, size, loc=None, scale=None, shape=None,
         n = min(len(draw), remaining)
         out[filled:filled + n] = draw[:n]
         filled += n
-    return out
+        if filled >= size:
+            return out
+    raise ValueError(
+        f"Truncated sampling accepted only {filled}/{size} draws after "
+        f"{max_rounds} rounds (dist_id={dist_id}, loc={loc}, "
+        f"scale={scale}, minimum={minimum}, maximum={maximum}): the "
+        "[minimum, maximum] window excludes nearly all of the "
+        "distribution's probability mass. Check the input's baseline "
+        "value and its min/max bounds."
+    )
 
 
 def _resolve_scale(cfg, default_scale=0.0):
@@ -1212,7 +1222,10 @@ def _resolve_price_dist_params(props):
     ``std``/``min``/``max``/``dist_id`` fields as ``consumption_uncertainty``/
     ``production_uncertainty``), mirroring how every other per-item
     uncertainty block is namespaced. ``"loc"``/``"mean"`` inside it default
-    to the item's own ``"price"``.
+    to the item's own ``"price"``, and the default truncation bounds are
+    ``baseline ± 2*std`` (floored at 0 for non-negative baselines), the
+    same convention consumption/production use -- so negative baselines
+    (e.g. disposal credits) and arbitrarily large ones sample correctly.
 
     Backward-compatible fallback: if ``"price_uncertainty"`` is absent, the
     distribution fields are read directly off ``props`` instead (the
@@ -1233,12 +1246,23 @@ def _resolve_price_dist_params(props):
         ``(dist_id, loc, scale, shape, minimum, maximum)``, as returned by
         :func:`_resolve_dist_params`.
     """
+    baseline = props.get("price", 0.0)
     price_cfg = props.get("price_uncertainty")
-    if price_cfg is not None:
-        return _resolve_dist_params(
-            price_cfg, default_loc=props.get("price", 0.0),
-        )
-    return _resolve_dist_params(props)
+    cfg = price_cfg if price_cfg is not None else props
+    std = _resolve_scale(cfg)
+    # Default truncation window is centered on the baseline, the same
+    # way consumption/production bounds are -- a hard-coded window would
+    # exclude (and hang the rejection sampling on) out-of-range
+    # baselines such as negative prices (disposal credits) or large
+    # per-unit costs in JPY/IDR-scale currencies. Only a non-negative
+    # baseline gets the zero floor; explicit min/max always win.
+    default_min = baseline - 2 * std
+    if baseline >= 0:
+        default_min = max(0.0, default_min)
+    return _resolve_dist_params(
+        cfg, default_loc=baseline,
+        default_min=default_min, default_max=baseline + 2 * std,
+    )
 
 
 def _resolve_rate_dist_params(props):
@@ -1251,7 +1275,9 @@ def _resolve_rate_dist_params(props):
     ``consumption_uncertainty``/``production_uncertainty``/
     ``price_uncertainty``), mirroring how every other per-item
     uncertainty block is namespaced. ``"loc"``/``"mean"`` inside it
-    default to the item's own ``"rate"``.
+    default to the item's own ``"rate"``, and the default truncation
+    bounds are ``baseline ± 2*std`` (floored at 0), the same convention
+    every other input uses.
 
     Backward-compatible fallback: if ``"rate_uncertainty"`` is absent,
     the distribution fields are read directly off ``props`` instead (the
@@ -1271,15 +1297,20 @@ def _resolve_rate_dist_params(props):
         ``(dist_id, loc, scale, shape, minimum, maximum)``, as returned
         by :func:`_resolve_dist_params`.
     """
+    baseline = props.get("rate", 38.11)
     rate_cfg = props.get("rate_uncertainty")
-    if rate_cfg is not None:
-        return _resolve_dist_params(
-            rate_cfg, default_loc=props.get("rate", 38.11),
-            default_scale=10, default_min=10, default_max=100,
-        )
+    cfg = rate_cfg if rate_cfg is not None else props
+    std = _resolve_scale(cfg, 10)
+    # Baseline-centered default window, like every other input's -- the
+    # old hard-coded [10, 100] hung the rejection sampling for rates
+    # above ~130 and silently piled samples under 100 for rates just
+    # over it. Explicit min/max always win.
+    default_min = baseline - 2 * std
+    if baseline >= 0:
+        default_min = max(0.0, default_min)
     return _resolve_dist_params(
-        props, default_loc=38.11, default_scale=10,
-        default_min=10, default_max=100,
+        cfg, default_loc=baseline, default_scale=10,
+        default_min=default_min, default_max=baseline + 2 * std,
     )
 
 

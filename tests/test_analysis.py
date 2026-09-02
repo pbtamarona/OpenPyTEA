@@ -333,6 +333,49 @@ def test_monte_carlo_dependency_operator_hourly_rate(test_plant):
     assert np.allclose(op_rate, 0.1 * hydrogen + 20.0)
 
 
+def test_sample_distribution_impossible_bounds_raises():
+    from openpytea.analysis import sample_distribution
+
+    # A window excluding essentially all probability mass must raise a
+    # clear error instead of spinning in the rejection loop forever
+    with pytest.raises(ValueError, match="probability mass"):
+        sample_distribution(3, 100, loc=0.0, scale=1.0, minimum=50, maximum=60)
+
+
+def test_monte_carlo_out_of_range_baselines(test_plant):
+    # Default truncation bounds are centered on each baseline, so
+    # negative prices (disposal credits), very large prices (JPY/IDR
+    # scale), and operator rates outside the old [10, 100] window all
+    # sample correctly instead of hanging or piling up at a bound
+    test_plant.variable_opex_inputs["waste"] = {
+        "consumption": 5, "price": -20.0,
+    }
+    test_plant.variable_opex_inputs["catalyst"] = {
+        "consumption": 1, "price": 150_000.0,
+    }
+    test_plant.operator_hourly_rate = {"rate": 150}
+
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=500, random_seed=11)
+    inputs = result["inputs"]
+
+    assert np.allclose(inputs["Waste price"], -20.0)
+    assert np.allclose(inputs["Catalyst price"], 150_000.0)
+    op_rate = np.array(inputs["Operator hourly rate"])
+    assert abs(op_rate.mean() - 150.0) < 2.0
+    assert (op_rate >= 130.0).all() and (op_rate <= 170.0).all()
+
+
+def test_monte_carlo_explicit_price_bounds_still_win(test_plant):
+    test_plant.plant_products["hydrogen"]["price_uncertainty"] = {
+        "std": 2.0, "min": 4.0, "max": 5.5,
+    }
+
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=500, random_seed=12)
+    price = np.array(result["inputs"]["Hydrogen product price"])
+
+    assert (price >= 4.0).all() and (price <= 5.5).all()
+
+
 def test_monte_carlo_dependent_noise_ignores_rate_alias(test_plant):
     # Legacy flat layout: "noise" sits right next to "rate" in the same
     # dict. The noise must be centered at 0, not at the "rate" value --
