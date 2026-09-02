@@ -1241,6 +1241,48 @@ def _resolve_price_dist_params(props):
     return _resolve_dist_params(props)
 
 
+def _resolve_rate_dist_params(props):
+    """
+    Extract operator-hourly-rate uncertainty ``(dist_id, loc, scale,
+    shape, minimum, maximum)`` from ``plant.operator_hourly_rate``.
+
+    Preferred form: a nested ``"rate_uncertainty"`` sub-dict (same
+    ``std``/``min``/``max``/``dist_id`` fields as
+    ``consumption_uncertainty``/``production_uncertainty``/
+    ``price_uncertainty``), mirroring how every other per-item
+    uncertainty block is namespaced. ``"loc"``/``"mean"`` inside it
+    default to the item's own ``"rate"``.
+
+    Backward-compatible fallback: if ``"rate_uncertainty"`` is absent,
+    the distribution fields are read directly off ``props`` instead (the
+    original flat layout, where ``dist_id``/``std``/``min``/``max`` sat
+    alongside ``"rate"``). This keeps configs written before
+    ``rate_uncertainty`` existed working unchanged; it is not the
+    recommended layout for new configs.
+
+    Parameters
+    ----------
+    props : dict
+        The full ``plant.operator_hourly_rate`` dict.
+
+    Returns
+    -------
+    tuple
+        ``(dist_id, loc, scale, shape, minimum, maximum)``, as returned
+        by :func:`_resolve_dist_params`.
+    """
+    rate_cfg = props.get("rate_uncertainty")
+    if rate_cfg is not None:
+        return _resolve_dist_params(
+            rate_cfg, default_loc=props.get("rate", 38.11),
+            default_scale=10, default_min=10, default_max=100,
+        )
+    return _resolve_dist_params(
+        props, default_loc=38.11, default_scale=10,
+        default_min=10, default_max=100,
+    )
+
+
 def _reject_std_scale_for_dependent(cfg, kind, name):
     """
     Raise ``ValueError`` if a dependent's own uncertainty block sets
@@ -1298,7 +1340,12 @@ def _collect_dependency_nodes(plant):
                 "production_uncertainty", {}
             )
         elif name == "operator_hourly_rate":
-            cfg = plant.operator_hourly_rate
+            # Preferred nested "rate_uncertainty" block; fall back to
+            # the original flat layout (noise/dist fields alongside
+            # "rate") for backward compatibility
+            cfg = plant.operator_hourly_rate.get(
+                "rate_uncertainty", plant.operator_hourly_rate
+            )
         else:
             cfg = plant.project_uncertainties.get(name, {})
 
@@ -1378,9 +1425,15 @@ def _resolve_quantity_dependencies(plant, num_samples, consumption_samples,
     (which raise ``ValueError`` there -- see
     :func:`_reject_std_scale_for_dependent`). Process nodes read this from
     their separate ``"consumption_uncertainty"``/``"production_uncertainty"``
-    sub-dict; economic scalars reuse whichever ``noise``/``dist_id``/etc.
-    fields already sit alongside ``"dependency"`` (see
-    :func:`_collect_dependency_nodes`). Each dependent's noise is drawn
+    sub-dict; ``operator_hourly_rate`` from its nested
+    ``"rate_uncertainty"`` sub-dict when present (falling back to the
+    legacy flat fields alongside ``"rate"``); other economic scalars
+    reuse whichever ``noise``/``dist_id``/etc. fields already sit
+    alongside ``"dependency"`` (see :func:`_collect_dependency_nodes`).
+    The noise is always centered at 0 unless the block sets an explicit
+    ``"loc"`` -- the ``"mean"``/``"price"``/``"rate"`` loc aliases are
+    ignored here, since they spell the item's own baseline, which the
+    dependency determines. Each dependent's noise is drawn
     independently, and because the walk feeds each parent's *final* value
     to its children, noise propagates downstream through the graph.
 
@@ -1438,13 +1491,21 @@ def _resolve_quantity_dependencies(plant, num_samples, consumption_samples,
             return value
         unc = noise_cfg[key]
         noise_std = _resolve_scale(unc)
-        dist_id, loc, scale, shape, minimum, maximum = _resolve_dist_params(
+        dist_id, _, scale, shape, minimum, maximum = _resolve_dist_params(
             unc,
             default_loc=0.0,
             default_scale=noise_std,
             default_min=-2 * noise_std,
             default_max=2 * noise_std,
         )
+        # Noise is centered on the DAG-implied mean, so only an explicit
+        # "loc" may shift it. The "mean"/"price"/"rate" loc aliases spell
+        # an item's own baseline (which the dependency determines here)
+        # and may sit in the same dict -- e.g. operator_hourly_rate's
+        # flat layout -- so reading them as the noise center would bias
+        # the noise by the baseline, or hang the truncated sampling when
+        # [-2*noise_std, 2*noise_std] lies far from it.
+        loc = unc.get("loc", 0.0)
         return value + sample_distribution(
             dist_id, num_samples, loc=loc, scale=scale, shape=shape,
             minimum=minimum, maximum=maximum, random_state=rng,
@@ -1684,8 +1745,8 @@ def monte_carlo(plant,
 
     # ---- Operator hourly rate ----
     op_cfg = plant.operator_hourly_rate
-    op_id, op_loc, op_scale, op_shape, op_min, op_max = _resolve_dist_params(
-        op_cfg, default_loc=38.11, default_scale=10, default_min=10, default_max=100,
+    op_id, op_loc, op_scale, op_shape, op_min, op_max = (
+        _resolve_rate_dist_params(op_cfg)
     )
 
     # ---- Sample ALL inputs once (skipping any that are themselves a

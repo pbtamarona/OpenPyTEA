@@ -77,7 +77,12 @@ class Plant:
                 of 3 operators/shift for batch processes. Does not change
                 capital, OPEX, or cash-flow calculations elsewhere, which are
                 indifferent to production mode. Default: "continuous".
-            operator_hourly_rate (dict or float): Wage rate for operators.
+            operator_hourly_rate (dict or float): Wage rate for operators,
+                e.g. ``{"rate": 25}``. Monte Carlo uncertainty goes in a
+                nested ``"rate_uncertainty"`` dict (same ``std``/``min``/
+                ``max``/``dist_id`` fields as ``price_uncertainty`` etc.);
+                the legacy flat layout (those fields alongside ``"rate"``)
+                is still accepted.
             working_weeks_per_year (int): Annual working weeks. Default: 49.
             working_shifts_per_week (int): Shifts per week. Default: 5.
             operating_shifts_per_day (int): Daily operating shifts. Default: 3.

@@ -333,6 +333,58 @@ def test_monte_carlo_dependency_operator_hourly_rate(test_plant):
     assert np.allclose(op_rate, 0.1 * hydrogen + 20.0)
 
 
+def test_monte_carlo_dependent_noise_ignores_rate_alias(test_plant):
+    # Legacy flat layout: "noise" sits right next to "rate" in the same
+    # dict. The noise must be centered at 0, not at the "rate" value --
+    # reading rate=25 as the noise center used to put the truncation
+    # window [-4, 4] ~10 sigma away and hang the rejection sampling
+    # forever.
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.operator_hourly_rate["dependency"] = {
+        "depends_on": {"production:hydrogen": 0.1}, "offset": 20.0,
+    }
+    test_plant.operator_hourly_rate["noise"] = 2.0
+
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=500, random_seed=6)
+    inputs = result["inputs"]
+    hydrogen = np.array(inputs["Hydrogen production"])
+    op_rate = np.array(inputs["Operator hourly rate"])
+
+    residual = op_rate - (0.1 * hydrogen + 20.0)
+    assert abs(residual.mean()) < 0.2
+    assert residual.std() > 0
+
+
+def test_monte_carlo_operator_rate_uncertainty_nested_block(test_plant):
+    # Preferred layout: uncertainty in a nested "rate_uncertainty" dict,
+    # uniform with price/consumption/production_uncertainty; loc defaults
+    # to the item's own baseline rate
+    test_plant.operator_hourly_rate["rate_uncertainty"] = {"std": 2.0}
+
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=500, random_seed=7)
+    op_rate = np.array(result["inputs"]["Operator hourly rate"])
+
+    assert abs(op_rate.mean() - 25.0) < 0.5
+    assert op_rate.std() > 0
+
+
+def test_monte_carlo_operator_rate_nested_noise_on_dependent(test_plant):
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.operator_hourly_rate["dependency"] = {
+        "depends_on": {"production:hydrogen": 0.1}, "offset": 20.0,
+    }
+    test_plant.operator_hourly_rate["rate_uncertainty"] = {"noise": 2.0}
+
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=500, random_seed=8)
+    inputs = result["inputs"]
+    hydrogen = np.array(inputs["Hydrogen production"])
+    op_rate = np.array(inputs["Operator hourly rate"])
+
+    residual = op_rate - (0.1 * hydrogen + 20.0)
+    assert abs(residual.mean()) < 0.2
+    assert residual.std() > 0
+
+
 def test_monte_carlo_dependent_parent_not_seeded_as_baseline(test_plant):
     # A dependent used as another dependent's parent must feed its
     # DAG-resolved samples to the child, not get lazily seeded as a
