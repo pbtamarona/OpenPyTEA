@@ -15,7 +15,7 @@
       "min": 25
     },
 
-    "additional_capex_costs": [17194000, 17194000],
+    "additional_capex_cost": [17194000, 17194000],
     "additional_capex_years": [10, 20],
 
     "plant_products": {

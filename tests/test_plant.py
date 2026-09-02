@@ -425,3 +425,14 @@ def test_vectorized_lifetimes_match_scalar_runs(test_plant):
         assert np.isclose(mc_lcop[i], scalar.calculate_levelized_cost())
         assert np.isclose(mc_pbt[i], scalar.calculate_payback_time())
         assert np.isclose(mc_roi[i], scalar.calculate_roi())
+
+
+def test_to_dict_with_multi_entry_additional_capex(test_plant):
+    # After calculate_cash_flow, additional_capex_cost is a numpy array;
+    # to_dict's truthiness check must not raise for 2+ entries
+    test_plant.additional_capex_cost = [100_000, 100_000]
+    test_plant.additional_capex_years = [5, 10]
+    test_plant.calculate_npv()
+
+    d = test_plant.to_dict()
+    assert "roi_with_additional_capex" in d["metrics"]

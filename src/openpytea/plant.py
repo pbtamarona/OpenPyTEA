@@ -1555,7 +1555,8 @@ class Plant:
             ):
                 raise ValueError(
                     "The number of additional_capex_years must "
-                    "match the number of additional_capex_costs."
+                    "match the number of additional_capex_cost "
+                    "entries."
                 )
 
             for i, year in enumerate(
@@ -2394,7 +2395,11 @@ class Plant:
         }
 
         additional_capex_cost = getattr(self, "additional_capex_cost", None)
-        if additional_capex_cost:
+        # After calculate_cash_flow this is a numpy array, whose truth
+        # value is ambiguous for 2+ entries -- test length explicitly
+        if additional_capex_cost is not None and len(
+            np.atleast_1d(additional_capex_cost)
+        ) > 0:
             self.calculate_roi(additional_capex=True)
             self.calculate_payback_time(additional_capex=True)
             plant_dict["metrics"]["roi_with_additional_capex"] = float(
