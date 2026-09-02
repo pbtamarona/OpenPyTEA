@@ -404,6 +404,15 @@ def plot_tornado(
     xlabel = data.get("xlabel")
     pm = data.get("plus_minus_value")
 
+    # plus_minus_value is documented optional: fall back to neutral
+    # legend labels without it. %g keeps fractional percentages exact
+    # (7.5% stays 7.5%, not int-truncated to 7%)
+    if pm is None:
+        low_label, high_label = "Low", "High"
+    else:
+        low_label = f"-{pm * 100:g}{_tex_escape('%')}"
+        high_label = f"+{pm * 100:g}{_tex_escape('%')}"
+
     y_pos = np.arange(len(labels_sorted))
 
     created_fig = None
@@ -420,7 +429,7 @@ def plot_tornado(
             color="#87CEEB",
             edgecolor="black",
             linewidth=0.75,
-            label=(f"-{int(pm * 100)}{_tex_escape('%')}" if i == 0 else ""),
+            label=(low_label if i == 0 else ""),
         )
 
         ax.barh(
@@ -430,7 +439,7 @@ def plot_tornado(
             color="#FF9999",
             edgecolor="black",
             linewidth=0.75,
-            label=(f"+{int(pm * 100)}{_tex_escape('%')}" if i == 0 else ""),
+            label=(high_label if i == 0 else ""),
         )
 
     ax.axvline(base_value, color="black", linestyle="--", linewidth=0.5)

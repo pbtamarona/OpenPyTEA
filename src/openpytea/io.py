@@ -790,6 +790,10 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 metrics_to_plot = list(requested_metrics)
 
             for metric_name in metrics_to_plot:
+                # metrics keys are always uppercase (LCOP/NPV/ROI/PBT)
+                # and plot_monte_carlo uppercases its argument, so a
+                # lowercase config entry must not abort the run
+                metric_name = metric_name.upper()
                 if metric_name not in mc_metrics:
                     available = ", ".join(mc_metrics.keys())
                     raise ValueError(

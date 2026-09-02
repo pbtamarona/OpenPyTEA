@@ -555,8 +555,8 @@ def sensitivity_data(plants,
         a dependency on one of the plants.
     Notes
     -----
-    - For "fixed_capital" and "fixed_opex",
-    the original value is assumed to be 1.0
+    - For "fixed_capital" and "fixed_opex", the plant's configured
+    fc/fp multiplier (1.0 when unset) is perturbed
     - If a parameter does not exist for a particular plant,
     a flat baseline curve is returned
     - Shorthand parameters are resolved from full nested keys
@@ -767,8 +767,16 @@ def sensitivity_data(plants,
                 pct_axis, fill_value=base_value, dtype=float
             )
         else:
-            if parameter in ["fixed_capital", "fixed_opex"]:
-                original_value = 1.0
+            if parameter == "fixed_capital":
+                # Perturb the plant's actual configured multiplier, not
+                # an assumed 1.0 (see the tornado twin in helpers)
+                original_value = (
+                    1.0 if plant.fc is None else plant.fc
+                )
+            elif parameter == "fixed_opex":
+                original_value = (
+                    1.0 if plant.fp is None else plant.fp
+                )
             else:
                 original_value = _get_original_value(
                     plant, parameter
@@ -1826,7 +1834,10 @@ def monte_carlo(plant,
         cons_std = _resolve_scale(cons_cfg, 0)
         has_cons_uncertainty = _has_uncertainty(cons_cfg)
 
-        if "consumption_dependency" in props:
+        # .get(...) is not None, matching _collect_dependency_specs: an
+        # explicit "consumption_dependency": None means no dependency,
+        # so the item must still be sampled here
+        if props.get("consumption_dependency") is not None:
             # Deterministic (DAG) mean, plus any noise on top of it, is
             # resolved later by _resolve_quantity_dependencies.
             continue
@@ -1873,7 +1884,8 @@ def monte_carlo(plant,
         prod_std = _resolve_scale(prod_cfg, 0)
         has_prod_uncertainty = _has_uncertainty(prod_cfg)
 
-        if "production_dependency" in props:
+        # see the consumption gate above: None means no dependency
+        if props.get("production_dependency") is not None:
             # Deterministic (DAG) mean, plus any noise on top of it, is
             # resolved later by _resolve_quantity_dependencies.
             continue

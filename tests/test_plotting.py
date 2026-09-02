@@ -144,3 +144,21 @@ def test_plot_cash_flow_accepts_round_tripped_results(test_plant):
     fig, ax = plot_cash_flow(round_tripped, show=False)
     assert ax.has_data()
     plt.close(fig)
+
+
+def test_plot_tornado_without_plus_minus_value(test_plant):
+    """Documented-optional key: neutral legend, no crash."""
+    data = tornado_data(test_plant, plus_minus_value=0.1)
+    data.pop("plus_minus_value", None)
+    fig, ax = plot_tornado(data, show=False)
+    labels = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert labels == ["Low", "High"]
+    plt.close(fig)
+
+
+def test_plot_tornado_fractional_percentage_label(test_plant):
+    data = tornado_data(test_plant, plus_minus_value=0.075)
+    fig, ax = plot_tornado(data, show=False)
+    labels = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert labels == ["-7.5%", "+7.5%"]
+    plt.close(fig)

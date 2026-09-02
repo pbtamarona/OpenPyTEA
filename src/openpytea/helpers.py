@@ -1070,8 +1070,8 @@ def _run_tornado_sensitivity(plant, keys, nested_keys,
             representing the metric values at low and high perturbation levels
             respectively.
     Notes:
-        - Special handling is applied to "fixed_capital" and "fixed_opex"
-        parameters, which use direct multiplication by (1 ± pm).
+        - "fixed_capital" and "fixed_opex" perturb the plant's configured
+        fc/fp multiplier (1.0 when unset) by (1 ± pm).
         - "operator_hourly_rate" is handled specially to extract rate from
         dict format
             or convert scalar values to float.
@@ -1082,8 +1082,15 @@ def _run_tornado_sensitivity(plant, keys, nested_keys,
 
     for key in keys:
         if key in ["fixed_capital", "fixed_opex"]:
-            low = 1 - pm
-            high = 1 + pm
+            # Perturb around the plant's actual configured factor, not
+            # an assumed 1.0 -- with e.g. fc=1.3 both bar ends would
+            # otherwise land on the same side of the baseline
+            factor = (
+                plant.fc if key == "fixed_capital" else plant.fp
+            )
+            original = 1.0 if factor is None else factor
+            low = original * (1 - pm)
+            high = original * (1 + pm)
 
         elif key == "operator_hourly_rate":
             current = getattr(

@@ -117,7 +117,9 @@ def _analysis_data(output_dir=None):
                     "batch_size": 20,
                     "additional_capex": False,
                 },
-                "metric": ["LCOP"],
+                # lowercase on purpose: the metric check must be
+                # case-insensitive (metrics keys are uppercase)
+                "metric": ["lcop"],
                 "plot_inputs": True,
             },
         },

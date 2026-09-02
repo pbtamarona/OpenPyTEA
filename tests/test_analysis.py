@@ -710,3 +710,34 @@ def test_tornado_never_ranks_opt_in_economic_scalars(test_plant):
     curve = sensitivity_data(test_plant, parameter="plant_utilization",
                              plus_minus_value=0.1, n_points=3)["curves"][0]
     assert not np.allclose(curve["y"], curve["y"][0])
+
+
+def test_explicit_none_dependency_is_sampled_normally(test_plant):
+    # "consumption_dependency": None (programmatically disabled) must
+    # mean "no dependency": the item is sampled like any other instead
+    # of falling through both the sampler and the DAG into a KeyError
+    test_plant.variable_opex_inputs["electricity"][
+        "consumption_dependency"
+    ] = None
+
+    result = monte_carlo(test_plant, num_samples=200, batch_size=100, random_seed=13)
+    electricity = np.array(result["inputs"]["Electricity consumption"])
+    assert np.allclose(electricity, 100.0)  # baseline constant
+
+
+def test_tornado_and_sensitivity_center_on_configured_fc(test_plant):
+    # With fc != 1 the perturbation must straddle the actual baseline,
+    # not the assumed factor of 1.0
+    test_plant.fc = 1.3
+    data = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP")
+    idx = data["factors"].index("fixed_capital")
+    low, high = data["lows"][idx], data["highs"][idx]
+    assert low < data["base_value"] < high
+
+    sens = sensitivity_data(
+        test_plant, "fixed_capital", plus_minus_value=0.1,
+        n_points=3, metric="LCOP",
+    )
+    curve = sens["curves"][0]
+    mid = curve["y"][len(curve["y"]) // 2]
+    assert np.isclose(mid, curve["baseline"])
