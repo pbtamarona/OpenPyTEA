@@ -82,12 +82,12 @@ Source code, issue tracker, and contributions:
       Worked Jupyter notebooks covering hydrogen, geothermal, and other
       case studies with full TEA workflows.
 
-   .. grid-item-card:: :octicon:`video` Tutorials
+   .. grid-item-card:: :octicon:`book` Tutorials
       :link: tutorials
       :link-type: doc
 
-      Walkthrough notebook and step-by-step video tutorials covering the
-      full OpenPyTEA workflow.
+      Walkthrough notebook covering the full OpenPyTEA workflow
+      step by step.
 
    .. grid-item-card:: :octicon:`browser` Graphical User Interface
       :link: gui

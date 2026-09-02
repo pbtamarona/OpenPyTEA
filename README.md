@@ -303,31 +303,6 @@ openpytea run project/config.json --output-dir outputs/tea_results
 `openpytea equipment`, `openpytea plant`, and `openpytea tea` (the three-file variant of `run_tea()`) are also available — run `openpytea --help` for the full command list. See the [JSON Workflow guide](docs/user_guide/io_workflow.rst) for details.
 
 ---
-## ▶️ Tutorials
-
-Step-by-step tutorial videos covering the full OpenPyTEA workflow are available here:
-
-**Tutorial 01 - Creating Equipment**
-
-<a href="https://www.youtube.com/watch?v=z-hspQh_wVE" target="_blank">
-  <img src="https://img.youtube.com/vi/z-hspQh_wVE/0.jpg" width="320" alt="Tutorial 01 - Creating Equipment">
-</a>
-
-**Tutorial 02 - Creating a Plant**
-
-<a href="https://www.youtube.com/watch?v=eoooa2gjCwE" target="_blank">
-  <img src="https://img.youtube.com/vi/eoooa2gjCwE/0.jpg" width="320" alt="Tutorial 02 - Creating a Plant">
-</a>
-
-**Tutorial 03 - Performing Analysis**
-
-<a href="https://www.youtube.com/watch?v=o1zosMUZaDc" target="_blank">
-  <img src="https://img.youtube.com/vi/o1zosMUZaDc/0.jpg" width="320" alt="Tutorial 03 - Performing Analysis">
-</a>
-
-The notebooks used in the tutorials and the raw video files are available in the [tutorial_videos folder](https://github.com/pbtamarona/OpenPyTEA/tree/main/tutorial_videos)
-
----
 ## 📘 Example Workflows
 
 Example notebooks are available in the `examples/` folder, including:

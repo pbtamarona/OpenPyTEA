@@ -18,7 +18,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_copybutton",
     "sphinx_design",
-    "sphinxcontrib.youtube",
     "sphinxcontrib.jquery",
     "sphinx_datatables",
 ]
