@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+import numpy as np
 import pytest
 from openpytea import Plant
 
@@ -235,3 +238,36 @@ def test_fixed_opex_components_override(test_plant):
     test_plant.fixed_opex_components = {"maintenance_costs": 999_999}
     test_plant.calculate_fixed_opex()
     assert test_plant.maintenance_costs == 999_999
+
+
+def test_vectorized_lifetimes_match_scalar_runs(test_plant):
+    # Each sample in a vectorized (Monte Carlo) run must reproduce a
+    # scalar run of its own lifetime: no revenue, costs, or taxes may
+    # accrue past a sample's lifetime just because a longer-lived
+    # sample shares the arrays.
+    lifetimes = np.array([10, 20, 30])
+    n = len(lifetimes)
+
+    mc = deepcopy(test_plant)
+    mc.plant_products["hydrogen"]["price"] = 300.0
+    mc.update_configuration({
+        "project_lifetime": lifetimes,
+        "interest_rate": np.full(n, 0.08),
+    })
+    mc.calculate_fixed_capital(fc=np.ones(n))
+    mc_npv = mc.calculate_npv()
+    mc_lcop = mc.calculate_levelized_cost()
+    mc_pbt = mc.calculate_payback_time()
+    mc_roi = mc.calculate_roi()
+
+    assert mc.revenue_array[0, lifetimes[0]:].sum() == 0
+    assert mc.cash_flow[0, lifetimes[0]:].sum() == 0
+
+    for i, lt in enumerate(lifetimes):
+        scalar = deepcopy(test_plant)
+        scalar.plant_products["hydrogen"]["price"] = 300.0
+        scalar.update_configuration({"project_lifetime": int(lt)})
+        assert np.isclose(mc_npv[i], scalar.calculate_npv())
+        assert np.isclose(mc_lcop[i], scalar.calculate_levelized_cost())
+        assert np.isclose(mc_pbt[i], scalar.calculate_payback_time())
+        assert np.isclose(mc_roi[i], scalar.calculate_roi())

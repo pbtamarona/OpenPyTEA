@@ -1490,7 +1490,13 @@ class Plant:
         wc_year = len(capex_ramp) - 1
         if wc_year < n_years:
             capex[:, wc_year] += self.working_capital
-        capex[:, -1] -= self.working_capital
+        # Release working capital in each sample's own final year, not
+        # the longest sample's (n_years is the max lifetime across samples)
+        working_capital = np.broadcast_to(
+            np.atleast_1d(self.working_capital).astype(float),
+            n_samples,
+        )
+        capex[np.arange(n_samples), lifetime - 1] -= working_capital
 
         # --- Add additional CAPEX at specified years ---
         if (
@@ -1608,6 +1614,28 @@ class Plant:
                 - tax_paid[:, yr]
                 - capex[:, yr]
             )
+
+        # --- Zero out years past each sample's own lifetime ---
+        # Each sample's table must end at its own lifetime (a scalar run
+        # of that lifetime has no rows past it); columns only reach
+        # n_years because samples share one array. capex needs no mask:
+        # the capex ramp, additional-capex years (alive_mask above), and
+        # the working-capital release all land within each lifetime.
+        alive = (
+            np.arange(n_years)[None, :] < lifetime[:, None]
+        )
+        for arr in (
+            prod_array,
+            main_revenue,
+            side_revenue,
+            revenue,
+            cash_cost,
+            gross_profit,
+            taxable_income,
+            tax_paid,
+        ):
+            arr *= alive
+        cash_flow[:] = gross_profit - tax_paid - capex
 
         # --- Save arrays to instance ---
         self.capital_cost_array = capex
