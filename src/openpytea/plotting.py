@@ -902,18 +902,20 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title, show):
         axes[i].axis("off")
 
     fig.suptitle(title, fontsize=14, fontweight="bold")
-    if show:
-        # Reserve a top margin sized to fit the suptitle in absolute
-        # inches rather than a fixed fraction of figure height -- a flat
-        # fraction leaves a disproportionately large gap on tall,
-        # many-row grids (e.g. the economic-parameters figure once
-        # project-level factors and every priced item are included).
-        # tight_layout is given this budget up front (via `rect`) so it
-        # can fit each subplot's own title within the remaining space in
-        # the same pass, rather than being squeezed after the fact.
-        reserved_inches = 0.1
-        top = max(0.5, min(0.97, 1 - reserved_inches / fig_size[1]))
-        fig.tight_layout(rect=[0, 0, 1, top])
+    # Reserve a top margin sized to fit the suptitle in absolute
+    # inches rather than a fixed fraction of figure height -- a flat
+    # fraction leaves a disproportionately large gap on tall,
+    # many-row grids (e.g. the economic-parameters figure once
+    # project-level factors and every priced item are included).
+    # tight_layout is given this budget up front (via `rect`) so it
+    # can fit each subplot's own title within the remaining space in
+    # the same pass, rather than being squeezed after the fact.
+    # Runs unconditionally: saved figures (show=False, as in run_tea)
+    # need the layout just as much as displayed ones -- bbox_inches
+    # crops at save time but never re-lays-out an overlapping title.
+    reserved_inches = 0.1
+    top = max(0.5, min(0.97, 1 - reserved_inches / fig_size[1]))
+    fig.tight_layout(rect=[0, 0, 1, top])
 
     return fig, axes
 

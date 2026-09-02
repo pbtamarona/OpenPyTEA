@@ -301,6 +301,9 @@ def export_equipment_strings(equipment_list, filepath):
     """
     filepath = Path(filepath)
 
+    # Ensure directory exists, like the sibling exporters
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+
     with filepath.open("w", encoding="utf-8") as f:
         for eq in equipment_list:
             f.write(str(eq) + "\n")

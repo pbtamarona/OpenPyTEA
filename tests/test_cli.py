@@ -109,3 +109,12 @@ def test_cli_requires_a_command(capsys):
         main([])
 
     assert exc_info.value.code != 0
+
+
+def test_export_equipment_strings_creates_parent_dirs(tmp_path, test_equipment):
+    from openpytea.io import export_equipment_strings
+
+    target = tmp_path / "nested" / "dir" / "equipment.txt"
+    export_equipment_strings(test_equipment, target)
+    assert target.exists()
+    assert "Reactor" in target.read_text(encoding="utf-8")
