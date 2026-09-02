@@ -5,6 +5,8 @@ from scipy.stats import norm
 import matplotlib.pyplot as plt
 import numpy as np
 
+from openpytea.helpers import _default_metric_label, _tex_escape
+
 
 def _latex_available():
     """
@@ -35,7 +37,6 @@ except (AttributeError, ImportError):
         stacklevel=2,
     )
 
-from openpytea.helpers import _default_metric_label, _tex_escape
 cmap = plt.cm.plasma
 
 

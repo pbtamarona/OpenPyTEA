@@ -491,7 +491,10 @@ class Plant:
             ):
                 self.variable_opex_inputs = {}
             clear_superseded_uncertainty(
-                self.variable_opex_inputs, configuration["variable_opex_inputs"], "consumption_dependency", "consumption_uncertainty",
+                self.variable_opex_inputs,
+                configuration["variable_opex_inputs"],
+                "consumption_dependency",
+                "consumption_uncertainty",
             )
             recursive_update(
                 self.variable_opex_inputs,
@@ -513,7 +516,10 @@ class Plant:
             ):
                 self.plant_products = {}
             clear_superseded_uncertainty(
-                self.plant_products, configuration["plant_products"], "production_dependency", "production_uncertainty",
+                self.plant_products,
+                configuration["plant_products"],
+                "production_dependency",
+                "production_uncertainty",
             )
             recursive_update(
                 self.plant_products,
@@ -559,7 +565,9 @@ class Plant:
             ):
                 self.project_uncertainties = {}
             clear_superseded_uncertainty(
-                self.project_uncertainties, configuration["project_uncertainties"], "dependency",
+                self.project_uncertainties,
+                configuration["project_uncertainties"],
+                "dependency",
             )
             recursive_update(
                 self.project_uncertainties,
