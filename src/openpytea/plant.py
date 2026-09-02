@@ -2234,7 +2234,7 @@ class Plant:
                 "category": getattr(eq, "category", None),
                 "type": getattr(eq, "type", None),
                 "num_units": int(getattr(eq, "num_units", 1)),
-                "purchase_cost": float(getattr(eq, "purchase_cost", 0.0)),
+                "purchased_cost": float(getattr(eq, "purchased_cost", 0.0)),
                 "direct_cost": float(getattr(eq, "direct_cost", 0.0)),
             })
 

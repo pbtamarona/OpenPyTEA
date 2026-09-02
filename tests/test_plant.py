@@ -240,6 +240,17 @@ def test_fixed_opex_components_override(test_plant):
     assert test_plant.maintenance_costs == 999_999
 
 
+def test_to_dict_serializes_equipment_purchased_cost(test_plant):
+    test_plant.calculate_fixed_capital()
+    items = test_plant.to_dict()["equipment_summary"]["items"]
+    by_name = {item["name"]: item for item in items}
+    # conftest fixture: Reactor purchased at 100k, Pump at 20k (2024),
+    # inflation-adjusted to the target year, so > 0 is the contract here
+    assert by_name["Reactor"]["purchased_cost"] > 0
+    assert by_name["Pump"]["purchased_cost"] > 0
+    assert by_name["Reactor"]["direct_cost"] > 0
+
+
 def test_working_capital_tracks_fixed_capital(test_plant):
     # Auto-computed working capital must follow fixed_capital on every
     # recalculation, not freeze at its first computed value -- including
