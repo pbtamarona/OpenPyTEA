@@ -89,7 +89,7 @@ Source code, issue tracker, and contributions:
       Walkthrough notebook and step-by-step video tutorials covering the
       full OpenPyTEA workflow.
 
-   .. grid-item-card:: :octicon:`browser` Web GUI
+   .. grid-item-card:: :octicon:`browser` Graphical User Interface
       :link: gui
       :link-type: doc
 
@@ -104,7 +104,7 @@ Key features
 * **Extensive financial metrics** — NPV, IRR, ROI, levelized cost, payback time, and full cash-flow tables
 * **Multiple depreciation methods** — straight-line, declining-balance, MACRS
 * **Sensitivity & uncertainty** — one-way sensitivity, tornado diagrams, Monte Carlo simulation
-* **Interactive web GUI** — React + FastAPI front-end for no-code analysis *(work in progress)**
+* **Graphical user interface** — installable desktop app (or run from source) for no-code analysis *(work in progress)**
 * **Reproducible workflows** — JSON-based configuration files and result export
 * **Research-oriented design** — easy integration with other frameworks (optimization, LCA, etc.)
 

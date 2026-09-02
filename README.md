@@ -98,26 +98,6 @@ src/openpytea/
 └── data/                   # Cost correlations database and CEPCI data
 examples/                   # Example notebooks and case studies
 walkthrough.ipynb           # Walkthrough of the package
-
-backend/                    # FastAPI backend for the web GUI (standalone-package branch only)
-├── app/
-│   ├── main.py             # FastAPI app with CORS and router mounting
-│   ├── state.py            # In-memory session state
-│   ├── schemas.py          # Pydantic request/response models
-│   ├── util.py             # JSON serialization utilities
-│   ├── routers/            # API endpoints (equipment, plant, analysis, I/O)
-│   └── presets/            # Example preset JSON files
-└── requirements.txt
-
-frontend/                   # React + TypeScript web GUI (standalone-package branch only)
-├── src/
-│   ├── api/client.ts       # Typed API client
-│   ├── types/index.ts      # TypeScript interfaces
-│   ├── pages/              # Equipment, Plant Config, Results, Analysis, Monte Carlo, Compare
-│   ├── App.tsx             # Tab navigation + examples dropdown
-│   └── App.css             # Styling
-└── package.json
-
 pyproject.toml
 README.md
 ```
@@ -129,56 +109,19 @@ README.md
 
 Software architecture and data flow of **OpenPyTEA**, illustrating the progression from user input to TEA output. Users provide economic assumptions, process simulation results, and equipment-sizing parameters. Equipment-sizing information is linked with cost correlations and CEPCI values stored in CSV databases to calculate inflation-adjusted purchased and direct costs. `Equipment` objects are aggregated into a `Plant` object, where CAPEX, OPEX, and financial performance metrics are evaluated. The `analysis.py` module subsequently operates on `Plant` objects to perform sensitivity and uncertainty analyses.
 
-<!-- ## 🖥️ Web GUI (**work in progress**)
+---
+## 🖥️ Graphical User Interface
 
-OpenPyTEA includes an optional web-based graphical interface for users who prefer a visual workflow over Python scripting. The GUI provides the full TEA workflow through a tabbed browser interface:
+> **Note:** The GUI is still in development and may not yet offer all the features of the Python package.
 
-- **Equipment** — add, edit, and remove equipment with cost database lookup
-- **Plant Config** — configure location, financial parameters, labor, products, and variable OPEX
-- **Results** — run calculations and view metric cards, cost breakdown charts, and cash flow tables
-- **Analysis** — sensitivity plots and tornado diagrams. Sensitivity supports a **multi-panel grid** (different parameter and metric per panel, e.g. NPV vs. interest rate, ROI vs. electricity price, all in one figure) and **multi-plant overlay** (curves for every plant added on the Compare tab share the same axes for direct comparison)
-- **Monte Carlo** — uncertainty analysis with histogram distributions, fitted normal curves, and summary statistics. **Multi-plant overlay** shows distributions for several plants on the same axes, mirroring `plot_multiple_monte_carlo` from the library
-- **Compare** — side-by-side comparison of saved plants (CAPEX/OPEX breakdown bars, key metric bars). Plants imported here are also reused as the overlay set on the Analysis and Monte Carlo tabs
-- **Downloadable charts** — all plots include a download button to export as standalone PNG images with full axis labels
-- **Examples** — built-in presets from the case study notebooks for quick demonstration
+An optional graphical interface provides the full TEA workflow — equipment costing, plant configuration, results, sensitivity/tornado analysis, Monte Carlo, and multi-plant comparison — without writing Python code. It can be installed as a standalone desktop app — installers for **Windows** (`.exe`/`.msi`) and **macOS** (`.dmg`) are available on the [Releases page](https://github.com/pbtamarona/OpenPyTEA/releases), with no Python or Node.js required — or run from source as a FastAPI + React application.
 
-### Running the GUI
-
-**Quick start** (requires Python 3.10+ and Node.js — macOS/Linux):
+The GUI's source, installer build, setup instructions, and architecture documentation live on the [`standalone-package`](https://github.com/pbtamarona/OpenPyTEA/tree/standalone-package) branch:
 
 ```bash
-./start.sh
+git fetch origin
+git checkout standalone-package
 ```
-
-That's it. On first run the script creates a local `.venv`, installs the backend dependencies, runs `npm install`, then launches both servers and opens your browser at http://localhost:5173. Subsequent runs just start the servers. Press `Ctrl+C` to stop both.
-
-<details>
-<summary><strong>Manual steps</strong> (if you'd rather run backend and frontend yourself)</summary>
-
-**Backend** (Python 3.10+):
-```bash
-pip install -e .          # install OpenPyTEA from repo root
-cd backend
-pip install -r requirements.txt
-PYTHONPATH=../src python3 -m uvicorn app.main:app --reload --port 8000
-```
-
-**Frontend** (Node.js):
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Then open http://localhost:5173.
-
-</details>
-
-Click **Examples** in the header to load a case study preset and explore.
-
-For detailed architecture documentation, see `GUI_ARCHITECTURE.md`. -->
-
-<!-- --- -->
 
 ---
 ## 🧠 Core Concepts
