@@ -333,6 +333,32 @@ def test_monte_carlo_dependency_operator_hourly_rate(test_plant):
     assert np.allclose(op_rate, 0.1 * hydrogen + 20.0)
 
 
+def test_monte_carlo_dependent_parent_not_seeded_as_baseline(test_plant):
+    # A dependent used as another dependent's parent must feed its
+    # DAG-resolved samples to the child, not get lazily seeded as a
+    # baseline constant. plant_utilization is opt-in (lazily seedable),
+    # and consumption nodes are walked before project nodes, so the
+    # child is reached while its parent is still pending -- the exact
+    # ordering that used to trigger the eager seeding.
+    test_plant.plant_products["hydrogen"]["production_uncertainty"] = {"std": 5}
+    test_plant.project_uncertainties["plant_utilization"] = {
+        "dependency": {"depends_on": {"production:hydrogen": 0.004}, "offset": 0.70},
+    }
+    test_plant.variable_opex_inputs["electricity"]["consumption_dependency"] = {
+        "depends_on": {"project:plant_utilization": 100.0},
+    }
+
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=500, random_seed=5)
+    inputs = result["inputs"]
+    hydrogen = np.array(inputs["Hydrogen production"])
+    utilization = np.array(inputs["Plant utilization"])
+    electricity = np.array(inputs["Electricity consumption"])
+
+    assert np.allclose(utilization, 0.004 * hydrogen + 0.70)
+    assert np.allclose(electricity, 100.0 * utilization)
+    assert electricity.std() > 0
+
+
 def test_monte_carlo_dependency_makes_opt_in_scalar_visible(test_plant):
     # plant_utilization/tax_rate normally stay absent from "inputs" unless
     # independently configured; becoming a dependent opts them in too

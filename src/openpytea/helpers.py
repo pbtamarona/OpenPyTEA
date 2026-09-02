@@ -370,9 +370,15 @@ def _resolve_dependency_dag(dependents, driver_pool,
             dep = dependents[key]
             parents = _dependency_parents(dep, key)
 
+            # A parent that is itself a pending dependent must never be
+            # lazily seeded (that would hand its children a baseline
+            # constant instead of its resolved value) -- wait for a
+            # later pass to resolve it instead
             if not all(
                 pk in driver_pool
-                or (seed_missing is not None and seed_missing(pk))
+                or (pk not in dependents
+                    and seed_missing is not None
+                    and seed_missing(pk))
                 for pk in parents
             ):
                 still_pending.append(key)
