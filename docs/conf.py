@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath("../src"))
 project = "OpenPyTEA"
 copyright = "2026, Panji B. Tamarona, Thijs J.H. Vlugt, Mahinder Ramdin"
 author = "Panji B. Tamarona, Thijs J.H. Vlugt, Mahinder Ramdin"
-release = "2.1.0"
+release = "3.0.0"
 
 extensions = [
     "sphinx.ext.autodoc",

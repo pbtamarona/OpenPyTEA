@@ -82,7 +82,6 @@ The main dependencies include:
 - `pandas`
 - `scienceplots`  
 - `scipy`  
-- `seaborn`  
 - `tqdm`  
 - `jinja2` 
 

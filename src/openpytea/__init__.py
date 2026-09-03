@@ -19,7 +19,7 @@ from .plotting import (plot_stacked_bar, plot_cash_flow,
 from .io import (load_results, load_openpytea_config,
                  run_equipment, run_plant, run_tea, run_openpytea)
 
-__version__ = "2.1.0"
+__version__ = "3.0.0"
 __author__ = "Panji B. Tamarona"
 __email__ = "P.B.Tamarona@tudelft.nl"
 __license__ = "MIT"
