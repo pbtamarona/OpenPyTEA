@@ -19,3 +19,7 @@ openpytea.equipment
 .. autoclass:: openpytea.equipment.Equipment
    :members:
    :show-inheritance:
+
+.. autoclass:: openpytea.equipment.CompositeEquipment
+   :members:
+   :show-inheritance:

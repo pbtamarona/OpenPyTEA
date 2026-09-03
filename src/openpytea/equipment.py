@@ -369,9 +369,10 @@ class Equipment:
     name : str
         Equipment identifier/name.
     param : float | tuple[float, float] | list[float]
-        Equipment parameter (size, capacity) for cost correlation lookup.
-        Pass a 2-element tuple/list ``(s1, s2)`` for two-parameter
-        correlation forms such as ``"2-var power-law"``.
+        Equipment parameter (size, capacity) for cost correlation lookup,
+        per unit when ``num_units`` is given. Pass a 2-element tuple/list
+        ``(s1, s2)`` for two-parameter correlation forms such as
+        ``"2-var power-law"``.
     process_type : str
         Type of process ("Solids", "Fluids", "Mixed", or "Electrical").
     category : str
@@ -394,11 +395,17 @@ class Equipment:
         double-counting it, and raises ValueError if the material isn't
         found in ``material_factors``.
     num_units : int | None, optional
-        Number of identical units. Default is None (set to 1 when
-        purchased_cost is provided).
+        Number of identical units. With a cost correlation, ``param`` is
+        the size of one unit and the correlation cost is multiplied by
+        ``num_units``. With a direct ``purchased_cost`` it is a label
+        only: the given cost is taken as the total for all units.
+        Default is None: 1 for a direct ``purchased_cost``, or, for a
+        correlation, the number of parallel units the database splits
+        ``param`` into when it exceeds the correlation's capacity (that
+        cost already covers all of them).
     purchased_cost : float | None, optional
-        Direct purchased cost input. If provided, param is ignored.
-        Default is None.
+        Direct purchased cost input, the total for all ``num_units``.
+        If provided, param is ignored. Default is None.
     cost_year : int | None, optional
         Year of the purchased_cost quote for inflation adjustment.
         Default is None.
@@ -680,12 +687,16 @@ class Equipment:
 
         Resolves the correlation key, evaluates the cost for the equipment's
         size parameter, and applies inflation adjustment to the target year.
-        Also sets ``num_units`` and ``cost_year`` as side effects.
+        If ``num_units`` was given, the correlation cost is the cost of one
+        unit of size ``param`` and is multiplied by ``num_units``;
+        otherwise ``num_units`` is set to the number of parallel units the
+        database split ``param`` into (already included in the cost).
+        Also sets ``cost_year`` as a side effect.
 
         Returns
         -------
         float
-            Inflation-adjusted purchased equipment cost.
+            Inflation-adjusted purchased equipment cost for all units.
         """
         key = self._resolve_key()
         if isinstance(self.param, (tuple, list)):
@@ -693,7 +704,10 @@ class Equipment:
         else:
             s, s2 = self.param, None
         purchased, units, year = self._db.evaluate(key, s, s2)
-        self.num_units = self.num_units or units
+        if self.num_units is None:
+            self.num_units = units
+        else:
+            purchased = purchased * self.num_units
         self.cost_year = year
         return inflation_adjustment(
             purchased, year, target_year=self.target_year
@@ -766,3 +780,418 @@ class Equipment:
             f"Purchased Cost={self.purchased_cost}, "
             f"Direct Cost={self.direct_cost})"
         )
+
+
+class CompositeEquipment:
+    """
+    Equipment assembled from individually priced sub-components.
+
+    Models a package unit such as a PSA skid, a compressor train or a
+    reactor with its catalyst charge: one line item in the plant's
+    equipment list whose cost is built up from sub-components. Each
+    sub-component is an ordinary :class:`Equipment` (so it brings its own
+    cost correlation or user-defined purchased cost, its own material
+    factor and its own process-type installation factors) or another
+    ``CompositeEquipment`` (nesting is allowed).
+
+    The composite exposes the same attributes :class:`~openpytea.plant.Plant`
+    reads from an ``Equipment`` (``name``, ``category``, ``type``,
+    ``process_type``, ``param``, ``num_units``, ``cost_year``,
+    ``target_year``, ``purchased_cost``, ``direct_cost``, ``to_dict``), so
+    it can be placed directly in ``equipment_list``. For operator
+    estimation it counts as a single process step.
+
+    Parameters
+    ----------
+    name : str
+        Composite identifier/name.
+    process_type : str
+        Type of process ("Solids", "Fluids", "Mixed", or "Electrical").
+        Used by the plant's operator estimate and, when
+        ``installation="composite"``, as the installation-factor table for
+        the whole composite.
+    components : list
+        Sub-components: ``Equipment`` or ``CompositeEquipment`` objects.
+        Several identical units of a component are priced by setting
+        ``num_units`` on that component, exactly as for stand-alone
+        equipment; its ``purchased_cost`` and ``direct_cost`` then already
+        cover all of its units.
+    category : str, optional
+        Category label for reporting. Default is "Composite".
+    type : str | None, optional
+        Sub-type label for reporting. Default is None.
+    installation : {"component", "composite"}, optional
+        How the direct (installed) cost is built. ``"component"`` (default)
+        sums each sub-component's own ``direct_cost``, so every part keeps
+        its own process-type and material factors. ``"composite"`` applies
+        this composite's process-type factors (and any factor overrides)
+        once to the total purchased cost, i.e. the composite is installed
+        as one item.
+    purchased_cost : float | None, optional
+        User-defined purchased cost for the composite (e.g. a vendor quote
+        for the skid), taken as the total for all ``num_units`` just as
+        for ``Equipment``. When given it replaces the component sum; the
+        components are kept only as a breakdown, and the direct cost is
+        computed with the ``"composite"`` rule. Default is None.
+    cost_year : int | None, optional
+        Year of the composite ``purchased_cost`` quote, for inflation
+        adjustment. Default is None (no adjustment).
+    target_year : int, optional
+        Target year for cost reporting. Every component must share it.
+        Default is 2024.
+    num_units : int, optional
+        Number of identical composites. Multiplies the component-based
+        purchased and direct cost, consistent with ``Equipment``; a
+        composite ``purchased_cost`` quote is not multiplied. Default
+        is 1.
+    erection_factor : float | None, optional
+        Override used by the ``"composite"`` rule. Default is None
+        (use the ``process_type`` table).
+    piping_factor : float | None, optional
+        Override used by the ``"composite"`` rule. Default is None
+        (use the ``process_type`` table).
+    instrumentation_factor : float | None, optional
+        Override used by the ``"composite"`` rule. Default is None
+        (use the ``process_type`` table).
+    electrical_factor : float | None, optional
+        Override used by the ``"composite"`` rule. Default is None
+        (use the ``process_type`` table).
+    civil_factor : float | None, optional
+        Override used by the ``"composite"`` rule. Default is None
+        (use the ``process_type`` table).
+    structural_factor : float | None, optional
+        Override used by the ``"composite"`` rule. Default is None
+        (use the ``process_type`` table).
+    lagging_factor : float | None, optional
+        Override used by the ``"composite"`` rule. Default is None
+        (use the ``process_type`` table).
+    material_factor : float | None, optional
+        Material factor used by the ``"composite"`` rule. Default is
+        None (1.0).
+
+    Attributes
+    ----------
+    components : list
+        The component objects as given.
+    components_purchased_cost : float
+        Sum of the components' ``purchased_cost`` times ``num_units``, in
+        ``target_year`` money. Equals ``purchased_cost`` unless a composite
+        quote was supplied.
+    purchased_cost : float
+        Composite purchased cost for all units in ``target_year`` money.
+    direct_cost : float
+        Composite direct (installed) cost for all units.
+
+    Raises
+    ------
+    ValueError
+        If ``process_type`` or ``installation`` is invalid, ``components``
+        is empty, ``num_units`` is not positive, or a component's
+        ``target_year`` differs from the composite's.
+    TypeError
+        If a component has no ``purchased_cost``/``direct_cost``.
+
+    Examples
+    --------
+    >>> vessel = Equipment("Adsorber vessel", 12.0, "Fluids",
+    ...                    "Pressure vessels", type="Vertical",
+    ...                    material="304 stainless steel", num_units=4)
+    >>> zeolite = Equipment("Zeolite 5A", 1000, "Solids",
+    ...                     "Packings & adsorbents", type="Molecular sieves")
+    >>> psa = CompositeEquipment("PSA", "Fluids",
+    ...                          components=[vessel, zeolite],
+    ...                          category="Adsorption", type="PSA")
+    >>> psa.breakdown()  # DataFrame with one row per sub-component
+    """
+
+    def __init__(
+        self,
+        name: str,
+        process_type: str,
+        components: list,
+        category: str = "Composite",
+        type: str | None = None,
+        installation: str = "component",
+        purchased_cost: float | None = None,
+        cost_year: int | None = None,
+        target_year: int = 2024,
+        num_units: int = 1,
+        erection_factor: float | None = None,
+        piping_factor: float | None = None,
+        instrumentation_factor: float | None = None,
+        electrical_factor: float | None = None,
+        civil_factor: float | None = None,
+        structural_factor: float | None = None,
+        lagging_factor: float | None = None,
+        material_factor: float | None = None,
+    ):
+        """Initialize the composite and compute purchased and direct costs."""
+        if process_type not in Equipment.process_factors:
+            raise ValueError(
+                f"Invalid process_type '{process_type}'. "
+                f"Valid options are: {list(Equipment.process_factors)}"
+            )
+        if installation not in ("component", "composite"):
+            raise ValueError(
+                f"Invalid installation '{installation}'. "
+                f"Valid options are: ['component', 'composite']"
+            )
+        if not components:
+            raise ValueError(
+                f"CompositeEquipment '{name}' needs at least one component."
+            )
+        if num_units <= 0:
+            raise ValueError(
+                f"CompositeEquipment '{name}' has num_units={num_units}; "
+                f"it must be positive."
+            )
+
+        self.name = name
+        self.process_type = process_type
+        self.category = category
+        self.type = type
+        self.installation = installation
+        self.target_year = target_year
+        self.num_units = num_units
+        self.param = None
+        self.material = None
+        # Component costs are already escalated, so the composite's own
+        # cost basis is the target year.
+        self.cost_year = target_year
+
+        self.components = []
+        for obj in components:
+            if not hasattr(obj, "purchased_cost") or not hasattr(
+                obj, "direct_cost"
+            ):
+                raise TypeError(
+                    f"Component {obj!r} of composite '{name}' must be an "
+                    f"Equipment or CompositeEquipment."
+                )
+            if getattr(obj, "target_year", target_year) != target_year:
+                raise ValueError(
+                    f"Component '{obj.name}' has target_year="
+                    f"{obj.target_year} but composite '{name}' has "
+                    f"target_year={target_year}."
+                )
+            self.components.append(obj)
+
+        _pf = Equipment.process_factors[process_type]
+        self.erection_factor = (
+            erection_factor if erection_factor is not None else _pf["fer"]
+        )
+        self.piping_factor = (
+            piping_factor if piping_factor is not None else _pf["fp"]
+        )
+        self.instrumentation_factor = (
+            instrumentation_factor
+            if instrumentation_factor is not None
+            else _pf["fi"]
+        )
+        self.electrical_factor = (
+            electrical_factor if electrical_factor is not None else _pf["fel"]
+        )
+        self.civil_factor = (
+            civil_factor if civil_factor is not None else _pf["fc"]
+        )
+        self.structural_factor = (
+            structural_factor if structural_factor is not None else _pf["fs"]
+        )
+        self.lagging_factor = (
+            lagging_factor if lagging_factor is not None else _pf["fl"]
+        )
+        self.material_factor = (
+            material_factor if material_factor is not None else 1.0
+        )
+
+        self.components_purchased_cost = float(
+            sum(obj.purchased_cost for obj in self.components) * num_units
+        )
+        self._quoted = purchased_cost is not None
+        if self._quoted:
+            quote = float(purchased_cost)
+            if cost_year is not None:
+                quote = inflation_adjustment(
+                    quote, cost_year, target_year=target_year
+                )
+            self.purchased_cost = quote
+        else:
+            self.purchased_cost = self.components_purchased_cost
+
+        self.direct_cost = self.calculate_direct_cost()
+
+    def calculate_direct_cost(self) -> float:
+        """
+        Calculate the composite's direct (installed) cost.
+
+        With ``installation="component"`` and no composite quote, this is
+        the sum of the components' own direct costs times ``num_units``.
+        Otherwise the composite's installation factors are applied once to
+        ``purchased_cost``, using the same formula as
+        :meth:`Equipment.calculate_direct_cost`.
+
+        Returns
+        -------
+        float
+            Total direct installed cost.
+        """
+        if self.installation == "component" and not self._quoted:
+            self.direct_cost = float(
+                sum(obj.direct_cost for obj in self.components)
+                * self.num_units
+            )
+        else:
+            self.direct_cost = self.purchased_cost * (
+                (1 + self.piping_factor) * self.material_factor
+                + (
+                    self.erection_factor
+                    + self.electrical_factor
+                    + self.instrumentation_factor
+                    + self.civil_factor
+                    + self.structural_factor
+                    + self.lagging_factor
+                )
+            )
+        return self.direct_cost
+
+    def leaves(self, _prefix: str = "", _multiplier: int | None = None):
+        """
+        Iterate over the leaf components, flattening nested composites.
+
+        Yields
+        ------
+        tuple[str, Equipment, int]
+            ``(label, equipment, multiplier)`` where ``label`` is the
+            component's name prefixed by the names of enclosing composites
+            (``"Inner composite / Vessel"``) and ``multiplier`` is the
+            product of the ``num_units`` of every enclosing composite,
+            this one included. The leaf's own ``purchased_cost`` and
+            ``direct_cost`` already cover its own ``num_units``.
+        """
+        multiplier = self.num_units if _multiplier is None else _multiplier
+        for obj in self.components:
+            label = f"{_prefix}{obj.name}"
+            if isinstance(obj, CompositeEquipment):
+                yield from obj.leaves(
+                    label + " / ", multiplier * obj.num_units
+                )
+            else:
+                yield label, obj, multiplier
+
+    def breakdown(self) -> pd.DataFrame:
+        """
+        Tabulate the leaf components and their costs.
+
+        Returns
+        -------
+        pd.DataFrame
+            One row per leaf component with columns ``component``,
+            ``category``, ``type``, ``material``, ``param``, ``num_units``
+            (total count of that component across all enclosing
+            composites), ``purchased_each`` (cost of one unit),
+            ``purchased_total`` and ``direct_total`` (all units).
+            ``direct_total`` is the component's own installed cost; see
+            :meth:`direct_cost_breakdown` for a split that always sums to
+            the composite's ``direct_cost``.
+        """
+        rows = []
+        for label, leaf, mult in self.leaves():
+            leaf_units = leaf.num_units or 1
+            rows.append(
+                {
+                    "component": label,
+                    "category": leaf.category,
+                    "type": leaf.type,
+                    "material": leaf.material,
+                    "param": leaf.param,
+                    "num_units": leaf_units * mult,
+                    "purchased_each": float(leaf.purchased_cost / leaf_units),
+                    "purchased_total": float(leaf.purchased_cost * mult),
+                    "direct_total": float(leaf.direct_cost * mult),
+                }
+            )
+        return pd.DataFrame(rows)
+
+    def direct_cost_breakdown(self) -> dict:
+        """
+        Split the composite's direct cost over its leaf components.
+
+        Under the ``"component"`` rule this is each component's own direct
+        cost. When the composite is installed as one item (``"composite"``
+        rule or a composite quote) the composite direct cost is pro-rated by
+        each component's share of ``components_purchased_cost``. Either way
+        the values sum to ``direct_cost``.
+
+        Returns
+        -------
+        dict
+            Mapping of ``"Composite name / component label"`` to direct cost.
+        """
+        leaves = list(self.leaves(f"{self.name} / "))
+        if self.installation == "component" and not self._quoted:
+            return {
+                label: float(leaf.direct_cost * mult)
+                for label, leaf, mult in leaves
+            }
+        base = self.components_purchased_cost
+        return {
+            label: float(
+                self.direct_cost * (leaf.purchased_cost * mult) / base
+            )
+            for label, leaf, mult in leaves
+        }
+
+    def to_dict(self):
+        """
+        Convert the composite and its components to a dictionary.
+
+        Returns
+        -------
+        dict
+            The same keys as :meth:`Equipment.to_dict` plus
+            ``installation``, ``components_purchased_cost`` and
+            ``components`` (a list of the components' own dicts).
+        """
+        return {
+            "name": self.name,
+            "category": self.category,
+            "type": self.type,
+            "material": self.material,
+            "process_type": self.process_type,
+            "param": self.param,
+            "num_units": self.num_units,
+            "cost_year": self.cost_year,
+            "target_year": self.target_year,
+            "purchased_cost": float(self.purchased_cost),
+            "direct_cost": float(self.direct_cost),
+            "installation": self.installation,
+            "components_purchased_cost": self.components_purchased_cost,
+            "components": [obj.to_dict() for obj in self.components],
+        }
+
+    def __str__(self) -> str:
+        """
+        Return a formatted string summary of the composite and its parts.
+
+        Returns
+        -------
+        str
+            Human-readable representation of the composite costs followed by
+            one indented line per direct component.
+        """
+        head = (
+            f"Name={self.name}, "
+            f"Category={self.category}, Sub-type={self.type}, "
+            f"Process Type={self.process_type}, "
+            f"Installation={self.installation}, "
+            f"Number of units={self.num_units}, "
+            f"Purchased Cost={self.purchased_cost}, "
+            f"Direct Cost={self.direct_cost})"
+        )
+        body = "\n".join(
+            f"    - {obj.name} (x{obj.num_units}): "
+            f"Purchased Cost={obj.purchased_cost}, "
+            f"Direct Cost={obj.direct_cost}"
+            for obj in self.components
+        )
+        return f"{head}\n{body}"

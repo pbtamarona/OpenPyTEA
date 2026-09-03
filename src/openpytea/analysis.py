@@ -25,7 +25,7 @@ from openpytea.helpers import (_make_label,
 # DATA PREPARATION (MAIN API)
 # ======================================================
 
-def direct_costs_data(plants, pct=False):
+def direct_costs_data(plants, pct=False, expand_composites=False):
     """
     Extract and organize direct cost data from one or more plants.
     This function aggregates direct cost information from equipment lists
@@ -39,6 +39,11 @@ def direct_costs_data(plants, pct=False):
     pct : bool, optional
         If True, return direct costs as percentages of the total. If False
         (default), return absolute cost values.
+    expand_composites : bool, optional
+        If True, an :class:`~openpytea.equipment.CompositeEquipment` is split
+        into its leaf components (labelled ``"Composite / component"``) using
+        :meth:`~openpytea.equipment.CompositeEquipment.direct_cost_breakdown`
+        instead of appearing as a single bar segment. Default is False.
     Returns
     -------
     dict
@@ -68,10 +73,14 @@ def direct_costs_data(plants, pct=False):
 
     for plant in plants:
         loc = plant._resolve_loc_factor()
-        components = {
-            eq.name: float(eq.direct_cost * loc * plant.exchange_rate)
-            for eq in plant.equipment_list
-        }
+        scale = loc * plant.exchange_rate
+        components = {}
+        for eq in plant.equipment_list:
+            if expand_composites and hasattr(eq, "direct_cost_breakdown"):
+                for label, cost in eq.direct_cost_breakdown().items():
+                    components[label] = float(cost * scale)
+            else:
+                components[eq.name] = float(eq.direct_cost * scale)
         components_list.append(components)
         xlabels.append(plant.name)
 
@@ -1559,8 +1568,8 @@ def _resolve_quantity_dependencies(plant, num_samples, consumption_samples,
 
 
 def monte_carlo(plant,
-                 num_samples: int = 1_000_000,
-                 batch_size: int = 1000,
+                 num_samples: int = 100_000,
+                 batch_size: int = 10_000,
                  additional_capex: bool = False,
                  random_seed: int = None):
     """

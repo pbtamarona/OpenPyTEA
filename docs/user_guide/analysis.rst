@@ -42,7 +42,10 @@ The five data-preparation functions and their outputs:
    * - Function
      - Output
    * - ``direct_costs_data(plants)``
-     - Equipment-level purchased and direct costs.
+     - Equipment-level direct costs. A
+       :class:`~openpytea.equipment.CompositeEquipment` is one segment by
+       default; ``expand_composites=True`` splits it into its components
+       (labelled ``"composite / component"``).
    * - ``fixed_capital_data(plants)``
      - ISBL, OSBL, D&E, contingency (and optional additional CAPEX).
    * - ``fixed_opex_data(plants)``
@@ -58,6 +61,9 @@ Basic usage (single plant):
 
    # Equipment-level CAPEX
    direct_costs = direct_costs_data(plants=plant)
+
+   # Same, with composite equipment split into its components
+   direct_costs_split = direct_costs_data(plants=plant, expand_composites=True)
 
    # Fixed capital breakdown (include additional CAPEX events)
    fixed_capital = fixed_capital_data(plants=plant, additional_capex=True)

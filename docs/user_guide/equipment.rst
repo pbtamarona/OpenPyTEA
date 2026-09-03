@@ -238,7 +238,8 @@ Constructor parameters
      - Year to inflate costs to. Default: ``2024``.
    * - ``purchased_cost``
      - float or None
-     - Supply your own purchased cost and bypass the correlation entirely.
+     - Supply your own purchased cost (the total for all units) and
+       bypass the correlation entirely.
    * - ``cost_year``
      - int or None
      - Reference year of a manually supplied ``purchased_cost``. If given,
@@ -250,8 +251,12 @@ Constructor parameters
        category/type.
    * - ``num_units``
      - int or None
-     - Override the number of parallel units. By default this is set
-       automatically by the parallelization logic.
+     - Number of identical units. With a correlation, ``param`` describes
+       one unit and the correlation cost is multiplied by ``num_units``.
+       With a manual ``purchased_cost`` it is a label only (the cost is
+       the total). By default it is 1 for a manual ``purchased_cost``, or
+       the number of parallel units the parallelization logic splits
+       ``param`` into (that cost already covers all of them).
    * - ``piping_factor``, ``erection_factor``, … ``lagging_factor``
      - float or None
      - Per-factor overrides. ``None`` uses the ``process_type`` default.
@@ -369,17 +374,21 @@ Example 5 — Inflation to a custom target year
 Example 6 — Fixing the number of units manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+The correlation is evaluated at ``param`` for one unit and the result is
+multiplied by ``num_units``. (A manual ``purchased_cost`` is not
+multiplied: it is the total for all units.)
+
 .. code-block:: python
 
    fridge = Equipment(
        name="Refrigerator R-201",
-       param=180,
+       param=180,                       # duty of ONE unit
        process_type="Fluids",
        category="Utilities",
        type="Packaged mechanical refrigerator",
-       num_units=3,                     # bypass auto-parallelization
+       num_units=3,                     # three identical units
    )
-   print(fridge)
+   print(fridge)                        # purchased cost covers all three
 
 Example 7 — Automatic default material resolution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -502,6 +511,149 @@ independent size parameters. Pass both as a ``(S1, S2)`` tuple/list in
 way ``s_lower``/``s_upper`` bound the first, except exceeding
 ``s2_upper`` always raises ``ValueError`` — it never triggers
 parallelization the way ``s_upper`` does.
+
+Composite equipment
+-------------------
+
+.. code-block:: python
+
+   from openpytea import CompositeEquipment
+
+Some equipment items are assemblies: a pressure-swing adsorption (PSA)
+unit is a set of adsorber vessels filled with layers of different
+adsorbents, a compressor train is a compressor plus its driver, a
+reactor carries a catalyst charge. A
+:class:`~openpytea.equipment.CompositeEquipment` assembles one equipment
+line item from sub-components. Every sub-component is an ordinary
+``Equipment`` (or another ``CompositeEquipment``; nesting is allowed), so
+it brings its own cost correlation or user-defined purchased cost, its
+own material factor and its own installation factors.
+
+The composite exposes the same attributes as an ``Equipment``
+(``purchased_cost``, ``direct_cost``, ``num_units``, ``to_dict()``, …), so
+it goes into a plant's ``equipment`` list like any other item and counts
+as a single process step in the operator estimate.
+
+Constructor parameters
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 14 64
+
+   * - Parameter
+     - Type
+     - Description
+   * - ``name``
+     - str
+     - Composite identifier.
+   * - ``process_type``
+     - str
+     - ``"Solids"``, ``"Fluids"``, ``"Mixed"``, or ``"Electrical"``. Used
+       by the plant's operator estimate and, under the ``"composite"``
+       installation rule, as the factor table for the whole composite.
+   * - ``components``
+     - list
+     - ``Equipment`` or ``CompositeEquipment`` objects. Several identical
+       units of a component are priced by setting ``num_units`` on the
+       component itself, exactly as for stand-alone equipment.
+   * - ``category``, ``type``
+     - str
+     - Free labels used for reporting. Default category is
+       ``"Composite"``.
+   * - ``installation``
+     - str
+     - ``"component"`` (default): the direct cost is the sum of each
+       component's own direct cost, so every part keeps its own
+       process-type and material factors. ``"composite"``: the
+       composite's own process-type factors are applied once to the
+       total purchased cost, i.e. the assembly is installed as one item.
+   * - ``purchased_cost``, ``cost_year``
+     - float, int
+     - Optional vendor quote for the whole composite (the total for all
+       ``num_units``, not multiplied). It replaces the component sum,
+       which is kept as ``components_purchased_cost``; the composite is
+       then installed as one item.
+   * - ``num_units``
+     - int
+     - Number of identical composites. Multiplies the component-based
+       purchased and direct cost. Default 1.
+   * - ``target_year``
+     - int
+     - Must match every component's ``target_year``. Default 2024.
+   * - ``piping_factor``, … ``material_factor``
+     - float or None
+     - Overrides used by the ``"composite"`` installation rule.
+
+Example 11 — A PSA unit built from sub-components
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   vessel = Equipment(
+       name="Adsorber vessel",
+       param=12.0,                      # volume of ONE vessel, m^3
+       process_type="Fluids",
+       category="Pressure vessels",
+       type="Vertical",
+       material="304 stainless steel",
+       num_units=4,                     # four identical vessels
+   )
+   zeolite = Equipment(
+       name="Zeolite 5A layer",
+       param=4 * 250.0,                 # total bulk volume, ft^3
+       process_type="Solids",
+       category="Packings & adsorbents",
+       type="Molecular sieves",
+   )
+   carbon = Equipment(
+       name="Activated carbon layer",
+       param=None,
+       process_type="Solids",
+       category="Packings & adsorbents",
+       type="Activated carbon",
+       purchased_cost=38_000.0,         # vendor quote instead of a correlation
+       cost_year=2021,
+   )
+
+   psa = CompositeEquipment(
+       name="PSA",
+       process_type="Fluids",
+       components=[vessel, zeolite, carbon],
+       category="Adsorption",
+       type="Pressure-swing adsorber",
+   )
+   print(psa)
+   psa.breakdown()                      # one row per leaf component
+
+``breakdown()`` returns a DataFrame with one row per leaf component:
+``purchased_each`` is the cost of one unit, while ``purchased_total`` and
+``direct_total`` cover all ``num_units`` of that component. Nested
+composites are flattened, with labels such as ``"PSA / Adsorber vessel"``
+and the ``num_units`` of every enclosing composite multiplied along the
+path.
+
+The same assembly installed as one item, and priced from a skid quote:
+
+.. code-block:: python
+
+   psa_as_one = CompositeEquipment(
+       name="PSA", process_type="Fluids",
+       components=[vessel, zeolite, carbon],
+       installation="composite",
+   )
+   psa_quoted = CompositeEquipment(
+       name="PSA", process_type="Fluids",
+       components=[vessel, zeolite, carbon],
+       purchased_cost=650_000.0,        # 2019 quote for the whole skid
+       cost_year=2019,
+   )
+
+In cost breakdown charts a composite appears as a single segment by
+default; pass ``expand_composites=True`` to
+:func:`~openpytea.analysis.direct_costs_data` to split it into its
+components, or plot ``psa.direct_cost_breakdown()`` directly. See the
+:doc:`analysis` guide.
 
 Listing available equipment
 ---------------------------
@@ -645,6 +797,7 @@ See also
 --------
 
 * :class:`~openpytea.equipment.Equipment` — full API reference
+* :class:`~openpytea.equipment.CompositeEquipment` — equipment assembled from sub-components
 * :class:`~openpytea.equipment.CostCorrelationDB` — database interface
 * :func:`~openpytea.equipment.inflation_adjustment` — CEPCI utility
 * `Walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_ — end-to-end worked example

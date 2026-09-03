@@ -4,7 +4,7 @@ economic sensitivity and uncertainty evaluation.
 """
 
 from .plant import Plant
-from .equipment import Equipment, inflation_adjustment
+from .equipment import Equipment, CompositeEquipment, inflation_adjustment
 from .analysis import (direct_costs_data, fixed_capital_data,
                        fixed_opex_data, variable_opex_data,
                        levelized_cost_data, cash_flow_data,
@@ -33,6 +33,7 @@ __url__ = "https://github.com/PBTamarona/OpenPyTEA"
 __all__ = [
     "Plant",
     "Equipment",
+    "CompositeEquipment",
     "inflation_adjustment",
     "direct_costs_data",
     "fixed_capital_data",

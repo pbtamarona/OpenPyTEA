@@ -148,6 +148,20 @@ print(compressor.direct_cost)
 
 Each equipment item retrieves its cost correlation from the internal database in `data/cost_correlations.csv` and adjusts the cost to the desired year using the Chemical Engineering Plant Cost Index (CEPCI).
 
+Assemblies such as a PSA skid (vessels plus adsorbent layers) can be built from individually priced sub-components with `CompositeEquipment`; the composite then behaves like any other equipment item in a plant:
+
+```python
+from openpytea.equipment import CompositeEquipment
+
+psa = CompositeEquipment(
+    name='PSA',
+    process_type='Fluids',
+    components=[vessel, zeolite, carbon],   # ordinary Equipment objects
+)
+print(psa.direct_cost)
+psa.breakdown()                             # one row per sub-component
+```
+
 ### 2. **Plant-level techno-economic assessment**
 
 Multiple equipment objects can be grouped into a `Plant` instance for full TEA
@@ -192,7 +206,7 @@ Main outputs include:
 
 Following a `data` + `plot` pattern used throughout the package, OpenPyTEA includes convenience functions for visualizing the economic structure of one or more plants as stacked bar charts:
 
-- `direct_costs_data()` + `plot_stacked_bar()`: direct equipment costs (per equipment item).  
+- `direct_costs_data()` + `plot_stacked_bar()`: direct equipment costs (per equipment item; `expand_composites=True` splits composite equipment into its components).  
 - `fixed_capital_data()` + `plot_stacked_bar()`: fixed capital components (ISBL, OSBL, design & engineering, contingency).  
 - `variable_opex_data()` + `plot_stacked_bar()`: variable operating costs by input mass and energy stream.  
 - `fixed_opex_data()` + `plot_stacked_bar()`: fixed operating expenses, including labor, supervision, maintenance, overhead, R&D, and more.  
