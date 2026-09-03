@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo-white.png" alt="OpenPyTEA" width="400"/>
+  <img src="https://raw.githubusercontent.com/pbtamarona/OpenPyTEA/main/docs/logo-white.png" alt="OpenPyTEA" width="400"/>
 </p>
 
 **OpenPyTEA** is an open-source Python toolkit for performing **techno-economic assessment (TEA)** of chemical and energy systems. It was created to address a persistent gap in the TEA workflow: while process simulators model mass and energy balances, researchers often lack an equally transparent and flexible way to evaluate the **economic feasibility** of their designs. Commercial tools remain *black-box tools*, and many academic TEA implementations are process-specific, undocumented, or difficult to reproduce.
@@ -25,7 +25,7 @@ https://github.com/pbtamarona/OpenPyTEA/tree/main/examples
 We are hosting a one-day workshop on open-science techno-economic assessment using **OpenPyTEA**!
 
 <p align="center">
-  <img src="workshop-flyer.jpg" alt="OpenPyTEA" width="800"/>
+  <img src="https://raw.githubusercontent.com/pbtamarona/OpenPyTEA/main/workshop-flyer.jpg" alt="OpenPyTEA" width="800"/>
 </p>
 
 **Open-Science Techno-Economic Assessment with OpenPyTEA: From Process Design to Economic Insights**
@@ -105,7 +105,7 @@ README.md
 ---
 ## 🏗️ Software Architecture
 
-![OpenPyTEA Architecture](examples/img/architecture.png)
+![OpenPyTEA Architecture](https://raw.githubusercontent.com/pbtamarona/OpenPyTEA/main/examples/img/architecture.png)
 
 Software architecture and data flow of **OpenPyTEA**, illustrating the progression from user input to TEA output. Users provide economic assumptions, process simulation results, and equipment-sizing parameters. Equipment-sizing information is linked with cost correlations and CEPCI values stored in CSV databases to calculate inflation-adjusted purchased and direct costs. `Equipment` objects are aggregated into a `Plant` object, where CAPEX, OPEX, and financial performance metrics are evaluated. The `analysis.py` module subsequently operates on `Plant` objects to perform sensitivity and uncertainty analyses.
 
