@@ -139,7 +139,13 @@ frontend/
 - Card sections: General, Financial, Labor, Products, Variable OPEX,
   Parameter Dependencies
 - Country/region are cascading dropdowns from `Plant.locFactors`
-- Products and variable OPEX are dynamic key-value editors (add/remove rows)
+- Products and variable OPEX are dynamic key-value editors (add/remove rows).
+  Each row carries two Monte Carlo uncertainty groups: price (item-level
+  `std`/`min`/`max`, legacy shape) and quantity (3.0
+  `consumption_uncertainty`/`production_uncertainty` sub-dicts — std ≤ 0
+  removes the block and the quantity stays fixed at baseline). The quantity
+  cells read "via dependency" when a dependency drives the item, since the
+  sub-dict then holds the noise managed by the Dependencies card
 - **Parameter Dependencies** (3.0 dependency DAG): rules of the form
   `dependent = Σ weight × parent + offset`, with optional Monte Carlo noise.
   Dependents/parents are any `consumption:<item>`, `production:<product>`,

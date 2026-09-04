@@ -263,6 +263,27 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
     }));
   };
 
+  // Consumption/production uncertainty (3.0): a {std, min, max} sub-dict on
+  // the item. std <= 0 removes the block (quantity stays fixed at baseline).
+  // Not editable for a dependency-driven item — there the block holds the
+  // Monte Carlo noise managed by the Dependencies card.
+  const updateQtyUncertainty = (
+    root: "variable_opex_inputs" | "plant_products", key: string, field: string, value: number,
+  ) => {
+    const uKey = root === "variable_opex_inputs" ? "consumption_uncertainty" : "production_uncertainty";
+    setConfig((prev) => {
+      const item = { ...prev[root][key] };
+      const block = { ...((item[uKey] as Record<string, number> | null | undefined) ?? {}) };
+      block[field] = value;
+      if ((block.std ?? 0) <= 0) {
+        delete item[uKey];
+      } else {
+        item[uKey] = block;
+      }
+      return { ...prev, [root]: { ...prev[root], [key]: item } };
+    });
+  };
+
   // Dependency rules are derived from the config on every render; edits
   // write straight back into the config via writeDep/clearDep.
   const rules = rulesFromConfig(config);
@@ -380,7 +401,15 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
           <p style={{ color: "#868e96", fontSize: 13 }}>No products defined. First product is the main product.</p>
         ) : (
           <table>
-            <thead><tr><th>Product</th><th>Production (daily)</th><th>Price ($/unit)</th><th>Std</th><th>Min</th><th>Max</th><th></th></tr></thead>
+            <thead>
+              <tr>
+                <th rowSpan={2}>Product</th><th rowSpan={2}>Production (daily)</th><th rowSpan={2}>Price ($/unit)</th>
+                <th colSpan={3} style={{ textAlign: "center" }}>Price uncertainty (MC)</th>
+                <th colSpan={3} style={{ textAlign: "center" }}>Production uncertainty (MC)</th>
+                <th rowSpan={2}></th>
+              </tr>
+              <tr><th>Std</th><th>Min</th><th>Max</th><th>Std</th><th>Min</th><th>Max</th></tr>
+            </thead>
             <tbody>
               {Object.entries(config.plant_products).map(([key, val]) => (
                 <tr key={key}>
@@ -405,6 +434,15 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
                   <td><input type="number" value={val.std ?? 0} onChange={(e) => updateProduct(key, "std", +e.target.value)} style={{ width: 60 }} /></td>
                   <td><input type="number" value={val.min ?? 0} onChange={(e) => updateProduct(key, "min", +e.target.value)} style={{ width: 60 }} /></td>
                   <td><input type="number" value={val.max ?? 99999} onChange={(e) => updateProduct(key, "max", +e.target.value)} style={{ width: 70 }} /></td>
+                  {val.production_dependency ? (
+                    <td colSpan={3} style={{ fontSize: 12, color: "#868e96" }} title="Set by a parameter dependency — noise is configured in the Dependencies card">via dependency</td>
+                  ) : (
+                    <>
+                      <td><input type="number" placeholder="0" value={val.production_uncertainty?.std ?? ""} onChange={(e) => updateQtyUncertainty("plant_products", key, "std", +e.target.value)} style={{ width: 70 }} /></td>
+                      <td><input type="number" disabled={!val.production_uncertainty} value={val.production_uncertainty?.min ?? ""} onChange={(e) => updateQtyUncertainty("plant_products", key, "min", +e.target.value)} style={{ width: 70 }} /></td>
+                      <td><input type="number" disabled={!val.production_uncertainty} value={val.production_uncertainty?.max ?? ""} onChange={(e) => updateQtyUncertainty("plant_products", key, "max", +e.target.value)} style={{ width: 70 }} /></td>
+                    </>
+                  )}
                   <td style={{ display: "flex", gap: 6 }}>
                     {editingProductKey === key ? (
                       <button className="btn-primary" onClick={() => renameProduct(key, editingProductName)}>Done</button>
@@ -428,7 +466,15 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
           <p style={{ color: "#868e96", fontSize: 13 }}>No variable costs defined yet.</p>
         ) : (
           <table>
-            <thead><tr><th>Item</th><th>Consumption (daily)</th><th>Price ($/unit)</th><th>Std</th><th>Min</th><th>Max</th><th></th></tr></thead>
+            <thead>
+              <tr>
+                <th rowSpan={2}>Item</th><th rowSpan={2}>Consumption (daily)</th><th rowSpan={2}>Price ($/unit)</th>
+                <th colSpan={3} style={{ textAlign: "center" }}>Price uncertainty (MC)</th>
+                <th colSpan={3} style={{ textAlign: "center" }}>Consumption uncertainty (MC)</th>
+                <th rowSpan={2}></th>
+              </tr>
+              <tr><th>Std</th><th>Min</th><th>Max</th><th>Std</th><th>Min</th><th>Max</th></tr>
+            </thead>
             <tbody>
               {Object.entries(config.variable_opex_inputs).map(([key, val]) => (
                 <tr key={key}>
@@ -453,6 +499,15 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
                   <td><input type="number" value={val.std ?? 0} onChange={(e) => updateVarOpex(key, "std", +e.target.value)} style={{ width: 60 }} /></td>
                   <td><input type="number" value={val.min ?? 0} onChange={(e) => updateVarOpex(key, "min", +e.target.value)} style={{ width: 60 }} /></td>
                   <td><input type="number" value={val.max ?? 99999} onChange={(e) => updateVarOpex(key, "max", +e.target.value)} style={{ width: 70 }} /></td>
+                  {val.consumption_dependency ? (
+                    <td colSpan={3} style={{ fontSize: 12, color: "#868e96" }} title="Set by a parameter dependency — noise is configured in the Dependencies card">via dependency</td>
+                  ) : (
+                    <>
+                      <td><input type="number" placeholder="0" value={val.consumption_uncertainty?.std ?? ""} onChange={(e) => updateQtyUncertainty("variable_opex_inputs", key, "std", +e.target.value)} style={{ width: 70 }} /></td>
+                      <td><input type="number" disabled={!val.consumption_uncertainty} value={val.consumption_uncertainty?.min ?? ""} onChange={(e) => updateQtyUncertainty("variable_opex_inputs", key, "min", +e.target.value)} style={{ width: 70 }} /></td>
+                      <td><input type="number" disabled={!val.consumption_uncertainty} value={val.consumption_uncertainty?.max ?? ""} onChange={(e) => updateQtyUncertainty("variable_opex_inputs", key, "max", +e.target.value)} style={{ width: 70 }} /></td>
+                    </>
+                  )}
                   <td style={{ display: "flex", gap: 6 }}>
                     {editingVarOpexKey === key ? (
                       <button className="btn-primary" onClick={() => renameVarOpex(key, editingVarOpexName)}>Done</button>
