@@ -4,6 +4,7 @@ import numpy as np
 from fastapi import APIRouter, HTTPException
 
 from openpytea.analysis import sensitivity_data, tornado_data, monte_carlo
+from openpytea.helpers import _collect_dependency_specs, _sensitivity_key_node
 
 from app import state
 from app.plant_factory import build_plant
@@ -44,9 +45,19 @@ def _rehydrate_extras(extras: list[PlantInput]):
 def get_sensitivity_parameters():
     plant = _require_plant()
     top = ["fixed_capital", "fixed_opex", "project_lifetime", "interest_rate", "operator_hourly_rate"]
+    # Bare item keys vary the price; explicit .consumption/.production keys
+    # vary the process quantity (3.0).
     var_keys = [f"variable_opex_inputs.{k}" for k in plant.variable_opex_inputs]
     prod_keys = [f"plant_products.{k}" for k in plant.plant_products]
-    return top + var_keys + prod_keys
+    qty_keys = [f"variable_opex_inputs.{k}.consumption" for k in plant.variable_opex_inputs]
+    qty_keys += [f"plant_products.{k}.production" for k in plant.plant_products]
+    # A parameter set by a dependency has no value of its own to vary —
+    # sensitivity_data would reject it, so don't offer it.
+    dependents = _collect_dependency_specs(plant)
+    return [
+        k for k in top + var_keys + prod_keys + qty_keys
+        if _sensitivity_key_node(k) not in dependents
+    ]
 
 
 @router.post("/sensitivity", response_model=SensitivityResult)

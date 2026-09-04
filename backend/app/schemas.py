@@ -133,6 +133,9 @@ class PlantConfigIn(BaseModel):
     operating_shifts_per_day: int = 3
     variable_opex_inputs: dict[str, dict] = Field(default_factory=dict)
     plant_products: dict[str, dict] = Field(default_factory=dict)
+    # Financial-parameter uncertainty blocks and/or dependency declarations
+    # (3.0): {"fixed_capital_factor": {"std": .., "dependency": {..}}, ...}
+    project_uncertainties: dict[str, dict] | None = None
     fc: float | None = None
     fp: float | None = None
     additional_capex_years: list[int] | None = None

@@ -136,9 +136,22 @@ frontend/
   never round-tripped as inputs)
 
 ### PlantConfigPage
-- Four card sections: General, Financial, Labor, Products, Variable OPEX
+- Card sections: General, Financial, Labor, Products, Variable OPEX,
+  Parameter Dependencies
 - Country/region are cascading dropdowns from `Plant.locFactors`
 - Products and variable OPEX are dynamic key-value editors (add/remove rows)
+- **Parameter Dependencies** (3.0 dependency DAG): rules of the form
+  `dependent = Σ weight × parent + offset`, with optional Monte Carlo noise.
+  Dependents/parents are any `consumption:<item>`, `production:<product>`,
+  or `project:<param>` node. Rules are stored in the plant config itself
+  (`consumption_dependency` / `production_dependency` / `dependency` blocks
+  + `project_uncertainties`), so all three analyses honour them. The editor
+  derives its rows from the config on render and writes edits straight back.
+  Two library rules are enforced on write: a dependent's uncertainty may only
+  be zero-centered `noise` (never `std`), and absolute `min`/`max` bounds are
+  stripped from a dependent (they would truncate the noise distribution).
+  `/api/analysis/sensitivity/parameters` offers `.consumption`/`.production`
+  quantity keys and excludes anything set by a dependency.
 - Each product/opex item has: name, consumption/production, price, std, min, max (std/min/max used for Monte Carlo distributions)
 - "Save Configuration" button sends to backend
 

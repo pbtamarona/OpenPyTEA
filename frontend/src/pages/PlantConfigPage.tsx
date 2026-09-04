@@ -1,6 +1,125 @@
 import { useEffect, useState } from "react";
 import { getPlantConfig, setPlantConfig, getLocations } from "../api/client";
-import type { PlantConfig } from "../types";
+import type { PlantConfig, DependencyBlock } from "../types";
+
+// ── Parameter dependencies (3.0 dependency DAG) ────────────────────
+// A dependency ties one parameter to others: dependent = Σ weight·parent
+// + offset. It lives in the plant config (consumption_dependency /
+// production_dependency / dependency blocks) and is honoured by Monte
+// Carlo, sensitivity, and tornado alike.
+
+const PROJECT_PARAMS = [
+  "fixed_capital_factor", "fixed_opex_factor", "project_lifetime",
+  "interest_rate", "plant_utilization", "tax_rate", "operator_hourly_rate",
+];
+
+interface DepRule {
+  target: string;                              // "consumption:x" | "production:y" | "project:p"
+  parents: { ref: string; weight: number }[];
+  offset: number;
+  noise: number | null;                        // MC-only additive noise on the DAG-implied mean
+}
+
+const refLabel = (ref: string) => {
+  const [kind, name] = ref.split(":");
+  return `${name} (${kind})`;
+};
+
+const allNodeRefs = (config: PlantConfig): string[] => [
+  ...Object.keys(config.variable_opex_inputs).map((k) => `consumption:${k}`),
+  ...Object.keys(config.plant_products).map((k) => `production:${k}`),
+  ...PROJECT_PARAMS.map((p) => `project:${p}`),
+];
+
+const rulesFromConfig = (config: PlantConfig): DepRule[] => {
+  const rules: DepRule[] = [];
+  const push = (target: string, block: DependencyBlock | null | undefined, noise: number | null) => {
+    if (!block || !block.depends_on) return;
+    rules.push({
+      target,
+      parents: Object.entries(block.depends_on).map(([ref, weight]) => ({ ref, weight })),
+      offset: block.offset ?? 0,
+      noise,
+    });
+  };
+  for (const [k, v] of Object.entries(config.variable_opex_inputs)) {
+    push(`consumption:${k}`, v.consumption_dependency, v.consumption_uncertainty?.noise ?? null);
+  }
+  for (const [k, v] of Object.entries(config.plant_products)) {
+    push(`production:${k}`, v.production_dependency, v.production_uncertainty?.noise ?? null);
+  }
+  push("project:operator_hourly_rate", config.operator_hourly_rate.dependency,
+    config.operator_hourly_rate.noise ?? null);
+  for (const [p, v] of Object.entries(config.project_uncertainties ?? {})) {
+    if (p === "operator_hourly_rate") continue;
+    push(`project:${p}`, v.dependency as DependencyBlock | null, (v.noise as number | undefined) ?? null);
+  }
+  return rules;
+};
+
+// Remove the dependency (and its noise) stored at `target`, restoring the
+// shape an independent parameter needs.
+const clearDep = (config: PlantConfig, target: string): PlantConfig => {
+  const [kind, name] = target.split(":");
+  const next = structuredClone(config);
+  if (kind === "consumption" && next.variable_opex_inputs[name]) {
+    delete next.variable_opex_inputs[name].consumption_dependency;
+    delete next.variable_opex_inputs[name].consumption_uncertainty;
+  } else if (kind === "production" && next.plant_products[name]) {
+    delete next.plant_products[name].production_dependency;
+    delete next.plant_products[name].production_uncertainty;
+  } else if (target === "project:operator_hourly_rate") {
+    delete next.operator_hourly_rate.dependency;
+    delete next.operator_hourly_rate.noise;
+    // A dependent op-rate must not carry std; give it back on release
+    if (next.operator_hourly_rate.std == null) next.operator_hourly_rate.std = 0;
+  } else if (kind === "project") {
+    const pu = next.project_uncertainties ?? {};
+    if (pu[name]) {
+      delete pu[name].dependency;
+      delete pu[name].noise;
+      if (Object.keys(pu[name]).length === 0) delete pu[name];
+    }
+    next.project_uncertainties = Object.keys(pu).length ? pu : null;
+  }
+  return next;
+};
+
+// Write `rule` into the config (clearing whatever was at `prevTarget` first
+// when the dependent changed).
+const writeDep = (config: PlantConfig, prevTarget: string | null, rule: DepRule): PlantConfig => {
+  let next = prevTarget && prevTarget !== rule.target ? clearDep(config, prevTarget) : structuredClone(config);
+  next = prevTarget === rule.target ? clearDep(next, rule.target) : next;
+  const block: DependencyBlock = {
+    depends_on: Object.fromEntries(rule.parents.map((p) => [p.ref, p.weight])),
+    offset: rule.offset,
+  };
+  const [kind, name] = rule.target.split(":");
+  if (kind === "consumption" && next.variable_opex_inputs[name]) {
+    next.variable_opex_inputs[name].consumption_dependency = block;
+    if (rule.noise != null) next.variable_opex_inputs[name].consumption_uncertainty = { noise: rule.noise };
+  } else if (kind === "production" && next.plant_products[name]) {
+    next.plant_products[name].production_dependency = block;
+    if (rule.noise != null) next.plant_products[name].production_uncertainty = { noise: rule.noise };
+  } else if (rule.target === "project:operator_hourly_rate") {
+    next.operator_hourly_rate.dependency = block;
+    // A dependent's value is set by the graph: the library rejects "std"
+    // (only zero-centered "noise" applies), and absolute min/max bounds
+    // would truncate that noise distribution to nothing — drop them all.
+    delete next.operator_hourly_rate.std;
+    delete next.operator_hourly_rate.min;
+    delete next.operator_hourly_rate.max;
+    if (rule.noise != null) next.operator_hourly_rate.noise = rule.noise;
+  } else if (kind === "project") {
+    const pu = next.project_uncertainties ?? {};
+    // Replace, don't merge: leftover std/min/max from an independent
+    // uncertainty block would clash with dependent-noise semantics
+    pu[name] = { dependency: block };
+    if (rule.noise != null) pu[name].noise = rule.noise;
+    next.project_uncertainties = pu;
+  }
+  return next;
+};
 
 const defaultConfig: PlantConfig = {
   plant_name: "My Plant", process_type: "Fluids", country: "United States",
@@ -144,6 +263,13 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
     }));
   };
 
+  // Dependency rules are derived from the config on every render; edits
+  // write straight back into the config via writeDep/clearDep.
+  const rules = rulesFromConfig(config);
+  const nodeRefs = allNodeRefs(config);
+  const availableTargets = (current: string | null) =>
+    nodeRefs.filter((r) => r === current || !rules.some((rl) => rl.target === r));
+
   return (
     <div>
       {/* General */}
@@ -223,7 +349,9 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
           </div>
           <div className="form-group">
             <label>Rate Std Dev (MC)</label>
-            <input type="number" step="0.1" value={config.operator_hourly_rate.std}
+            <input type="number" step="0.1" value={config.operator_hourly_rate.std ?? 0}
+              disabled={config.operator_hourly_rate.dependency != null}
+              title={config.operator_hourly_rate.dependency != null ? "Set by a parameter dependency — its spread comes from the parents (plus optional noise)" : undefined}
               onChange={(e) => setConfig((p) => ({ ...p, operator_hourly_rate: { ...p.operator_hourly_rate, std: +e.target.value } }))} />
           </div>
           <div className="form-group">
@@ -339,6 +467,101 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
           </table>
         )}
         <button className="btn-primary" style={{ marginTop: 12 }} onClick={addVarOpex}>+ Add Item</button>
+      </div>
+
+      {/* Parameter dependencies (3.0 dependency DAG) */}
+      <div className="card">
+        <h2>Parameter Dependencies</h2>
+        <p style={{ color: "#868e96", fontSize: 13, marginBottom: 12 }}>
+          Tie a parameter to others: <em>dependent = Σ weight × parent + offset</em>. A dependent is never
+          sampled or varied on its own — Monte Carlo, sensitivity, and tornado all propagate its parents'
+          values through the graph. Optional noise (Monte Carlo only) adds scatter around the implied value.
+        </p>
+        {rules.length === 0 && (
+          <p style={{ color: "#868e96", fontSize: 13 }}>No dependencies defined.</p>
+        )}
+        {rules.map((rule) => (
+          <div key={rule.target} style={{ border: "1px solid var(--border, #dee2e6)", borderRadius: 6, padding: 12, marginBottom: 10 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 8 }}>
+              <label style={{ fontSize: 13, fontWeight: 600 }}>Dependent</label>
+              <select
+                value={rule.target}
+                onChange={(e) => setConfig((prev) => writeDep(prev, rule.target, { ...rule, target: e.target.value }))}
+              >
+                {availableTargets(rule.target).map((r) => <option key={r} value={r}>{refLabel(r)}</option>)}
+              </select>
+              <span style={{ fontSize: 14 }}>=</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {rule.parents.map((par, pi) => (
+                  <div key={pi} style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    {pi > 0 && <span style={{ fontSize: 13 }}>+</span>}
+                    <input
+                      type="number" step="any" style={{ width: 90 }} value={par.weight}
+                      onChange={(e) => setConfig((prev) => writeDep(prev, rule.target, {
+                        ...rule,
+                        parents: rule.parents.map((q, qi) => (qi === pi ? { ...q, weight: +e.target.value } : q)),
+                      }))}
+                    />
+                    <span style={{ fontSize: 13 }}>×</span>
+                    <select
+                      value={par.ref}
+                      onChange={(e) => setConfig((prev) => writeDep(prev, rule.target, {
+                        ...rule,
+                        parents: rule.parents.map((q, qi) => (qi === pi ? { ...q, ref: e.target.value } : q)),
+                      }))}
+                    >
+                      {nodeRefs.filter((r) => r !== rule.target).map((r) => <option key={r} value={r}>{refLabel(r)}</option>)}
+                    </select>
+                    {rule.parents.length > 1 && (
+                      <button
+                        className="btn-danger" style={{ padding: "2px 8px", fontSize: 12 }}
+                        onClick={() => setConfig((prev) => writeDep(prev, rule.target, {
+                          ...rule, parents: rule.parents.filter((_, qi) => qi !== pi),
+                        }))}
+                      >×</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <span style={{ fontSize: 13 }}>+ offset</span>
+              <input
+                type="number" step="any" style={{ width: 90 }} value={rule.offset}
+                onChange={(e) => setConfig((prev) => writeDep(prev, rule.target, { ...rule, offset: +e.target.value }))}
+              />
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <button
+                className="btn-secondary" style={{ padding: "3px 10px", fontSize: 12 }}
+                onClick={() => setConfig((prev) => writeDep(prev, rule.target, {
+                  ...rule,
+                  parents: [...rule.parents, { ref: nodeRefs.find((r) => r !== rule.target) ?? nodeRefs[0], weight: 1 }],
+                }))}
+              >+ Parent</button>
+              <label style={{ fontSize: 13 }}>Noise std (MC, optional)</label>
+              <input
+                type="number" step="any" style={{ width: 100 }} placeholder="none"
+                value={rule.noise ?? ""}
+                onChange={(e) => setConfig((prev) => writeDep(prev, rule.target, {
+                  ...rule, noise: e.target.value === "" ? null : +e.target.value,
+                }))}
+              />
+              <button
+                className="btn-danger" style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 12 }}
+                onClick={() => setConfig((prev) => clearDep(prev, rule.target))}
+              >Remove</button>
+            </div>
+          </div>
+        ))}
+        <button
+          className="btn-primary" style={{ marginTop: 4 }}
+          disabled={availableTargets(null).length === 0 || nodeRefs.length < 2}
+          onClick={() => {
+            const target = availableTargets(null)[0];
+            const parent = nodeRefs.find((r) => r !== target);
+            if (!target || !parent) return;
+            setConfig((prev) => writeDep(prev, null, { target, parents: [{ ref: parent, weight: 1 }], offset: 0, noise: null }));
+          }}
+        >+ Add Dependency</button>
       </div>
 
       {/* Save */}

@@ -17,7 +17,10 @@ def get_plant_config():
 
 @router.put("/config", response_model=OkResponse)
 def set_plant_config(data: PlantConfigIn):
-    state.plant_config = data.model_dump()
+    config = data.model_dump()
+    if config.get("project_uncertainties") is None:
+        config.pop("project_uncertainties", None)
+    state.plant_config = config
     return {"ok": True}
 
 

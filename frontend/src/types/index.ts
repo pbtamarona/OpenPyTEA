@@ -48,6 +48,40 @@ export interface CostDBEntry {
   default_material: string | null;
 }
 
+// dependent = sum(weight_i * parent_i) + offset. Parent refs are
+// "production:<product>", "consumption:<item>", or "project:<param>".
+export interface DependencyBlock {
+  depends_on: Record<string, number>;
+  offset?: number;
+}
+
+// A variable-OPEX or product item. `std`/`min`/`max` describe the price
+// uncertainty; quantity dependencies and quantity noise live in the
+// *_dependency / *_uncertainty blocks (3.0).
+export interface QuantityItem {
+  consumption?: number;
+  production?: number;
+  price?: number;
+  std?: number;
+  min?: number;
+  max?: number;
+  consumption_dependency?: DependencyBlock | null;
+  production_dependency?: DependencyBlock | null;
+  consumption_uncertainty?: Record<string, number> | null;
+  production_uncertainty?: Record<string, number> | null;
+  [key: string]: unknown;
+}
+
+export interface OperatorHourlyRate {
+  rate: number;
+  std?: number;
+  min?: number;
+  max?: number;
+  noise?: number;
+  dependency?: DependencyBlock | null;
+  [key: string]: unknown;
+}
+
 export interface PlantConfig {
   plant_name: string;
   process_type: string;
@@ -63,12 +97,13 @@ export interface PlantConfig {
   depreciation: Record<string, unknown> | null;
   operators_per_shift: number | null;
   operators_hired: number | null;
-  operator_hourly_rate: { rate: number; std: number; min: number; max: number };
+  operator_hourly_rate: OperatorHourlyRate;
   working_weeks_per_year: number;
   working_shifts_per_week: number;
   operating_shifts_per_day: number;
-  variable_opex_inputs: Record<string, Record<string, number>>;
-  plant_products: Record<string, Record<string, number>>;
+  variable_opex_inputs: Record<string, QuantityItem>;
+  plant_products: Record<string, QuantityItem>;
+  project_uncertainties?: Record<string, Record<string, unknown>> | null;
   fc: number | null;
   fp: number | null;
   additional_capex_years: number[] | null;
