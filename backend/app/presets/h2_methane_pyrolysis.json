@@ -103,9 +103,11 @@
       "name": "PSA",
       "param": 1017.98,
       "process_type": "Fluids",
-      "category": "Gas separation",
+      "category": "Adsorption & membrane separation",
       "type": "Pressure-swing adsorber",
-      "material": "Carbon steel"
+      "material": "Carbon steel",
+      "purchased_cost": 283266.07,
+      "cost_year": 1994
     }
   ],
   "plant": {
