@@ -1,13 +1,20 @@
 {
   "analysis": {
+    "levelized_cost": {
+      "run": true
+    },
+    "cash_flow": {
+      "run": true
+    },
     "monte_carlo": {
       "run": true,
       "args": {
-        "num_samples": 1000000,
+        "num_samples": 100000,
         "batch_size": 10000,
         "additional_capex": false
       },
-      "metric": ["LCOP"]
+      "metric": ["LCOP"],
+      "plot_inputs": true
     }
   },
   "output": {

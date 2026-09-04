@@ -49,7 +49,7 @@ Creating a ``Plant``
        # Products — first entry is the main product for LCOP calculations
        "plant_products": {
            "methanol": {
-               "production": 125_000,               # units/yr
+               "production": 125_000,               # units/day
                "price": 2.5,                        # USD/unit (not needed for LCOP)
            },
            "hydrogen": {                            # co-product
@@ -60,7 +60,7 @@ Creating a ``Plant``
 
        # Variable OPEX — consumables and utilities
        "variable_opex_inputs": {
-           "electricity":   {"consumption": 2.2e6, "price": 0.08},   # units/yr, USD/unit
+           "electricity":   {"consumption": 2.2e6, "price": 0.08},   # units/day, USD/unit
            "cooling_water": {"consumption": 1.6e6, "price": 0.0007},
        },
 
@@ -151,12 +151,27 @@ Configuration reference
    * - ``plant_products``
      - ``{}``
      - Products dict. First entry is the main product for LCOP; others are co-products.
+       Each entry takes ``production`` (units/day) and ``price`` (USD/unit), plus the
+       optional Monte Carlo keys ``price_uncertainty``, ``production_uncertainty``,
+       and ``production_dependency`` — see :ref:`uncertainty-keys`.
    * - ``variable_opex_inputs``
      - ``{}``
-     - Utilities and raw materials, each with ``consumption`` (units/yr) and ``price`` (USD/unit).
+     - Utilities and raw materials, each with ``consumption`` (units/day) and ``price`` (USD/unit),
+       plus the optional Monte Carlo keys ``price_uncertainty``,
+       ``consumption_uncertainty``, and ``consumption_dependency`` — see
+       :ref:`uncertainty-keys`.
+   * - ``project_uncertainties``
+     - ``{}``
+     - Per-parameter uncertainty for the six project-level scalars
+       (``fixed_capital_factor``, ``fixed_opex_factor``, ``project_lifetime``,
+       ``interest_rate``, ``plant_utilization``, ``tax_rate``). Read by
+       :func:`~openpytea.analysis.monte_carlo` only — see :ref:`uncertainty-keys`.
    * - ``operator_hourly_rate``
      - ``{"rate": 38.11}``
-     - Operator wage in USD/hr.
+     - Operator wage in USD/hr, under ``"rate"``. Monte Carlo uncertainty
+       goes in a nested ``"rate_uncertainty"`` sub-dict (same fields as
+       ``price_uncertainty``; the legacy flat layout still works). Also
+       accepts the ``dependency`` key of a project-level scalar.
    * - ``working_weeks_per_year``
      - ``49``
      - Annual working weeks per operator.
@@ -172,6 +187,12 @@ Configuration reference
    * - ``operators_per_shift``
      - auto
      - Operators per shift. Computed automatically; override to fix.
+   * - ``production_type``
+     - ``"continuous"``
+     - ``"continuous"`` or ``"batch"``. Only affects the auto-calculated
+       ``operators_per_shift`` (applies the chart's minimum of 3
+       operators/shift for batch processes); does not change capital, OPEX,
+       or cash-flow calculations elsewhere.
    * - ``fixed_capital_factors``
      - ``{}``
      - Per-key overrides for OSBL, D&E, and contingency factors.
@@ -256,8 +277,8 @@ Access individual components after calculation:
    print(f"ISBL        : ${plant.isbl:,.0f}")
    print(f"OSBL        : ${plant.osbl:,.0f}")
    print(f"D&E         : ${plant.dne:,.0f}")
-   print(f"Contingency : ${plant.contingency:,.0f}")
-   print(f"FCI         : ${plant.fci:,.0f}")
+   print(f"Contingency : ${plant.contigency:,.0f}")
+   print(f"FCI         : ${plant.fixed_capital:,.0f}")
 
 Location factors
 ~~~~~~~~~~~~~~~~
@@ -420,14 +441,37 @@ Operating labor cost is calculated as:
 where :math:`H_{\text{year}} = W_{\text{weeks}} \times W_{\text{shifts}} \times (24 / S_{\text{day}})` is
 the working hours per operator per year and :math:`r` is the hourly rate (default **$38.11/hr**).
 
-**Operators per shift** is estimated from the equipment list using an empirical correlation:
+**Operators per shift** is estimated from the equipment list. For processes with at most 2
+solids-handling sections (:math:`N_{\text{solid}} \leq 2`), the Turton et al. empirical
+correlation applies:
 
 .. math::
 
    N_{\text{shift}} = \sqrt{6.29 + 31.7 \cdot N_{\text{solid}}^2 + 0.23 \cdot N_{\text{fluid}}}
 
 where :math:`N_{\text{solid}}` and :math:`N_{\text{fluid}}` are the numbers of solid-handling
-and fluid-handling process steps respectively (:math:`N_{\text{solid}} \leq 2`).
+and fluid-handling process steps respectively (pumps and pressure vessels excluded).
+
+Beyond that range (:math:`N_{\text{solid}} > 2`), the correlation is no longer valid and the
+package falls back to the rule-based chart method instead:
+
+.. math::
+
+   N_{\text{shift}} = 3 + N_{\text{solid}}
+
+*Source:  Towler & Sinnott (2022)*
+
+For **batch processes** (``production_type: "batch"`` in the plant config), the chart gives
+no formula for staffing — only a minimum of 3 operators per shift, properly determined from
+the batch sequence and degree of automation. OpenPyTEA applies that minimum as a floor on top
+of whichever estimate above applies:
+
+.. math::
+
+   N_{\text{shift}} \leftarrow \max(3, N_{\text{shift}})
+
+``production_type`` defaults to ``"continuous"`` and only affects this staffing estimate — it
+does not change capital, OPEX, or cash-flow calculations elsewhere.
 
 **Total operators hired** accounts for the continuous plant schedule versus each operator's
 working schedule:
@@ -486,8 +530,9 @@ Variable costs scale with production and are calculated as:
    C_{\text{var}} = \sum_i \text{consumption}_i \times \text{price}_i
    \times 365 \times \text{plant\_utilization}
 
-Each entry in ``variable_opex_inputs`` needs a ``consumption`` (annual
-quantity in any consistent unit) and a ``price`` (USD per unit):
+Each entry in ``variable_opex_inputs`` needs a ``consumption`` (daily
+quantity in any consistent unit; multiplied by 365 and the plant
+utilization internally) and a ``price`` (USD per unit):
 
 .. code-block:: python
 
@@ -565,13 +610,13 @@ A representative output for a 20-year project (values in USD, abbreviated):
 .. code-block:: text
 
    Year  Capital cost      Revenue      Cash cost    Gross profit  Depreciation  Taxable income    Tax paid     Cash flow
-      1   -15,000,000            0              0               0             0               0           0   -15,000,000
-      2   -30,000,000            0              0               0             0               0           0   -30,000,000
-      3    -5,000,000    8,000,000      4,500,000       3,500,000     2,500,000       1,000,000           0    -1,500,000
+      1    15,000,000            0              0               0             0               0           0   -15,000,000
+      2    30,000,000            0              0               0             0               0           0   -30,000,000
+      3     5,000,000    8,000,000      4,500,000       3,500,000     2,500,000       1,000,000           0    -1,500,000
       4             0   16,000,000      4,500,000      11,500,000     2,500,000       3,500,000     250,000    11,250,000
       5             0   20,000,000      4,500,000      15,500,000     2,500,000      11,500,000     875,000    14,625,000
     ...          ...          ...            ...             ...           ...             ...         ...           ...
-     20     5,000,000   20,000,000      4,500,000      15,500,000             0      15,500,000   3,875,000    16,625,000
+     20    -5,000,000   20,000,000      4,500,000      15,500,000             0      15,500,000   3,875,000    16,625,000
 
 
 
@@ -692,7 +737,7 @@ Three methods are supported:
    plant.update_configuration({
        "depreciation": {
            "method": "macrs",
-           "class": 7,                 # recovery period in years
+           "macrs_class": 7,           # recovery period in years
        }
    })
 
@@ -740,7 +785,7 @@ main-product production in year :math:`t`.
 Payback time (PBT)
 ~~~~~~~~~~~~~~~~~~~
 
-First year when cumulative undiscounted cash flow ≥ 0:
+Total fixed capital divided by the mean annual cash flow across revenue-generating years:
 
 .. math::
 

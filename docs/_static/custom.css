@@ -79,3 +79,22 @@ dt.sig {
     border-left: 3px solid #538DFF;
     padding-left: 0.5em;
 }
+
+/* DataTables FixedColumns frozen-column panel (cost correlations table):
+   the library hardcodes a white background/text color that only swaps
+   for dark mode when <html class="dark"> is set, which Furo never does.
+   Force it to track the active Furo theme instead. */
+.dtfc-fixed-start,
+.dtfc-fixed-end,
+.dtfc-fixed-left,
+.dtfc-fixed-right {
+    background-color: var(--color-background-primary) !important;
+    color: var(--color-foreground-primary) !important;
+    border-color: var(--color-background-border) !important;
+}
+
+/* Inline emphasis for deadlines (rst role :red-bold:) */
+.red-bold {
+    color: #d32f2f;
+    font-weight: 700;
+}

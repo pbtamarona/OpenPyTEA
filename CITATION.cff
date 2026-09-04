@@ -1,6 +1,6 @@
-cff-version: 2.1.0        
-message: "If you use OpenPyTEA, please cite it as below."
-title: "OpenPyTEA: An open-source Python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
+cff-version: 1.2.0
+message: "If you use OpenPyTEA, please cite the following paper."
+title: "OpenPyTEA: An open-source Python toolkit for techno-economic assessment of chemical process plants and energy systems with economic sensitivity and uncertainty evaluation"
 abstract: >
   OpenPyTEA is an open-source Python toolkit for techno-economic assessment (TEA)
   of chemical and energy systems. It integrates equipment cost estimation, cash-flow
@@ -15,7 +15,6 @@ authors:
   - given-names: "Mahinder"
     family-names: "Ramdin"
     email: "M.Ramdin@tudelft.nl"
-version: "2.1.0"
 license: "MIT"
 repository-code: "https://github.com/pbtamarona/OpenPyTEA"
 url: "https://github.com/pbtamarona/OpenPyTEA"
@@ -26,8 +25,8 @@ keywords:
   - "energy systems"
   - "chemical engineering"
 preferred-citation:
-  type: software
-  title: "OpenPyTEA: An open-source Python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
+  type: article
+  title: "OpenPyTEA: An open-source Python toolkit for techno-economic assessment of chemical process plants and energy systems with economic sensitivity and uncertainty evaluation"
   authors:
     - given-names: "Panji B."
       family-names: "Tamarona"
@@ -35,6 +34,9 @@ preferred-citation:
       family-names: "Vlugt"
     - given-names: "Mahinder"
       family-names: "Ramdin"
-  url: "https://github.com/pbtamarona/OpenPyTEA"
-  year: "2026"
-  version: "2.1.0"
+  journal: "SoftwareX"
+  volume: 35
+  year: 2026
+  pages: "102816"
+  doi: "10.1016/j.softx.2026.102816"
+  url: "https://doi.org/10.1016/j.softx.2026.102816"

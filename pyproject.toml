@@ -1,6 +1,6 @@
 [project]
 name = "OpenPyTEA"
-version = "2.1.0"
+version = "3.0.0"
 description = "OpenPyTEA: An open-source Python toolkit for techno-economic assessment of process plants with economic sensitivity and uncertainty evaluation"
 readme = "README.md"
 license = "MIT"
@@ -20,7 +20,6 @@ dependencies = [
     "pandas>=1.5",
     "scienceplots>=2.2.0",
     "scipy>=1.10",
-    "seaborn>=0.12",
     "tqdm>=4.64",
     "jinja2>=3.1",
 ]
@@ -29,12 +28,16 @@ maintainers = [
   { name = "Panji B. Tamarona", email = "P.B.Tamarona@tudelft.nl" }
 ]
 
+[project.scripts]
+openpytea = "openpytea.cli:main"
+
 [project.optional-dependencies]
 test = [
     "pytest>=8.0",
 ]
 ipython = [
     "ipython>=8.0",
+    "ipywidgets>=8.0",
 ]
 
 [urls]

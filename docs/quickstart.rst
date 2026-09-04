@@ -27,10 +27,10 @@ Here is a snippet of how the database is structured:
    :widths: 22, 18, 14, 10, 6, 6, 10, 6, 8
    :class: small-table
 
-   "impeller_mixer_turton_2001", "Agitators, blenders, & mixers", "Impeller mixer", "power, kW", 5, 150, "quad log-log", 2001, "Turton et al. (2018)"
-   "boilers_packaged_towler_2010", "Boilers, heaters, & furnaces", "Boiler, packaged", "steam, kg/h", 5000, 200000, "power-law", 2010, "Towler & Sinnott (2010)"
-   "solid_bowl_centrifuge_turton_2001", "Centrifuges", "Solid bowl", "diameter, m", 0.3, 2, "quad log-log", 2001, "Turton et al. (2018)"
-   "centrifugal_compressor_towler_2010", "Compressors, fans, & blowers", "Compressor, centrifugal", "driver power, kW", 75, 30000, "power-law", 2010, "Towler & Sinnott (2010)"
+   "impeller_mixer_turton_2001", "Agitators, blenders, & mixers", "Impeller mixer", "power, kW", 5, 150, "log-log quadratic", 2001, "Turton et al. (2018)"
+   "boilers_packaged_towler_2010", "Boilers, heaters, & furnaces", "Boiler, packaged", "steam, kg/h", 5000, 200000, "offset power-law", 2010, "Towler & Sinnott (2010)"
+   "solid_bowl_centrifuge_turton_2001", "Centrifuges", "Solid bowl", "diameter, m", 0.3, 2, "log-log quadratic", 2001, "Turton et al. (2018)"
+   "centrifugal_compressor_towler_2010", "Compressors, fans, & blowers", "Compressor, centrifugal", "driver power, kW", 75, 30000, "offset power-law", 2010, "Towler & Sinnott (2010)"
    "...", "...", "...", "...", "...", "...", "...", "...", "..."
 
 For example, let's define a centrifugal compressor with a shaft power of 5000 kW, made of carbon steel:
@@ -143,8 +143,8 @@ Step 5 — Visualise the CAPEX breakdown
 .. code-block:: python
 
    capex = fixed_capital_data(plant)
-   ax = plot_stacked_bar(capex)
-   ax.get_figure().savefig("capex.png", dpi=150)
+   fig, ax = plot_stacked_bar(capex)
+   fig.savefig("capex.png", dpi=150)
 
 For more visualisation options, see the :doc:`Plotting user guide <user_guide/plotting>`.
 
@@ -164,7 +164,7 @@ See how the levelized cost of ammonia changes as the electricity price varies
        n_points=30,
        label="LCOA (USD/t)",
    )
-   ax = plot_sensitivity(sens)
+   fig, ax = plot_sensitivity(sens)
 
 For more sensitivity and uncertainty analysis options, see the :doc:`Analysis user guide <user_guide/analysis>`.
 

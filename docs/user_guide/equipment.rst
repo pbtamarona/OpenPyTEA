@@ -11,23 +11,63 @@ How costs are estimated
 Purchased cost correlations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Two correlation forms are supported:
+Six correlation forms are supported:
 
-**Power-law**
+**Offset power-law**
 
 .. math::
 
    C_p = a + b \cdot S^n
 
-**Quadratic log-log**
+**Log-log quadratic**
 
 .. math::
 
    \log_{10} C_p = K_1 + K_2 \log_{10} S + K_3 \left(\log_{10} S\right)^2
+   + K_4 \left(\log_{10} S\right)^3 + K_5 \left(\log_{10} S\right)^4
 
-where :math:`S` is the equipment size parameter (e.g., shaft power in kW,
-heat transfer area in m²) and :math:`C_p` is the purchased cost in the
-correlation's reference year (USD).
+**Ln-ln quadratic**
+
+.. math::
+
+   \ln C_p = K_1 + K_2 \ln S + K_3 \left(\ln S\right)^2
+   + K_4 \left(\ln S\right)^3 + K_5 \left(\ln S\right)^4
+
+Same form as log-log quadratic but with natural rather than base-10
+logarithms. :math:`K_4` and :math:`K_5` are optional (default 0) and let
+either log-based form fit a cubic or quartic trend when the underlying
+data calls for it — the built-in correlations of both forms currently
+only use :math:`K_1`–:math:`K_3`.
+
+**Power-sizing**
+
+.. math::
+
+   C_p = C_0 \left( \frac{S}{S_0} \right)^f
+
+**Exponential**
+
+.. math::
+
+   C_p = a \cdot \exp(b \cdot S)
+
+**2-var power-law**
+
+.. math::
+
+   C_p = a + b \cdot S_1^{n} \cdot S_2^{n_2}
+
+For equipment priced off two independent size parameters (e.g., a belt
+conveyor's width and length). :math:`a` is typically 0 unless the
+correlation has a genuine offset term. Evaluating this form requires
+passing both sizes, e.g. ``Equipment(..., param=(S1, S2))`` — see
+Example 10 below.
+
+where :math:`S` (or :math:`S_1`, :math:`S_2`) is the equipment size
+parameter (e.g., shaft power in kW, heat transfer area in m²) and
+:math:`C_p` is the purchased cost in the correlation's reference year
+(USD). For the power-sizing form, :math:`S_0` and :math:`C_0` are a
+reference size and its corresponding cost.
 
 All correlations and their coefficients are stored in
 :download:`cost_correlations.csv <../../src/openpytea/data/cost_correlations.csv>`.
@@ -75,9 +115,62 @@ where :math:`f_m` is the material factor and :math:`f_p`, :math:`f_{er}`,
 piping, erection, electrical, instrumentation, civil, structural, and lagging
 factors respectively. Default installation factor values depend on the ``process_type``
 (see :ref:`process-factors` below). **All factors can be overridden per equipment
-item via constructor keyword arguments** — see Example 8 for details.
+item via constructor keyword arguments** — see Example 9 for details.
 
 *Source: Towler & Sinnott (2022)*
+
+Equipment Cost Correlations
+----------------------------
+
+``cost_correlations.csv`` bundles 417 correlations spanning 34 equipment
+categories (agitators, compressors, heat exchangers, pressure vessels,
+reactors, conveyors, and more), pulled from several published sources:
+
+* Turton et al., *Analysis, Synthesis, and Design of Chemical Processes*
+  (2018) — log-log quadratic correlations.
+* Towler & Sinnott, *Chemical Engineering Design* (2010) — offset
+  power-law correlations.
+* Perry's Chemical Engineers' Handbook, Table 9-50 (1997) — power-sizing
+  correlations, cost-escalated to 1996 via the Marshall & Swift index.
+* Seider et al., *Product and Process Design Principles*, 4th ed.
+  (2013) — ln-ln quadratic, offset/2-var power-law, and exponential
+  correlations for solids-handling, size-enlargement, and separation
+  equipment.
+* Ulrich (2003), ESDU 97006 (1997), and several process-specific studies
+  (Manzolini, Kreutz, Parkinson, Towler, Nexant, NREL) covering
+  compressors, furnaces, gas separation, and CO\ :sub:`2` capture
+  equipment.
+
+Each row records the correlation's ``category``, ``type``, size
+``units``, valid size range (``s_lower``–``s_upper``, plus
+``s2_lower``–``s2_upper`` for two-parameter forms), correlation
+``form``, reference ``cost_year``, its ``default material`` (the
+construction material the quoted cost basis assumes, e.g. ``Carbon
+steel`` or ``Stainless steel`` — override via the ``Equipment``
+constructor's ``material`` argument), its ``source``
+(clickable, linking to the DOI or reference where available), any
+``Remarks`` (basis of the quoted cost, e.g. free-on-board vs. installed,
+included/excluded motor, escalation notes), and the correlation ``key``.
+Use the ``key`` value as the ``cost_func`` argument when you need to pin
+a specific correlation (see Example 2 below), and the
+``category``/``type`` values for the ``Equipment`` constructor.
+
+**The correlation coefficients themselves are not shown in this summary
+table** — download the full
+:download:`cost_correlations.csv <../../src/openpytea/data/cost_correlations.csv>`
+for those.
+
+The table below is generated directly from ``cost_correlations.csv`` and
+is searchable, sortable, and paginated — use the search box to filter by
+category, type, form, or source, or click a column header to sort.
+``Category`` and ``Type`` stay pinned while you scroll horizontally
+through the remaining columns.
+
+.. csv-table:: Built-in equipment cost correlations
+   :file: ../_static/cost_correlations_table.csv
+   :header-rows: 1
+   :widths: 13, 15, 9, 6, 6, 9, 5, 9, 14, 17, 13
+   :class: sphinx-datatable
 
 The ``Equipment`` class
 -----------------------
@@ -109,10 +202,11 @@ Constructor parameters
      - str
      - Identifier for this equipment item (used in plots and reports).
    * - ``param``
-     - float
+     - float, or tuple/list of two floats
      - Size/capacity parameter. Units depend on the equipment type —
-       check ``cost_correlations.csv``. Ignored when ``purchased_cost``
-       is given.
+       check ``cost_correlations.csv``. Pass a 2-element ``(S1, S2)``
+       tuple/list for two-parameter forms such as ``"2-var power-law"``
+       (see Example 10). Ignored when ``purchased_cost`` is given.
    * - ``process_type``
      - str
      - ``"Solids"``, ``"Fluids"``, ``"Mixed"``, or ``"Electrical"`` —
@@ -126,15 +220,26 @@ Constructor parameters
      - Equipment sub-type within the category. Required when a category
        has multiple types.
    * - ``material``
-     - str
-     - Construction material — controls the material factor :math:`f_m`.
-       Default: ``"Carbon steel"``.
+     - str or None
+     - Construction material. Default: ``None``, which uses the
+       resolved correlation's ``default material`` (falling back to
+       ``"Carbon steel"`` if there's no match). A material that matches
+       this resolved default — whether auto-filled or passed explicitly
+       — always gets :math:`f_m = 1.0`, since the correlation's cost
+       already prices that material in. Passing a *different* material
+       instead uses the *ratio* of the two materials' factors from the
+       table below (target :math:`f_m` divided by default :math:`f_m`,
+       using 1.0 for a default material not in the table, e.g. "Cast
+       iron"), so the factor stays relative to the correlation's actual
+       cost basis instead of double-counting it. Raises if the target
+       material isn't found in the table.
    * - ``target_year``
      - int
      - Year to inflate costs to. Default: ``2024``.
    * - ``purchased_cost``
      - float or None
-     - Supply your own purchased cost and bypass the correlation entirely.
+     - Supply your own purchased cost (the total for all units) and
+       bypass the correlation entirely.
    * - ``cost_year``
      - int or None
      - Reference year of a manually supplied ``purchased_cost``. If given,
@@ -146,14 +251,20 @@ Constructor parameters
        category/type.
    * - ``num_units``
      - int or None
-     - Override the number of parallel units. By default this is set
-       automatically by the parallelization logic.
+     - Number of identical units. With a correlation, ``param`` describes
+       one unit and the correlation cost is multiplied by ``num_units``.
+       With a manual ``purchased_cost`` it is a label only (the cost is
+       the total). By default it is 1 for a manual ``purchased_cost``, or
+       the number of parallel units the parallelization logic splits
+       ``param`` into (that cost already covers all of them).
    * - ``piping_factor``, ``erection_factor``, … ``lagging_factor``
      - float or None
      - Per-factor overrides. ``None`` uses the ``process_type`` default.
    * - ``material_factor``
      - float or None
-     - Override the material factor. ``None`` uses the material table.
+     - Override the material factor. ``None`` uses 1.0 when
+       ``material`` matches the resolved default, or the ratio of the
+       two materials' table factors otherwise.
 
 Usage examples
 --------------
@@ -263,19 +374,67 @@ Example 5 — Inflation to a custom target year
 Example 6 — Fixing the number of units manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+The correlation is evaluated at ``param`` for one unit and the result is
+multiplied by ``num_units``. (A manual ``purchased_cost`` is not
+multiplied: it is the total for all units.)
+
 .. code-block:: python
 
    fridge = Equipment(
        name="Refrigerator R-201",
-       param=180,
+       param=180,                       # duty of ONE unit
        process_type="Fluids",
        category="Utilities",
        type="Packaged mechanical refrigerator",
-       num_units=3,                     # bypass auto-parallelization
+       num_units=3,                     # three identical units
    )
-   print(fridge)
+   print(fridge)                        # purchased cost covers all three
 
-Example 7 — Comparing materials
+Example 7 — Automatic default material resolution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Leaving ``material`` unset resolves it from the matched correlation's own
+``default material`` column, with :math:`f_m = 1.0` — the correlation's
+quoted cost already prices in that material, so no extra multiplier is
+applied. This batch centrifuge correlation defaults to "Stainless steel":
+
+.. code-block:: python
+
+   centrifuge = Equipment(
+       name="Centrifuge C-101",
+       param=30,                        # bowl diameter, in
+       process_type="Fluids",
+       category="Centrifuges",
+       type="Batch, bottom-drive, vertical basket",
+   )
+   print(f"material        : {centrifuge.material}")         # Stainless steel
+   print(f"material_factor : {centrifuge.material_factor}")  # 1.0
+
+Passing a *different* material instead rescales the table's factor
+relative to the correlation's own default rather than the usual carbon
+steel baseline — requesting Inconel construction here applies the ratio
+of Inconel's factor to Stainless steel's factor (1.70 / 1.30 ≈ 1.31),
+not the raw 1.70, since the correlation's cost basis is already
+stainless steel rather than carbon steel:
+
+.. code-block:: python
+
+   centrifuge_inconel = Equipment(
+       name="Centrifuge C-101 (Inconel)",
+       param=30,
+       process_type="Fluids",
+       category="Centrifuges",
+       type="Batch, bottom-drive, vertical basket",
+       material="Inconel",
+   )
+   print(f"material_factor : {centrifuge_inconel.material_factor:.3f}")  # 1.308
+
+If the resolved default isn't recognized in ``material_factors`` (e.g.
+"Cast iron", "Ceramic"), it's still reported as ``material`` with
+:math:`f_m = 1.0`, and an explicit different material falls back to its
+raw table factor (an unrecognized default has no factor to divide out).
+
+Example 8 — Comparing materials
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The material factor :math:`f_m` multiplies the installed cost. Here the same
@@ -304,7 +463,7 @@ agitator is costed in carbon steel versus Hastelloy C:
    print(f"Carbon steel direct cost : ${mixer_cs.direct_cost:,.0f}")
    print(f"Hastelloy C direct cost  : ${mixer_alloy.direct_cost:,.0f}")
 
-Example 8 — Overriding installation factors
+Example 9 — Overriding installation factors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Individual installation factors can be overridden without affecting the rest.
@@ -329,6 +488,172 @@ defaults:
    )
    print(f"piping_factor   : {reactor.piping_factor}")
    print(f"material_factor : {reactor.material_factor}")
+
+Example 10 — Two-parameter correlations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Correlations with ``form = "2-var power-law"`` are priced off two
+independent size parameters. Pass both as a ``(S1, S2)`` tuple/list in
+``param`` — here, belt width (in) and belt length (ft):
+
+.. code-block:: python
+
+   belt = Equipment(
+       name="Belt conveyor BC-101",
+       param=(24, 150),                 # (width, in;  length, ft)
+       process_type="Solids",
+       category="Conveyors",
+       cost_func="belt_conveyor_seider_2013",
+   )
+   print(belt)
+
+``s2_lower``/``s2_upper`` in the CSV bound the second parameter the same
+way ``s_lower``/``s_upper`` bound the first, except exceeding
+``s2_upper`` always raises ``ValueError`` — it never triggers
+parallelization the way ``s_upper`` does.
+
+Composite equipment
+-------------------
+
+.. code-block:: python
+
+   from openpytea import CompositeEquipment
+
+Some equipment items are assemblies: a pressure-swing adsorption (PSA)
+unit is a set of adsorber vessels filled with layers of different
+adsorbents, a compressor train is a compressor plus its driver, a
+reactor carries a catalyst charge. A
+:class:`~openpytea.equipment.CompositeEquipment` assembles one equipment
+line item from sub-components. Every sub-component is an ordinary
+``Equipment`` (or another ``CompositeEquipment``; nesting is allowed), so
+it brings its own cost correlation or user-defined purchased cost, its
+own material factor and its own installation factors.
+
+The composite exposes the same attributes as an ``Equipment``
+(``purchased_cost``, ``direct_cost``, ``num_units``, ``to_dict()``, …), so
+it goes into a plant's ``equipment`` list like any other item and counts
+as a single process step in the operator estimate.
+
+Constructor parameters
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 14 64
+
+   * - Parameter
+     - Type
+     - Description
+   * - ``name``
+     - str
+     - Composite identifier.
+   * - ``process_type``
+     - str
+     - ``"Solids"``, ``"Fluids"``, ``"Mixed"``, or ``"Electrical"``. Used
+       by the plant's operator estimate and, under the ``"composite"``
+       installation rule, as the factor table for the whole composite.
+   * - ``components``
+     - list
+     - ``Equipment`` or ``CompositeEquipment`` objects. Several identical
+       units of a component are priced by setting ``num_units`` on the
+       component itself, exactly as for stand-alone equipment.
+   * - ``category``, ``type``
+     - str
+     - Free labels used for reporting. Default category is
+       ``"Composite"``.
+   * - ``installation``
+     - str
+     - ``"component"`` (default): the direct cost is the sum of each
+       component's own direct cost, so every part keeps its own
+       process-type and material factors. ``"composite"``: the
+       composite's own process-type factors are applied once to the
+       total purchased cost, i.e. the assembly is installed as one item.
+   * - ``purchased_cost``, ``cost_year``
+     - float, int
+     - Optional vendor quote for the whole composite (the total for all
+       ``num_units``, not multiplied). It replaces the component sum,
+       which is kept as ``components_purchased_cost``; the composite is
+       then installed as one item.
+   * - ``num_units``
+     - int
+     - Number of identical composites. Multiplies the component-based
+       purchased and direct cost. Default 1.
+   * - ``target_year``
+     - int
+     - Must match every component's ``target_year``. Default 2024.
+   * - ``piping_factor``, … ``material_factor``
+     - float or None
+     - Overrides used by the ``"composite"`` installation rule.
+
+Example 11 — A PSA unit built from sub-components
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   vessel = Equipment(
+       name="Adsorber vessel",
+       param=12.0,                      # volume of ONE vessel, m^3
+       process_type="Fluids",
+       category="Pressure vessels",
+       type="Vertical",
+       material="304 stainless steel",
+       num_units=4,                     # four identical vessels
+   )
+   zeolite = Equipment(
+       name="Zeolite 5A layer",
+       param=4 * 250.0,                 # total bulk volume, ft^3
+       process_type="Solids",
+       category="Packings & adsorbents",
+       type="Molecular sieves",
+   )
+   carbon = Equipment(
+       name="Activated carbon layer",
+       param=None,
+       process_type="Solids",
+       category="Packings & adsorbents",
+       type="Activated carbon",
+       purchased_cost=38_000.0,         # vendor quote instead of a correlation
+       cost_year=2021,
+   )
+
+   psa = CompositeEquipment(
+       name="PSA",
+       process_type="Fluids",
+       components=[vessel, zeolite, carbon],
+       category="Adsorption",
+       type="Pressure-swing adsorber",
+   )
+   print(psa)
+   psa.breakdown()                      # one row per leaf component
+
+``breakdown()`` returns a DataFrame with one row per leaf component:
+``purchased_each`` is the cost of one unit, while ``purchased_total`` and
+``direct_total`` cover all ``num_units`` of that component. Nested
+composites are flattened, with labels such as ``"PSA / Adsorber vessel"``
+and the ``num_units`` of every enclosing composite multiplied along the
+path.
+
+The same assembly installed as one item, and priced from a skid quote:
+
+.. code-block:: python
+
+   psa_as_one = CompositeEquipment(
+       name="PSA", process_type="Fluids",
+       components=[vessel, zeolite, carbon],
+       installation="composite",
+   )
+   psa_quoted = CompositeEquipment(
+       name="PSA", process_type="Fluids",
+       components=[vessel, zeolite, carbon],
+       purchased_cost=650_000.0,        # 2019 quote for the whole skid
+       cost_year=2019,
+   )
+
+In cost breakdown charts a composite appears as a single segment by
+default; pass ``expand_composites=True`` to
+:func:`~openpytea.analysis.direct_costs_data` to split it into its
+components, or plot ``psa.direct_cost_breakdown()`` directly. See the
+:doc:`analysis` guide.
 
 Listing available equipment
 ---------------------------
@@ -375,6 +700,8 @@ The table below lists the valid ``material`` strings and their factors
      - 1.07
    * - ``"Cast steel"``
      - 1.10
+   * - ``"Stainless steel"``
+     - 1.30
    * - ``"304 stainless steel"``
      - 1.30
    * - ``"316 stainless steel"``
@@ -389,6 +716,12 @@ The table below lists the valid ``material`` strings and their factors
      - 1.70
    * - ``"Inconel"``
      - 1.70
+
+``"Stainless steel"`` (no grade specified) is not part of the original
+Towler & Sinnott table — it's added here, set equal to
+``"304 stainless steel"`` since that's the most common general-purpose
+grade. This is also the value used in ``cost_correlations.csv`` for
+rows whose ``default material`` is unspecified-grade stainless steel.
 
 .. _process-factors:
 
@@ -464,6 +797,7 @@ See also
 --------
 
 * :class:`~openpytea.equipment.Equipment` — full API reference
+* :class:`~openpytea.equipment.CompositeEquipment` — equipment assembled from sub-components
 * :class:`~openpytea.equipment.CostCorrelationDB` — database interface
 * :func:`~openpytea.equipment.inflation_adjustment` — CEPCI utility
 * `Walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_ — end-to-end worked example

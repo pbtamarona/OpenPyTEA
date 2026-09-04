@@ -13,7 +13,7 @@ Running the examples
 
    git clone https://github.com/PBTamarona/OpenPyTEA.git
    cd OpenPyTEA
-   pip install "OpenPyTEA[ipython]"
+   pip install "OpenPyTEA[ipython]" jupyter
    jupyter notebook examples/
 
 Case Study 1 — Hydrogen Production Pathways

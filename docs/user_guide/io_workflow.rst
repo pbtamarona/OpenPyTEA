@@ -1,12 +1,12 @@
-JSON Workflow
-=============
+Config Files & CLI
+===================
 
 OpenPyTEA supports a fully declarative, JSON-based workflow that makes studies
 **reproducible**, **shareable**, and easy to version-control.
 The :mod:`openpytea.io` module handles loading configuration files and
 exporting results.
 
-Three high-level functions drive the workflow:
+Four high-level functions drive the workflow:
 
 * ``run_equipment()`` — reads an equipment configuration file and returns a
   list of :class:`~openpytea.equipment.Equipment` objects with all costs
@@ -17,6 +17,9 @@ Three high-level functions drive the workflow:
 * ``run_tea()`` — executes the full TEA pipeline (cost breakdowns, sensitivity
   analysis, Monte Carlo simulation) from three input files, writing results and
   optional plots to an output directory.
+* ``run_openpytea()`` — the single-file counterpart to ``run_tea()``: same
+  pipeline, but driven by one combined JSON file rather than three. This is
+  the entry point used by the CLI (see :ref:`single-file-cli-workflow`).
 
 To see all examples below in action, refer to the
 `walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_
@@ -25,7 +28,9 @@ and the
 
 .. code-block:: python
 
-   from openpytea import run_equipment, run_plant, run_tea, load_results
+   from openpytea import (
+       run_equipment, run_plant, run_tea, run_openpytea, load_results
+   )
 
 File structure
 --------------
@@ -39,12 +44,18 @@ A complete TEA study uses three JSON input files:
    ├── plant.json          # Plant configuration and financial assumptions
    └── analysis.json       # Analysis settings and output options
 
+For single-file / CLI use, the same three blocks (``equipment``, ``plant``,
+``analysis``) can instead live under one combined file — see
+:ref:`single-file-cli-workflow` below.
+
 ``equipment.json``
 ------------------
 
 Each entry requires ``name``, ``process_type``, ``category``, and either
 ``param`` (size/capacity parameter) or ``purchased_cost`` (manual override).
-All other fields are optional.
+All other fields are optional — omitting ``material``, as shown below,
+resolves it from the matched correlation's own default material instead
+of assuming carbon steel (see :ref:`materials`).
 
 .. code-block:: json
 
@@ -63,21 +74,33 @@ All other fields are optional.
          "param": 31.87,
          "process_type": "Fluids",
          "category": "Heat Exchangers",
-         "type": "U-tube shell & tube",
-         "material": "Carbon steel"
+         "type": "U-tube shell & tube"
        }
      ]
    }
+
+``HX-1`` omits ``material`` entirely, so it resolves to the matched
+correlation's own default material with a material factor of 1.0.
 
 ``plant.json``
 --------------
 
 The ``plant`` object mirrors the configuration dict accepted by
 :class:`~openpytea.plant.Plant`. Monte Carlo uncertainty fields (``std``,
-``min``, ``max``) can be embedded directly in ``variable_opex_inputs``,
-``plant_products``, and ``operator_hourly_rate`` — they are ignored when
-running plant-only calculations and activated automatically when
-``run_tea()`` executes a Monte Carlo block.
+``min``, ``max``, ``dist_id``) go in a nested sub-dict per item:
+``price_uncertainty`` on ``variable_opex_inputs``/``plant_products``
+entries (plus ``consumption_uncertainty``/``production_uncertainty`` for
+the process quantities) and ``rate_uncertainty`` on
+``operator_hourly_rate`` — they are ignored when running plant-only
+calculations and activated automatically when ``run_tea()`` executes a
+Monte Carlo block. The legacy flat layout (the same fields directly
+alongside ``price``/``rate``) is still accepted for older files. Uncertainty on project-level
+factors (``fixed_capital_factor``, ``fixed_opex_factor``,
+``project_lifetime``, ``interest_rate``, ``plant_utilization``,
+``tax_rate``) is instead configured via the top-level
+``project_uncertainties`` key; omitting a parameter there falls back to its
+built-in default distribution, and setting ``"std": 0`` disables sampling
+for it.
 
 .. code-block:: json
 
@@ -91,11 +114,19 @@ running plant-only calculations and activated automatically when
        "project_lifetime": 30,
        "plant_utilization": 0.95,
 
+       "project_uncertainties": {
+         "fixed_capital_factor": { "std": 0.3, "min": 0.25, "max": 1.75 },
+         "interest_rate": { "std": 0.02 },
+         "plant_utilization": { "std": 0.05 }
+       },
+
        "operator_hourly_rate": {
          "rate": 38.11,
-         "std": 10,
-         "min": 25,
-         "max": 50
+         "rate_uncertainty": {
+           "std": 10,
+           "min": 25,
+           "max": 50
+         }
        },
 
        "plant_products": {
@@ -109,16 +140,20 @@ running plant-only calculations and activated automatically when
          "electricity": {
            "consumption": 38293.44,
            "price": 0.05,
-           "std": 0.03,
-           "min": 0.01,
-           "max": 3
+           "price_uncertainty": {
+             "std": 0.03,
+             "min": 0.01,
+             "max": 3
+           }
          },
          "methane_feed": {
            "consumption": 219936,
            "price": 0.4,
-           "std": 0.25,
-           "min": 0,
-           "max": 5
+           "price_uncertainty": {
+             "std": 0.25,
+             "min": 0,
+             "max": 5
+           }
          }
        }
      }
@@ -129,17 +164,23 @@ running plant-only calculations and activated automatically when
 
 The ``analysis`` block contains one sub-object per analysis type. Each must
 have ``"run": true`` to be executed, plus an ``"args"`` dict that is passed
-directly to the corresponding Python function. The ``output`` block controls
-whether results and plots are saved, and in what format.
+directly to the corresponding Python function. Anything the function accepts
+is therefore reachable from JSON — including
+``"include_process_params": true`` on ``tornado``, and a process quantity
+such as ``"parameter": "electricity.consumption"`` on a sensitivity case.
+The ``output`` block controls whether results and plots are saved, and in
+what format.
 
 .. code-block:: json
 
    {
      "analysis": {
-       "direct_costs":  { "run": true, "args": { "pct": false } },
-       "fixed_capital": { "run": true, "args": { "additional_capex": false, "pct": false } },
-       "fixed_opex":    { "run": true, "args": { "pct": true } },
-       "variable_opex": { "run": true, "args": { "pct": false } },
+       "direct_costs":    { "run": true, "args": { "pct": false } },
+       "fixed_capital":   { "run": true, "args": { "additional_capex": false, "pct": false } },
+       "fixed_opex":      { "run": true, "args": { "pct": true } },
+       "variable_opex":   { "run": true, "args": { "pct": false } },
+       "levelized_cost":  { "run": true, "args": { "pct": false } },
+       "cash_flow":       { "run": true },
 
        "sensitivity": {
          "run": true,
@@ -157,13 +198,14 @@ whether results and plots are saved, and in what format.
 
        "tornado": {
          "run": true,
-         "args": { "plus_minus_value": 0.5, "metric": "NPV" }
+         "args": { "plus_minus_value": 0.5, "metric": "NPV", "include_process_params": true }
        },
 
        "monte_carlo": {
          "run": true,
          "args": { "num_samples": 1000000, "batch_size": 10000 },
-         "metric": ["LCOP", "NPV"]
+         "metric": ["LCOP", "NPV"],
+         "plot_inputs": true
        }
      },
 
@@ -176,9 +218,21 @@ whether results and plots are saved, and in what format.
    }
 
 The ``"metric"`` list under ``monte_carlo`` controls which metrics are
-rendered as histogram plots when ``save_plots`` is ``true``. The ``args``
-dict maps directly to :func:`~openpytea.analysis.monte_carlo` keyword
-arguments.
+rendered as histogram plots when ``save_plots`` is ``true``. Setting
+``"plot_inputs": true`` additionally renders two grids of histograms (via
+:func:`~openpytea.plotting.plot_monte_carlo_inputs`) showing every input:
+one for **process** quantities (every ``variable_opex_inputs`` item's
+consumption and every ``plant_products`` item's production -- shown as a
+constant when no ``consumption_uncertainty``/``production_uncertainty``/
+dependency is configured for it) and one for **economic** quantities
+(project-level factors from ``plant.project_uncertainties``, plus every
+priced ``variable_opex_inputs``, ``plant_products``, and
+``operator_hourly_rate``), saved as
+``{plant_name}_monte_carlo_inputs_process.{plot_format}`` and
+``{plant_name}_monte_carlo_inputs_economic.{plot_format}`` respectively. A
+group is only skipped if the plant genuinely has nothing in it (e.g. no
+``variable_opex_inputs`` or ``plant_products`` at all). The ``args`` dict
+maps directly to :func:`~openpytea.analysis.monte_carlo` keyword arguments.
 
 Running a study
 ---------------
@@ -246,9 +300,91 @@ The function returns a dict with keys for each analysis that was run:
    results["fixed_capital"]   # CAPEX breakdown
    results["fixed_opex"]      # fixed OPEX breakdown
    results["variable_opex"]   # variable OPEX breakdown
+   results["levelized_cost"]  # LCOP breakdown (CAPEX, OPEX, side revenue)
+   results["cash_flow"]       # cumulative cash flow diagram data
    results["sensitivity"]     # dict of sensitivity cases
    results["tornado"]         # tornado data
-   results["monte_carlo"]     # Monte Carlo results
+   results["monte_carlo"]     # Monte Carlo results (metrics + sampled inputs)
+
+.. _single-file-cli-workflow:
+
+Single-file / CLI workflow
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:func:`~openpytea.io.run_openpytea` runs the exact same pipeline as
+``run_tea()``, but from a single combined configuration file instead of
+three. This is convenient for CLI use and for sharing one self-contained
+study file. The file simply merges the top-level keys that would otherwise
+live in ``equipment.json``, ``plant.json``, and ``analysis.json``:
+
+.. code-block:: json
+
+   {
+     "equipment": [ { "name": "COMP-1", "param": 945, "...": "..." } ],
+     "plant": { "plant_name": "Steam Reforming", "...": "..." },
+     "analysis": { "direct_costs": { "run": true }, "...": "..." },
+     "output": { "save_json": true, "save_plots": true }
+   }
+
+.. code-block:: python
+
+   results = run_openpytea(
+       config_path="project/config.json",
+       output_dir="outputs/tea_results",
+   )
+
+It returns the same results dict, and writes the same
+``{plant_name}_equipment_results.json``,
+``{plant_name}_plant_results.json``, and
+``{plant_name}_analysis_results.json`` files (plus optional plots) as
+``run_tea()`` — in every output filename, ``{plant_name}`` is a sanitized
+form of the plant's name (filesystem-reserved characters such as ``/`` or
+``:`` become ``_``; the display name is unchanged everywhere else) — so
+:func:`~openpytea.io.load_results` and everything under
+:ref:`Comparing multiple scenarios <comparing-multiple-scenarios>` work
+unchanged. Use :func:`~openpytea.io.load_openpytea_config` directly if you
+only need the parsed config dict (e.g. to validate a file before running
+it). See ``examples/input_configs/smr_combined.json`` for a full example.
+
+The ``openpytea`` command
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Installing the package also installs an ``openpytea`` console command
+(:mod:`openpytea.cli`), a thin wrapper around the four functions above.
+Running the combined config from the previous example needs no Python at
+all:
+
+.. code-block:: console
+
+   $ openpytea run project/config.json --output-dir outputs/tea_results
+   Ran: direct_costs, fixed_capital, fixed_opex, variable_opex, ...
+   Results written to: outputs/tea_results
+
+``--output-dir``/``-o`` is optional — omit it to fall back to the config's
+own ``output.directory`` (or ``"results"`` if that isn't set either).
+
+The other three functions are available as their own subcommands, for
+running a single stage of the pipeline:
+
+.. code-block:: console
+
+   $ openpytea equipment project/equipment.json outputs/equipment_results.json
+   Wrote 14 equipment item(s) to outputs/equipment_results.json
+
+   $ openpytea plant project/plant.json outputs/plant_results.json \
+         --equipment project/equipment.json
+   Wrote plant 'Steam Reforming' results to outputs/plant_results.json
+
+   $ openpytea tea --equipment project/equipment.json \
+         --plant project/plant.json \
+         --analysis project/analysis.json \
+         --output-dir outputs/tea_results
+   Ran: direct_costs, fixed_capital, ...
+   Results written to: outputs/tea_results
+
+Run ``openpytea --help`` or ``openpytea <command> --help`` for the full
+list of options, and ``openpytea --version`` to print the installed
+version.
 
 Loading saved results
 ---------------------
@@ -266,7 +402,9 @@ results file for further analysis or visualization. The output file is named
    mc = results["monte_carlo"]
 
    from openpytea.plotting import plot_monte_carlo
-   plot_monte_carlo(mc, metric="LCOP", bins=30)
+   fig, ax = plot_monte_carlo(mc, metric="LCOP", bins=30)
+
+.. _comparing-multiple-scenarios:
 
 Comparing multiple scenarios
 -----------------------------

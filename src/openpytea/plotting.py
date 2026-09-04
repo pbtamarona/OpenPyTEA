@@ -1,14 +1,42 @@
+import shutil
 import warnings
 from itertools import cycle
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 import numpy as np
-import scienceplots
 
-from openpytea.helpers import _default_metric_label
+from openpytea.helpers import _default_metric_label, _tex_escape
 
-plt.style.use(["science", "ieee"])
-_ = scienceplots  # mark as used for Flake8
+
+def _latex_available():
+    """
+    True when a working LaTeX toolchain for matplotlib's ``text.usetex``
+    is on the PATH (``latex`` itself plus ``dvipng``, which the Agg
+    backend needs to rasterize the output).
+    """
+    return (
+        shutil.which("latex") is not None
+        and shutil.which("dvipng") is not None
+    )
+
+
+try:
+    import scienceplots  # noqa: F401
+    # Full LaTeX rendering when a toolchain is installed; otherwise the
+    # same style family with text.usetex off, so rendering never fails
+    # at savefig time on machines without LaTeX
+    _styles = ["science", "ieee"]
+    if not _latex_available():
+        _styles.append("no-latex")
+    plt.style.use(_styles)
+except (AttributeError, ImportError):
+    warnings.warn(
+        "scienceplots could not be loaded due to a matplotlib "
+        "compatibility issue. Plots will use matplotlib defaults.",
+        ImportWarning,
+        stacklevel=2,
+    )
+
 cmap = plt.cm.plasma
 
 
@@ -20,15 +48,24 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     This function generates a stacked bar chart where components are sorted
     by their total values across all bars in descending order. Components are
     color-coded and displayed with a legend.
+
+    As a special case (used by
+    :func:`openpytea.analysis.levelized_cost_data`), a component named
+    "Side revenue" (expected to hold a negative value, since it is
+    subtracted from the total) forms the base of the stack below zero: the
+    remaining components stack on top of it, so the top of each bar reads
+    as the correct net total (e.g., the LCOP). It is drawn last (on top,
+    z-order-wise) so it stays visible where it overlaps the other
+    components, and reuses the color of the largest stacked component
+    (distinguished only by a hatch pattern) so the CAPEX/OPEX color ratio
+    remains easy to read.
     Parameters
     ----------
     data : dict
         Dictionary containing the following keys:
-        - "values" : list of lists
-            List of lists where each inner list contains values for a component
-            across all bars.
-        - "labels" : tuple or list
-            Labels for each component/stack in the bar chart.
+        - "components" : list of dict
+            List of dictionaries (one per bar) mapping component names to
+            their values.
         - "xlabels" : list
             Labels for the x-axis (one per bar).
         - "currency" : str
@@ -49,8 +86,9 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
         If True and a new figure is created, display the plot. Default is True.
     Returns
     -------
-    matplotlib.axes.Axes
-        The axes object containing the stacked bar chart.
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the stacked bar chart.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     Notes
     -----
     - Components are sorted in descending order by their total value across
@@ -61,30 +99,46 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     - The legend is positioned to the right of the plot area.
     - When pct=True and n_bars=1, the percentage value is appended to the
         component label.
+    - When pct=True, percentages are relative to the sum of the stacked
+        (non-side-revenue) components in each bar.
     """
-
-    values = data["values"]
-    labels = data["labels"]
+    components_list = data["components"]
     xlabels = data["xlabels"]
     currency = data["currency"]
     pct = data["pct"]
+    ylabel = data["ylabel"]
 
-    n_bars = len(values)
+    side_key = "Side revenue"
 
-    # sort by first plant's values so order is stable across all bars
-    sorted_idx = np.argsort(values[0])[::-1]
+    n_bars = len(components_list)
 
-    # reorder labels and values
-    labels_sorted = [labels[0][i] for i in sorted_idx]
-    values_sorted = [[v[i] for i in sorted_idx] for v in values]
+    # sort stacked components (excluding side revenue) by their total value
+    # across all bars, descending, so order is stable
+    labels_sorted = sorted(
+        {k for c in components_list for k in c if k != side_key},
+        key=lambda lab: -sum(c.get(lab, 0.0) for c in components_list),
+    )
 
-    x = np.arange(n_bars)
-    bottoms = np.zeros(n_bars)
+    values_sorted = [
+        [c.get(lab, 0.0) for lab in labels_sorted] for c in components_list
+    ]
+    side_values = [c.get(side_key, 0.0) for c in components_list]
+    has_side_rev = any(v != 0 for v in side_values)
+
+    if pct:
+        totals = [sum(row) for row in values_sorted]
+        values_sorted = [
+            [v / t * 100 if t != 0 else 0.0 for v in row]
+            for row, t in zip(values_sorted, totals)
+        ]
+        side_values = [
+            v / t * 100 if t != 0 else 0.0
+            for v, t in zip(side_values, totals)
+        ]
 
     spacing = 0.75  # < 1.0 pulls bars together
     bar_width = 0.45
     x = np.arange(n_bars) * spacing
-    bottoms = np.zeros(n_bars, dtype=float)
 
     # --- Ax/fig handling ---
     created_fig = None
@@ -101,20 +155,40 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
             figsize=(auto_width, base_h)
         )
 
-    colors = [cmap(i) for i in np.linspace(0.15, 0.95, len(labels_sorted))]
+    # cap how far into the colormap we sample for few components, so e.g.
+    # a 2-component chart lands on magenta rather than plasma's pale yellow
+    # (the cap relaxes back to the full 0.15-0.95 range by 5+ components,
+    # matching the previous behavior for larger charts)
+    n_labels = len(labels_sorted)
+    color_end = 0.15 + min(0.8, 0.25 * max(0, n_labels - 1))
+    colors = [cmap(i) for i in np.linspace(0.15, color_end, n_labels)]
     color_map = dict(zip(labels_sorted, colors))
+    if has_side_rev:
+        # side revenue sits directly below the first (largest) stacked
+        # component, so reuse its color -- keeping only the CAPEX/OPEX
+        # colors on screen preserves their ratio at a glance
+        color_map[side_key] = colors[0] if colors else cmap(0.15)
 
     if pct:
-        ax.set_ylabel(data["ylabel"] + r" / [\%]")
+        ax.set_ylabel(ylabel + f" / [{_tex_escape('%')}]")
         plot_labels = [
-            rf"{lab} ({values_sorted[0][i]:.1f}\%)" if n_bars == 1 else lab
+            f"{lab} ({values_sorted[0][i]:.1f}{_tex_escape('%')})"
+            if n_bars == 1 else lab
             for i, lab in enumerate(labels_sorted)
         ]
     else:
-        ax.set_ylabel(data["ylabel"] + " / [" + currency + "]")
+        ax.set_ylabel(ylabel + " / [" + currency + "]")
         plot_labels = labels_sorted
 
-    # --- use sorted data ---
+    # --- Remaining components stack starting from the side-revenue
+    # baseline (so the final top reads as the correct net total), drawn
+    # first so the side-revenue bar can be drawn on top of them below ---
+    bottoms = (
+        np.array(side_values, dtype=float)
+        if has_side_rev
+        else np.zeros(n_bars, dtype=float)
+    )
+
     for i in range(len(labels_sorted)):
         vals = [v[i] for v in values_sorted]
         ax.bar(
@@ -129,8 +203,42 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
         )
         bottoms += vals
 
-    max_height = max(np.sum(v) for v in values_sorted)
-    ax.set_ylim(0, max_height * 1.1)
+    top = max(bottoms) if n_bars else 0.0
+
+    # --- Side revenue (if any) drawn last, on top of the stack, so its
+    # hatch pattern remains visible over the region it overlaps below zero
+    if has_side_rev:
+        side_label = (
+            f"{side_key} ({side_values[0]:.1f}{_tex_escape('%')})"
+            if pct and n_bars == 1
+            else side_key
+        )
+        side_bars = ax.bar(
+            x,
+            side_values,
+            bottom=0,
+            width=bar_width,
+            label=side_label,
+            color=color_map[side_key],
+            edgecolor="black",
+            linewidth=0.3,
+            hatch="////",
+        )
+        # matplotlib ties hatch-line color to edgecolor by default, which
+        # reads poorly on the dark plasma tones (e.g. black-on-purple); set
+        # a lighter, semi-transparent hatch color directly on the patches
+        # so the border stays black but the hatch lines stand out less
+        for patch in side_bars:
+            patch._hatch_color = (1.0, 1.0, 1.0, 0.6)
+            patch._hatch_linewidth = 0.6
+        ax.axhline(0, color="black", linewidth=0.5)
+
+    if has_side_rev:
+        bottom = min(side_values)
+        span = top - bottom if top != bottom else max(abs(top), 1.0)
+        ax.set_ylim(bottom - 0.1 * span, top + 0.1 * span)
+    else:
+        ax.set_ylim(0, top * 1.1)
 
     ax.set_xticks(x)
     ax.set_xticklabels(xlabels)
@@ -148,7 +256,7 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     if show and created_fig is not None:
         plt.show()
 
-    return ax
+    return ax.figure, ax
 
 
 def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
@@ -179,8 +287,9 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
         Whether to display the plot. Default is True.
     Returns
     -------
-    matplotlib.axes.Axes
-        The axes object containing the plotted sensitivity curves.
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the plotted sensitivity curves.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     Notes
     -----
     - Multiple curves are plotted with colors from the Set2 colormap.
@@ -217,12 +326,29 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
         if show:
             ax.figure.canvas.draw_idle()
 
-    return ax
+    return ax.figure, ax
+
+
+# Tornado figure height, in inches, as a function of the number of bars:
+# ``_TORNADO_BASE_HEIGHT + _TORNADO_HEIGHT_PER_BAR * n``, floored at
+# ``_TORNADO_MIN_HEIGHT``. Calibrated so a nine-factor plot comes out at
+# ~2.4 in, the fixed default this replaced, while a long factor list (a
+# plant with many utilities, or ``include_process_params=True``) grows
+# instead of squeezing its bars together.
+_TORNADO_BASE_HEIGHT = 0.7
+_TORNADO_HEIGHT_PER_BAR = 0.19
+_TORNADO_MIN_HEIGHT = 1.5
+
+
+def _tornado_figsize(n_factors, width=3.4):
+    """Figure size for a tornado plot with ``n_factors`` bars."""
+    height = _TORNADO_BASE_HEIGHT + _TORNADO_HEIGHT_PER_BAR * n_factors
+    return width, max(height, _TORNADO_MIN_HEIGHT)
 
 
 def plot_tornado(
     data,
-    figsize=(3.4, 2.4),
+    figsize=None,
     ax=None,
     show=True,
 ):
@@ -247,7 +373,12 @@ def plot_tornado(
         - 'plus_minus_value' : float, optional
             Percentage variation value displayed in legend (e.g., 0.1 for 10%).
     figsize : tuple, optional
-        Figure size as (width, height) in inches. Default is (3.4, 2.4).
+        Figure size as (width, height) in inches. Default is None, which
+        sizes the figure to the number of factors: the width is 3.4 in and
+        the height grows with each bar, so a long factor list gets a taller
+        figure rather than a more crowded one. A nine-factor plot comes out
+        at roughly (3.4, 2.4) in, the fixed default this replaced. Pass an
+        explicit tuple to override. Ignored when *ax* is given.
     ax : matplotlib.axes.Axes, optional
         Existing axes object to plot on. If None, a new figure and axes are
         created. Default is None.
@@ -256,8 +387,9 @@ def plot_tornado(
         Default is True.
     Returns
     -------
-    matplotlib.axes.Axes
-        The axes object containing the tornado plot.
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the tornado plot.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     Notes
     -----
     - Blue bars represent negative deviations (lows from base_value).
@@ -273,10 +405,21 @@ def plot_tornado(
     xlabel = data.get("xlabel")
     pm = data.get("plus_minus_value")
 
+    # plus_minus_value is documented optional: fall back to neutral
+    # legend labels without it. %g keeps fractional percentages exact
+    # (7.5% stays 7.5%, not int-truncated to 7%)
+    if pm is None:
+        low_label, high_label = "Low", "High"
+    else:
+        low_label = f"-{pm * 100:g}{_tex_escape('%')}"
+        high_label = f"+{pm * 100:g}{_tex_escape('%')}"
+
     y_pos = np.arange(len(labels_sorted))
 
     created_fig = None
     if ax is None:
+        if figsize is None:
+            figsize = _tornado_figsize(len(labels_sorted))
         created_fig, ax = plt.subplots(figsize=figsize)
 
     for i in range(len(y_pos)):
@@ -287,7 +430,7 @@ def plot_tornado(
             color="#87CEEB",
             edgecolor="black",
             linewidth=0.75,
-            label=(rf"-{int(pm * 100)}\%" if i == 0 else ""),
+            label=(low_label if i == 0 else ""),
         )
 
         ax.barh(
@@ -297,7 +440,7 @@ def plot_tornado(
             color="#FF9999",
             edgecolor="black",
             linewidth=0.75,
-            label=(rf"+{int(pm * 100)}\%" if i == 0 else ""),
+            label=(high_label if i == 0 else ""),
         )
 
     ax.axvline(base_value, color="black", linestyle="--", linewidth=0.5)
@@ -334,13 +477,129 @@ def plot_tornado(
         if show:
             plt.show()
 
-    return ax
+    return ax.figure, ax
+
+
+def plot_cash_flow(data, figsize=(3.6, 2.6), ax=None, show=True):
+    """
+    Plot a project cash flow diagram (cumulative cash position vs. time).
+
+    Draws the classic cumulative cash flow curve used to visualize capital
+    recovery over a project's life: the curve dips into debt during
+    construction/start-up as CAPEX and working capital are spent, bottoms
+    out at the "maximum investment", crosses back above zero at the
+    break-even point, and then climbs as operating profit accumulates.
+
+    Parameters
+    ----------
+    data : dict
+        Dictionary as returned by
+        :func:`openpytea.analysis.cash_flow_data`, containing a "curves"
+        list (one entry per plant with "years", "cumulative",
+        "breakeven_year", "max_investment", and "max_investment_year"),
+        plus "xlabel", "ylabel", and "currency".
+    figsize : tuple, optional
+        Figure size as (width, height) in inches. Default is (3.6, 2.6).
+    ax : matplotlib.axes.Axes, optional
+        Existing axes object to plot on. If None, a new figure and axes
+        are created. Default is None.
+    show : bool, optional
+        If True and a new figure is created, display the plot using
+        plt.show(). Default is True.
+
+    Returns
+    -------
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the cash flow diagram.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
+
+    Notes
+    -----
+    - For every plant, the region where its cumulative cash flow is
+      negative is shaded (hatched) as debt, and its break-even point
+      (if any) is marked with a dashed vertical line in the same
+      color as its curve.
+    """
+    curves = data["curves"]
+    currency = data.get("currency", _tex_escape("$"))
+    xlabel = data.get("xlabel", "Time / [years]")
+    ylabel = data.get("ylabel", "Cumulative cash flow") + " / [" + currency + "]"
+
+    created_fig = None
+    if ax is None:
+        created_fig, ax = plt.subplots(figsize=figsize)
+
+    line_colors = cycle(plt.cm.Set2.colors)
+    all_cumulative = []
+
+    for curve in curves:
+        color = next(line_colors)
+        # Coerce like the other plot functions: results reloaded from
+        # JSON (load_results) arrive as plain lists, which would break
+        # the `cumulative < 0` mask below
+        years = np.asarray(curve["years"], dtype=float)
+        cumulative = np.asarray(curve["cumulative"], dtype=float)
+        breakeven = curve["breakeven_year"]
+        all_cumulative.append(cumulative)
+
+        ax.plot(
+            years,
+            cumulative,
+            linewidth=1.2,
+            color=color,
+            label=curve["plant"],
+            zorder=3,
+            linestyle="-"
+        )
+
+        ax.fill_between(
+            years,
+            cumulative,
+            0,
+            where=(cumulative < 0),
+            interpolate=True,
+            color=color,
+            alpha=0.25,
+            hatch="////",
+            edgecolor=color,
+            linewidth=0.0,
+            zorder=1,
+        )
+
+        if breakeven is not None:
+            ax.axvline(
+                breakeven, color=color, linestyle="--",
+                linewidth=0.6, zorder=2,
+            )
+
+    ax.axhline(0, color="black", linewidth=0.6, zorder=2)
+    ax.set_xlim(left=0)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
+    ymin = float(np.min(np.concatenate(all_cumulative)))
+    ymax = float(np.max(np.concatenate(all_cumulative)))
+    span = ymax - ymin if ymax != ymin else max(abs(ymax), 1.0)
+
+    ax.set_ylim(ymin - 0.15 * span, ymax + 0.15 * span)
+    ax.legend(loc="best", fontsize="x-small")
+
+    if created_fig is not None:
+        created_fig.tight_layout()
+        if show:
+            plt.show()
+    else:
+        if show:
+            ax.figure.canvas.draw_idle()
+
+    return ax.figure, ax
 
 
 def plot_monte_carlo(
     data,
     metric: str = None,
     bins: int = 30,
+    show_fit: bool = True,
     label: str | None = None,
     figsize=(3.2, 2.2),
     ax=None,
@@ -366,6 +625,11 @@ def plot_monte_carlo(
         Must be present in the data's available metrics.
     bins : int, optional
         Number of histogram bins. Default is 30.
+    show_fit : bool, optional
+        Whether to overlay a normal distribution fitted to the data (or,
+        when the fitted standard deviation is 0, a vertical line at the
+        mean). If False, only the histogram is plotted and the legend is
+        omitted. Default is True.
     label : str or None, optional
         X-axis label. If None, a default label is generated based on the metric
         and currency. Default is None.
@@ -379,8 +643,9 @@ def plot_monte_carlo(
         figure was created. Default is True.
     Returns
     -------
-    matplotlib.axes.Axes
-        The axes object containing the plot.
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the plot.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     Raises
     ------
     ValueError
@@ -388,8 +653,8 @@ def plot_monte_carlo(
         metrics.
     Notes
     -----
-    - The normal distribution parameters (μ, σ) are fitted to the data using
-    scipy.stats.norm.fit()
+    - When ``show_fit`` is True, the normal distribution parameters (μ, σ)
+    are fitted to the data using scipy.stats.norm.fit()
     - The standard deviation is formatted in scientific notation if
     |σ|>= 1000 or < 0.001
     - The histogram is semi-transparent (alpha=0.6) with black edges for
@@ -415,7 +680,7 @@ def plot_monte_carlo(
         values = np.asarray(data["metrics"][metric], dtype=float)
 
         if label is None:
-            currency = data.get("currency", r"\$")
+            currency = data.get("currency", _tex_escape("$"))
             label = _default_metric_label(currency, metric)
 
     # --- Case 2: Plant object(s) ---
@@ -442,12 +707,12 @@ def plot_monte_carlo(
             values_list.append(
                 np.asarray(plant.monte_carlo_metrics[metric], dtype=float)
             )
-            currencies.append(getattr(plant, "currency", r"\$"))
+            currencies.append(getattr(plant, "currency", _tex_escape("$")))
 
         values = np.concatenate(values_list)
 
         if label is None:
-            currency = currencies[0] if currencies else r"\$"
+            currency = currencies[0] if currencies else _tex_escape("$")
             label = _default_metric_label(currency, metric)
 
     # --- Case 3: Raw array ---
@@ -455,7 +720,7 @@ def plot_monte_carlo(
         values = np.asarray(data, dtype=float)
 
         if label is None:
-            label = _default_metric_label(r"\$", metric)
+            label = _default_metric_label(_tex_escape("$"), metric)
 
     n_total = values.size
     finite_mask = np.isfinite(values)
@@ -475,8 +740,6 @@ def plot_monte_carlo(
             "No finite Monte Carlo values available for plotting."
         )
 
-    mu, std = norm.fit(values)
-
     created_fig = None
     if ax is None:
         created_fig, ax = plt.subplots(figsize=figsize)
@@ -495,124 +758,93 @@ def plot_monte_carlo(
         label="Samples",
     )
 
-    x = np.linspace(values.min(), values.max(), 1000)
-    p = norm.pdf(x, mu, std)
+    if show_fit:
+        mu, std = norm.fit(values)
 
-    if std > 0:
-        x = np.linspace(values.min(), values.max(), 1000)
-        p = norm.pdf(x, mu, std)
+        if std > 0:
+            x = np.linspace(values.min(), values.max(), 1000)
+            p = norm.pdf(x, mu, std)
 
-        std_exp = int(np.floor(np.log10(std)))
+            std_exp = int(np.floor(np.log10(std)))
 
-        if std_exp == 0:
-            stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+            if std_exp == 0:
+                stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+            else:
+                std_mant = std / 10**std_exp
+                stat_label = (
+                    rf"$\mu$={mu:.3g}, "
+                    rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
+
+            ax.plot(
+                    x,
+                    p,
+                    color=line_color,
+                    linewidth=1.2,
+                    zorder=2,
+                    linestyle="-",
+                    label=stat_label,
+                )
         else:
-            std_mant = std / 10**std_exp
-            stat_label = (
-                rf"$\mu$={mu:.3g}, "
-                rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
-
-        ax.plot(
-                x,
-                p,
+            stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+            ax.axvline(
+                mu,
                 color=line_color,
                 linewidth=1.2,
                 zorder=2,
                 linestyle="-",
                 label=stat_label,
             )
-    else:
-        stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-        ax.axvline(
-            mu,
-            color=line_color,
-            linewidth=1.2,
-            zorder=2,
-            linestyle="-",
-            label=stat_label,
-        )
 
     ax.set_xlabel(label)
     ax.set_ylabel("Density")
-    ax.legend(
-            loc="best",
-            ncol=1,
-            fontsize=4,
-            frameon=True,
-            facecolor="white",
-            framealpha=0.6,
-            fancybox=True,
-        )
+
+    if show_fit:
+        ax.legend(
+                loc="best",
+                ncol=1,
+                fontsize=4,
+                frameon=True,
+                facecolor="white",
+                framealpha=0.6,
+                fancybox=True,
+            )
 
     if created_fig is not None and show:
         created_fig.tight_layout()
         plt.show()
 
-    return ax
+    return ax.figure, ax
 
 
-def plot_monte_carlo_inputs(
-    data,
-    figsize=None,
-    bins: int = 50,
-    show: bool = True,
-):
+def _is_process_monte_carlo_input(label):
     """
-    Plot histograms of Monte Carlo input parameters.
-    This function creates a grid of histograms visualizing the distribution of
-    input parameters from a Monte Carlo simulation. Each parameter is
-    displayed in its own subplot, arranged in a grid layout with 3 columns.
-    Parameters
-    ----------
-    data : dict or dict-like
-        Input data containing Monte Carlo parameters. Can be either:
-        - A dictionary with an "inputs" key containing the parameters dict
-        - A dictionary directly mapping parameter names to arrays of values
-    inputs : dict
-        Dictionary where keys are parameter names (str) and values are array
-        like objects containing the parameter samples.
-    figsize : tuple of (float, float), optional
-        Figure size as (width, height) in inches. If None, automatically
-        calculated based on number of parameters (default: None).
-    bins : int, optional
-        Number of histogram bins for each parameter (default: 50).
-    show : bool, optional
-        If True, displays the figure and calls tight_layout(). If False, only
-        returns the axes without displaying (default: True).
-    Returns
-    -------
-    numpy.ndarray
-        Array of matplotlib Axes objects corresponding to each subplot.
-        For a single parameter, returns a 1D array; for multiple parameters,
-        returns a flattened array of subplots.
-    Notes
-    -----
-    - Histograms are plotted with density normalization enabled
-    - Unused subplots (when n_params is not a multiple of 3) are hidden
-    - Each histogram is displayed with black edges and 70% transparency
+    True if a Monte Carlo input display name is a process quantity
+    (consumption or production) rather than an economic one (price, rate,
+    factor, etc.). OpenPyTEA always generates these labels itself (e.g.
+    ``"Electricity consumption"``, ``"Methanol production"``), so a simple
+    suffix check is reliable.
     """
-    if isinstance(data, dict) and "inputs" in data:
-        inputs = data["inputs"]
-    else:
-        inputs = data
+    normalized = label.strip().lower()
+    return normalized.endswith("consumption") or normalized.endswith("production")
 
+
+def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title, show):
+    """
+    Build one figure of histograms (one subplot per input, 3 columns) for
+    the given ``{label: samples}`` dict, with a bold suptitle. Shared by the
+    "process"/"economic" groups in :func:`plot_monte_carlo_inputs`.
+    """
     n_params = len(inputs)
     n_cols = 3
     n_rows = (n_params + n_cols - 1) // n_cols
 
-    if figsize is None:
-        figsize = (n_cols * 5, n_rows * 3)
+    fig_size = figsize if figsize is not None else (n_cols * 5, n_rows * 3)
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=fig_size)
 
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
-
-    if n_params == 1:
-        axes = np.array([axes])
-    else:
-        axes = np.asarray(axes).flatten()
-
-    color_cycle = cycle(plt.cm.tab10.colors)
-    hist_color = next(color_cycle)
-    hist_color = next(color_cycle)
+    # plt.subplots always returns an array here (n_cols is fixed at 3),
+    # so flattening covers every n_params, including 1 -- the loop below
+    # then hides the unused axes
+    axes = np.asarray(axes).flatten()
 
     for idx, (label, arr) in enumerate(inputs.items()):
         ax = axes[idx]
@@ -627,7 +859,7 @@ def plot_monte_carlo_inputs(
                 f"Filtered {n_filtered} non-finite value(s) from "
                 f"Monte Carlo input '{label}' before plotting.",
                 RuntimeWarning,
-                stacklevel=2,
+                stacklevel=3,
             )
 
         if values.size == 0:
@@ -635,30 +867,176 @@ def plot_monte_carlo_inputs(
                 f"No finite values available for Monte Carlo input '{label}'."
             )
 
-        ax.hist(
-            values,
-            bins=bins,
-            density=True,
-            color=hist_color,
-            edgecolor="black",
-            alpha=0.7,
-        )
+        unique_vals = np.unique(values)
+        if unique_vals.size <= 10 and unique_vals.size < bins:
+            # Discrete-looking input (e.g. Bernoulli, fixed/no-uncertainty
+            # values): a fine-grained histogram would bury the few distinct
+            # values among mostly-empty bins, so plot one bar per value
+            # instead and size the x-axis to the data instead of `bins`.
+            counts = np.array([np.count_nonzero(values == v) for v in unique_vals])
+            heights = counts / counts.sum()
+            if unique_vals.size > 1:
+                width = np.diff(unique_vals).min() * 0.6
+            else:
+                width = max(abs(unique_vals[0]) * 0.1, 1e-9)
+            ax.bar(
+                unique_vals,
+                heights,
+                width=width*0.5,
+                color=hist_color,
+                edgecolor="black",
+                alpha=0.7,
+            )
+            ax.set_xlim(unique_vals.min() - width, unique_vals.max() + width)
+        else:
+            ax.hist(
+                values,
+                bins=bins,
+                density=True,
+                color=hist_color,
+                edgecolor="black",
+                alpha=0.7,
+            )
         ax.set_title(label, fontsize=9)
 
     for i in range(n_params, len(axes)):
         axes[i].axis("off")
 
-    if show:
-        fig.tight_layout()
-        plt.show()
+    fig.suptitle(title, fontsize=14, fontweight="bold")
+    # Reserve a top margin sized to fit the suptitle in absolute
+    # inches rather than a fixed fraction of figure height -- a flat
+    # fraction leaves a disproportionately large gap on tall,
+    # many-row grids (e.g. the economic-parameters figure once
+    # project-level factors and every priced item are included).
+    # tight_layout is given this budget up front (via `rect`) so it
+    # can fit each subplot's own title within the remaining space in
+    # the same pass, rather than being squeezed after the fact.
+    # Runs unconditionally: saved figures (show=False, as in run_tea)
+    # need the layout just as much as displayed ones -- bbox_inches
+    # crops at save time but never re-lays-out an overlapping title.
+    reserved_inches = 0.1
+    top = max(0.5, min(0.97, 1 - reserved_inches / fig_size[1]))
+    fig.tight_layout(rect=[0, 0, 1, top])
 
-    return axes
+    return fig, axes
+
+
+def plot_monte_carlo_inputs(
+    data,
+    category: str = "both",
+    figsize=None,
+    bins: int = 50,
+    show: bool = True,
+):
+    """
+    Plot histograms of Monte Carlo input parameters.
+
+    This function creates a grid of histograms visualizing the distribution
+    of input parameters from a Monte Carlo simulation. Each parameter is
+    displayed in its own subplot, arranged in a grid layout with 3 columns.
+    Inputs are split into two categories: **process** parameters
+    (consumption/production quantities) and **economic** parameters
+    (prices, rates, and project-level financial factors).
+
+    Parameters
+    ----------
+    data : dict or dict-like
+        Input data containing Monte Carlo parameters. Can be either:
+        - A dictionary with an "inputs" key containing the parameters dict
+        - A dictionary directly mapping parameter names to arrays of values
+    category : {"both", "process", "economic"}, optional
+        Which group of inputs to plot. ``"process"`` covers consumption and
+        production quantities; ``"economic"`` covers everything else
+        (prices, operator rate, interest rate, and the other
+        ``project_uncertainties`` factors). ``"both"`` (default) builds one
+        figure per group and returns both. If a requested group has no
+        matching inputs, a ``RuntimeWarning`` is issued and ``(None, None)``
+        is returned for that group instead of an empty figure.
+    figsize : tuple of (float, float), optional
+        Figure size as (width, height) in inches, applied to each figure
+        produced. If None, automatically calculated from that figure's
+        number of parameters (default: None).
+    bins : int, optional
+        Number of histogram bins for each parameter (default: 50).
+    show : bool, optional
+        If True, calls ``tight_layout()`` on each figure and displays them.
+        If False, only returns the figures/axes without displaying
+        (default: True).
+
+    Returns
+    -------
+    tuple
+        For ``category="process"`` or ``category="economic"``:
+        ``(fig, axes)``, matching the previous single-figure API — ``axes``
+        is a flattened 1-D array of subplots (length 1 for a single
+        parameter). For ``category="both"`` (default):
+        ``(fig_process, axes_process, fig_economic, axes_economic)``.
+
+    Notes
+    -----
+    - Histograms are plotted with density normalization enabled
+    - Unused subplots (when a group's parameter count is not a multiple of
+      3) are hidden
+    - Each histogram is displayed with black edges and 70% transparency
+    """
+    if category not in ("both", "process", "economic"):
+        raise ValueError(
+            f"Invalid category {category!r}; must be 'both', 'process', "
+            "or 'economic'."
+        )
+
+    if isinstance(data, dict) and "inputs" in data:
+        inputs = data["inputs"]
+    else:
+        inputs = data
+
+    process_inputs = {
+        label: arr for label, arr in inputs.items()
+        if _is_process_monte_carlo_input(label)
+    }
+    economic_inputs = {
+        label: arr for label, arr in inputs.items()
+        if not _is_process_monte_carlo_input(label)
+    }
+
+    color_cycle = cycle(plt.cm.tab10.colors)
+    next(color_cycle)
+    hist_color = next(color_cycle)
+
+    def _build(group_inputs, title):
+        if not group_inputs:
+            warnings.warn(
+                f"No {title.lower()} to plot.", RuntimeWarning, stacklevel=3,
+            )
+            return None, None
+        return _plot_input_histogram_grid(
+            group_inputs, figsize, bins, hist_color, title, show
+        )
+
+    if category == "process":
+        fig, axes = _build(process_inputs, "Process Parameters")
+        if show and fig is not None:
+            plt.show()
+        return fig, axes
+
+    if category == "economic":
+        fig, axes = _build(economic_inputs, "Economic Parameters")
+        if show and fig is not None:
+            plt.show()
+        return fig, axes
+
+    fig_process, axes_process = _build(process_inputs, "Process Parameters")
+    fig_economic, axes_economic = _build(economic_inputs, "Economic Parameters")
+    if show:
+        plt.show()
+    return fig_process, axes_process, fig_economic, axes_economic
 
 
 def plot_multiple_monte_carlo(
     data_list,
     metric="LCOP",
     bins=30,
+    show_fit: bool = True,
     figsize=None,
     label=None,
     ax=None,
@@ -676,6 +1054,10 @@ def plot_multiple_monte_carlo(
         Metric to plot from Monte Carlo results (default: "LCOP").
     bins : int, optional
         Number of histogram bins (default: 30).
+    show_fit : bool, optional
+        Whether to overlay a normal distribution fitted to each dataset (or,
+        when the fitted standard deviation is 0, a vertical line at the
+        mean). If False, only the histograms are plotted. Default is True.
     figsize : tuple, optional
         Figure size as (width, height).
     label : str, optional
@@ -687,7 +1069,9 @@ def plot_multiple_monte_carlo(
 
     Returns
     -------
-    matplotlib.axes.Axes
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        The figure and axes containing the overlaid histograms.
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     """
     metric = metric.upper()
 
@@ -699,7 +1083,7 @@ def plot_multiple_monte_carlo(
             created_fig, ax = plt.subplots(figsize=figsize)
 
     color_cycle = cycle(plt.cm.tab10.colors)
-    currency = r"\$"
+    currency = _tex_escape("$")
     plotted_any = False
 
     for i, item in enumerate(data_list):
@@ -754,8 +1138,6 @@ def plot_multiple_monte_carlo(
         plotted_any = True
         color = next(color_cycle)
 
-        mu, std = norm.fit(values)
-
         ax.hist(
             values,
             bins=bins,
@@ -768,39 +1150,42 @@ def plot_multiple_monte_carlo(
             label=name,
         )
 
-        if std > 0:
-            x = np.linspace(values.min(), values.max(), 1000)
-            p = norm.pdf(x, mu, std)
+        if show_fit:
+            mu, std = norm.fit(values)
 
-            std_exp = int(np.floor(np.log10(std)))
+            if std > 0:
+                x = np.linspace(values.min(), values.max(), 1000)
+                p = norm.pdf(x, mu, std)
 
-            if std_exp == 0:
-                stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+                std_exp = int(np.floor(np.log10(std)))
+
+                if std_exp == 0:
+                    stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+                else:
+                    std_mant = std / 10**std_exp
+                    stat_label = (
+                        rf"$\mu$={mu:.3g}, "
+                        rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
+
+                ax.plot(
+                    x,
+                    p,
+                    color=color,
+                    linewidth=1.2,
+                    zorder=2,
+                    linestyle="-",
+                    label=stat_label,
+                )
             else:
-                std_mant = std / 10**std_exp
-                stat_label = (
-                    rf"$\mu$={mu:.3g}, "
-                    rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
-
-            ax.plot(
-                x,
-                p,
-                color=color,
-                linewidth=1.2,
-                zorder=2,
-                linestyle="-",
-                label=stat_label,
-            )
-        else:
-            stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-            ax.axvline(
-                mu,
-                color=color,
-                linewidth=1.2,
-                zorder=2,
-                linestyle="-",
-                label=stat_label,
-            )
+                stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+                ax.axvline(
+                    mu,
+                    color=color,
+                    linewidth=1.2,
+                    zorder=2,
+                    linestyle="-",
+                    label=stat_label,
+                )
 
     if label is None:
         label = _default_metric_label(currency, metric)
@@ -839,7 +1224,9 @@ def plot_multiple_monte_carlo(
 
         if show:
             plt.show()
-        else:
-            plt.close(created_fig)
+        # show=False returns the live figure for the caller to
+        # customize, save, or show -- closing it here (unlike every
+        # sibling plot function) made plt.show() and Jupyter display
+        # silently render nothing
 
-    return ax
+    return ax.figure, ax

@@ -1,4 +1,6 @@
 import math
+import warnings
+
 import numpy as np
 import pandas as pd
 from copy import deepcopy
@@ -72,7 +74,17 @@ class Plant:
             operators_per_shift (int or None): Manual input or auto-calculated.
             operators_hired (int or None): Total operators needed;
                                             auto-calculated if None.
-            operator_hourly_rate (dict or float): Wage rate for operators.
+            production_type (str): "continuous" or "batch". Only affects
+                calculate_operators_per_shift, applying the chart's minimum
+                of 3 operators/shift for batch processes. Does not change
+                capital, OPEX, or cash-flow calculations elsewhere, which are
+                indifferent to production mode. Default: "continuous".
+            operator_hourly_rate (dict or float): Wage rate for operators,
+                e.g. ``{"rate": 25}``. Monte Carlo uncertainty goes in a
+                nested ``"rate_uncertainty"`` dict (same ``std``/``min``/
+                ``max``/``dist_id`` fields as ``price_uncertainty`` etc.);
+                the legacy flat layout (those fields alongside ``"rate"``)
+                is still accepted.
             working_weeks_per_year (int): Annual working weeks. Default: 49.
             working_shifts_per_week (int): Shifts per week. Default: 5.
             operating_shifts_per_day (int): Daily operating shifts. Default: 3.
@@ -203,6 +215,11 @@ class Plant:
         self.working_capital = configuration.get(
             "working_capital", None
         )
+        # User-provided working capital is kept as-is; an auto-computed
+        # one must track fixed_capital on every recalculation
+        self._working_capital_fixed = (
+            self.working_capital is not None
+        )
         self.interest_rate = configuration.get(
             "interest_rate", 0.09
         )
@@ -221,6 +238,9 @@ class Plant:
         )
         self.operators_hired = configuration.get(
             "operators_hired", None
+        )
+        self.production_type = configuration.get(
+            "production_type", "continuous"
         )
         self.working_weeks_per_year = configuration.get(
             "working_weeks_per_year", 49
@@ -324,12 +344,22 @@ class Plant:
         self.region = configuration.get(
             "region", self.region
         )
+        self.currency = configuration.get(
+            "currency", self.currency
+        )
+        self.exchange_rate = configuration.get(
+            "exchange_rate", self.exchange_rate
+        )
         self.equipment_list = configuration.get(
             "equipment", self.equipment_list
         )
-        self.working_capital = configuration.get(
-            "working_capital", self.working_capital
-        )
+        if "working_capital" in configuration:
+            self.working_capital = configuration[
+                "working_capital"
+            ]
+            self._working_capital_fixed = (
+                self.working_capital is not None
+            )
         self.interest_rate = configuration.get(
             "interest_rate", self.interest_rate
         )
@@ -347,6 +377,9 @@ class Plant:
         )
         self.operators_hired = configuration.get(
             "operators_hired", self.operators_hired
+        )
+        self.production_type = configuration.get(
+            "production_type", self.production_type
         )
         self.working_weeks_per_year = configuration.get(
             "working_weeks_per_year",
@@ -416,12 +449,53 @@ class Plant:
                 else:
                     original[key] = value
 
+        def clear_superseded_uncertainty(original, updates,
+                                          dep_key, unc_key=None):
+            """
+            Drop an entry's pre-existing *absolute-value* uncertainty spec
+            when ``updates`` turns it into a dependency-driven one.
+
+            Merging (rather than replacing) is right for ordinary config,
+            but an item's absolute-value uncertainty stops being meaningful
+            the moment it becomes a dependent: its value is then set by the
+            dependency, and its uncertainty block is reinterpreted as
+            *additive noise* around that. Leftover ``std``/``scale`` would
+            raise a confusing error naming a key the caller never wrote,
+            and leftover ``min``/``max`` would silently be re-read as
+            noise-band bounds -- shifting the dependent off its DAG line
+            with no warning at all. So a call that introduces ``dep_key``
+            clears the stale keys first, leaving only what that call
+            itself specifies.
+
+            ``unc_key`` names the nested sub-dict holding the spec for
+            process items (e.g. ``"consumption_uncertainty"``); economic
+            scalars keep those fields inline, so it is ``None`` for them.
+            """
+            for name, incoming in updates.items():
+                if not isinstance(incoming, dict) or dep_key not in incoming:
+                    continue
+                existing = original.get(name)
+                if not isinstance(existing, dict):
+                    continue
+                if unc_key is None:
+                    for stale in _ABSOLUTE_UNCERTAINTY_KEYS:
+                        existing.pop(stale, None)
+                elif isinstance(existing.get(unc_key), dict):
+                    for stale in _ABSOLUTE_UNCERTAINTY_KEYS:
+                        existing[unc_key].pop(stale, None)
+
         if "variable_opex_inputs" in configuration:
             if (
                 not hasattr(self, "variable_opex_inputs")
                 or self.variable_opex_inputs is None
             ):
                 self.variable_opex_inputs = {}
+            clear_superseded_uncertainty(
+                self.variable_opex_inputs,
+                configuration["variable_opex_inputs"],
+                "consumption_dependency",
+                "consumption_uncertainty",
+            )
             recursive_update(
                 self.variable_opex_inputs,
                 configuration["variable_opex_inputs"],
@@ -441,6 +515,12 @@ class Plant:
                 or self.plant_products is None
             ):
                 self.plant_products = {}
+            clear_superseded_uncertainty(
+                self.plant_products,
+                configuration["plant_products"],
+                "production_dependency",
+                "production_uncertainty",
+            )
             recursive_update(
                 self.plant_products,
                 configuration["plant_products"],
@@ -460,6 +540,11 @@ class Plant:
                 or self.operator_hourly_rate is None
             ):
                 self.operator_hourly_rate = {}
+            clear_superseded_uncertainty(
+                {"operator_hourly_rate": self.operator_hourly_rate},
+                {"operator_hourly_rate": configuration["operator_hourly_rate"]},
+                "dependency",
+            )
             recursive_update(
                 self.operator_hourly_rate,
                 configuration["operator_hourly_rate"],
@@ -479,6 +564,11 @@ class Plant:
                 or self.project_uncertainties is None
             ):
                 self.project_uncertainties = {}
+            clear_superseded_uncertainty(
+                self.project_uncertainties,
+                configuration["project_uncertainties"],
+                "dependency",
+            )
             recursive_update(
                 self.project_uncertainties,
                 configuration["project_uncertainties"],
@@ -529,6 +619,41 @@ class Plant:
         else:
             return self.purchased_cost
 
+    def _resolve_loc_factor(self) -> float:
+        """
+        Resolve the location factor from explicit override or country/region lookup.
+
+        Returns
+        -------
+        float
+            Resolved location factor.
+
+        Raises
+        ------
+        ValueError
+            If the plant's country or region is not found in ``locFactors``
+            and no explicit ``loc_factor`` is set.
+        """
+        if self.loc_factor is not None:
+            return self.loc_factor
+
+        if self.country not in self.locFactors:
+            raise ValueError(
+                f"Country not found: {self.country}. "
+                f"Available countries: {list(self.locFactors.keys())}"
+            )
+
+        loc_factor = self.locFactors[self.country]
+        if isinstance(loc_factor, dict):
+            if self.region in loc_factor:
+                return loc_factor[self.region]
+            else:
+                raise ValueError(
+                    f"Region not found: {self.region}. "
+                    f"Available regions: {list(loc_factor.keys())}"
+                )
+        return loc_factor
+
     def calculate_isbl(self, fc=1.0, print_results=False):
         """
         Calculate Inside Battery Limits (ISBL) cost.
@@ -554,34 +679,12 @@ class Plant:
             If the plant's country or region is not found in ``locFactors``
             and no explicit ``loc_factor`` is set.
         """
-        def location_factors() -> float:
-
-            if self.loc_factor is not None:
-                return self.loc_factor
-
-            if self.country not in self.locFactors:
-                raise ValueError(
-                    f"Country not found: {self.country}. "
-                    f"Available countries: {list(self.locFactors.keys())}"
-                )
-
-            loc_factor = self.locFactors[self.country]
-            if isinstance(loc_factor, dict):
-                if self.region in loc_factor:
-                    return loc_factor[self.region]
-                else:
-                    raise ValueError(
-                        f"Region not found: {self.region}. "
-                        f"Available regions: {list(loc_factor.keys())}"
-                    )
-            return loc_factor
-
         self.isbl = (
             sum(
                 equipment.direct_cost
                 for equipment in self.equipment_list
             )
-            * location_factors()
+            * self._resolve_loc_factor()
             * fc
             * self.exchange_rate
         )
@@ -617,7 +720,8 @@ class Plant:
         Parameters
         ----------
         fc : float or None, optional
-            Installed cost multiplier. Defaults to 1.0 if None.
+            Installed cost multiplier. None keeps the plant's configured
+            multiplier (1.0 if never set).
         additional_capex : bool, optional
             Include additional CAPEX items in the printed summary. Default is False.
         print_results : bool, optional
@@ -633,10 +737,12 @@ class Plant:
         ValueError
             If ``process_type`` is not one of the supported process types.
         """
-        if fc is None:
-            self.fc = 1.0
-        else:
+        # None means "keep the configured factor", not "reset to 1.0" --
+        # a bare call must not clobber a plant configured with fc != 1
+        if fc is not None:
             self.fc = fc
+        elif self.fc is None:
+            self.fc = 1.0
         self.calculate_isbl(self.fc)
 
         if self.process_type not in self.processTypes:
@@ -869,60 +975,82 @@ class Plant:
         return count
 
     def calculate_operators_per_shift(
-        self, no_fluid_process=None, no_solid_process=None
+        self,
+        no_fluid_process=None,
+        no_solid_process=None,
     ):
         """
-        Calculate the number of operators required per shift.
+        Estimate the number of operators required per shift.
 
-        Uses the empirical correlation from Turton et al. based on fluid and
-        solid process step counts. Returns ``operators_per_shift`` directly if
-        it was set manually on the plant.
+        Uses the empirical correlation from Turton et al. where it is valid
+        (no_solid_process <= 2), and falls back to the rule-based method from
+        Towler & Sinnott, *Chemical Engineering Design* (Fig. 8.12) for
+        processes with more than 2 solids-handling sections. For batch
+        processes (``self.production_type == "batch"``), the chart specifies
+        a minimum of 3 operators per shift rather than a formula — this is
+        applied as a floor on top of the correlation, not a replacement for
+        it.
+
+        Note ``self.production_type`` only affects this staffing estimate.
+        It does not make the rest of the package (fixed capital, variable/
+        fixed OPEX, cash flow, NPV/IRR, LCOP) batch-aware — those all operate
+        on annualized quantities and are indifferent to production mode.
+        Batch-specific effects like parallel trains or cycle-time-driven
+        equipment sizing are not modeled here and must be reflected by the
+        user directly in ``equipment_list``.
 
         Parameters
         ----------
         no_fluid_process : int or None, optional
-            Number of fluid/mixed process steps. Auto-counted if None.
+            Number of fluid (gas or liquid) / mixed process steps. Auto-counted
+            if None.
         no_solid_process : int or None, optional
-            Number of solid/mixed process steps (max 2). Auto-counted if None.
+            Number of solid/mixed process steps. Auto-counted if None.
 
         Returns
         -------
         float
             Estimated operators per shift.
-
-        Raises
-        ------
-        ValueError
-            If ``no_solid_process`` exceeds 2.
         """
         if self.operators_per_shift is not None:
             return self.operators_per_shift
+
+        if self.production_type not in ("continuous", "batch"):
+            raise ValueError(
+                f"Unsupported production_type '{self.production_type}'. "
+                "Expected 'continuous' or 'batch'."
+            )
+        is_batch = self.production_type == "batch"
+
+        if no_fluid_process is None:
+            no_fluid_process = self.count_process_steps(
+                self.equipment_list,
+                {"Fluids", "Mixed"},
+                {"Pumps", "Pressure vessels"},
+            )
+        if no_solid_process is None:
+            no_solid_process = self.count_process_steps(
+                self.equipment_list,
+                {"Solids", "Mixed"},
+                {"Pumps", "Pressure vessels"},
+            )
+
+        # --- Beyond Turton's validated range: fall back to chart rule
+        # "3 shift positions + 1 for every solids-handling section"
+        if no_solid_process > 2:
+            operators_per_shift = 3.0 + no_solid_process
         else:
-            if no_fluid_process is None:
-                no_fluid_process = self.count_process_steps(
-                    self.equipment_list,
-                    {"Fluids", "Mixed"},
-                    {"Pumps", "Pressure vessels"},
-                )
-            if no_solid_process is None:
-                no_solid_process = self.count_process_steps(
-                    self.equipment_list,
-                    {"Solids", "Mixed"},
-                    {"Pumps", "Pressure vessels"},
-                )
-
-            if no_solid_process > 2:
-                raise ValueError(
-                    "Number of solid processes needs "
-                    "to be less than or equal to 2."
-                )
-
-            operators_per_shifts = (
-                6.29
-                + 31.7 * (no_solid_process**2)
-                + 0.23 * no_fluid_process
+            # --- Turton et al. correlation
+            operators_per_shift = (
+                6.29 + 31.7 * (no_solid_process ** 2) + 0.23 * no_fluid_process
             ) ** 0.5
-            return operators_per_shifts
+
+        # --- Batch processes: minimum of 3, but never lower than the
+        # correlation/rule-based estimate above
+        if is_batch:
+            operators_per_shift = max(3.0, operators_per_shift)
+
+        return operators_per_shift
 
     def calculate_operators_hired(
         self, no_fluid_process=None, no_solid_process=None
@@ -1034,7 +1162,8 @@ class Plant:
         Parameters
         ----------
         fp : float or None, optional
-            Fixed OPEX multiplier applied to the total. Defaults to 1.0 if None.
+            Fixed OPEX multiplier applied to the total. None keeps the
+            plant's configured multiplier (1.0 if never set).
         print_results : bool, optional
             Print a full fixed OPEX breakdown. Default is False.
 
@@ -1043,10 +1172,11 @@ class Plant:
         float
             Total annual fixed OPEX in plant currency.
         """
-        if fp is None:
-            self.fp = 1.0
-        else:
+        # None means "keep the configured factor", not "reset to 1.0"
+        if fp is not None:
             self.fp = fp
+        elif self.fp is None:
+            self.fp = 1.0
 
         self.calculate_fixed_capital(fc=self.fc)
         self.calculate_variable_opex()
@@ -1116,15 +1246,17 @@ class Plant:
             ),
         )
 
-        if self.working_capital is not None:
-            self.interest_working_capital = (
-                self.working_capital * self.interest_rate
+        # Only a user-provided working capital is kept as-is; an
+        # auto-computed one is recomputed here so it tracks the
+        # current fixed_capital (which may have changed, or be a
+        # per-sample array in Monte Carlo runs)
+        if not getattr(self, "_working_capital_fixed", False):
+            self.working_capital = (
+                f["working_capital"] * self.fixed_capital
             )
-        else:
-            self.working_capital = f["working_capital"] * self.fixed_capital
-            self.interest_working_capital = (
-                self.working_capital * self.interest_rate
-            )
+        self.interest_working_capital = (
+            self.working_capital * self.interest_rate
+        )
 
         self.fixed_production_costs = (
             self.operating_labor_costs
@@ -1270,6 +1402,17 @@ class Plant:
         ValueError
             If ``project_lifetime < 3``, ``capex_ramp`` or
             ``production_ramp`` are invalid, or no plant products are defined.
+
+        Notes
+        -----
+        Income tax follows the Towler & Sinnott 1-year lag: tax on year
+        ``n``'s taxable income is paid in year ``n + 1``. Because the
+        table ends at the project lifetime, the tax on the final
+        operating year's profit would be settled one year *after* the
+        project ends and is therefore never included -- a deliberate
+        simplification of that convention which slightly flatters NPV.
+        Extend ``project_lifetime`` by one year if you need the last
+        settlement inside the analysis horizon.
         """
         # 0) Upstream calcs (capital, opex breakdowns)
         self.calculate_fixed_capital(fc=self.fc)
@@ -1395,7 +1538,13 @@ class Plant:
         wc_year = len(capex_ramp) - 1
         if wc_year < n_years:
             capex[:, wc_year] += self.working_capital
-        capex[:, -1] -= self.working_capital
+        # Release working capital in each sample's own final year, not
+        # the longest sample's (n_years is the max lifetime across samples)
+        working_capital = np.broadcast_to(
+            np.atleast_1d(self.working_capital).astype(float),
+            n_samples,
+        )
+        capex[np.arange(n_samples), lifetime - 1] -= working_capital
 
         # --- Add additional CAPEX at specified years ---
         if (
@@ -1416,7 +1565,8 @@ class Plant:
             ):
                 raise ValueError(
                     "The number of additional_capex_years must "
-                    "match the number of additional_capex_costs."
+                    "match the number of additional_capex_cost "
+                    "entries."
                 )
 
             for i, year in enumerate(
@@ -1513,6 +1663,28 @@ class Plant:
                 - tax_paid[:, yr]
                 - capex[:, yr]
             )
+
+        # --- Zero out years past each sample's own lifetime ---
+        # Each sample's table must end at its own lifetime (a scalar run
+        # of that lifetime has no rows past it); columns only reach
+        # n_years because samples share one array. capex needs no mask:
+        # the capex ramp, additional-capex years (alive_mask above), and
+        # the working-capital release all land within each lifetime.
+        alive = (
+            np.arange(n_years)[None, :] < lifetime[:, None]
+        )
+        for arr in (
+            prod_array,
+            main_revenue,
+            side_revenue,
+            revenue,
+            cash_cost,
+            gross_profit,
+            taxable_income,
+            tax_paid,
+        ):
+            arr *= alive
+        cash_flow[:] = gross_profit - tax_paid - capex
 
         # --- Save arrays to instance ---
         self.capital_cost_array = capex
@@ -2095,7 +2267,7 @@ class Plant:
                 "category": getattr(eq, "category", None),
                 "type": getattr(eq, "type", None),
                 "num_units": int(getattr(eq, "num_units", 1)),
-                "purchase_cost": float(getattr(eq, "purchase_cost", 0.0)),
+                "purchased_cost": float(getattr(eq, "purchased_cost", 0.0)),
                 "direct_cost": float(getattr(eq, "direct_cost", 0.0)),
             })
 
@@ -2114,6 +2286,7 @@ class Plant:
                 "operator_hourly_rate": deepcopy(self.operator_hourly_rate),
                 "operators_per_shift": self.operators_per_shift,
                 "operators_hired": self.operators_hired,
+                "production_type": self.production_type,
                 "working_weeks_per_year": self.working_weeks_per_year,
                 "working_shifts_per_week": self.working_shifts_per_week,
                 "operating_shifts_per_day": self.operating_shifts_per_day,
@@ -2232,7 +2405,11 @@ class Plant:
         }
 
         additional_capex_cost = getattr(self, "additional_capex_cost", None)
-        if additional_capex_cost:
+        # After calculate_cash_flow this is a numpy array, whose truth
+        # value is ambiguous for 2+ entries -- test length explicitly
+        if additional_capex_cost is not None and len(
+            np.atleast_1d(additional_capex_cost)
+        ) > 0:
             self.calculate_roi(additional_capex=True)
             self.calculate_payback_time(additional_capex=True)
             plant_dict["metrics"]["roi_with_additional_capex"] = float(
@@ -2444,31 +2621,28 @@ _UNCERTAINTY_KEYS = {
     "plant_utilization",
     "tax_rate",
 }
-_UNCERTAINTY_SUB_KEYS = {"std", "min", "max"}
+# Uncertainty fields that describe an item's own *absolute* value. They stop
+# being meaningful once that item becomes a dependent (its value then comes
+# from the dependency, and its uncertainty block means additive noise), so a
+# config update that introduces a dependency clears any left over from before
+# -- see Plant.update_configuration.clear_superseded_uncertainty.
+_ABSOLUTE_UNCERTAINTY_KEYS = {
+    "dist_id", "loc", "mean", "scale", "std", "shape",
+    "min", "max", "minimum", "maximum",
+}
+
+_UNCERTAINTY_SUB_KEYS = {"std", "min", "max"} | {
+    "dist_id", "loc", "scale", "shape", "minimum", "maximum", "dependency",
+    # Scale parameter spelled for a dependent's own additive noise; required
+    # in place of "std"/"scale" once "dependency" is set (see
+    # analysis._reject_std_scale_for_dependent).
+    "noise",
+}
 # Parameters whose values must stay within [0, 1]
 _UNIT_INTERVAL_PARAMS = {"plant_utilization", "tax_rate"}
 
 
 def _validate_project_uncertainties(cfg: dict) -> None:
-    """
-    Validate the structure and values of a ``project_uncertainties`` config dict.
-
-    Parameters
-    ----------
-    cfg : dict
-        Uncertainty configuration mapping parameter names to sub-dicts with
-        keys such as ``mean``, ``std``, ``min``, ``max``.
-
-    Raises
-    ------
-    TypeError
-        If ``cfg`` is not a dict, or any sub-entry is not a dict, or any
-        numeric value is not an int or float.
-    ValueError
-        If unknown parameter or sub-keys are present, ``std`` is negative,
-        ``min >= max``, or domain-specific bounds are violated (e.g. interest
-        rate ≤ 0, project lifetime < 1, unit-interval params outside [0, 1]).
-    """
     if not cfg:
         return
     if not isinstance(cfg, dict):
@@ -2496,6 +2670,16 @@ def _validate_project_uncertainties(cfg: dict) -> None:
                 f"Valid keys: {sorted(_UNCERTAINTY_SUB_KEYS)}."
             )
         for key, val in sub.items():
+            if key == "dependency":
+                # A DAG dependency block ({"depends_on": ..., "offset": ...});
+                # its shape is validated by analysis._resolve_quantity_dependencies,
+                # which has the full plant to resolve references against.
+                if not isinstance(val, dict):
+                    raise TypeError(
+                        f"'project_uncertainties['{param}']['dependency']' "
+                        f"must be a dict, got {type(val).__name__}."
+                    )
+                continue
             if not isinstance(val, (int, float)):
                 raise TypeError(
                     f"'project_uncertainties['{param}']['{key}']' must be "
@@ -2511,29 +2695,47 @@ def _validate_project_uncertainties(cfg: dict) -> None:
                 f"'project_uncertainties['{param}']': "
                 f"'min' ({sub['min']}) must be less than 'max' ({sub['max']})."
             )
+        # Same pairing check for the new-style bound keys.
+        if (
+            "minimum" in sub
+            and "maximum" in sub
+            and sub["minimum"] >= sub["maximum"]
+        ):
+            raise ValueError(
+                f"'project_uncertainties['{param}']': 'minimum' "
+                f"({sub['minimum']}) must be less than 'maximum' "
+                f"({sub['maximum']})."
+            )
+        # The range checks below assume min/max bound the parameter's own
+        # absolute value. For a dependent that value comes from the
+        # dependency instead, and min/max bound its additive *noise* around
+        # zero -- so they legitimately go negative, and these rules would
+        # reject every valid noise band. Skip them for dependents.
+        if "dependency" in sub:
+            continue
         if param in ("fixed_capital_factor", "fixed_opex_factor"):
-            for bound in ("min", "max"):
+            for bound in ("min", "max", "minimum", "maximum"):
                 if bound in sub and sub[bound] <= 0:
                     raise ValueError(
                         f"'project_uncertainties['{param}']['{bound}']' "
                         f"must be > 0, got {sub[bound]}."
                     )
         if param == "interest_rate":
-            for bound in ("min", "max"):
+            for bound in ("min", "max", "minimum", "maximum"):
                 if bound in sub and sub[bound] <= 0:
                     raise ValueError(
                         f"'project_uncertainties['interest_rate']['{bound}']' "
                         f"must be > 0, got {sub[bound]}."
                     )
         if param == "project_lifetime":
-            for bound in ("min", "max"):
+            for bound in ("min", "max", "minimum", "maximum"):
                 if bound in sub and sub[bound] < 1:
                     raise ValueError(
                         f"'project_uncertainties['project_lifetime']"
                         f"['{bound}']' must be ≥ 1, got {sub[bound]}."
                     )
         if param in _UNIT_INTERVAL_PARAMS:
-            for bound in ("min", "max"):
+            for bound in ("min", "max", "minimum", "maximum"):
                 if bound in sub and not (0 <= sub[bound] <= 1):
                     raise ValueError(
                         f"'project_uncertainties['{param}']['{bound}']' "
@@ -2565,8 +2767,10 @@ def _normalize_dep_config(
         ValueError: If the specified MACRS class is not supported.
             Only classes defined in _MACRS_HALF_YEAR are accepted.
     Notes:
-        - If cfg.life is not specified, it defaults to the minimum of
-            project_life and 15 years.
+        - If cfg.life is not specified, it defaults to
+            min(15, project_life - service_start_year) -- capped at the
+            usable horizon so the default configuration always fully
+            depreciates within the project.
         - Only the "half_year" MACRS convention is currently supported.
         - MACRS class validation only occurs when the depreciation
             method is "macrs".
@@ -2577,9 +2781,15 @@ def _normalize_dep_config(
             if hasattr(cfg, k):
                 setattr(cfg, k, v)
 
-    # Sensible defaults
+    # Sensible defaults: cap the default life at the usable horizon
+    # (assets enter service at service_start_year) so the out-of-the-box
+    # config never strands book value past the end of the project. A
+    # user-specified life is taken as-is -- a statutory life longer than
+    # the project is legitimate (see build_depreciation_array's warning).
     if cfg.life is None:
-        cfg.life = min(project_life, 15)
+        cfg.life = max(
+            1, min(15, project_life - cfg.service_start_year)
+        )
     if cfg.method == "macrs":
         if cfg.convention != "half_year":
             raise ValueError(
@@ -2620,8 +2830,11 @@ def _straight_line_schedule(
 
     Notes:
         - Depreciation is distributed equally across the asset's useful life.
-        - A rounding correction is applied to the final depreciation year to
-        ensure the sum of the schedule equals the total depreciable amount.
+        - When the full life fits within the horizon, a float-rounding
+        correction on the final depreciation year ensures the schedule sums
+        exactly to the total depreciable amount. A schedule truncated by the
+        horizon keeps only the statutory annual amounts -- the undepreciated
+        tail is not written off within the analysis.
     """
     salvage = basis * salvage_frac
     dep_total = basis - salvage
@@ -2629,10 +2842,15 @@ def _straight_line_schedule(
     sched = np.zeros(horizon, dtype=float)
     years = min(life, horizon)
     sched[:years] = annual
-    # Small rounding fix to ensure sum equals dep_total
-    diff = dep_total - sched.sum()
-    if abs(diff) > 1e-6 and years > 0:
-        sched[years - 1] += diff
+    # Float-rounding fix only, and only when the full life fits the
+    # horizon. A truncated schedule (horizon < life) must NOT be topped
+    # up: each year may deduct only the statutory annual amount, so the
+    # undepreciated tail is simply not written off within the project
+    # (build_depreciation_array warns when that happens).
+    if horizon >= life and years > 0:
+        diff = dep_total - sched.sum()
+        if abs(diff) > 1e-6:
+            sched[years - 1] += diff
     return sched
 
 
@@ -2683,8 +2901,10 @@ def _declining_balance_schedule(
         amount.
     - The schedule respects the salvage value, preventing
         depreciation below it.
-    - A rounding correction is applied to ensure the total depreciation equals
-        (basis - salvage) within numerical precision.
+    - When the full life fits within the horizon, a float-rounding
+        correction ensures the total depreciation equals (basis - salvage)
+        within numerical precision. A schedule truncated by the horizon is
+        not topped up with the un-recovered balance.
     """
     salvage = basis * salvage_frac
     remaining = basis
@@ -2705,13 +2925,16 @@ def _declining_balance_schedule(
         )  # cannot dip below salvage
         sched[y] = dep
         remaining -= dep
-    # Tiny rounding correction
-    diff = (basis - salvage) - sched.sum()
-    if abs(diff) > 1e-6:
-        last = (
-            np.nonzero(sched)[0][-1] if sched.any() else 0
-        )
-        sched[last] += diff
+    # Float-rounding correction only, and only when the full life fits
+    # the horizon -- a truncated schedule must not be topped up with the
+    # un-recovered balance (see _straight_line_schedule)
+    if horizon >= life:
+        diff = (basis - salvage) - sched.sum()
+        if abs(diff) > 1e-6:
+            last = (
+                np.nonzero(sched)[0][-1] if sched.any() else 0
+            )
+            sched[last] += diff
     return sched
 
 
@@ -2799,6 +3022,8 @@ def build_depreciation_array(
     """
     cfg = _normalize_dep_config(project_life, dep_cfg)
     dep = np.zeros(project_life, dtype=float)
+    expected_total = 0.0
+    written_off_total = 0.0
 
     for capex_year, amount in capex_by_year.items():
         # place-in-service timing
@@ -2831,6 +3056,27 @@ def build_depreciation_array(
                 f"Unknown depreciation method: {cfg.method}"
             )
 
+        if cfg.method == "macrs":
+            expected_total += amount
+        else:
+            expected_total += amount * (1.0 - cfg.salvage_fraction)
+        written_off_total += sched.sum()
+
         dep[start: start + len(sched)] += sched
+
+    stranded = expected_total - written_off_total
+    if stranded > max(1e-6, 1e-9 * expected_total):
+        # Message kept free of amounts so the default warnings filter
+        # collapses it to a single line across Monte Carlo samples
+        warnings.warn(
+            "Depreciation life exceeds the usable horizon (project "
+            "lifetime minus service start year), so part of the "
+            "depreciable basis is not written off within the project. "
+            "This is legitimate for a statutory life longer than the "
+            "project, but shorten the depreciation life or extend the "
+            "project lifetime if a full write-off is intended.",
+            UserWarning,
+            stacklevel=2,
+        )
 
     return dep

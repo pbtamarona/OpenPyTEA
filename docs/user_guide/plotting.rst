@@ -4,8 +4,9 @@ Plotting
 The :mod:`openpytea.plotting` module wraps matplotlib to produce
 publication-quality figures using the `SciencePlots
 <https://github.com/garrettj403/SciencePlots>`_ style. All functions return
-a ``matplotlib.axes.Axes`` object so you can further customize the figure
-before saving.
+a ``(fig, ax)`` tuple — a :class:`matplotlib.figure.Figure` and a
+:class:`matplotlib.axes.Axes` — so you can further customize or save the
+figure directly.
 
 To see the outputs of all code examples below, refer to the
 `walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_.
@@ -28,19 +29,95 @@ helper functions in :mod:`openpytea.analysis`.
 
    # Equipment-level direct costs
    equip_data = direct_costs_data(plants=plant)
-   ax = plot_stacked_bar(equip_data)
+   fig, ax = plot_stacked_bar(equip_data)
 
    # Capital cost breakdown (ISBL, OSBL, D&E, Contingency)
    capex_data = fixed_capital_data(plants=plant)
-   ax = plot_stacked_bar(capex_data)
+   fig, ax = plot_stacked_bar(capex_data)
 
    # Fixed OPEX breakdown
    fopex_data = fixed_opex_data(plants=plant)
-   ax = plot_stacked_bar(fopex_data)
+   fig, ax = plot_stacked_bar(fopex_data)
 
    # Variable OPEX breakdown
    vopex_data = variable_opex_data(plants=plant)
-   ax = plot_stacked_bar(vopex_data)
+   fig, ax = plot_stacked_bar(vopex_data)
+
+.. list-table::
+   :widths: 25 25 25 25
+
+   * - .. image:: ../_static/plotting/direct_costs.png
+          :width: 100%
+     - .. image:: ../_static/plotting/fixed_capital.png
+          :width: 100%
+     - .. image:: ../_static/plotting/fixed_opex.png
+          :width: 100%
+     - .. image:: ../_static/plotting/variable_opex.png
+          :width: 100%
+
+Levelized cost breakdown
+-------------------------
+
+:func:`~openpytea.analysis.levelized_cost_data` feeds the same
+``plot_stacked_bar()`` function, but its "Side revenue" component (stored
+as a negative value) is rendered as a waterfall-style base below zero
+instead of stacking like a normal cost — so CAPEX and OPEX still stack up
+to the true net LCOP at the top of the bar. The side-revenue segment reuses
+the color of the largest stacked component, distinguished only by a hatch
+pattern, so the CAPEX/OPEX ratio stays easy to read.
+
+.. code-block:: python
+
+   from openpytea.analysis import levelized_cost_data
+   from openpytea.plotting import plot_stacked_bar
+
+   lcop = levelized_cost_data(plants=plant)
+   fig, ax = plot_stacked_bar(lcop)
+
+.. image:: ../_static/plotting/levelized_cost.png
+   :width: 320px
+   :align: center
+
+Cash flow diagram
+-------------------------
+
+:func:`~openpytea.plotting.plot_cash_flow` draws the classic cumulative
+cash flow curve: a dip into debt during construction/start-up, a minimum
+("maximum investment"), a break-even point where the curve crosses back
+above zero, and a climb into profit for the remainder of the project life.
+The region where the cumulative cash flow is negative is shaded (hatched)
+as debt, and the break-even point (if any) is marked with a dashed
+vertical line in the same color as the curve.
+
+.. code-block:: python
+
+   from openpytea.analysis import cash_flow_data
+   from openpytea.plotting import plot_cash_flow
+
+   cash_flow = cash_flow_data(plant)
+   fig, ax = plot_cash_flow(cash_flow)
+
+   fig.savefig("cash_flow.pdf")
+
+.. image:: ../_static/plotting/cash_flow.png
+   :width: 450px
+   :align: center
+
+Comparing multiple plants
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pass a list of plants to :func:`~openpytea.analysis.cash_flow_data` to
+overlay their cumulative cash flow curves — each with its own shaded debt
+region and break-even line — for direct comparison:
+
+.. code-block:: python
+
+   cash_flow_multi = cash_flow_data([plant, plant_b])
+   fig, ax = plot_cash_flow(cash_flow_multi, figsize=(4.5, 3))
+
+.. image:: ../_static/plotting/cash_flow_multi.png
+   :width: 450px
+   :align: center
 
 Sensitivity plots
 -----------------
@@ -52,9 +129,13 @@ Sensitivity plots
 
    # Vary electricity price ±50 % and plot LCOP
    sens = sensitivity_data(plants=plant, parameter="electricity", plus_minus_value=0.5)
-   ax = plot_sensitivity(sens)
+   fig, ax = plot_sensitivity(sens)
 
-   ax.figure.savefig("sensitivity.pdf")
+   fig.savefig("sensitivity.pdf")
+
+.. image:: ../_static/plotting/sensitivity.png
+   :width: 450px
+   :align: center
 
 Axis labels and the legend are set automatically from the data returned by
 :func:`~openpytea.analysis.sensitivity_data`. Pass a custom ``figsize`` to
@@ -62,7 +143,11 @@ resize the chart:
 
 .. code-block:: python
 
-   ax = plot_sensitivity(sens, figsize=(5, 3))
+   fig, ax = plot_sensitivity(sens, figsize=(5, 3))
+
+.. image:: ../_static/plotting/sensitivity_figsize.png
+   :width: 550px
+   :align: center
 
 Comparing multiple plants
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,7 +163,11 @@ plot all curves on the same axes:
        metric="NPV",
        plus_minus_value=0.5,
    )
-   ax = plot_sensitivity(sens_multi)
+   fig, ax = plot_sensitivity(sens_multi)
+
+.. image:: ../_static/plotting/sensitivity_multi.png
+   :width: 450px
+   :align: center
 
 Tornado diagrams
 ----------------
@@ -90,13 +179,37 @@ Tornado diagrams
 
    # Default metric is LCOP
    td = tornado_data(plant=plant, plus_minus_value=0.5)
-   ax = plot_tornado(td)
+   fig, ax = plot_tornado(td)
 
    # Profit-oriented metric
    td_roi = tornado_data(plant=plant, plus_minus_value=0.5, metric="ROI")
-   ax = plot_tornado(td_roi)
+   fig, ax = plot_tornado(td_roi)
 
-   ax.figure.savefig("tornado.pdf")
+   fig.savefig("tornado.pdf")
+
+.. list-table::
+   :widths: 50 50
+
+   * - .. image:: ../_static/plotting/tornado_lcop.png
+          :width: 100%
+     - .. image:: ../_static/plotting/tornado_roi.png
+          :width: 100%
+
+The figure height is chosen from the number of factors, so a long factor
+list — a plant with many utilities, or ``include_process_params=True`` on
+:func:`~openpytea.analysis.tornado_data` — produces a taller figure rather
+than a more crowded one. Pass an explicit ``figsize`` to override:
+
+.. code-block:: python
+
+   td = tornado_data(plant=plant, plus_minus_value=0.5,
+                     include_process_params=True)
+   fig, ax = plot_tornado(td, figsize=(4, 6))
+
+Consumption and production factors are labelled ``"<item> cons."`` and
+``"<product> prod."`` to keep the y-axis readable. The Monte Carlo input
+names (``"Electricity consumption"``, ``"Methanol production"`` — see
+:func:`~openpytea.plotting.plot_monte_carlo_inputs`) are unabbreviated.
 
 Monte Carlo histograms
 -----------------------
@@ -109,21 +222,39 @@ Monte Carlo histograms
    mc_results = monte_carlo(plant, num_samples=1_000_000, batch_size=10_000)
 
    # Distribution of the LCOP
-   ax = plot_monte_carlo(plant, metric="LCOP", bins=30)
+   fig, ax = plot_monte_carlo(plant, metric="LCOP", bins=30)
 
-   ax.figure.savefig("monte_carlo_lcop.pdf")
+   fig.savefig("monte_carlo_lcop.pdf")
+
+.. image:: ../_static/plotting/monte_carlo_lcop.png
+   :width: 450px
+   :align: center
 
 Visualizing input distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use :func:`~openpytea.plotting.plot_monte_carlo_inputs` to verify that the
-``std``/``min``/``max`` settings produce the intended input distributions:
+``std``/``min``/``max`` settings produce the intended input distributions.
+Inputs are split into two categories: **process** parameters (consumption
+and production quantities) and **economic** parameters (prices, rates, and
+the other ``project_uncertainties`` factors). The default ``category="both"``
+builds one figure per group and returns both; pass ``category="process"`` or
+``category="economic"`` to get just one back as a plain ``(fig, axes)`` pair:
 
 .. code-block:: python
 
    from openpytea.plotting import plot_monte_carlo_inputs
 
-   axes = plot_monte_carlo_inputs(mc_results, bins=40)
+   fig_process, axes_process, fig_economic, axes_economic = plot_monte_carlo_inputs(
+       mc_results, bins=40
+   )
+
+   # Or select a single group:
+   fig, axes = plot_monte_carlo_inputs(mc_results, category="process", bins=40)
+
+.. image:: ../_static/plotting/monte_carlo_inputs.png
+   :width: 700px
+   :align: center
 
 Comparing scenarios
 ~~~~~~~~~~~~~~~~~~~
@@ -134,23 +265,26 @@ Comparing scenarios
 
    mc_b = monte_carlo(plant_b, num_samples=1_000_000, batch_size=10_000)
 
-   ax = plot_multiple_monte_carlo(
+   fig, ax = plot_multiple_monte_carlo(
        data_list=[plant, plant_b],
        metric="LCOP",
        bins=30,
    )
 
+.. image:: ../_static/plotting/monte_carlo_multiple.png
+   :width: 450px
+   :align: center
+
 Saving figures
 --------------
 
-All functions return an ``Axes`` object. Access the parent figure via
-``ax.figure`` to save:
+All functions return a ``(fig, ax)`` tuple. Use ``fig`` directly to save:
 
 .. code-block:: python
 
-   ax = plot_stacked_bar(capex_data)
-   ax.figure.savefig("capex.png", dpi=300, bbox_inches="tight")
-   ax.figure.savefig("capex.pdf")   # vector format for publications
+   fig, ax = plot_stacked_bar(capex_data)
+   fig.savefig("capex.png", dpi=300, bbox_inches="tight")
+   fig.savefig("capex.pdf")   # vector format for publications
 
 Customizing axes
 -----------------
@@ -159,10 +293,14 @@ You can modify the returned axes object with standard matplotlib calls:
 
 .. code-block:: python
 
-   ax = plot_sensitivity(sens)
+   fig, ax = plot_sensitivity(sens)
    ax.set_title("Custom title", fontsize=14)
    ax.set_xlim(-0.6, 0.6)
    ax.legend(loc="upper left")
+
+.. image:: ../_static/plotting/sensitivity_custom_axes.png
+   :width: 450px
+   :align: center
 
 See also
 --------

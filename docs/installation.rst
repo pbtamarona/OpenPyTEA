@@ -60,8 +60,6 @@ OpenPyTEA automatically installs all required dependencies:
      - Publication-quality figure styling
    * - ``scipy >= 1.10``
      - Optimization (IRR solver) and statistical distributions
-   * - ``seaborn >= 0.12``
-     - Statistical visualization (Monte Carlo plots)
    * - ``tqdm >= 4.64``
      - Progress bars for Monte Carlo simulations
    * - ``jinja2 >= 3.1``
@@ -72,7 +70,9 @@ Optional extras
 
 .. code-block:: bash
 
-   # Jupyter / IPython kernel support
+   # IPython display support, including the ipywidgets progress
+   # bar shown while a Monte Carlo run is in progress (Jupyter itself
+   # is not included -- install it separately, e.g. `pip install jupyter`)
    pip install "OpenPyTEA[ipython]"
 
    # Development / testing

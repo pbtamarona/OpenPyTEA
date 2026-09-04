@@ -11,3 +11,6 @@ CLAUDE.md
 build/
 dist/
 TAURI_PACKAGING_PLAN.md.bak
+
+docs/_build/
+docs/_static/cost_correlations_table.csv

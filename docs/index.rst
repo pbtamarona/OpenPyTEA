@@ -1,3 +1,5 @@
+.. role:: red-bold
+
 Open-Source Techno-Economic Assessment Python-Toolkit
 =========
 
@@ -22,6 +24,31 @@ covering capital expenditure (CAPEX), operating expenses (OPEX), and key
 financial metrics.
 Source code, issue tracker, and contributions:
 `github.com/pbtamarona/OpenPyTEA <https://github.com/pbtamarona/OpenPyTEA>`_.
+
+----
+
+.. admonition:: 🎓 Upcoming Workshop — Register Now!
+   :class: important
+
+   **Open-Science Techno-Economic Assessment with OpenPyTEA: From Process Design to Economic Insights**
+
+   We are hosting a one-day workshop covering the full workflow from process design and simulation
+   to economic evaluation, with lectures, a hands-on OpenPyTEA session, and an industry talk by Shell.
+   It closes with a community discussion on establishing shared TEA standards.
+
+   - 📅 **Date:** November 6, 2026 | 09:30 – 18:00
+   - 📍 **Location:** Process & Energy, TU Delft, Delft, The Netherlands
+   - 📝 **Registration:** `aanmelder.nl/openpytea2026 <https://aanmelder.nl/openpytea2026>`_
+   - ⏰ **Deadline:** :red-bold:`Registration closes on October 15, 2026`
+
+   Lunch, snacks, coffee, and drinks will be provided!
+
+   .. image:: _static/workshop-flyer.jpg
+      :alt: OpenPyTEA Workshop Flyer
+      :width: 600px
+      :align: center
+
+----
 
 .. grid:: 2
    :gutter: 3
@@ -58,14 +85,14 @@ Source code, issue tracker, and contributions:
       Worked Jupyter notebooks covering hydrogen, geothermal, and other
       case studies with full TEA workflows.
 
-   .. grid-item-card:: :octicon:`video` Tutorials
+   .. grid-item-card:: :octicon:`book` Tutorials
       :link: tutorials
       :link-type: doc
 
-      Walkthrough notebook and step-by-step video tutorials covering the
-      full OpenPyTEA workflow.
+      Walkthrough notebook covering the full OpenPyTEA workflow
+      step by step.
 
-   .. grid-item-card:: :octicon:`browser` Web GUI
+   .. grid-item-card:: :octicon:`browser` Graphical User Interface
       :link: gui
       :link-type: doc
 
@@ -80,7 +107,7 @@ Key features
 * **Extensive financial metrics** — NPV, IRR, ROI, levelized cost, payback time, and full cash-flow tables
 * **Multiple depreciation methods** — straight-line, declining-balance, MACRS
 * **Sensitivity & uncertainty** — one-way sensitivity, tornado diagrams, Monte Carlo simulation
-* **Interactive web GUI** — React + FastAPI front-end for no-code analysis *(work in progress)**
+* **Graphical user interface** — installable desktop app (or run from source) for no-code analysis *(work in progress)**
 * **Reproducible workflows** — JSON-based configuration files and result export
 * **Research-oriented design** — easy integration with other frameworks (optimization, LCA, etc.)
 

@@ -4,19 +4,22 @@ economic sensitivity and uncertainty evaluation.
 """
 
 from .plant import Plant
-from .equipment import Equipment
+from .equipment import Equipment, CompositeEquipment, inflation_adjustment
 from .analysis import (direct_costs_data, fixed_capital_data,
                        fixed_opex_data, variable_opex_data,
+                       levelized_cost_data, cash_flow_data,
                        sensitivity_data, tornado_data,
                        monte_carlo)
-from .plotting import (plot_stacked_bar, plot_sensitivity,
+from .plotting import (plot_stacked_bar, plot_cash_flow,
+                       plot_sensitivity,
                        plot_tornado, plot_monte_carlo,
                        plot_monte_carlo_inputs,
                        plot_multiple_monte_carlo)
 
-from .io import (load_results, run_equipment, run_plant, run_tea)
+from .io import (load_results, load_openpytea_config,
+                 run_equipment, run_plant, run_tea, run_openpytea)
 
-__version__ = "2.1.0"
+__version__ = "3.0.0"
 __author__ = "Panji B. Tamarona"
 __email__ = "P.B.Tamarona@tudelft.nl"
 __license__ = "MIT"
@@ -30,21 +33,28 @@ __url__ = "https://github.com/PBTamarona/OpenPyTEA"
 __all__ = [
     "Plant",
     "Equipment",
+    "CompositeEquipment",
+    "inflation_adjustment",
     "direct_costs_data",
     "fixed_capital_data",
     "fixed_opex_data",
     "variable_opex_data",
+    "levelized_cost_data",
+    "cash_flow_data",
     "sensitivity_data",
     "tornado_data",
     "monte_carlo",
     "plot_stacked_bar",
+    "plot_cash_flow",
     "plot_sensitivity",
     "plot_tornado",
     "plot_monte_carlo",
     "plot_monte_carlo_inputs",
     "plot_multiple_monte_carlo",
     "load_results",
+    "load_openpytea_config",
     "run_equipment",
     "run_plant",
-    "run_tea"
+    "run_tea",
+    "run_openpytea"
 ]
