@@ -1,6 +1,6 @@
 """Pydantic models for request/response bodies."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Any
 
 
@@ -27,16 +27,29 @@ class LoadExampleResponse(BaseModel):
 
 class EquipmentIn(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    param: float | None = Field(default=None, ge=0, le=1e12)
+    # A 2-element list for 2-variable correlations (e.g. conveyor width & length)
+    param: float | list[float] | None = None
     process_type: str = "Fluids"
     category: str = Field(default="", max_length=255)
     type: str | None = Field(default=None, max_length=255)
-    material: str = "Carbon steel"
+    # None = use the correlation's default material
+    material: str | None = None
     num_units: int | None = Field(default=None, ge=1, le=10000)
     purchased_cost: float | None = Field(default=None, ge=0, le=1e12)
     cost_year: int | None = Field(default=None, ge=1900, le=2100)
     cost_func: str | None = None
     target_year: int = Field(default=2024, ge=1900, le=2100)
+
+    @field_validator("param")
+    @classmethod
+    def _validate_param(cls, v):
+        vals = v if isinstance(v, list) else [v]
+        if isinstance(v, list) and len(v) != 2:
+            raise ValueError("param list must have exactly 2 elements")
+        for x in vals:
+            if x is not None and not (0 <= x <= 1e12):
+                raise ValueError("param values must be between 0 and 1e12")
+        return v
 
 
 class EquipmentOut(BaseModel):
@@ -46,8 +59,10 @@ class EquipmentOut(BaseModel):
     type: str | None
     material: str
     process_type: str
-    param: float | None
+    param: float | list[float] | None
     num_units: int | None
+    num_units_input: int | None = None
+    cost_func: str | None = None
     cost_year: int | None
     target_year: int
     purchased_cost: float
@@ -60,6 +75,9 @@ class CostDBEntry(BaseModel):
     units: str = ""
     s_lower: float | None = None
     s_upper: float | None = None
+    s2_lower: float | None = None
+    s2_upper: float | None = None
+    default_material: str | None = None
 
 
 class ExamplePreset(BaseModel):

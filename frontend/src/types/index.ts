@@ -5,8 +5,10 @@ export interface EquipmentItem {
   type: string | null;
   material: string;
   process_type: string;
-  param: number | null;
+  param: number | number[] | null;
   num_units: number | null;
+  num_units_input: number | null;
+  cost_func: string | null;
   cost_year: number | null;
   target_year: number;
   purchased_cost: number;
@@ -15,11 +17,11 @@ export interface EquipmentItem {
 
 export interface EquipmentInput {
   name: string;
-  param?: number | null;
+  param?: number | number[] | null;
   process_type: string;
   category: string;
   type?: string | null;
-  material: string;
+  material: string | null;
   num_units?: number | null;
   purchased_cost?: number | null;
   cost_year?: number | null;
@@ -33,6 +35,9 @@ export interface CostDBEntry {
   units: string;
   s_lower: number | null;
   s_upper: number | null;
+  s2_lower: number | null;
+  s2_upper: number | null;
+  default_material: string | null;
 }
 
 export interface PlantConfig {

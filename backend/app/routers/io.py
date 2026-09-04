@@ -6,9 +6,8 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
 
-from openpytea.equipment import Equipment
-
 from app import state
+from app.plant_factory import build_equipment_list
 from app.schemas import LoadResponse, LoadExampleResponse, ExamplePreset
 from app.util import to_jsonable
 
@@ -41,12 +40,16 @@ def save_project():
     for eq in state.equipment_list:
         equipment_data.append({
             "name": eq.name,
-            "param": eq.param,
+            "param": list(eq.param) if isinstance(eq.param, tuple) else eq.param,
             "process_type": eq.process_type,
             "category": eq.category,
             "type": eq.type,
             "material": eq.material,
-            "num_units": eq.num_units,
+            # Save what the user asked for, not the library's resolved
+            # value — the resolved count is already priced into the cost,
+            # and reloading it as an input would multiply the cost again.
+            "num_units": getattr(eq, "_requested_num_units", None),
+            "cost_func": eq._cost_func,
             "purchased_cost": float(eq.purchased_cost) if eq.param is None else None,
             "cost_year": eq.cost_year,
             "target_year": eq.target_year,
@@ -65,7 +68,6 @@ def save_project():
 
 
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
-MAX_EQUIPMENT = 500
 
 
 def _restore_project_state(data: dict) -> int:
@@ -74,40 +76,11 @@ def _restore_project_state(data: dict) -> int:
     Accepts both the current versioned envelope and the legacy flat shape —
     both have `equipment` and `plant` at the top level.
     """
-    equipment_data = data.get("equipment", [])
-    if len(equipment_data) > MAX_EQUIPMENT:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Too many equipment items (max {MAX_EQUIPMENT})",
-        )
-
-    rebuilt: list[Equipment] = []
-    for entry in equipment_data:
-        try:
-            eq = Equipment(
-                name=entry["name"],
-                param=entry.get("param", 0.0),
-                process_type=entry["process_type"],
-                category=entry["category"],
-                type=entry.get("type"),
-                material=entry.get("material", "Carbon steel"),
-                num_units=entry.get("num_units"),
-                purchased_cost=entry.get("purchased_cost"),
-                cost_year=entry.get("cost_year"),
-                target_year=entry.get("target_year", 2024),
-            )
-            rebuilt.append(eq)
-        except Exception:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid equipment entry '{entry.get('name', '?')}'",
-            )
-
-    state.equipment_list = rebuilt
+    state.equipment_list = build_equipment_list(data.get("equipment", []))
     state.plant_config = data.get("plant", {})
     state.plant = None
     state.results = {}
-    return len(rebuilt)
+    return len(state.equipment_list)
 
 
 @router.post("/load", response_model=LoadResponse)
@@ -167,27 +140,7 @@ def load_example(example_id: str):
     data = json.loads(preset_file.read_text())
 
     # Restore equipment
-    state.equipment_list = []
-    for entry in data.get("equipment", []):
-        try:
-            eq = Equipment(
-                name=entry["name"],
-                param=entry.get("param", 0.0),
-                process_type=entry["process_type"],
-                category=entry["category"],
-                type=entry.get("type"),
-                material=entry.get("material", "Carbon steel"),
-                num_units=entry.get("num_units"),
-                purchased_cost=entry.get("purchased_cost"),
-                cost_year=entry.get("cost_year"),
-                target_year=entry.get("target_year", 2024),
-            )
-            state.equipment_list.append(eq)
-        except Exception:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid equipment entry '{entry.get('name', '?')}'",
-            )
+    state.equipment_list = build_equipment_list(data.get("equipment", []))
 
     # Restore plant config
     state.plant_config = data.get("plant", {})

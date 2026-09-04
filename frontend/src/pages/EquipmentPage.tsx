@@ -7,8 +7,15 @@ import type { EquipmentItem, EquipmentInput, CostDBEntry } from "../types";
 
 const defaultInput: EquipmentInput = {
   name: "", param: null, process_type: "Fluids", category: "",
-  type: null, material: "Carbon steel", target_year: 2024,
-  purchased_cost: null, cost_year: null,
+  type: null, material: null, target_year: 2024,
+  purchased_cost: null, cost_year: null, num_units: null, cost_func: null,
+};
+
+// "belt_conveyor_seider_2013" → "Seider 2013", used to tell apart correlations
+// that share a category + type but come from different sources.
+const sourceLabel = (key: string): string | null => {
+  const m = key.match(/_([a-z]+)_(\d{4}[a-z]?)$/i);
+  return m ? `${m[1][0].toUpperCase()}${m[1].slice(1)} ${m[2]}` : null;
 };
 
 interface Props {
@@ -24,6 +31,8 @@ export default function EquipmentPage({ setError, markDirty }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [form, setForm] = useState<EquipmentInput>({ ...defaultInput });
+  const [param1, setParam1] = useState<number | null>(null);
+  const [param2, setParam2] = useState<number | null>(null);
   const [useDirectCost, setUseDirectCost] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
@@ -39,9 +48,21 @@ export default function EquipmentPage({ setError, markDirty }: Props) {
   }, []);
 
   const selectedTypes = form.category ? (categories[form.category] || []) : [];
+  // Prefer the pinned correlation key; fall back to the type name for
+  // items created before cost_func was tracked (legacy saves, presets).
+  const selectedEntry = form.cost_func
+    ? selectedTypes.find((t) => t.key === form.cost_func)
+    : form.type
+      ? selectedTypes.find((t) => t.type === form.type)
+      : undefined;
+  const isTwoVar = selectedEntry != null && (selectedEntry.s2_lower != null || selectedEntry.s2_upper != null);
+  // 2-var correlations describe both size parameters in one units string, e.g. "Width, in & length, ft"
+  const [units1, units2] = (selectedEntry?.units || "").split(" & ");
 
   const openAdd = () => {
     setForm({ ...defaultInput });
+    setParam1(null);
+    setParam2(null);
     setEditIndex(null);
     setUseDirectCost(false);
     setModalError(null);
@@ -52,9 +73,12 @@ export default function EquipmentPage({ setError, markDirty }: Props) {
     setForm({
       name: item.name, param: item.param, process_type: item.process_type,
       category: item.category, type: item.type, material: item.material,
+      num_units: item.num_units_input, cost_func: item.cost_func,
       target_year: item.target_year, purchased_cost: item.param === null ? item.purchased_cost : null,
       cost_year: item.cost_year,
     });
+    setParam1(Array.isArray(item.param) ? item.param[0] : item.param);
+    setParam2(Array.isArray(item.param) ? item.param[1] : null);
     setEditIndex(item.index);
     setUseDirectCost(item.param === null);
     setModalError(null);
@@ -67,6 +91,7 @@ export default function EquipmentPage({ setError, markDirty }: Props) {
       if (useDirectCost) {
         payload.param = null;
       } else {
+        payload.param = isTwoVar ? [param1 ?? 0, param2 ?? 0] : param1;
         payload.purchased_cost = null;
         payload.cost_year = null;
       }
@@ -118,7 +143,7 @@ export default function EquipmentPage({ setError, markDirty }: Props) {
                   <td>{item.type || "-"}</td>
                   <td>{item.material}</td>
                   <td>{item.process_type}</td>
-                  <td className="number">{item.param != null ? fmt(item.param) : "-"}</td>
+                  <td className="number">{item.param == null ? "-" : Array.isArray(item.param) ? item.param.map(fmt).join(" × ") : fmt(item.param)}</td>
                   <td className="number">{item.num_units ?? 1}</td>
                   <td className="number">{fmt(item.purchased_cost)}</td>
                   <td className="number">{fmt(item.direct_cost)}</td>
@@ -153,16 +178,30 @@ export default function EquipmentPage({ setError, markDirty }: Props) {
               </div>
               <div className="form-group">
                 <label>Category</label>
-                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value, type: null })}>
+                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value, type: null, cost_func: null })}>
                   <option value="">-- Select --</option>
                   {Object.keys(categories).sort().map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label>Type</label>
-                <select value={form.type || ""} onChange={(e) => setForm({ ...form, type: e.target.value || null })}>
+                <select
+                  value={selectedEntry?.key || ""}
+                  onChange={(e) => {
+                    const entry = selectedTypes.find((t) => t.key === e.target.value);
+                    setForm({ ...form, type: entry?.type ?? null, cost_func: entry?.key ?? null });
+                  }}
+                >
                   <option value="">-- None --</option>
-                  {selectedTypes.map((t) => <option key={t.key} value={t.type || ""}>{t.type || t.key}</option>)}
+                  {selectedTypes.map((t) => {
+                    const dup = selectedTypes.filter((o) => o.type === t.type).length > 1;
+                    const src = dup ? sourceLabel(t.key) : null;
+                    return (
+                      <option key={t.key} value={t.key}>
+                        {(t.type || t.key) + (src ? ` (${src})` : "")}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div className="form-group">
@@ -173,13 +212,24 @@ export default function EquipmentPage({ setError, markDirty }: Props) {
               </div>
               <div className="form-group">
                 <label>Material</label>
-                <select value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })}>
+                <select value={form.material ?? ""} onChange={(e) => setForm({ ...form, material: e.target.value || null })}>
+                  <option value="">
+                    Auto{selectedEntry?.default_material ? ` — ${selectedEntry.default_material}` : " (correlation default)"}
+                  </option>
                   {materials.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label>Target Year</label>
                 <input type="number" value={form.target_year} onChange={(e) => setForm({ ...form, target_year: +e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label>Number of Units</label>
+                <input
+                  type="number" min={1} placeholder="auto"
+                  value={form.num_units ?? ""}
+                  onChange={(e) => setForm({ ...form, num_units: e.target.value ? +e.target.value : null })}
+                />
               </div>
             </div>
 
@@ -206,14 +256,27 @@ export default function EquipmentPage({ setError, markDirty }: Props) {
                 <div className="form-group">
                   <label>
                     Size Parameter
-                    {selectedTypes.length > 0 && form.type && (
+                    {selectedEntry && (
                       <span style={{ fontWeight: 400, textTransform: "none" }}>
-                        {" "}({selectedTypes.find(t => t.type === form.type)?.units || ""}, range: {selectedTypes.find(t => t.type === form.type)?.s_lower ?? "?"} - {selectedTypes.find(t => t.type === form.type)?.s_upper ?? "?"})
+                        {" "}({units1 || selectedEntry.units}, range: {selectedEntry.s_lower ?? "?"} - {selectedEntry.s_upper ?? "?"})
                       </span>
                     )}
                   </label>
-                  <input type="number" value={form.param ?? ""} onChange={(e) => setForm({ ...form, param: e.target.value ? +e.target.value : null })} />
+                  <input type="number" value={param1 ?? ""} onChange={(e) => setParam1(e.target.value ? +e.target.value : null)} />
                 </div>
+                {isTwoVar && (
+                  <div className="form-group">
+                    <label>
+                      2nd Size Parameter
+                      {selectedEntry && (
+                        <span style={{ fontWeight: 400, textTransform: "none" }}>
+                          {" "}({units2 || ""}, range: {selectedEntry.s2_lower ?? "?"} - {selectedEntry.s2_upper ?? "?"})
+                        </span>
+                      )}
+                    </label>
+                    <input type="number" value={param2 ?? ""} onChange={(e) => setParam2(e.target.value ? +e.target.value : null)} />
+                  </div>
+                )}
               </div>
             )}
 

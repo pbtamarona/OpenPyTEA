@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from openpytea.equipment import Equipment, CostCorrelationDB
 
 from app import state
+from app.plant_factory import equipment_from_entry
 from app.schemas import EquipmentIn, EquipmentOut, OkResponse, CostDBEntry
 
 router = APIRouter()
@@ -12,6 +13,9 @@ _db = CostCorrelationDB()
 
 
 def _eq_to_out(i: int, eq: Equipment) -> dict:
+    param = eq.param
+    if isinstance(param, tuple):
+        param = list(param)
     return EquipmentOut(
         index=i,
         name=eq.name,
@@ -19,8 +23,10 @@ def _eq_to_out(i: int, eq: Equipment) -> dict:
         type=eq.type,
         material=eq.material,
         process_type=eq.process_type,
-        param=eq.param,
+        param=param,
         num_units=eq.num_units,
+        num_units_input=getattr(eq, "_requested_num_units", None),
+        cost_func=eq._cost_func,
         cost_year=eq.cost_year,
         target_year=eq.target_year,
         purchased_cost=float(eq.purchased_cost),
@@ -29,19 +35,7 @@ def _eq_to_out(i: int, eq: Equipment) -> dict:
 
 
 def _make_equipment(data: EquipmentIn) -> Equipment:
-    return Equipment(
-        name=data.name,
-        param=data.param if data.param is not None else 0.0,
-        process_type=data.process_type,
-        category=data.category,
-        type=data.type,
-        material=data.material,
-        num_units=data.num_units,
-        purchased_cost=data.purchased_cost,
-        cost_year=data.cost_year,
-        cost_func=data.cost_func,
-        target_year=data.target_year,
-    )
+    return equipment_from_entry(data.model_dump())
 
 
 @router.get("", response_model=list[EquipmentOut])
@@ -53,8 +47,8 @@ def list_equipment():
 def add_equipment(data: EquipmentIn):
     try:
         eq = _make_equipment(data)
-    except (KeyError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid equipment parameters")
+    except (KeyError, ValueError, TypeError) as e:
+        raise HTTPException(status_code=400, detail=f"Invalid equipment parameters: {e}")
     state.equipment_list.append(eq)
     return _eq_to_out(len(state.equipment_list) - 1, eq)
 
@@ -65,8 +59,8 @@ def update_equipment(index: int, data: EquipmentIn):
         raise HTTPException(status_code=404, detail="Equipment not found")
     try:
         eq = _make_equipment(data)
-    except (KeyError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid equipment parameters")
+    except (KeyError, ValueError, TypeError) as e:
+        raise HTTPException(status_code=400, detail=f"Invalid equipment parameters: {e}")
     state.equipment_list[index] = eq
     return _eq_to_out(index, eq)
 
@@ -88,12 +82,18 @@ def get_cost_db_categories():
         cat = row.get("category", "")
         if cat not in groups:
             groups[cat] = []
+        default_material = row.get("default material")
+        if not isinstance(default_material, str) or default_material.strip().lower() in ("", "n.a.", "na", "none"):
+            default_material = None
         groups[cat].append({
             "key": row.get("key", ""),
             "type": row.get("type", None),
             "units": row.get("units", ""),
             "s_lower": float(row["s_lower"]) if not _isnan(row.get("s_lower")) else None,
             "s_upper": float(row["s_upper"]) if not _isnan(row.get("s_upper")) else None,
+            "s2_lower": float(row["s2_lower"]) if not _isnan(row.get("s2_lower")) else None,
+            "s2_upper": float(row["s2_upper"]) if not _isnan(row.get("s2_upper")) else None,
+            "default_material": default_material,
         })
     return groups
 

@@ -107,8 +107,19 @@ frontend/
 - Footer row with totals
 - Modal dialog for add/edit with:
   - Category dropdown (populated from `/cost-db/categories`)
-  - Type dropdown (cascading, shows param units and valid range)
-  - Process type, material, target year dropdowns
+  - Type dropdown (cascading, shows param units and valid range). Each option
+    is backed by its correlation `key`, sent as `cost_func` to pin the exact
+    correlation — several correlations can share a category + type (different
+    sources), and duplicates are labeled with the source (e.g. "Belt (Seider 2013)")
+  - A second size-parameter input appears for 2-variable correlations
+    (rows with `s2_lower`/`s2_upper`, e.g. conveyor width & length)
+  - Material dropdown with an "Auto" option (sends `material: null`; the
+    library resolves the correlation's default material)
+  - Optional "Number of units" (blank = library auto-parallelization). The
+    user's value is tracked separately (`num_units_input`) from the resolved
+    count, because the resolved count is already priced into the cost and
+    must never be round-tripped as an input
+  - Process type, target year inputs
   - Toggle between "size parameter" and "direct cost input" modes
 - On submit, backend constructs Equipment and returns computed costs
 
