@@ -36,24 +36,28 @@ def new_project():
 @router.post("/save")
 def save_project():
     """Return the full project state as a versioned JSON envelope."""
+    # Every equipment object is built via plant_factory.equipment_from_entry,
+    # which keeps the sanitized original input on _input_spec. Saving that
+    # spec (never derived values like the resolved num_units or an
+    # inflation-adjusted composite quote) makes save → load a clean rebuild
+    # from user inputs.
     equipment_data = []
     for eq in state.equipment_list:
-        equipment_data.append({
-            "name": eq.name,
-            "param": list(eq.param) if isinstance(eq.param, tuple) else eq.param,
-            "process_type": eq.process_type,
-            "category": eq.category,
-            "type": eq.type,
-            "material": eq.material,
-            # Save what the user asked for, not the library's resolved
-            # value — the resolved count is already priced into the cost,
-            # and reloading it as an input would multiply the cost again.
-            "num_units": getattr(eq, "_requested_num_units", None),
-            "cost_func": eq._cost_func,
-            "purchased_cost": float(eq.purchased_cost) if eq.param is None else None,
-            "cost_year": eq.cost_year,
-            "target_year": eq.target_year,
-        })
+        spec = getattr(eq, "_input_spec", None)
+        if spec is None:
+            spec = {
+                "name": eq.name,
+                "param": list(eq.param) if isinstance(eq.param, tuple) else eq.param,
+                "process_type": eq.process_type,
+                "category": eq.category,
+                "type": eq.type,
+                "material": eq.material,
+                "num_units": getattr(eq, "_requested_num_units", None),
+                "purchased_cost": float(eq.purchased_cost) if eq.param is None else None,
+                "cost_year": eq.cost_year,
+                "target_year": eq.target_year,
+            }
+        equipment_data.append(spec)
 
     project = {
         "format": PROJECT_FORMAT,

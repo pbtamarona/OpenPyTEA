@@ -1,7 +1,7 @@
 """Equipment CRUD + cost database lookup endpoints."""
 
 from fastapi import APIRouter, HTTPException
-from openpytea.equipment import Equipment, CostCorrelationDB
+from openpytea.equipment import Equipment, CompositeEquipment, CostCorrelationDB
 
 from app import state
 from app.plant_factory import equipment_from_entry
@@ -12,10 +12,11 @@ router = APIRouter()
 _db = CostCorrelationDB()
 
 
-def _eq_to_out(i: int, eq: Equipment) -> dict:
+def _eq_to_out(i: int, eq) -> dict:
     param = eq.param
     if isinstance(param, tuple):
         param = list(param)
+    is_composite = isinstance(eq, CompositeEquipment)
     return EquipmentOut(
         index=i,
         name=eq.name,
@@ -26,11 +27,34 @@ def _eq_to_out(i: int, eq: Equipment) -> dict:
         param=param,
         num_units=eq.num_units,
         num_units_input=getattr(eq, "_requested_num_units", None),
-        cost_func=eq._cost_func,
+        cost_func=None if is_composite else eq._cost_func,
         cost_year=eq.cost_year,
         target_year=eq.target_year,
         purchased_cost=float(eq.purchased_cost),
         direct_cost=float(eq.direct_cost),
+        is_composite=is_composite,
+        installation=eq.installation if is_composite else None,
+        components_purchased_cost=(
+            float(eq.components_purchased_cost) if is_composite else None
+        ),
+        quoted_purchased_cost=(
+            eq._input_spec.get("purchased_cost") if is_composite else None
+        ),
+        quoted_cost_year=(
+            eq._input_spec.get("cost_year") if is_composite else None
+        ),
+        components=(
+            [
+                {
+                    "spec": comp._input_spec,
+                    "purchased_cost": float(comp.purchased_cost),
+                    "direct_cost": float(comp.direct_cost),
+                }
+                for comp in eq.components
+            ]
+            if is_composite
+            else None
+        ),
     ).model_dump()
 
 

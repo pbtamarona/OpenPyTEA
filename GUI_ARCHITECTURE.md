@@ -121,7 +121,19 @@ frontend/
     must never be round-tripped as an input
   - Process type, target year inputs
   - Toggle between "size parameter" and "direct cost input" modes
-- On submit, backend constructs Equipment and returns computed costs
+  - "Composite equipment" mode (3.0 `CompositeEquipment`): a package unit
+    (PSA skid, compressor train) assembled from sub-components. The modal
+    switches to a composite view with label fields, installation rule
+    (per-component factors vs. composite factors applied once), optional
+    vendor quote (+ quote year, inflation-adjusted by the library), and a
+    components list edited with the same field editor as regular equipment.
+    Components may themselves be composites when loaded from JSON (the UI
+    creates one level; the backend accepts nesting up to 3)
+- On submit, backend constructs Equipment/CompositeEquipment and returns
+  computed costs. Each object keeps its sanitized original input on
+  `_input_spec`; project save writes those specs verbatim so save → load
+  rebuilds from user inputs (resolved num_units or adjusted quotes are
+  never round-tripped as inputs)
 
 ### PlantConfigPage
 - Four card sections: General, Financial, Labor, Products, Variable OPEX

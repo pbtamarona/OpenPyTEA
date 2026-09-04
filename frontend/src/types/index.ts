@@ -13,6 +13,12 @@ export interface EquipmentItem {
   target_year: number;
   purchased_cost: number;
   direct_cost: number;
+  is_composite: boolean;
+  installation: string | null;
+  components_purchased_cost: number | null;
+  quoted_purchased_cost: number | null;
+  quoted_cost_year: number | null;
+  components: { spec: EquipmentInput; purchased_cost: number; direct_cost: number }[] | null;
 }
 
 export interface EquipmentInput {
@@ -27,6 +33,8 @@ export interface EquipmentInput {
   cost_year?: number | null;
   cost_func?: string | null;
   target_year: number;
+  components?: EquipmentInput[] | null;
+  installation?: string | null;
 }
 
 export interface CostDBEntry {

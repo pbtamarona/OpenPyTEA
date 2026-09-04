@@ -39,6 +39,10 @@ class EquipmentIn(BaseModel):
     cost_year: int | None = Field(default=None, ge=1900, le=2100)
     cost_func: str | None = None
     target_year: int = Field(default=2024, ge=1900, le=2100)
+    # Composite equipment: sub-components (each a full equipment spec,
+    # possibly itself composite) and the installation rule.
+    components: list["EquipmentIn"] | None = Field(default=None, max_length=100)
+    installation: str | None = None
 
     @field_validator("param")
     @classmethod
@@ -51,13 +55,20 @@ class EquipmentIn(BaseModel):
                 raise ValueError("param values must be between 0 and 1e12")
         return v
 
+    @field_validator("installation")
+    @classmethod
+    def _validate_installation(cls, v):
+        if v is not None and v not in ("component", "composite"):
+            raise ValueError("installation must be 'component' or 'composite'")
+        return v
+
 
 class EquipmentOut(BaseModel):
     index: int
     name: str
     category: str
     type: str | None
-    material: str
+    material: str | None
     process_type: str
     param: float | list[float] | None
     num_units: int | None
@@ -67,6 +78,16 @@ class EquipmentOut(BaseModel):
     target_year: int
     purchased_cost: float
     direct_cost: float
+    # Composite equipment
+    is_composite: bool = False
+    installation: str | None = None
+    components_purchased_cost: float | None = None
+    # The composite's vendor quote as entered (purchased_cost on the item is
+    # the inflation-adjusted value; editing needs the original back)
+    quoted_purchased_cost: float | None = None
+    quoted_cost_year: int | None = None
+    # One dict per component: {"spec": <input spec>, "purchased_cost": .., "direct_cost": ..}
+    components: list[dict] | None = None
 
 
 class CostDBEntry(BaseModel):
