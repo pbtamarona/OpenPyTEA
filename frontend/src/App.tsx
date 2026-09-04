@@ -14,7 +14,7 @@ import WelcomePage from "./pages/WelcomePage";
 import type { CalculationResults, ComparedPlant, PlantInput } from "./types";
 import "./App.css";
 
-const TABS = ["Equipment", "Plant Config", "Results", "Analysis", "Monte Carlo", "Compare"] as const;
+const TABS = ["Plant Config", "Equipment", "Results", "Analysis", "Monte Carlo", "Compare"] as const;
 const PROJECT_EXT = "openpytea";
 
 /** Detect Tauri at runtime. Cached on first call. */
@@ -37,7 +37,7 @@ const basename = (path: string | null): string => {
 };
 
 function App() {
-  const [tab, setTab] = useState<(typeof TABS)[number]>("Equipment");
+  const [tab, setTab] = useState<(typeof TABS)[number]>("Plant Config");
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [examples, setExamples] = useState<ExamplePreset[]>([]);
@@ -217,7 +217,7 @@ function App() {
       setResults(null);
       setError(null);
       setRefreshKey((k) => k + 1);
-      setTab("Equipment");
+      setTab("Plant Config");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "New project failed");
     } finally {
@@ -266,7 +266,7 @@ function App() {
       setDirty(false);
       setError(null);
       setRefreshKey((k) => k + 1);
-      setTab("Equipment");
+      setTab("Plant Config");
       // If the user opens a file from Finder while the welcome screen is up,
       // skip straight to the main app.
       setShowWelcome(false);
@@ -326,7 +326,7 @@ function App() {
       setResults(null);
       setError(null);
       setRefreshKey((k) => k + 1);
-      setTab("Equipment");
+      setTab("Plant Config");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Load failed");
     }
@@ -428,7 +428,7 @@ function App() {
       // alone so building a comparison still counts as unsaved work.
       setError(null);
       setRefreshKey((k) => k + 1);
-      setTab("Equipment");
+      setTab("Plant Config");
 
       setLoadingMsg("Calculating…");
       try {
