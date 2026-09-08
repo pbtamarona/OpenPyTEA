@@ -245,6 +245,11 @@ class MonteCarloIn(BaseModel):
     extra_plants: list[PlantInput] = Field(default_factory=list, max_length=8)
 
 
+class MCPlotIn(BaseModel):
+    """Which metric of the cached Monte Carlo run to render as a figure."""
+    metric: str = "LCOP"
+
+
 # ── Analysis results ──────────────────────────────────────────────
 
 

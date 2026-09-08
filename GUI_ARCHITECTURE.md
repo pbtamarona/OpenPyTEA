@@ -8,7 +8,9 @@ The GUI is a client-server application wrapping the OpenPyTEA Python library. Th
 
 - **Backend**: FastAPI (Python), runs on port 8000
 - **Frontend**: React 19 + TypeScript + Vite, runs on port 5173
-- **Charts**: Recharts (React-native charting, no matplotlib on the frontend)
+- **Charts**: Recharts for the interactive on-screen view; downloads are
+  matplotlib figures rendered by the backend (`/api/plots/*`) using the
+  library's own `plotting.py` — identical to the Jupyter output
 - **Styling**: Plain CSS (no framework), defined in `App.css`
 - **State**: In-memory on the backend (module-level singletons in `state.py`). No database. Single-user session.
 
@@ -32,7 +34,9 @@ frontend/
     api/client.ts     # Typed fetch wrapper — one function per API endpoint
     types/index.ts    # TypeScript interfaces mirroring backend schemas
     components/
-      DownloadableChart.tsx  # Reusable wrapper that adds PNG export to any Recharts chart
+      DownloadableChart.tsx  # Chart wrapper: boxed layout (maxWidth, centered) + download
+                             # button that fetches the backend matplotlib figure when a
+                             # serverPlot fetcher is given (screen-render PNG as fallback)
     pages/
       EquipmentPage   # Equipment table + add/edit modal with cost DB category/type picker
       PlantConfigPage # Forms: general, financial, labor, products, variable OPEX
@@ -194,7 +198,15 @@ frontend/
 
 ## Key Design Decisions
 
-1. **No matplotlib on frontend** — backend returns raw data; frontend renders charts with Recharts. The `openpytea.plotting` module is not used by the GUI.
+1. **Recharts on screen, matplotlib on download** — backend returns raw data and the
+   frontend renders interactive Recharts views; the download button on each chart
+   fetches `/api/plots/...`, where the backend runs the library's `plotting.py`
+   (Agg backend, one figure at a time behind a lock) and returns a 300-dpi PNG —
+   the exact figure Jupyter would show. Stacked cost bars and sensitivity/tornado
+   are recomputed from the current plant/params; Monte Carlo figures re-render the
+   cached raw sample arrays (`state.mc_raw`) of the last run, so the downloaded
+   figure matches the displayed run exactly. Charts with no library counterpart
+   (revenue, Compare tab) keep the client-side screen-render download.
 
 2. **Monte Carlo summarization** — raw arrays (potentially millions of floats) are histogrammed server-side into ~80 bins. Only bin edges, counts, and summary stats are sent to the frontend (~10KB vs ~40MB).
 

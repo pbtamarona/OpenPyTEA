@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  getSensitivityParameters, runSensitivity, runTornado,
+  getSensitivityParameters, runSensitivity, runTornado, fetchPlotPng,
 } from "../api/client";
 import type { SensitivityResult, TornadoResult, ComparedPlant } from "../types";
 import {
@@ -289,6 +289,14 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
               showRemove={panels.length > 1}
               compact={isGrid}
               label={isGrid ? `(${String.fromCharCode(97 + idx)})` : undefined}
+              serverPlot={() => fetchPlotPng("/plots/sensitivity", {
+                parameter: panel.parameter,
+                plus_minus_value: panel.plus_minus_value,
+                n_points: sensPoints,
+                metric: panel.metric,
+                additional_capex: false,
+                extra_plants: collectExtras(),
+              })}
               onChange={(patch) => updatePanel(panel.id, patch)}
               onRemove={() => removePanel(panel.id)}
             />
@@ -339,6 +347,13 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
         {tornResult && tornChartData.length > 0 && (
           <DownloadableChart
             filename="tornado"
+            maxWidth={800}
+            serverPlot={() => fetchPlotPng("/plots/tornado", {
+              plus_minus_value: tornPM,
+              metric: tornMetric,
+              additional_capex: false,
+              extra_plants: collectTornExtras(),
+            })}
             height={Math.max(
               300,
               tornChartData.length * (isMultiTorn ? Math.max(40, tornPlants.length * 18) : 30) + 120,
@@ -427,11 +442,12 @@ interface PanelProps {
   showRemove: boolean;
   compact: boolean;
   label?: string;
+  serverPlot: () => Promise<Blob>;
   onChange: (patch: Partial<Panel>) => void;
   onRemove: () => void;
 }
 
-function SensitivityPanel({ panel, parameters, showRemove, compact, label, onChange, onRemove }: PanelProps) {
+function SensitivityPanel({ panel, parameters, showRemove, compact, label, serverPlot, onChange, onRemove }: PanelProps) {
   const result = panel.result;
 
   const allY = result ? result.curves.flatMap((c) => c.y).filter((v): v is number => typeof v === "number") : [];
@@ -488,7 +504,7 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, onCha
       </div>
 
       {result && chartData.length > 0 && (
-        <DownloadableChart filename={`sensitivity_${panel.parameter}_${panel.metric}`} height={chartHeight} style={{ marginTop: 4 }}>
+        <DownloadableChart filename={`sensitivity_${panel.parameter}_${panel.metric}`} height={chartHeight} serverPlot={serverPlot} style={{ marginTop: 4 }}>
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 50, width: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ transform: "rotate(-90deg)", whiteSpace: "nowrap", fontWeight: "bold", fontSize: compact ? 12 : 14, color: "#666" }}>{yLabel}</span>
           </div>

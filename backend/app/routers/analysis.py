@@ -170,7 +170,7 @@ def _summarize_mc(result: dict) -> dict:
 
 def _run_mc_for_plant(plant, num_samples: int, batch_size: int, additional_capex: bool) -> dict:
     try:
-        result = monte_carlo(
+        return monte_carlo(
             plant,
             num_samples=num_samples,
             batch_size=batch_size,
@@ -181,7 +181,6 @@ def _run_mc_for_plant(plant, num_samples: int, batch_size: int, additional_capex
             status_code=400,
             detail=f"Monte Carlo analysis failed for plant '{getattr(plant, 'name', '?')}' — check configuration",
         )
-    return _summarize_mc(result)
 
 
 @router.post("/monte-carlo", response_model=MonteCarloMultiResult)
@@ -189,12 +188,16 @@ def run_monte_carlo(data: MonteCarloIn):
     plant = _require_plant()
     plants = [plant] + _rehydrate_extras(data.extra_plants)
 
+    raws: list[dict] = []
     summaries: list[dict] = []
     for p in plants:
-        summary = _run_mc_for_plant(p, data.num_samples, data.batch_size, data.additional_capex)
-        summaries.append(summary)
+        raw = _run_mc_for_plant(p, data.num_samples, data.batch_size, data.additional_capex)
+        raws.append(raw)
+        summaries.append(_summarize_mc(raw))
 
-    # Cache only the active-plant raw result for any future single-plant use.
+    # Cache the raw results (full sample arrays) so /api/plots/monte-carlo
+    # can re-render this exact run with the library's matplotlib functions.
+    state.mc_raw = raws
     state.mc_results = summaries[0] if summaries else None
 
     return {"plants": summaries}

@@ -39,6 +39,22 @@ const getBase = (): Promise<string> =>
     throw e;
   }));
 
+// Fetch a matplotlib-rendered figure (PNG) from the backend — the exact
+// rendering the library produces in Jupyter. GET when no body is given.
+export async function fetchPlotPng(path: string, body?: unknown): Promise<Blob> {
+  const base = await getBase();
+  const res = await fetch(`${base}${path}`, body === undefined ? undefined : {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail.detail || `HTTP ${res.status}`);
+  }
+  return res.blob();
+}
+
 async function request<T>(path: string, opts?: RequestInit): Promise<T> {
   const base = await getBase();
   const res = await fetch(`${base}${path}`, {

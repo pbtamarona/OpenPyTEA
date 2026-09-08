@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { runMonteCarlo } from "../api/client";
+import { runMonteCarlo, fetchPlotPng } from "../api/client";
 import type { MonteCarloMultiResult, MonteCarloResult, ComparedPlant } from "../types";
 import {
   ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -248,7 +248,7 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                     );
                   })}
                 </div>
-                <DownloadableChart filename={`mc_${metric}`} height={340}>
+                <DownloadableChart filename={`mc_${metric}`} height={430} serverPlot={() => fetchPlotPng("/plots/monte-carlo", { metric })}>
                   <ResponsiveContainer>
                     <ComposedChart data={data} margin={{ bottom: 30, left: 10, top: 10, right: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -306,7 +306,33 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
           {/* Input distributions — show active plant only (extras share the same priors) */}
           {plants[0] && Object.keys(plants[0].inputs).length > 0 && (
             <div className="card">
-              <h2>Input Parameter Distributions ({plants[0].name})</h2>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                <h2>Input Parameter Distributions ({plants[0].name})</h2>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {(["process", "economic"] as const).map((cat) => (
+                    <button
+                      key={cat}
+                      className="btn-secondary" style={{ padding: "4px 10px", fontSize: 12 }}
+                      title="Download the library-rendered figure, exactly as plot_monte_carlo_inputs produces in Jupyter"
+                      onClick={async () => {
+                        try {
+                          const blob = await fetchPlotPng(`/plots/monte-carlo/inputs?category=${cat}`);
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `mc_inputs_${cat}.png`;
+                          a.click();
+                          setTimeout(() => URL.revokeObjectURL(url), 10_000);
+                        } catch (e: unknown) {
+                          setError(e instanceof Error ? e.message : "Figure download failed");
+                        }
+                      }}
+                    >
+                      ⬇ {cat} figure
+                    </button>
+                  ))}
+                </div>
+              </div>
               <table>
                 <thead>
                   <tr><th>Input</th><th>Mean</th><th>Std</th><th>Min</th><th>Max</th></tr>

@@ -1,16 +1,34 @@
-import { useRef, useCallback, type ReactNode } from "react";
+import { useRef, useCallback, useState, type ReactNode } from "react";
 
 interface Props {
   filename?: string;
   children: ReactNode;
   height: number | string;
   style?: React.CSSProperties;
+  // Box constraint: charts render at most this wide, centered, instead of
+  // stretching across the whole card. Pass null to fill the container.
+  maxWidth?: number | null;
+  // When given, the download button fetches the backend's matplotlib
+  // rendering of this chart — the exact figure the library produces in
+  // Jupyter — instead of rasterizing the on-screen SVG. Falls back to the
+  // screen render if the request fails.
+  serverPlot?: () => Promise<Blob>;
 }
 
-export default function DownloadableChart({ filename = "chart", children, height, style }: Props) {
+export default function DownloadableChart({
+  filename = "chart", children, height, style, maxWidth = 620, serverPlot,
+}: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
+  const [busy, setBusy] = useState(false);
 
-  const download = useCallback(() => {
+  const saveUrl = useCallback((url: string) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${filename}.png`;
+    a.click();
+  }, [filename]);
+
+  const downloadScreenRender = useCallback(() => {
     if (!chartRef.current) return;
 
     // Get all SVGs inside the chart area (button is outside this div)
@@ -82,29 +100,50 @@ export default function DownloadableChart({ filename = "chart", children, height
       ctx.scale(scale, scale);
       ctx.drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-
-      const a = document.createElement("a");
-      a.href = canvas.toDataURL("image/png");
-      a.download = `${filename}.png`;
-      a.click();
+      saveUrl(canvas.toDataURL("image/png"));
     };
     img.src = url;
-  }, [filename]);
+  }, [saveUrl]);
+
+  const download = useCallback(async () => {
+    if (serverPlot) {
+      setBusy(true);
+      try {
+        const blob = await serverPlot();
+        const url = URL.createObjectURL(blob);
+        saveUrl(url);
+        setTimeout(() => URL.revokeObjectURL(url), 10_000);
+        return;
+      } catch (e) {
+        console.warn("Publication figure failed, falling back to screen render:", e);
+      } finally {
+        setBusy(false);
+      }
+    }
+    downloadScreenRender();
+  }, [serverPlot, saveUrl, downloadScreenRender]);
 
   return (
-    <div style={{ position: "relative", height, ...style }}>
+    <div style={{
+      position: "relative", height,
+      ...(maxWidth != null ? { maxWidth, marginLeft: "auto", marginRight: "auto" } : {}),
+      ...style,
+    }}>
       <button
         onClick={download}
-        title="Download as PNG"
+        disabled={busy}
+        title={serverPlot
+          ? "Download publication figure (rendered by the OpenPyTEA library, as in Jupyter)"
+          : "Download as PNG"}
         style={{
           position: "absolute", top: 4, right: 4, zIndex: 10,
-          background: "none", border: "none", cursor: "pointer",
-          opacity: 0.4, padding: 4, lineHeight: 1, fontSize: 18,
+          background: "none", border: "none", cursor: busy ? "wait" : "pointer",
+          opacity: busy ? 1 : 0.4, padding: 4, lineHeight: 1, fontSize: 18,
         }}
         onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.4"; }}
+        onMouseLeave={(e) => { if (!busy) e.currentTarget.style.opacity = "0.4"; }}
       >
-        &#11015;
+        {busy ? "⏳" : "⬇"}
       </button>
       <div ref={chartRef} style={{ width: "100%", height: "100%" }}>
         {children}
