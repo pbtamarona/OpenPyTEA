@@ -250,16 +250,16 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                 </div>
                 <DownloadableChart filename={`mc_${metric}`} height={430} serverPlot={() => fetchPlotPng("/plots/monte-carlo", { metric })}>
                   <ResponsiveContainer>
-                    <ComposedChart data={data} margin={{ bottom: 30, left: 10, top: 10, right: 20 }}>
+                    <ComposedChart data={data} margin={{ bottom: 46, left: 12, top: 10, right: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
                         dataKey="x"
                         type="number"
                         domain={["dataMin", "dataMax"]}
                         tickFormatter={(v: number) => v.toFixed(2)}
-                        label={{ value: metric, position: "insideBottom", offset: -16, style: { fontSize: 12, fill: "#666" } }}
+                        label={{ value: metric, position: "insideBottom", offset: -30, style: { fontSize: 14, fill: "#666" } }}
                       />
-                      <YAxis label={{ value: "Probability density", angle: -90, position: "insideLeft", offset: 4, style: { fontSize: 12, fill: "#666" } }} />
+                      <YAxis width={74} tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v === 0 ? "0" : Number(v).toExponential(1))} label={{ value: "Probability density", angle: -90, position: "insideLeft", offset: 0, style: { fontSize: 14, fill: "#666", textAnchor: "middle" } }} />
                       <Tooltip
                         labelFormatter={(v) => `${metric}: ${Number(v).toFixed(3)}`}
                         formatter={(v, name) => {
@@ -372,10 +372,10 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                                 dataKey="x"
                                 type="number"
                                 domain={["dataMin", "dataMax"]}
-                                tick={{ fontSize: 10 }}
+                                tick={{ fontSize: 11 }}
                                 tickFormatter={(v: number) => Number(v).toPrecision(3)}
                               />
-                              <YAxis tick={{ fontSize: 10 }} width={44} tickFormatter={(v: number) => Number(v).toExponential(0)} />
+                              <YAxis tick={{ fontSize: 11 }} width={48} tickFormatter={(v: number) => (v === 0 ? "0" : Number(v).toExponential(0))} />
                               <Tooltip
                                 labelFormatter={(v) => `${name}: ${Number(v).toPrecision(4)}`}
                                 formatter={(v) => [Number(v).toExponential(2), "density"]}

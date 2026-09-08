@@ -361,12 +361,12 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
             style={{ marginTop: 20 }}
           >
             <ResponsiveContainer>
-              <BarChart data={tornChartData} layout="vertical" margin={{ left: 160, bottom: 40 }}>
+              <BarChart data={tornChartData} layout="vertical" margin={{ left: 160, bottom: 52 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   type="number"
                   tickFormatter={(v) => (v + tornBase).toFixed(tornMetric === "IRR" ? 3 : 2)}
-                  label={{ value: tornXLabel, position: "insideBottom", offset: -20, style: { fontWeight: "bold" } }}
+                  label={{ value: tornXLabel, position: "insideBottom", offset: -34, style: { fontWeight: "bold", fontSize: 14, fill: "#666" } }}
                 />
                 <YAxis type="category" dataKey="label" width={150} tick={{ fontSize: 12, fontWeight: "bold" }} />
                 <Tooltip
@@ -510,9 +510,9 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, serve
           </div>
           <div style={{ position: "absolute", left: 24, right: 0, top: 0, bottom: 0 }}>
             <ResponsiveContainer>
-              <LineChart data={chartData} margin={{ left: 10, bottom: 40, top: 10 }}>
+              <LineChart data={chartData} margin={{ left: 10, bottom: 52, top: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="x" tickFormatter={(v) => parseFloat(v.toFixed(4)).toString()} label={{ value: xLabel, position: "insideBottom", offset: -20, style: { fontWeight: "bold", fontSize: compact ? 12 : 14, fill: "#666" } }} />
+                <XAxis dataKey="x" tickFormatter={(v) => parseFloat(v.toFixed(4)).toString()} label={{ value: xLabel, position: "insideBottom", offset: -34, style: { fontWeight: "bold", fontSize: compact ? 13 : 14, fill: "#666" } }} />
                 <YAxis width={60} />
                 <Tooltip
                   labelFormatter={(v) => `x: ${typeof v === "number" ? v.toFixed(2) : parseFloat(String(v)).toFixed(2)} %`}
