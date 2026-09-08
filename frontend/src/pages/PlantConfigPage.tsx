@@ -106,10 +106,13 @@ const writeDep = (config: PlantConfig, prevTarget: string | null, rule: DepRule)
     next.operator_hourly_rate.dependency = block;
     // A dependent's value is set by the graph: the library rejects "std"
     // (only zero-centered "noise" applies), and absolute min/max bounds
-    // would truncate that noise distribution to nothing — drop them all.
+    // would truncate that noise distribution to nothing — drop them all,
+    // including a nested rate_uncertainty block from the distribution
+    // editor (the library prefers that block and would reject its std).
     delete next.operator_hourly_rate.std;
     delete next.operator_hourly_rate.min;
     delete next.operator_hourly_rate.max;
+    delete next.operator_hourly_rate.rate_uncertainty;
     if (rule.noise != null) next.operator_hourly_rate.noise = rule.noise;
   } else if (kind === "project") {
     const pu = next.project_uncertainties ?? {};
@@ -294,33 +297,45 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
   };
 
   const uEditSave = (e: UEdit, block: UncertaintyBlock | null) => {
-    setConfig((prev) => {
-      const next = structuredClone(prev);
-      if (e.kind === "rate") {
-        // Preferred nested block; drop the legacy top-level shape so the
-        // library doesn't fall back to it
-        if (block) next.operator_hourly_rate.rate_uncertainty = block;
-        else delete next.operator_hourly_rate.rate_uncertainty;
-        delete next.operator_hourly_rate.std;
-        delete next.operator_hourly_rate.min;
-        delete next.operator_hourly_rate.max;
+    // Compute the next config synchronously so it can be both applied to
+    // local state and pushed to the backend in one go — uncertainty edits
+    // auto-save on Apply/None, no separate "Save Configuration" needed.
+    const next = structuredClone(config);
+    if (e.kind === "rate") {
+      // Preferred nested block; drop the legacy top-level shape so the
+      // library doesn't fall back to it
+      if (block) next.operator_hourly_rate.rate_uncertainty = block;
+      else delete next.operator_hourly_rate.rate_uncertainty;
+      delete next.operator_hourly_rate.std;
+      delete next.operator_hourly_rate.min;
+      delete next.operator_hourly_rate.max;
+    } else {
+      const item = next[e.root][e.key];
+      if (e.kind === "price") {
+        if (block) item.price_uncertainty = block;
+        else delete item.price_uncertainty;
+        delete item.std;
+        delete item.min;
+        delete item.max;
       } else {
-        const item = next[e.root][e.key];
-        if (e.kind === "price") {
-          if (block) item.price_uncertainty = block;
-          else delete item.price_uncertainty;
-          delete item.std;
-          delete item.min;
-          delete item.max;
-        } else {
-          const uKey = e.root === "variable_opex_inputs" ? "consumption_uncertainty" : "production_uncertainty";
-          if (block) item[uKey] = block;
-          else delete item[uKey];
-        }
+        const uKey = e.root === "variable_opex_inputs" ? "consumption_uncertainty" : "production_uncertainty";
+        if (block) item[uKey] = block;
+        else delete item[uKey];
       }
-      return next;
-    });
+    }
+    setConfig(next);
     setUEdit(null);
+    // Fire-and-forget persist; errors surface next to the Save button
+    setSaveError(null);
+    setPlantConfig(next)
+      .then(() => {
+        markDirty();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      })
+      .catch((err: unknown) => {
+        setSaveError(err instanceof Error ? err.message : "Auto-save failed — press Save Configuration");
+      });
   };
 
   // Dropdown-first picker: the distribution family is chosen right in the
