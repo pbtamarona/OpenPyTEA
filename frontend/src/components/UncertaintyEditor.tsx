@@ -130,15 +130,29 @@ export function uncertaintySummary(block: UncertaintyBlock | null | undefined): 
   return spread != null ? `${dist.name} (σ=${spread})` : dist.name;
 }
 
+// Parameters only, without the family name — shown next to the family
+// dropdown: "σ=0.3", "[25, 50]", "α=2, β=5".
+export function paramSummary(block: UncertaintyBlock | null | undefined): string {
+  if (!block) return "";
+  const id = block.dist_id ?? 3;
+  if (id === 4 || id === 5 || id === 7) return `[${block.min ?? "?"}, ${block.max ?? "?"}]`;
+  if (id === 10) return `α=${block.loc ?? "?"}, β=${block.shape ?? "?"}`;
+  if (id === 6) return `p=${block.loc ?? "?"}`;
+  const spread = block.std ?? block.scale;
+  return spread != null ? `σ=${spread}` : "…";
+}
+
 interface Props {
   title: string;
   value: UncertaintyBlock | null;
+  // Family preselected by the caller's dropdown; overrides the value's own
+  initialDistId?: number;
   onSave: (block: UncertaintyBlock | null) => void;
   onClose: () => void;
 }
 
-export default function UncertaintyEditor({ title, value, onSave, onClose }: Props) {
-  const [distId, setDistId] = useState<number>(value?.dist_id ?? 3);
+export default function UncertaintyEditor({ title, value, initialDistId, onSave, onClose }: Props) {
+  const [distId, setDistId] = useState<number>(initialDistId ?? value?.dist_id ?? 3);
   const [fields, setFields] = useState<Record<string, number | null>>({
     loc: value?.loc ?? null,
     std: value?.std ?? null,

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getPlantConfig, setPlantConfig, getLocations } from "../api/client";
 import type { PlantConfig, DependencyBlock, UncertaintyBlock } from "../types";
-import UncertaintyEditor, { uncertaintySummary } from "../components/UncertaintyEditor";
+import UncertaintyEditor, { DISTRIBUTIONS, paramSummary } from "../components/UncertaintyEditor";
 
 // ── Parameter dependencies (3.0 dependency DAG) ────────────────────
 // A dependency ties one parameter to others: dependent = Σ weight·parent
@@ -269,8 +269,8 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
   // block the library's _resolve_dist_params reads: dist_id + the fields
   // that family needs. The editor modal manages one block at a time.
   type UEdit =
-    | { kind: "price" | "quantity"; root: "variable_opex_inputs" | "plant_products"; key: string }
-    | { kind: "rate" };
+    | { kind: "price" | "quantity"; root: "variable_opex_inputs" | "plant_products"; key: string; distId?: number }
+    | { kind: "rate"; distId?: number };
   const [uEdit, setUEdit] = useState<UEdit | null>(null);
 
   // Legacy shapes (item-level std/min/max for prices, operator_hourly_rate's
@@ -323,8 +323,36 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
     setUEdit(null);
   };
 
-  const priceSummary = (item: { price_uncertainty?: UncertaintyBlock | null; std?: number; min?: number; max?: number }) =>
-    uncertaintySummary(item.price_uncertainty ?? legacyNormal(item));
+  // Dropdown-first picker: the distribution family is chosen right in the
+  // cell; picking one opens the parameter popup for that family, and the
+  // chip next to it reopens the popup to tweak values. "None" clears the
+  // block immediately. Cancelling the popup leaves the config untouched,
+  // so the (controlled) dropdown snaps back on its own.
+  const uncertaintyPicker = (target: UEdit, block: UncertaintyBlock | null) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+      <select
+        value={block ? String(block.dist_id ?? 3) : ""}
+        onChange={(ev) => {
+          const v = ev.target.value;
+          if (v === "") uEditSave(target, null);
+          else setUEdit({ ...target, distId: +v });
+        }}
+        style={{ fontSize: 12, padding: "4px 6px", maxWidth: 140 }}
+      >
+        <option value="">None</option>
+        {DISTRIBUTIONS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+      </select>
+      {block && (
+        <button
+          className="btn-secondary" style={{ padding: "3px 8px", fontSize: 12 }}
+          title="Edit distribution parameters"
+          onClick={() => setUEdit({ ...target, distId: block.dist_id ?? 3 })}
+        >
+          {paramSummary(block)} ✎
+        </button>
+      )}
+    </div>
+  );
 
   // Dependency rules are derived from the config on every render; edits
   // write straight back into the config via writeDep/clearDep.
@@ -415,9 +443,7 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
             {config.operator_hourly_rate.dependency != null ? (
               <span style={{ fontSize: 12, color: "#868e96", padding: "8px 0" }} title="Set by a parameter dependency — its spread comes from the parents (plus optional noise)">via dependency</span>
             ) : (
-              <button className="btn-secondary" style={{ padding: "6px 10px", fontSize: 13 }} onClick={() => setUEdit({ kind: "rate" })}>
-                {uncertaintySummary(config.operator_hourly_rate.rate_uncertainty ?? legacyNormal(config.operator_hourly_rate))}
-              </button>
+              uncertaintyPicker({ kind: "rate" }, config.operator_hourly_rate.rate_uncertainty ?? legacyNormal(config.operator_hourly_rate))
             )}
           </div>
           <div className="form-group">
@@ -474,17 +500,13 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
                   <td><input type="number" value={val.production ?? 0} onChange={(e) => updateProduct(key, "production", +e.target.value)} style={{ width: 100 }} /></td>
                   <td><input type="number" value={val.price ?? 0} onChange={(e) => updateProduct(key, "price", +e.target.value)} style={{ width: 80 }} /></td>
                   <td>
-                    <button className="btn-secondary" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => setUEdit({ kind: "price", root: "plant_products", key })}>
-                      {priceSummary(val)}
-                    </button>
+                    {uncertaintyPicker({ kind: "price", root: "plant_products", key }, val.price_uncertainty ?? legacyNormal(val))}
                   </td>
                   <td>
                     {val.production_dependency ? (
                       <span style={{ fontSize: 12, color: "#868e96" }} title="Set by a parameter dependency — noise is configured in the Dependencies card">via dependency</span>
                     ) : (
-                      <button className="btn-secondary" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => setUEdit({ kind: "quantity", root: "plant_products", key })}>
-                        {uncertaintySummary(val.production_uncertainty)}
-                      </button>
+                      uncertaintyPicker({ kind: "quantity", root: "plant_products", key }, val.production_uncertainty ?? null)
                     )}
                   </td>
                   <td style={{ display: "flex", gap: 6 }}>
@@ -538,17 +560,13 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
                   <td><input type="number" value={val.consumption ?? 0} onChange={(e) => updateVarOpex(key, "consumption", +e.target.value)} style={{ width: 100 }} /></td>
                   <td><input type="number" value={val.price ?? 0} onChange={(e) => updateVarOpex(key, "price", +e.target.value)} style={{ width: 80 }} /></td>
                   <td>
-                    <button className="btn-secondary" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => setUEdit({ kind: "price", root: "variable_opex_inputs", key })}>
-                      {priceSummary(val)}
-                    </button>
+                    {uncertaintyPicker({ kind: "price", root: "variable_opex_inputs", key }, val.price_uncertainty ?? legacyNormal(val))}
                   </td>
                   <td>
                     {val.consumption_dependency ? (
                       <span style={{ fontSize: 12, color: "#868e96" }} title="Set by a parameter dependency — noise is configured in the Dependencies card">via dependency</span>
                     ) : (
-                      <button className="btn-secondary" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => setUEdit({ kind: "quantity", root: "variable_opex_inputs", key })}>
-                        {uncertaintySummary(val.consumption_uncertainty)}
-                      </button>
+                      uncertaintyPicker({ kind: "quantity", root: "variable_opex_inputs", key }, val.consumption_uncertainty ?? null)
                     )}
                   </td>
                   <td style={{ display: "flex", gap: 6 }}>
@@ -674,6 +692,7 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
         <UncertaintyEditor
           title={uEditTitle(uEdit)}
           value={uEditValue(uEdit)}
+          initialDistId={uEdit.distId}
           onSave={(block) => uEditSave(uEdit, block)}
           onClose={() => setUEdit(null)}
         />
