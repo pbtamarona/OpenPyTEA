@@ -55,9 +55,25 @@ export interface DependencyBlock {
   offset?: number;
 }
 
-// A variable-OPEX or product item. `std`/`min`/`max` describe the price
-// uncertainty; quantity dependencies and quantity noise live in the
-// *_dependency / *_uncertainty blocks (3.0).
+// One Monte Carlo uncertainty block, as the library's _resolve_dist_params
+// reads it: dist_id picks the family (default 3 = Normal), and loc/std/
+// scale/shape/min/max mean whatever that family says they mean.
+export interface UncertaintyBlock {
+  dist_id?: number;
+  loc?: number;
+  std?: number;
+  scale?: number;
+  shape?: number;
+  min?: number;
+  max?: number;
+  noise?: number;
+  [key: string]: unknown;
+}
+
+// A variable-OPEX or product item. Item-level `std`/`min`/`max` are the
+// legacy price-uncertainty shape; the nested price_uncertainty block is
+// the preferred 3.0 form. Quantity dependencies and quantity uncertainty
+// live in the *_dependency / *_uncertainty blocks.
 export interface QuantityItem {
   consumption?: number;
   production?: number;
@@ -65,10 +81,11 @@ export interface QuantityItem {
   std?: number;
   min?: number;
   max?: number;
+  price_uncertainty?: UncertaintyBlock | null;
   consumption_dependency?: DependencyBlock | null;
   production_dependency?: DependencyBlock | null;
-  consumption_uncertainty?: Record<string, number> | null;
-  production_uncertainty?: Record<string, number> | null;
+  consumption_uncertainty?: UncertaintyBlock | null;
+  production_uncertainty?: UncertaintyBlock | null;
   [key: string]: unknown;
 }
 
@@ -78,6 +95,7 @@ export interface OperatorHourlyRate {
   min?: number;
   max?: number;
   noise?: number;
+  rate_uncertainty?: UncertaintyBlock | null;
   dependency?: DependencyBlock | null;
   [key: string]: unknown;
 }

@@ -140,12 +140,21 @@ frontend/
   Parameter Dependencies
 - Country/region are cascading dropdowns from `Plant.locFactors`
 - Products and variable OPEX are dynamic key-value editors (add/remove rows).
-  Each row carries two Monte Carlo uncertainty groups: price (item-level
-  `std`/`min`/`max`, legacy shape) and quantity (3.0
-  `consumption_uncertainty`/`production_uncertainty` sub-dicts — std ≤ 0
-  removes the block and the quantity stays fixed at baseline). The quantity
-  cells read "via dependency" when a dependency drives the item, since the
-  sub-dict then holds the noise managed by the Dependencies card
+  Each row carries two Monte Carlo uncertainty buttons — price and quantity —
+  opening the shared `UncertaintyEditor` modal (also used for the operator
+  hourly rate on the Labor card). The editor exposes every `dist_id` family
+  the library supports (Normal, Lognormal, Uniform, Triangular, Weibull,
+  Gamma, Beta, GEV, Student's t, Discrete uniform, Bernoulli) with only the
+  fields each family reads. Two library facts are encoded in the field
+  specs: truncation min/max only exist for Normal/Lognormal/Bernoulli
+  (other families sample unbounded, so no bounds are offered), and a
+  Lognormal μ must be explicit (a blank one falls back to the parameter's
+  baseline as log-mean and overflows). Saved blocks use the preferred 3.0
+  sub-dicts (`price_uncertainty`, `rate_uncertainty`,
+  `consumption_uncertainty`, `production_uncertainty`); legacy item-level
+  `std`/`min`/`max` are read as a Normal for prefill and removed on save.
+  Quantity buttons read "via dependency" when a dependency drives the item,
+  since the sub-dict then holds the noise managed by the Dependencies card
 - **Parameter Dependencies** (3.0 dependency DAG): rules of the form
   `dependent = Σ weight × parent + offset`, with optional Monte Carlo noise.
   Dependents/parents are any `consumption:<item>`, `production:<product>`,
