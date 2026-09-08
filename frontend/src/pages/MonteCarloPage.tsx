@@ -25,6 +25,20 @@ interface OverlayRow {
   [series: string]: number;
 }
 
+// Empirical density rows for one input's histogram — no fitted curve: the
+// bins themselves show whatever distribution family was sampled (uniform,
+// triangular, gamma, ...).
+function inputHistRows(hist: { bin_edges: number[]; counts: number[] }, n: number) {
+  const rows: { x: number; density: number }[] = [];
+  for (let i = 0; i < hist.counts.length; i++) {
+    const lo = hist.bin_edges[i];
+    const hi = hist.bin_edges[i + 1];
+    const w = hi - lo;
+    rows.push({ x: (lo + hi) / 2, density: w > 0 ? hist.counts[i] / (n * w) : 0 });
+  }
+  return rows;
+}
+
 function buildOverlayData(plants: MonteCarloResult[], metric: string, pdfPoints = 200): OverlayRow[] {
   const series = plants
     .map((p) => ({ name: p.name, num_samples: p.num_samples, stats: p.metrics[metric] }))
@@ -309,6 +323,53 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                   ))}
                 </tbody>
               </table>
+
+              {/* One small histogram per sampled input — the empirical bins
+                  show the configured distribution family directly (a uniform
+                  price reads flat, a triangular one peaks at its mode, ...).
+                  Constant inputs (std = 0) are in the table but not plotted. */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16, marginTop: 20 }}>
+                {Object.entries(plants[0].inputs)
+                  .filter(([, stats]) => stats.std > 0)
+                  .map(([name, stats], i) => {
+                    const rows = inputHistRows(stats.histogram, plants[0].num_samples);
+                    if (rows.length === 0) return null;
+                    const color = COLORS[i % COLORS.length];
+                    return (
+                      <div key={name}>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: "var(--text-secondary)" }}>{name}</div>
+                        <DownloadableChart filename={`mc_input_${name.replace(/\W+/g, "_")}`} height={180}>
+                          <ResponsiveContainer>
+                            <ComposedChart data={rows} margin={{ bottom: 8, left: 4, top: 4, right: 8 }}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis
+                                dataKey="x"
+                                type="number"
+                                domain={["dataMin", "dataMax"]}
+                                tick={{ fontSize: 10 }}
+                                tickFormatter={(v: number) => Number(v).toPrecision(3)}
+                              />
+                              <YAxis tick={{ fontSize: 10 }} width={44} tickFormatter={(v: number) => Number(v).toExponential(0)} />
+                              <Tooltip
+                                labelFormatter={(v) => `${name}: ${Number(v).toPrecision(4)}`}
+                                formatter={(v) => [Number(v).toExponential(2), "density"]}
+                              />
+                              <Area
+                                type="stepAfter"
+                                dataKey="density"
+                                stroke={color}
+                                strokeOpacity={0.6}
+                                fill={color}
+                                fillOpacity={0.3}
+                                isAnimationActive={false}
+                              />
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                        </DownloadableChart>
+                      </div>
+                    );
+                  })}
+              </div>
             </div>
           )}
         </>
