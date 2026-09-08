@@ -12,3 +12,6 @@ mc_results: dict | None = None
 # own matplotlib functions.
 mc_raw: list[dict] | None = None
 plant_config: dict = {}
+# (config deep-copy, equipment ids) the active plant was built from —
+# plant_factory.require_active_plant() rebuilds the plant when it drifts
+calc_snapshot: tuple | None = None

@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from openpytea.plant import Plant
 
 from app import state
+from app.plant_factory import mark_plant_fresh
 from app.schemas import PlantConfigIn, CalculationResults, OkResponse
 from app.util import to_jsonable
 
@@ -48,6 +49,7 @@ def calculate():
         plant = Plant(config)
         plant.calculate_all()
         state.plant = plant
+        mark_plant_fresh()
     except Exception:
         raise HTTPException(status_code=400, detail="Calculation failed — check equipment and plant configuration")
 

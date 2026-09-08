@@ -34,7 +34,7 @@ from openpytea.plotting import (  # noqa: E402
 )
 
 from app import state  # noqa: E402
-from app.plant_factory import build_plant  # noqa: E402
+from app.plant_factory import build_plant, require_active_plant  # noqa: E402
 from app.schemas import SensitivityIn, TornadoIn, MCPlotIn, PlantInput  # noqa: E402
 
 router = APIRouter()
@@ -54,9 +54,7 @@ def _png(fig) -> Response:
 
 
 def _require_plant():
-    if state.plant is None:
-        raise HTTPException(status_code=400, detail="Run calculations first")
-    return state.plant
+    return require_active_plant()
 
 
 def _rehydrate_extras(extras: list[PlantInput]):

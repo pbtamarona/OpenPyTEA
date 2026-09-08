@@ -112,6 +112,52 @@ def build_equipment_list(payload: list[dict]) -> list[Equipment]:
     return equipment_list
 
 
+def _calc_snapshot():
+    """Fingerprint of what the active plant was built from.
+
+    Config dicts are compared by value (PUT /config replaces the dict
+    wholesale); equipment objects by identity (the routers replace list
+    entries rather than mutating them).
+    """
+    from app import state
+    import copy
+    return (copy.deepcopy(state.plant_config), [id(eq) for eq in state.equipment_list])
+
+
+def mark_plant_fresh():
+    """Record that state.plant matches the current config/equipment."""
+    from app import state
+    state.calc_snapshot = _calc_snapshot()
+
+
+def require_active_plant() -> Plant:
+    """Return the active plant, rebuilding it when config/equipment changed.
+
+    Analysis and plot endpoints read uncertainty settings (and everything
+    else) from the Plant object, which is only constructed at calculate
+    time. Without this check, editing e.g. a Monte Carlo distribution and
+    re-running MC silently reuses the stale plant — the deterministic
+    results don't change, so nothing prompts the user to recalculate.
+    """
+    from app import state
+    if state.plant is None:
+        raise HTTPException(status_code=400, detail="Run calculations first")
+    if state.calc_snapshot != _calc_snapshot():
+        config = dict(state.plant_config)
+        config["equipment"] = state.equipment_list
+        try:
+            plant = Plant(config)
+            plant.calculate_all()
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail="Configuration changed since the last calculation and recalculating failed — check the plant configuration",
+            )
+        state.plant = plant
+        mark_plant_fresh()
+    return state.plant
+
+
 def build_plant(equipment_payload: list[dict], plant_config: dict) -> Plant:
     """Rehydrate a fully calculated Plant from raw equipment + plant config payloads."""
     if not plant_config:

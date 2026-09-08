@@ -7,7 +7,7 @@ from openpytea.analysis import sensitivity_data, tornado_data, monte_carlo
 from openpytea.helpers import _collect_dependency_specs, _sensitivity_key_node
 
 from app import state
-from app.plant_factory import build_plant
+from app.plant_factory import build_plant, require_active_plant
 from app.schemas import (
     SensitivityIn, TornadoIn, MonteCarloIn,
     SensitivityResult, TornadoResult,
@@ -20,9 +20,7 @@ router = APIRouter()
 
 
 def _require_plant():
-    if state.plant is None:
-        raise HTTPException(status_code=400, detail="Run calculations first")
-    return state.plant
+    return require_active_plant()
 
 
 def _rehydrate_extras(extras: list[PlantInput]):
