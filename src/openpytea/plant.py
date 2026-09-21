@@ -874,7 +874,7 @@ class Plant:
             print(
                 f"Total Variable OPEX: "
                 f"{self.variable_production_costs:,.2f}"
-                f"{self.currency} per year"
+                f" {self.currency} per year"
             )
         else:
             return self.variable_production_costs

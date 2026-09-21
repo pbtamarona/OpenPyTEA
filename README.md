@@ -10,8 +10,8 @@ Beyond its functionality, **OpenPyTEA is designed as a community-driven TEA plat
 
 Whether used for early-stage process design, technology screening, or teaching, **OpenPyTEA** makes TEA more accessible, consistent, and aligned with FAIR research principles (Findable, Accessible, Interoperable, and Reusable).
 
-**For a full walkthrough of the features and usage of OpenPyTEA, refer to the `walkthrough.ipynb` notebook**:  
-https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb
+**For a full walkthrough of the features and usage of OpenPyTEA, refer to the notebooks in the `walkthrough` folder** (five parts, from equipment costing to Monte Carlo analysis):  
+https://github.com/pbtamarona/OpenPyTEA/tree/main/walkthrough
 
 **For the full documentation of the package, visit the ReadTheDocs page:**  
 https://openpytea.readthedocs.io
@@ -97,7 +97,7 @@ src/openpytea/
 ├── helpers.py              # Helper functions for data handling and common operations
 └── data/                   # Cost correlations database and CEPCI data
 examples/                   # Example notebooks and case studies
-walkthrough.ipynb           # Walkthrough of the package
+walkthrough/                # Walkthrough of the package, split into five notebooks (part_1 ... part_5)
 pyproject.toml
 README.md
 ```

@@ -9,7 +9,7 @@ a ``(fig, ax)`` tuple — a :class:`matplotlib.figure.Figure` and a
 figure directly.
 
 To see the outputs of all code examples below, refer to the
-`walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_.
+walkthrough notebooks `Part 3: Cost Analysis and Sensitivity <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_3_analysis.ipynb>`_ and `Part 4: Monte Carlo Uncertainty Analysis <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_4_monte_carlo.ipynb>`_.
 
 Cost breakdown charts
 ---------------------
@@ -307,4 +307,4 @@ See also
 
 * :mod:`openpytea.plotting` — full API reference
 * :mod:`openpytea.analysis` — data preparation functions
-* `Walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_ — end-to-end worked example
+* `Walkthrough Part 3: Cost Analysis and Sensitivity <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_3_analysis.ipynb>`_ and `Part 4: Monte Carlo Uncertainty Analysis <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_4_monte_carlo.ipynb>`_ — every plotting function in action

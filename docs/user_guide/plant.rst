@@ -14,7 +14,7 @@ techno-economic assessment, covering:
 * **Scenario arrays** — pass an array for any scalar parameter to evaluate multiple scenarios in one call
 
 To see the outputs of all code examples below, refer to the
-`walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_.
+`walkthrough notebook, Part 2: Creating the Plant <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_2_plant.ipynb>`_.
 
 Creating a ``Plant``
 ---------------------
@@ -843,7 +843,7 @@ See also
 
 * :class:`~openpytea.plant.Plant` — full API reference
 * :doc:`analysis` — sensitivity and Monte Carlo analysis
-* `Walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_ — end-to-end worked example
+* `Walkthrough Part 2: Creating the Plant <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_2_plant.ipynb>`_ — worked plant-configuration and financial-metric examples
 
 References
 ----------

@@ -22,7 +22,7 @@ Four high-level functions drive the workflow:
   the entry point used by the CLI (see :ref:`single-file-cli-workflow`).
 
 To see all examples below in action, refer to the
-`walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_
+`walkthrough notebook, Part 5: TEA Using Configuration Files <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_5_configuration_files.ipynb>`_
 and the
 `case study JSON notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/examples/case_study_1_with_JSON.ipynb>`_.
 
@@ -440,4 +440,4 @@ See also
 * :mod:`openpytea.io` — full API reference
 * :doc:`analysis` — analysis functions used inside ``run_tea()``
 * :doc:`plotting` — visualization functions for loaded results
-* `Walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_ — end-to-end worked example
+* `Walkthrough Part 5: TEA Using Configuration Files <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_5_configuration_files.ipynb>`_ — the configuration-file workflow

@@ -16,7 +16,7 @@ All analysis functions accept a configured and calculated
 handled separately by :doc:`plotting`.
 
 To see the outputs of all code examples below, refer to the
-`walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_.
+walkthrough notebooks `Part 3: Cost Analysis and Sensitivity <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_3_analysis.ipynb>`_ and `Part 4: Monte Carlo Uncertainty Analysis <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_4_monte_carlo.ipynb>`_.
 
 .. code-block:: python
 
@@ -829,4 +829,5 @@ See also
 
 * :mod:`openpytea.analysis` — full API reference
 * :doc:`plotting` — visualization options
-* `Walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_ — end-to-end worked example
+* `Walkthrough Part 3: Cost Analysis and Sensitivity <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_3_analysis.ipynb>`_ — cost breakdowns, sensitivity and tornado examples
+* `Walkthrough Part 4: Monte Carlo Uncertainty Analysis <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_4_monte_carlo.ipynb>`_ — Monte Carlo examples
