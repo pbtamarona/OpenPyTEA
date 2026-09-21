@@ -128,7 +128,6 @@ Contents
    user_guide/equipment
    user_guide/plant
    user_guide/analysis
-   user_guide/plotting
    user_guide/io_workflow
 
 .. toctree::

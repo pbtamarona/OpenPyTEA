@@ -146,7 +146,7 @@ Step 5 — Visualise the CAPEX breakdown
    fig, ax = plot_stacked_bar(capex)
    fig.savefig("capex.png", dpi=150)
 
-For more visualisation options, see the :doc:`Plotting user guide <user_guide/plotting>`.
+For more visualisation options, see the :doc:`Analysis and Plotting user guide <user_guide/analysis>`.
 
 Step 6 — Sensitivity analysis
 -------------------------------

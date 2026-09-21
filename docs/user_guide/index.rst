@@ -25,7 +25,6 @@ examples in action.
    equipment
    plant
    analysis
-   plotting
    io_workflow
 
 Overview of the workflow

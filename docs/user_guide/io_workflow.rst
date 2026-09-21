@@ -438,6 +438,5 @@ See also
 --------
 
 * :mod:`openpytea.io` — full API reference
-* :doc:`analysis` — analysis functions used inside ``run_tea()``
-* :doc:`plotting` — visualization functions for loaded results
+* :doc:`analysis` — analysis and plotting functions used inside ``run_tea()`` and for loaded results
 * `Walkthrough Part 5: TEA Using Configuration Files <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_5_configuration_files.ipynb>`_ — the configuration-file workflow
