@@ -62,16 +62,34 @@ Lunch, snacks, coffee, and drinks will be provided!
 pip install openpytea
 ```
 
+If you work in Jupyter notebooks or want to run the walkthrough and example notebooks, we recommend installing with the `ipython` extra:
+
+```bash
+pip install "openpytea[ipython]"
+```
+
+The difference:
+
+- `pip install openpytea` installs the core package. This is enough for Python scripts and the command-line interface.
+- `pip install "openpytea[ipython]"` also installs `ipython` and `ipywidgets`, which OpenPyTEA uses to show a live progress bar in notebooks during Monte Carlo runs. Without them, the progress bar falls back to plain text and Jupyter shows a warning. Jupyter itself is not included; install it separately if needed (e.g. `pip install jupyter`).
+
 ### 2. **Install from GitHub (development version)**
 
 ```bash
 pip install git+https://github.com/pbtamarona/OpenPyTEA
 ```
 
+or, with the `ipython` extra for notebooks:
+
+```bash
+pip install "openpytea[ipython] @ git+https://github.com/pbtamarona/OpenPyTEA"
+```
+
 or with `uv`:
 
 ```bash
 uv add git+https://github.com/pbtamarona/OpenPyTEA
+uv add "openpytea[ipython] @ git+https://github.com/pbtamarona/OpenPyTEA"  # with notebook extras
 ```
 
 **OpenPyTEA** requires **Python ≥ 3.10**.  
