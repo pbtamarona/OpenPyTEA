@@ -196,98 +196,18 @@ class Plant:
         # keep a copy of the original config so code can read from it later
         self.config = deepcopy(configuration)
 
-        self.name = configuration.get("plant_name")
-        self.process_type = configuration.get(
-            "process_type"
-        )
-        self.country = configuration.get(
-            "country", "United States"
-        )
-        self.region = configuration.get(
-            "region", "Gulf Coast"
-        )
-        self.currency = configuration.get(
-            "currency", "USD"
-        )
-        self.exchange_rate = configuration.get(
-            "exchange_rate", 1.0
-        )
-        self.working_capital = configuration.get(
-            "working_capital", None
-        )
+        for key, (attr, default) in _SCALARS.items():
+            setattr(self, attr, configuration.get(key, default))
         # User-provided working capital is kept as-is; an auto-computed
         # one must track fixed_capital on every recalculation
-        self._working_capital_fixed = (
-            self.working_capital is not None
-        )
-        self.interest_rate = configuration.get(
-            "interest_rate", 0.09
-        )
-        self.project_lifetime = configuration.get(
-            "project_lifetime", 20
-        )
-        self.plant_utilization = configuration.get(
-            "plant_utilization", 1
-        )
-        self.tax_rate = configuration.get("tax_rate", 0)
-        self.depreciation = configuration.get(
-            "depreciation", None
-        )
-        self.operators_per_shift = configuration.get(
-            "operators_per_shift", None
-        )
-        self.operators_hired = configuration.get(
-            "operators_hired", None
-        )
-        self.production_type = configuration.get(
-            "production_type", "continuous"
-        )
-        self.working_weeks_per_year = configuration.get(
-            "working_weeks_per_year", 49
-        )
-        self.working_shifts_per_week = configuration.get(
-            "working_shifts_per_week", 5
-        )
-        self.operating_shifts_per_day = configuration.get(
-            "operating_shifts_per_day", 3
-        )
-        self.additional_capex_years = configuration.get(
-            "additional_capex_years", None
-        )
-        self.additional_capex_cost = configuration.get(
-            "additional_capex_cost", None
-        )
+        self._working_capital_fixed = self.working_capital is not None
 
-        self.equipment_list = configuration.get(
-            "equipment", []
-        )
-        self.operator_hourly_rate = configuration.get(
-            "operator_hourly_rate", {}
-        )
-        self.project_uncertainties = configuration.get(
-            "project_uncertainties", {}
-        )
+        self.equipment_list = configuration.get("equipment", [])
+        for key in ("operator_hourly_rate", "project_uncertainties",
+                    "variable_opex_inputs", "plant_products",
+                    "fixed_opex_factors", "fixed_opex_components"):
+            setattr(self, key, configuration.get(key, {}))
         _validate_project_uncertainties(self.project_uncertainties)
-        self.variable_opex_inputs = configuration.get(
-            "variable_opex_inputs", {}
-        )
-        self.plant_products = configuration.get(
-            "plant_products", {}
-        )
-
-        self.fc = configuration.get("fc", None)
-        self.fp = configuration.get("fp", None)
-        self.capex_ramp = configuration.get("capex_ramp", None)
-        self.production_ramp = configuration.get(
-            "production_ramp", None
-        )
-        self.loc_factor = configuration.get("loc_factor", None)
-        self.fixed_opex_factors = configuration.get(
-            "fixed_opex_factors", {}
-        )
-        self.fixed_opex_components = configuration.get(
-            "fixed_opex_components", {}
-        )
         self.fixed_capital_factors = (
             configuration.get("fixed_capital_factors") or {}
         )
@@ -312,6 +232,8 @@ class Plant:
         configuration : dict
             Partial or full plant configuration. Only supplied keys are updated.
         """
+        # ponytail: self.config mirroring only read by one test; keep deepcopy in
+        #   __init__, drop mirroring
         # keep the stored config up to date
         if (
             not hasattr(self, "config")
@@ -332,114 +254,20 @@ class Plant:
             }
         )
 
-        self.name = configuration.get(
-            "plant_name", self.name
-        )
-        self.process_type = configuration.get(
-            "process_type", self.process_type
-        )
-        self.country = configuration.get(
-            "country", self.country
-        )
-        self.region = configuration.get(
-            "region", self.region
-        )
-        self.currency = configuration.get(
-            "currency", self.currency
-        )
-        self.exchange_rate = configuration.get(
-            "exchange_rate", self.exchange_rate
-        )
-        self.equipment_list = configuration.get(
-            "equipment", self.equipment_list
-        )
+        for key, (attr, _) in _SCALARS.items():
+            if key in configuration:
+                setattr(self, attr, configuration[key])
+        if "equipment" in configuration:
+            self.equipment_list = configuration["equipment"]
         if "working_capital" in configuration:
-            self.working_capital = configuration[
-                "working_capital"
-            ]
-            self._working_capital_fixed = (
-                self.working_capital is not None
-            )
-        self.interest_rate = configuration.get(
-            "interest_rate", self.interest_rate
-        )
-        self.project_lifetime = configuration.get(
-            "project_lifetime", self.project_lifetime
-        )
-        self.plant_utilization = configuration.get(
-            "plant_utilization", self.plant_utilization
-        )
-        self.tax_rate = configuration.get(
-            "tax_rate", self.tax_rate
-        )
-        self.operators_per_shift = configuration.get(
-            "operators_per_shift", self.operators_per_shift
-        )
-        self.operators_hired = configuration.get(
-            "operators_hired", self.operators_hired
-        )
-        self.production_type = configuration.get(
-            "production_type", self.production_type
-        )
-        self.working_weeks_per_year = configuration.get(
-            "working_weeks_per_year",
-            self.working_weeks_per_year,
-        )
-        self.working_shifts_per_week = configuration.get(
-            "working_shifts_per_week",
-            self.working_shifts_per_week,
-        )
-        self.operating_shifts_per_day = configuration.get(
-            "operating_shifts_per_day",
-            self.operating_shifts_per_day,
-        )
-        self.additional_capex_years = configuration.get(
-            "additional_capex_years",
-            self.additional_capex_years,
-        )
-        self.additional_capex_cost = configuration.get(
-            "additional_capex_cost",
-            self.additional_capex_cost,
-        )
-        self.fc = configuration.get("fc", self.fc)
-        self.fp = configuration.get("fp", self.fp)
-        self.loc_factor = configuration.get(
-            "loc_factor", self.loc_factor
-        )
-        if "fixed_capital_factors" in configuration:
-            self.fixed_capital_factors = {
-                **self.fixed_capital_factors,
-                **configuration["fixed_capital_factors"],
-            }
-        if "fixed_capital_components" in configuration:
-            self.fixed_capital_components = {
-                **self.fixed_capital_components,
-                **configuration["fixed_capital_components"],
-            }
-        self.capex_ramp = configuration.get(
-            "capex_ramp", self.capex_ramp
-        )
-        self.production_ramp = configuration.get(
-            "production_ramp", self.production_ramp
-        )
-        if "fixed_opex_factors" in configuration:
-            self.fixed_opex_factors = {
-                **self.fixed_opex_factors,
-                **configuration["fixed_opex_factors"],
-            }
-        if "fixed_opex_components" in configuration:
-            self.fixed_opex_components = {
-                **self.fixed_opex_components,
-                **configuration["fixed_opex_components"],
-            }
+            self._working_capital_fixed = self.working_capital is not None
 
-        # allow updating depreciation block
-        if "depreciation" in configuration:
-            self.depreciation = configuration[
-                "depreciation"
-            ]
+        for key in ("fixed_capital_factors", "fixed_capital_components",
+                    "fixed_opex_factors", "fixed_opex_components"):
+            if key in configuration:
+                setattr(self, key, {**getattr(self, key), **configuration[key]})
 
-        # merge nested variable_opex_inputs without clobbering
+        # merge nested dicts without clobbering
         def recursive_update(original, updates):
             for key, value in updates.items():
                 if isinstance(value, dict) and isinstance(
@@ -484,102 +312,35 @@ class Plant:
                     for stale in _ABSOLUTE_UNCERTAINTY_KEYS:
                         existing[unc_key].pop(stale, None)
 
-        if "variable_opex_inputs" in configuration:
-            if (
-                not hasattr(self, "variable_opex_inputs")
-                or self.variable_opex_inputs is None
-            ):
-                self.variable_opex_inputs = {}
-            clear_superseded_uncertainty(
-                self.variable_opex_inputs,
-                configuration["variable_opex_inputs"],
-                "consumption_dependency",
-                "consumption_uncertainty",
-            )
-            recursive_update(
-                self.variable_opex_inputs,
-                configuration["variable_opex_inputs"],
-            )
-
+        # (attribute, dependency key, nested uncertainty sub-dict key)
+        for key, dep_key, unc_key in (
+            ("variable_opex_inputs", "consumption_dependency",
+             "consumption_uncertainty"),
+            ("plant_products", "production_dependency",
+             "production_uncertainty"),
+            ("operator_hourly_rate", "dependency", None),
+            ("project_uncertainties", "dependency", None),
+        ):
+            if key not in configuration:
+                continue
+            updates = configuration[key]
+            if getattr(self, key, None) is None:
+                setattr(self, key, {})
+            original = getattr(self, key)
+            if key == "operator_hourly_rate":
+                # a single entry, not a dict of named entries
+                clear_superseded_uncertainty(
+                    {key: original}, {key: updates}, dep_key,
+                )
+            else:
+                clear_superseded_uncertainty(
+                    original, updates, dep_key, unc_key,
+                )
+            recursive_update(original, updates)
             # also mirror into stored config
-            if "variable_opex_inputs" not in self.config:
-                self.config["variable_opex_inputs"] = {}
-            recursive_update(
-                self.config["variable_opex_inputs"],
-                configuration["variable_opex_inputs"],
-            )
-
-        if "plant_products" in configuration:
-            if (
-                not hasattr(self, "plant_products")
-                or self.plant_products is None
-            ):
-                self.plant_products = {}
-            clear_superseded_uncertainty(
-                self.plant_products,
-                configuration["plant_products"],
-                "production_dependency",
-                "production_uncertainty",
-            )
-            recursive_update(
-                self.plant_products,
-                configuration["plant_products"],
-            )
-
-            # also mirror into stored config
-            if "plant_products" not in self.config:
-                self.config["plant_products"] = {}
-            recursive_update(
-                self.config["plant_products"],
-                configuration["plant_products"],
-            )
-
-        if "operator_hourly_rate" in configuration:
-            if (
-                not hasattr(self, "operator_hourly_rate")
-                or self.operator_hourly_rate is None
-            ):
-                self.operator_hourly_rate = {}
-            clear_superseded_uncertainty(
-                {"operator_hourly_rate": self.operator_hourly_rate},
-                {"operator_hourly_rate": configuration["operator_hourly_rate"]},
-                "dependency",
-            )
-            recursive_update(
-                self.operator_hourly_rate,
-                configuration["operator_hourly_rate"],
-            )
-
-            # also mirror into stored config
-            if "operator_hourly_rate" not in self.config:
-                self.config["operator_hourly_rate"] = {}
-            recursive_update(
-                self.config["operator_hourly_rate"],
-                configuration["operator_hourly_rate"],
-            )
+            recursive_update(self.config.setdefault(key, {}), updates)
 
         if "project_uncertainties" in configuration:
-            if (
-                not hasattr(self, "project_uncertainties")
-                or self.project_uncertainties is None
-            ):
-                self.project_uncertainties = {}
-            clear_superseded_uncertainty(
-                self.project_uncertainties,
-                configuration["project_uncertainties"],
-                "dependency",
-            )
-            recursive_update(
-                self.project_uncertainties,
-                configuration["project_uncertainties"],
-            )
-
-            if "project_uncertainties" not in self.config:
-                self.config["project_uncertainties"] = {}
-            recursive_update(
-                self.config["project_uncertainties"],
-                configuration["project_uncertainties"],
-            )
             _validate_project_uncertainties(self.project_uncertainties)
 
     def calculate_purchased_cost(self, print_results=False):
@@ -772,6 +533,7 @@ class Plant:
             + self.contigency
         )
 
+        # ponytail: two print branches differ by one line; print shared lines once
         if print_results:
             if (
                 additional_capex
@@ -939,6 +701,7 @@ class Plant:
         else:
             return self.revenue
 
+    # ponytail: two internal callers, same args; inline as sum(...)
     def count_process_steps(
         self,
         equipments,
@@ -1306,64 +1069,11 @@ class Plant:
             # Print the results
             print("Fixed production costs estimation")
             print("===================================")
-            print(
-                f"Operating labor costs: "
-                f"{self.operating_labor_costs:,.2f} {self.currency} per year"
-            )
-            print(
-                f"Supervision costs: "
-                f"{self.supervision_costs:,.2f} {self.currency} per year"
-            )
-            print(
-                f"Direct salary overhead: "
-                f"{self.direct_salary_overhead:,.2f} {self.currency} per year"
-            )
-            print(
-                f"Laboratory charges: "
-                f"{self.laboratory_charges:,.2f} {self.currency} per year"
-            )
-            print(
-                f"Maintenance costs: "
-                f"{self.maintenance_costs:,.2f} {self.currency} per year"
-            )
-            print(
-                f"Taxes and insurance costs: "
-                f"{self.taxes_insurance_costs:,.2f} {self.currency} per year"
-            )
-            print(
-                f"Rent of land costs: "
-                f"{self.rent_of_land_costs:,.2f} {self.currency} per year"
-            )
-            print(
-                f"Environmental charges: "
-                f"{self.environmental_charges:,.2f} {self.currency} per year"
-            )
-            print(
-                f"Operating supplies: "
-                f"{self.operating_supplies:,.2f} {self.currency} per year"
-            )
-            print(
-                f"General plant overhead: "
-                f"{self.general_plant_overhead:,.2f} {self.currency} per year"
-            )
-            print(
-                f"Interest on working capital: "
-                f"{self.interest_working_capital:,.2f} "
-                f"{self.currency} per year"
-            )
-            print(
-                f"Patents and royalties: "
-                f"{self.patents_royalties:,.2f} {self.currency} per year"
-            )
-            print(
-                f"Distribution and selling costs: "
-                f"{self.distribution_selling_costs:,.2f} "
-                f"{self.currency} per year"
-            )
-            print(
-                f"R&D costs: {self.RnD_costs:,.2f} "
-                f"{self.currency} per year"
-            )
+            for _, attr, label in _FIXED_OPEX_ITEMS:
+                print(
+                    f"{label}: "
+                    f"{getattr(self, attr):,.2f} {self.currency} per year"
+                )
             print("===================================")
             print(
                 f"Fixed OPEX: {self.fixed_production_costs:,.2f} "
@@ -1415,6 +1125,7 @@ class Plant:
         settlement inside the analysis horizon.
         """
         # 0) Upstream calcs (capital, opex breakdowns)
+        # ponytail: calculate_fixed_opex already calls fixed_capital and variable_opex
         self.calculate_fixed_capital(fc=self.fc)
         self.calculate_variable_opex()
         self.calculate_fixed_opex(fp=self.fp)
@@ -1468,6 +1179,7 @@ class Plant:
         prod_array = np.zeros(shape)
 
         # --- Resolve and validate CAPEX ramp ---
+        # ponytail: capex/production ramp checks duplicated; one _as_ramp() helper
         if self.capex_ramp is not None:
             try:
                 capex_ramp = np.asarray(
@@ -1602,6 +1314,8 @@ class Plant:
         )
 
         # --- Revenue & cost arrays ---
+        # ponytail: per-year loops vectorizable; cash_flow[:, yr] write is dead
+        #   (recomputed below)
         for yr in range(n_years):
             prod = nameplate * ramp[yr]
             prod_array[:, yr] = prod
@@ -1746,6 +1460,7 @@ class Plant:
             If ``interest_rate`` is an array whose length does not match the
             number of cash flow scenarios.
         """
+        # ponytail: calculate_cash_flow recomputes all of these; keep only that call
         self.calculate_fixed_capital(
             fc=1.0 if self.fc is None else self.fc
         )
@@ -1835,6 +1550,7 @@ class Plant:
         float or np.ndarray
             Levelized cost per unit of main product (scalar or array).
         """
+        # ponytail: calculate_cash_flow recomputes all of these; keep only that call
         self.calculate_fixed_capital(
             fc=1.0 if self.fc is None else self.fc
         )
@@ -1845,6 +1561,8 @@ class Plant:
         self.calculate_revenue()
         self.calculate_cash_flow()
 
+        # ponytail: scalar/vector branches with per-year loops; one (1+r)[:, None] **
+        #   arange broadcast
         is_array = isinstance(self.project_lifetime, (list, np.ndarray))
 
         capital_cost = self.capital_cost_array
@@ -1907,6 +1625,13 @@ class Plant:
         else:
             return self.levelized_cost
 
+    def _extra_capex(self, additional_capex):
+        """Additional CAPEX to add to the investment (0 unless requested
+        and configured)."""
+        if additional_capex and self.additional_capex_cost is not None:
+            return np.sum(self.additional_capex_cost)
+        return 0.0
+
     def calculate_payback_time(self, additional_capex: bool = False,
                                print_results: bool = False):
         """
@@ -1927,70 +1652,26 @@ class Plant:
         float or np.ndarray
             Payback time in years (``nan`` if no revenue-generating years exist).
         """
-        revenue = np.asarray(self.revenue_array, dtype=float)
-        cash_flow = np.asarray(self.cash_flow, dtype=float)
+        # One row per sample (a single row when inputs are scalar)
+        revenue = np.atleast_2d(np.asarray(self.revenue_array, dtype=float))
+        cash_flow = np.atleast_2d(np.asarray(self.cash_flow, dtype=float))
+        total_fixed_capital = np.broadcast_to(
+            np.asarray(self.fixed_capital, dtype=float)
+            + self._extra_capex(additional_capex),
+            len(cash_flow),
+        )
+
+        pbt = np.full(len(cash_flow), np.nan)
+        for i, (cf, rev) in enumerate(zip(cash_flow, revenue)):
+            revenue_generating_years = cf[rev > 0]
+            if len(revenue_generating_years) == 0:
+                continue
+            average_annual_cash_flow = np.mean(revenue_generating_years)
+            if average_annual_cash_flow > 0:
+                pbt[i] = total_fixed_capital[i] / average_annual_cash_flow
 
         is_array = isinstance(self.project_lifetime, (list, np.ndarray))
-
-        if is_array:
-            n_samples = len(self.project_lifetime)
-            pbt = np.full(n_samples, np.nan, dtype=float)
-
-            if (
-                additional_capex
-                and self.additional_capex_cost is not None
-            ):
-                total_fixed_capital = (
-                    np.asarray(self.fixed_capital, dtype=float)
-                    + np.sum(self.additional_capex_cost)
-                )
-            else:
-                total_fixed_capital = np.asarray(
-                    self.fixed_capital, dtype=float
-                )
-
-            for i in range(n_samples):
-                revenue_generating_years = cash_flow[i][revenue[i] > 0]
-
-                if len(revenue_generating_years) == 0:
-                    pbt[i] = np.nan
-                else:
-                    average_annual_cash_flow = np.mean(
-                        revenue_generating_years
-                    )
-                    pbt[i] = (
-                        total_fixed_capital[i] / average_annual_cash_flow
-                        if average_annual_cash_flow > 0
-                        else np.nan
-                    )
-
-            self.payback_time = pbt
-
-        else:
-            revenue_generating_years = cash_flow[revenue > 0]
-
-            if len(revenue_generating_years) == 0:
-                self.payback_time = float("nan")
-            else:
-                if (
-                    additional_capex
-                    and self.additional_capex_cost is not None
-                ):
-                    total_fixed_capital = (
-                        self.fixed_capital
-                        + sum(self.additional_capex_cost)
-                    )
-                else:
-                    total_fixed_capital = self.fixed_capital
-
-                average_annual_cash_flow = np.mean(
-                    revenue_generating_years
-                )
-                self.payback_time = (
-                    total_fixed_capital / average_annual_cash_flow
-                    if average_annual_cash_flow > 0
-                    else float("nan")
-                )
+        self.payback_time = pbt if is_array else pbt[0]
 
         if print_results:
             if np.ndim(self.payback_time) == 0:
@@ -2024,61 +1705,24 @@ class Plant:
         float or np.ndarray
             ROI as a percentage (scalar or array across scenarios).
         """
-        net_profit = (
+        # One row per sample (a single row when inputs are scalar)
+        net_profit = np.atleast_2d(
             np.asarray(self.gross_profit_array, dtype=float)
             - np.asarray(self.tax_paid_array, dtype=float)
         )
+        total_investment = (
+            np.asarray(self.fixed_capital, dtype=float)
+            + self._extra_capex(additional_capex)
+            + np.asarray(self.working_capital, dtype=float)
+        )
+        roi = (
+            np.sum(net_profit, axis=1) * 100
+            / (np.asarray(self.project_lifetime, dtype=float)
+               * total_investment)
+        )
 
         is_array = isinstance(self.project_lifetime, (list, np.ndarray))
-
-        if is_array:
-            project_lifetime = np.asarray(
-                self.project_lifetime, dtype=float
-            )
-            fixed_capital = np.asarray(self.fixed_capital, dtype=float)
-            working_capital = np.asarray(
-                self.working_capital, dtype=float
-            )
-
-            if (
-                additional_capex
-                and self.additional_capex_cost is not None
-            ):
-                total_investment = (
-                    fixed_capital
-                    + np.sum(self.additional_capex_cost)
-                    + working_capital
-                )
-            else:
-                total_investment = fixed_capital + working_capital
-
-            annual_profit_sum = np.sum(net_profit, axis=1)
-
-            self.roi = (
-                annual_profit_sum * 100
-                / (project_lifetime * total_investment)
-            )
-
-        else:
-            if (
-                additional_capex
-                and self.additional_capex_cost is not None
-            ):
-                total_investment = (
-                    self.fixed_capital
-                    + sum(self.additional_capex_cost)
-                    + self.working_capital
-                )
-            else:
-                total_investment = (
-                    self.fixed_capital + self.working_capital
-                )
-
-            self.roi = (
-                np.sum(net_profit)
-                * 100
-                / (self.project_lifetime * total_investment)
-            )
+        self.roi = roi if is_array else roi[0]
 
         if print_results:
             if np.ndim(self.roi) == 0:
@@ -2107,6 +1751,8 @@ class Plant:
         float or np.ndarray
             IRR as a fraction (e.g. 0.15 = 15%), or ``nan`` if undefined.
         """
+        # ponytail: grid scan + bracket + brentq; np.roots(cf[::-1]) like
+        #   numpy_financial.irr, ndim==1 branch dead
         cf = np.asarray(self.cash_flow, dtype=float)
 
         def _irr_from_cash_flow(cf_1d):
@@ -2293,6 +1939,8 @@ class Plant:
                 "plant_products": deepcopy(self.plant_products),
                 "variable_opex_inputs": deepcopy(self.variable_opex_inputs),
                 "working_capital": self.working_capital,
+                # ponytail: repeated .tolist() ternaries, deepcopy of fresh list,
+                #   getattr on always-set attrs
                 "additional_capex_cost": deepcopy(
                     self.additional_capex_cost.tolist()
                     if isinstance(self.additional_capex_cost, np.ndarray)
@@ -2340,44 +1988,10 @@ class Plant:
                     ),
             },
             "fixed_opex": {
-                "operating_labor": float(
-                    getattr(self, "operating_labor_costs", 0.0)
-                    ),
-                "supervision": float(getattr(self, "supervision_costs", 0.0)),
-                "direct_salary_overhead": float(
-                    getattr(self, "direct_salary_overhead", 0.0)
-                    ),
-                "laboratory_charges": float(
-                    getattr(self, "laboratory_charges", 0.0)
-                    ),
-                "maintenance": float(
-                    getattr(self, "maintenance_costs", 0.0)
-                    ),
-                "taxes_insurance": float(
-                    getattr(self, "taxes_insurance_costs", 0.0)
-                    ),
-                "rent_of_land": float(
-                    getattr(self, "rent_of_land_costs", 0.0)
-                    ),
-                "environmental_charges": float(
-                    getattr(self, "environmental_charges", 0.0)
-                    ),
-                "operating_supplies": float(
-                    getattr(self, "operating_supplies", 0.0)
-                    ),
-                "general_plant_overhead": float(
-                    getattr(self, "general_plant_overhead", 0.0)
-                    ),
-                "interest_working_capital": float(
-                    getattr(self, "interest_working_capital", 0.0)
-                    ),
-                "patents_royalties": float(
-                    getattr(self, "patents_royalties", 0.0)
-                    ),
-                "distribution_selling": float(
-                    getattr(self, "distribution_selling_costs", 0.0)
-                    ),
-                "rnd": float(getattr(self, "RnD_costs", 0.0)),
+                **{
+                    key: float(getattr(self, attr, 0.0))
+                    for key, attr, _ in _FIXED_OPEX_ITEMS
+                },
                 "total": float(getattr(self, "fixed_production_costs", 0.0)),
             },
             "revenue": {
@@ -2494,6 +2108,7 @@ class Plant:
 
 
 # Depreciation models
+# ponytail: only annotates DepreciationConfig; drop with it
 DepMethod = Literal[
     "straight_line", "declining_balance", "macrs"
 ]
@@ -2570,6 +2185,7 @@ _MACRS_HALF_YEAR: Dict[int, List[float]] = {
 }
 
 
+# ponytail: bare namespace class; _DEP_DEFAULTS dict + SimpleNamespace
 class DepreciationConfig:
     """
     Configuration for asset depreciation calculations.
@@ -2612,6 +2228,59 @@ class DepreciationConfig:
         2  # year index when asset is placed in service
     )
 
+
+# Fixed OPEX line items: (to_dict key, Plant attribute, printed label)
+_FIXED_OPEX_ITEMS = (
+    ("operating_labor", "operating_labor_costs", "Operating labor costs"),
+    ("supervision", "supervision_costs", "Supervision costs"),
+    ("direct_salary_overhead", "direct_salary_overhead",
+     "Direct salary overhead"),
+    ("laboratory_charges", "laboratory_charges", "Laboratory charges"),
+    ("maintenance", "maintenance_costs", "Maintenance costs"),
+    ("taxes_insurance", "taxes_insurance_costs", "Taxes and insurance costs"),
+    ("rent_of_land", "rent_of_land_costs", "Rent of land costs"),
+    ("environmental_charges", "environmental_charges",
+     "Environmental charges"),
+    ("operating_supplies", "operating_supplies", "Operating supplies"),
+    ("general_plant_overhead", "general_plant_overhead",
+     "General plant overhead"),
+    ("interest_working_capital", "interest_working_capital",
+     "Interest on working capital"),
+    ("patents_royalties", "patents_royalties", "Patents and royalties"),
+    ("distribution_selling", "distribution_selling_costs",
+     "Distribution and selling costs"),
+    ("rnd", "RnD_costs", "R&D costs"),
+)
+
+# Plain Plant attributes: config key -> (attribute name, __init__ default).
+# update_configuration overwrites each one whose key it is given.
+_SCALARS = {
+    "plant_name": ("name", None),
+    "process_type": ("process_type", None),
+    "country": ("country", "United States"),
+    "region": ("region", "Gulf Coast"),
+    "currency": ("currency", "USD"),
+    "exchange_rate": ("exchange_rate", 1.0),
+    "working_capital": ("working_capital", None),
+    "interest_rate": ("interest_rate", 0.09),
+    "project_lifetime": ("project_lifetime", 20),
+    "plant_utilization": ("plant_utilization", 1),
+    "tax_rate": ("tax_rate", 0),
+    "depreciation": ("depreciation", None),
+    "operators_per_shift": ("operators_per_shift", None),
+    "operators_hired": ("operators_hired", None),
+    "production_type": ("production_type", "continuous"),
+    "working_weeks_per_year": ("working_weeks_per_year", 49),
+    "working_shifts_per_week": ("working_shifts_per_week", 5),
+    "operating_shifts_per_day": ("operating_shifts_per_day", 3),
+    "additional_capex_years": ("additional_capex_years", None),
+    "additional_capex_cost": ("additional_capex_cost", None),
+    "fc": ("fc", None),
+    "fp": ("fp", None),
+    "capex_ramp": ("capex_ramp", None),
+    "production_ramp": ("production_ramp", None),
+    "loc_factor": ("loc_factor", None),
+}
 
 _UNCERTAINTY_KEYS = {
     "fixed_capital_factor",
@@ -2690,6 +2359,8 @@ def _validate_project_uncertainties(cfg: dict) -> None:
                 f"'project_uncertainties['{param}']['std']' must be ≥ 0, "
                 f"got {sub['std']}."
             )
+        # ponytail: min/max check written twice + four bound loops; one _BOUND_RULES
+        #   table
         if "min" in sub and "max" in sub and sub["min"] >= sub["max"]:
             raise ValueError(
                 f"'project_uncertainties['{param}']': "

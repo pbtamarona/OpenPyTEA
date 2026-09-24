@@ -19,6 +19,8 @@ from .plotting import (plot_stacked_bar, plot_cash_flow,
 from .io import (load_results, load_openpytea_config,
                  run_equipment, run_plant, run_tea, run_openpytea)
 
+# ponytail: hardcoded, can drift; importlib.metadata.version;
+#   __description__/__email__/__url__ unread
 __version__ = "3.0.0"
 __author__ = "Panji B. Tamarona"
 __email__ = "P.B.Tamarona@tudelft.nl"

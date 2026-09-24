@@ -96,6 +96,7 @@ def _default_metric_label(currency: str, metric: str) -> str:
     ``text.usetex`` is active (see :func:`_tex_escape`).
     """
     metric = metric.upper()
+    # ponytail: 'levelized_cost' can never match after .upper(); drop it
     if metric == "LCOP" or metric == "levelized_cost":
         return rf"Levelized cost / [{currency}$\cdot$unit$^{-1}$]"
     elif metric == "ROI":
@@ -379,6 +380,7 @@ def _resolve_dependency_dag(dependents, driver_pool,
         If a ``"depends_on"`` entry is malformed or points at an unknown
         item, or the dependency graph has a cycle.
     """
+    # ponytail: hand-rolled topo sort; graphlib.TopologicalSorter
     resolved = {}
     pending_keys = list(dependents)
 
@@ -713,6 +715,8 @@ def _update_and_evaluate(
         )  # ['variable_opex_inputs' | 'plant_products', '<name>']
         root, name = parts[0], parts[1]
 
+        # ponytail: builds same dict twice, ValueError unreachable;
+        #   update_configuration({root: {name: {'price': value}}})
         if root == "variable_opex_inputs":
             config = {
                 "variable_opex_inputs": {
@@ -768,6 +772,8 @@ def _update_and_evaluate(
     # This builds fixed_capital, opex, revenue, cash_flow, etc.
     plant_copy.calculate_levelized_cost()
 
+    # ponytail: copy of _evaluate_metric; return _evaluate_metric(plant_copy, metric,
+    #   additional_capex)
     # --- 4. Return requested metric ---
 
     if metric == "LCOP":
@@ -854,6 +860,8 @@ def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
         >>> result = _build_bar_data(components, ["Q1", "Q2"],
                                                 "Revenue", "USD", False)
     """
+    # ponytail: 'values'/'labels' unread by plotting; return components/xlabels only
+    #   (public API change)
     # collect all unique component names
     all_labels = sorted(set().union(*(c.keys() for c in components_list)))
 
@@ -904,6 +912,8 @@ def _evaluate_metric(plant, metric, additional_capex=False):
         AttributeError: If the plant object lacks required attributes or
             methods to calculate the requested metric.
     """
+    # ponytail: calculate_levelized_cost() called in every branch; call once before the
+    #   if-chain
     if metric == "LCOP":
         # Always recompute, like every other metric branch: a cached
         # levelized_cost is never invalidated, so trusting it here
@@ -956,6 +966,7 @@ def _evaluate_baseline_metric(plant, metric, additional_capex=False):
 
     plant_copy = deepcopy(plant)
     _apply_dependencies(plant_copy)
+    # ponytail: redundant, _evaluate_metric already recomputes
     # Resolving the graph can move the plant's inputs off the values its
     # cached levelized_cost was computed from, and _evaluate_metric reuses
     # that cache for "LCOP" rather than recomputing.
@@ -1080,6 +1091,8 @@ def _run_tornado_sensitivity(plant, keys, nested_keys,
     """
     results = {}
 
+    # ponytail: original-value branches duplicate _dependency_node_value; route through
+    #   _get_original_value
     for key in keys:
         if key in ["fixed_capital", "fixed_opex"]:
             # Perturb around the plant's actual configured factor, not
@@ -1159,6 +1172,7 @@ def _read_json(filepath):
         return json.load(f)
 
 
+# ponytail: json.dump(..., default=lambda o: o.tolist()) replaces this
 def _to_jsonable(obj):
     """
     Convert a Python object to a JSON-serializable format.

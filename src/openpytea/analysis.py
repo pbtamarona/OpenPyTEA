@@ -65,6 +65,8 @@ def direct_costs_data(plants, pct=False, expand_composites=False):
     >>> data = direct_costs_data(plant1)
     >>> data = direct_costs_data([plant1, plant2], pct=True)
     """
+    # ponytail: all five *_data functions repeat this wrapper; one _bar_data(plants,
+    #   per_plant_fn, ylabel, pct)
     plants = _ensure_list(plants)
     currency = plants[0].currency if plants else r"\$"
 
@@ -138,6 +140,8 @@ def fixed_capital_data(plants, additional_capex=False, pct=False):
             "Contingency": plant.contigency,
         }
 
+        # ponytail: isinstance/try coercion; 0.0 if extra is None else
+        #   float(np.sum(extra))
         if additional_capex:
             extra = getattr(plant, "additional_capex_cost", None)
 
@@ -342,6 +346,8 @@ def levelized_cost_data(plants, pct=False):
     xlabels = []
 
     for plant in plants:
+        # ponytail: repeats Plant.calculate_levelized_cost discounting; share one
+        #   broadcast helper
         plant.calculate_levelized_cost()
 
         n_years = int(plant.project_lifetime)
@@ -573,6 +579,7 @@ def sensitivity_data(plants,
     resolved the same way. See
     :func:`~openpytea.helpers._apply_dependencies`.
     """
+    # ponytail: inline _ensure_list; use plants = _ensure_list(plants)
     if not isinstance(plants, (list, tuple)):
         plants = [plants]
 
@@ -585,6 +592,8 @@ def sensitivity_data(plants,
         )
 
     # --- Top-level parameters ---
+    # ponytail: key sets built globally then again per plant; top_level_keys copies
+    #   _TOP_LEVEL_DEPENDENCY_NODES
     top_level_keys = [
         "fixed_capital",
         "fixed_opex",
@@ -771,6 +780,8 @@ def sensitivity_data(plants,
                 pct_axis, fill_value=base_value, dtype=float
             )
         else:
+            # ponytail: hand-written original-value branches;
+            #   _get_original_value/_dependency_node_value cover them
             if parameter == "fixed_capital":
                 # Perturb the plant's actual configured multiplier, not
                 # an assumed 1.0 (see the tornado twin in helpers)
@@ -943,6 +954,7 @@ def tornado_data(plant,
         "highs": highs_sorted,
         "base_value": base_value,
         "labels": labels_sorted,
+        # ponytail: stale comments on these return keys
         "plus_minus_value": plus_minus_value,   # ✅ add this
         "metric": metric,                       # optional
         "xlabel": label,
@@ -1109,6 +1121,8 @@ def sample_distribution(dist_id, size, loc=None, scale=None, shape=None,
     if not needs_truncation:
         return dist.rvs(size=size, random_state=random_state)
 
+    # ponytail: 200-round rejection loop; inverse-CDF truncation
+    #   dist.ppf(rng.uniform(cdf(lo), cdf(hi))) (changes seeded results)
     out = np.empty(size)
     filled = 0
     max_rounds = 200
@@ -1225,32 +1239,63 @@ def _resolve_dist_params(cfg, default_loc=0.0, default_scale=0.0,
     return dist_id, loc, scale, shape, minimum, maximum
 
 
-def _resolve_price_dist_params(props):
+def _window_dist_params(cfg, baseline, default_std=0.0, floor=None, cap=None):
     """
-    Extract price-uncertainty ``(dist_id, loc, scale, shape, minimum,
-    maximum)`` for one ``variable_opex_inputs``/``plant_products`` item.
+    :func:`_resolve_dist_params` with a default truncation window of
+    ``baseline ± 2*std``, clipped to ``[floor, cap]`` where given.
 
-    Preferred form: a nested ``"price_uncertainty"`` sub-dict (same
-    ``std``/``min``/``max``/``dist_id`` fields as ``consumption_uncertainty``/
+    Centering the default window on the baseline keeps out-of-range
+    baselines (negative prices such as disposal credits, large per-unit
+    costs in JPY/IDR-scale currencies, operator rates above ~130) from
+    being excluded by -- and hanging -- the rejection sampling. Explicit
+    ``min``/``max`` in ``cfg`` always win.
+    """
+    std = _resolve_scale(cfg, default_std)
+    default_min = baseline - 2 * std
+    if floor is not None:
+        default_min = max(floor, default_min)
+    default_max = baseline + 2 * std
+    if cap is not None:
+        default_max = min(cap, default_max)
+    return _resolve_dist_params(
+        cfg, default_loc=baseline, default_scale=std,
+        default_min=default_min, default_max=default_max,
+    )
+
+
+def _resolve_item_dist_params(props, key, default_value=0.0, default_std=0.0):
+    """
+    Extract ``(dist_id, loc, scale, shape, minimum, maximum)`` for the
+    ``key`` value (``"price"`` or ``"rate"``) of one config item: a
+    ``variable_opex_inputs``/``plant_products`` entry, or
+    ``plant.operator_hourly_rate``.
+
+    Preferred form: a nested ``"<key>_uncertainty"`` sub-dict (e.g.
+    ``"price_uncertainty"``, with the same ``std``/``min``/``max``/
+    ``dist_id`` fields as ``consumption_uncertainty``/
     ``production_uncertainty``), mirroring how every other per-item
     uncertainty block is namespaced. ``"loc"``/``"mean"`` inside it default
-    to the item's own ``"price"``, and the default truncation bounds are
-    ``baseline ± 2*std`` (floored at 0 for non-negative baselines), the
-    same convention consumption/production use -- so negative baselines
-    (e.g. disposal credits) and arbitrarily large ones sample correctly.
+    to the item's own ``key`` value, and the default truncation bounds are
+    ``baseline ± 2*std`` (floored at 0 for non-negative baselines), see
+    :func:`_window_dist_params`.
 
-    Backward-compatible fallback: if ``"price_uncertainty"`` is absent, the
+    Backward-compatible fallback: if ``"<key>_uncertainty"`` is absent, the
     distribution fields are read directly off ``props`` instead (the
-    pre-``price_uncertainty`` layout, where ``dist_id``/``std``/``min``/
-    ``max`` sat alongside ``"price"`` at the top level of the item). This
-    keeps configs written before ``price_uncertainty`` existed working
-    unchanged; it is not the recommended layout for new configs.
+    original flat layout, where ``dist_id``/``std``/``min``/``max`` sat
+    alongside ``key`` at the top level of the item). This keeps configs
+    written before the nested block existed working unchanged; it is not
+    the recommended layout for new configs.
 
     Parameters
     ----------
     props : dict
-        One item's full config dict (e.g. ``plant.variable_opex_inputs["electricity"]``
-        or ``plant.plant_products["methanol"]``).
+        One item's full config dict.
+    key : str
+        The sampled value's key, ``"price"`` or ``"rate"``.
+    default_value : float, optional
+        Baseline when ``props`` has no ``key``. Default is 0.0.
+    default_std : float, optional
+        Scale when the config sets none. Default is 0.0.
 
     Returns
     -------
@@ -1258,72 +1303,36 @@ def _resolve_price_dist_params(props):
         ``(dist_id, loc, scale, shape, minimum, maximum)``, as returned by
         :func:`_resolve_dist_params`.
     """
-    baseline = props.get("price", 0.0)
-    price_cfg = props.get("price_uncertainty")
-    cfg = price_cfg if price_cfg is not None else props
-    std = _resolve_scale(cfg)
-    # Default truncation window is centered on the baseline, the same
-    # way consumption/production bounds are -- a hard-coded window would
-    # exclude (and hang the rejection sampling on) out-of-range
-    # baselines such as negative prices (disposal credits) or large
-    # per-unit costs in JPY/IDR-scale currencies. Only a non-negative
-    # baseline gets the zero floor; explicit min/max always win.
-    default_min = baseline - 2 * std
-    if baseline >= 0:
-        default_min = max(0.0, default_min)
-    return _resolve_dist_params(
-        cfg, default_loc=baseline,
-        default_min=default_min, default_max=baseline + 2 * std,
+    baseline = props.get(key, default_value)
+    cfg = props.get(f"{key}_uncertainty")
+    if cfg is None:
+        cfg = props
+    return _window_dist_params(
+        cfg, baseline, default_std, floor=0.0 if baseline >= 0 else None,
     )
 
 
-def _resolve_rate_dist_params(props):
-    """
-    Extract operator-hourly-rate uncertainty ``(dist_id, loc, scale,
-    shape, minimum, maximum)`` from ``plant.operator_hourly_rate``.
-
-    Preferred form: a nested ``"rate_uncertainty"`` sub-dict (same
-    ``std``/``min``/``max``/``dist_id`` fields as
-    ``consumption_uncertainty``/``production_uncertainty``/
-    ``price_uncertainty``), mirroring how every other per-item
-    uncertainty block is namespaced. ``"loc"``/``"mean"`` inside it
-    default to the item's own ``"rate"``, and the default truncation
-    bounds are ``baseline ± 2*std`` (floored at 0), the same convention
-    every other input uses.
-
-    Backward-compatible fallback: if ``"rate_uncertainty"`` is absent,
-    the distribution fields are read directly off ``props`` instead (the
-    original flat layout, where ``dist_id``/``std``/``min``/``max`` sat
-    alongside ``"rate"``). This keeps configs written before
-    ``rate_uncertainty`` existed working unchanged; it is not the
-    recommended layout for new configs.
-
-    Parameters
-    ----------
-    props : dict
-        The full ``plant.operator_hourly_rate`` dict.
-
-    Returns
-    -------
-    tuple
-        ``(dist_id, loc, scale, shape, minimum, maximum)``, as returned
-        by :func:`_resolve_dist_params`.
-    """
-    baseline = props.get("rate", 38.11)
-    rate_cfg = props.get("rate_uncertainty")
-    cfg = rate_cfg if rate_cfg is not None else props
-    std = _resolve_scale(cfg, 10)
-    # Baseline-centered default window, like every other input's -- the
-    # old hard-coded [10, 100] hung the rejection sampling for rates
-    # above ~130 and silently piled samples under 100 for rates just
-    # over it. Explicit min/max always win.
-    default_min = baseline - 2 * std
-    if baseline >= 0:
-        default_min = max(0.0, default_min)
-    return _resolve_dist_params(
-        cfg, default_loc=baseline, default_scale=10,
-        default_min=default_min, default_max=baseline + 2 * std,
+def _draw(params, num_samples, rng):
+    """:func:`sample_distribution` on a ``_resolve_dist_params`` tuple."""
+    dist_id, loc, scale, shape, minimum, maximum = params
+    return sample_distribution(
+        dist_id, num_samples, loc=loc, scale=scale, shape=shape,
+        minimum=minimum, maximum=maximum, random_state=rng,
     )
+
+
+def _sample_process_value(cfg, baseline, num_samples, rng):
+    """
+    Sample a consumption/production value from its ``*_uncertainty``
+    block, or a constant at ``baseline`` when none is configured -- so the
+    process parameter still shows up alongside its price in the Monte
+    Carlo inputs/plots (dist_id 1 is a no-op for ``rng``).
+    """
+    if _has_uncertainty(cfg):
+        return _draw(
+            _window_dist_params(cfg, baseline, 0, floor=0.0), num_samples, rng,
+        )
+    return sample_distribution(1, num_samples, loc=baseline, random_state=rng)
 
 
 def _reject_std_scale_for_dependent(cfg, kind, name):
@@ -1399,6 +1408,7 @@ def _collect_dependency_nodes(plant):
     return dependents, noise_cfg
 
 
+# ponytail: two identical branches; one check on name in (plant_utilization, tax_rate)
 def _ensure_driver_available(plant, key, num_samples, driver_pool):
     """
     True if ``key`` is (or was just lazily seeded as) present in
@@ -1708,164 +1718,64 @@ def monte_carlo(plant,
         "PBT": np.zeros(num_samples),
     }
 
-    # ---- Resolve project uncertainty parameters ----
+    # ---- Sample ALL inputs once, in a fixed order (the order is the RNG
+    # draw sequence, so it must not change). project_samples collects every
+    # independently-sampled economic scalar (see _PROJECT_SCALAR_PARAMS),
+    # feeding the dependency DAG below both as potential drivers and to
+    # receive any of these seven that are themselves dependents. A param
+    # with its own "dependency" key skips sampling here entirely --
+    # _resolve_quantity_dependencies fills it in. ----
     pu = plant.project_uncertainties
-
-    fc_id, fc_loc, fc_scale, fc_shape, fc_min, fc_max = _resolve_dist_params(
-        pu.get("fixed_capital_factor", {}),
-        default_loc=1, default_scale=0.3, default_min=0.25, default_max=1.75,
-    )
-
-    fo_id, fo_loc, fo_scale, fo_shape, fo_min, fo_max = _resolve_dist_params(
-        pu.get("fixed_opex_factor", {}),
-        default_loc=1, default_scale=0.3, default_min=0.25, default_max=1.75,
-    )
-
-    lt_cfg = pu.get("project_lifetime", {})
-    lt_std_default = _resolve_scale(lt_cfg, 5)
-    lt_id, lt_loc, lt_scale, lt_shape, lt_min, lt_max = _resolve_dist_params(
-        lt_cfg,
-        default_loc=plant.project_lifetime,
-        default_scale=lt_std_default,
-        default_min=max(5, plant.project_lifetime - 2 * lt_std_default),
-        default_max=plant.project_lifetime + 2 * lt_std_default,
-    )
-
-    ir_cfg = pu.get("interest_rate", {})
-    ir_std_default = _resolve_scale(ir_cfg, 0.03)
-    ir_id, ir_loc, ir_scale, ir_shape, ir_min, ir_max = _resolve_dist_params(
-        ir_cfg,
-        default_loc=plant.interest_rate,
-        default_scale=ir_std_default,
-        default_min=max(0.02, plant.interest_rate - 2 * ir_std_default),
-        default_max=plant.interest_rate + 2 * ir_std_default,
-    )
-
-    # ---- project_samples collects every independently-sampled economic
-    # scalar (see _PROJECT_SCALAR_PARAMS), feeding the dependency DAG below
-    # both as potential drivers and to receive any of these seven that are
-    # themselves dependents. A param with its own "dependency" key skips
-    # sampling here entirely -- _resolve_quantity_dependencies fills it in.
-    project_samples = {}
-
-    pu_util_cfg = pu.get("plant_utilization", {})
-    pu_util_std = _resolve_scale(pu_util_cfg, 0)
-    pu_util_is_dependent = pu_util_cfg.get("dependency") is not None
-    if not pu_util_is_dependent and _has_uncertainty(pu_util_cfg):
-        pu_util_mean = plant.plant_utilization
-        (util_id, util_loc, util_scale, util_shape,
-         util_min, util_max) = _resolve_dist_params(
-            pu_util_cfg,
-            default_loc=pu_util_mean,
-            default_scale=pu_util_std,
-            default_min=max(0.0, pu_util_mean - 2 * pu_util_std),
-            default_max=min(1.0, pu_util_mean + 2 * pu_util_std),
-        )
-        project_samples["plant_utilization"] = sample_distribution(
-            util_id, num_samples, loc=util_loc, scale=util_scale,
-            shape=util_shape, minimum=util_min, maximum=util_max,
-            random_state=rng,
-        )
-
-    tr_cfg = pu.get("tax_rate", {})
-    tr_std = _resolve_scale(tr_cfg, 0)
-    tr_is_dependent = tr_cfg.get("dependency") is not None
-    if not tr_is_dependent and _has_uncertainty(tr_cfg):
-        tr_mean = plant.tax_rate
-        (tr_id, tr_loc, tr_scale, tr_shape,
-         tr_min, tr_max) = _resolve_dist_params(
-            tr_cfg,
-            default_loc=tr_mean,
-            default_scale=tr_std,
-            default_min=max(0.0, tr_mean - 2 * tr_std),
-            default_max=min(1.0, tr_mean + 2 * tr_std),
-        )
-        project_samples["tax_rate"] = sample_distribution(
-            tr_id, num_samples, loc=tr_loc, scale=tr_scale,
-            shape=tr_shape, minimum=tr_min, maximum=tr_max,
-            random_state=rng,
-        )
-
-    # ---- Operator hourly rate ----
     op_cfg = plant.operator_hourly_rate
-    op_id, op_loc, op_scale, op_shape, op_min, op_max = (
-        _resolve_rate_dist_params(op_cfg)
+
+    def cfg(name):
+        return op_cfg if name == "operator_hourly_rate" else pu.get(name, {})
+
+    factor_window = dict(
+        default_loc=1, default_scale=0.3, default_min=0.25, default_max=1.75,
     )
+    # (name, dist params, sampled only when it configures uncertainty)
+    project_inputs = [
+        ("plant_utilization", _window_dist_params(
+            cfg("plant_utilization"), plant.plant_utilization, 0,
+            floor=0.0, cap=1.0), True),
+        ("tax_rate", _window_dist_params(
+            cfg("tax_rate"), plant.tax_rate, 0, floor=0.0, cap=1.0), True),
+        ("fixed_capital_factor", _resolve_dist_params(
+            cfg("fixed_capital_factor"), **factor_window), False),
+        ("fixed_opex_factor", _resolve_dist_params(
+            cfg("fixed_opex_factor"), **factor_window), False),
+        ("operator_hourly_rate", _resolve_item_dist_params(
+            op_cfg, "rate", 38.11, 10), False),
+        ("project_lifetime", _window_dist_params(
+            cfg("project_lifetime"), plant.project_lifetime, 5, floor=5),
+         False),
+        ("interest_rate", _window_dist_params(
+            cfg("interest_rate"), plant.interest_rate, 0.03, floor=0.02),
+         False),
+    ]
+    project_samples = {}
+    for name, params, opt_in in project_inputs:
+        if cfg(name).get("dependency") is not None:
+            continue
+        if opt_in and not _has_uncertainty(cfg(name)):
+            continue
+        project_samples[name] = _draw(params, num_samples, rng)
 
-    # ---- Sample ALL inputs once (skipping any that are themselves a
-    # dependent, deferred to _resolve_quantity_dependencies below) ----
-    if pu.get("fixed_capital_factor", {}).get("dependency") is None:
-        project_samples["fixed_capital_factor"] = sample_distribution(
-            fc_id, num_samples, loc=fc_loc, scale=fc_scale, shape=fc_shape,
-            minimum=fc_min, maximum=fc_max, random_state=rng,
-        )
-
-    if pu.get("fixed_opex_factor", {}).get("dependency") is None:
-        project_samples["fixed_opex_factor"] = sample_distribution(
-            fo_id, num_samples, loc=fo_loc, scale=fo_scale, shape=fo_shape,
-            minimum=fo_min, maximum=fo_max, random_state=rng,
-        )
-
-    if op_cfg.get("dependency") is None:
-        project_samples["operator_hourly_rate"] = sample_distribution(
-            op_id, num_samples, loc=op_loc, scale=op_scale, shape=op_shape,
-            minimum=op_min, maximum=op_max, random_state=rng,
-        )
-
-    if pu.get("project_lifetime", {}).get("dependency") is None:
-        project_samples["project_lifetime"] = sample_distribution(
-            lt_id, num_samples, loc=lt_loc, scale=lt_scale, shape=lt_shape,
-            minimum=lt_min, maximum=lt_max, random_state=rng,
-        )
-
-    if pu.get("interest_rate", {}).get("dependency") is None:
-        project_samples["interest_rate"] = sample_distribution(
-            ir_id, num_samples, loc=ir_loc, scale=ir_scale, shape=ir_shape,
-            minimum=ir_min, maximum=ir_max, random_state=rng,
-        )
-
+    # A "*_dependency" that is explicitly None means no dependency (matching
+    # _collect_dependency_specs), so the item is still sampled here; a real
+    # one gets its DAG mean, plus any noise on top of it, from
+    # _resolve_quantity_dependencies below.
     variable_opex_price_samples = {}
     variable_opex_consumption_samples = {}
     for item, props in plant.variable_opex_inputs.items():
-        (v_id, v_loc, v_scale, v_shape,
-         v_min, v_max) = _resolve_price_dist_params(props)
-        variable_opex_price_samples[item] = sample_distribution(
-            v_id, num_samples, loc=v_loc, scale=v_scale, shape=v_shape,
-            minimum=v_min, maximum=v_max, random_state=rng,
+        variable_opex_price_samples[item] = _draw(
+            _resolve_item_dist_params(props, "price"), num_samples, rng,
         )
-
-        cons_cfg = props.get("consumption_uncertainty", {})
-        cons_std = _resolve_scale(cons_cfg, 0)
-        has_cons_uncertainty = _has_uncertainty(cons_cfg)
-
-        # .get(...) is not None, matching _collect_dependency_specs: an
-        # explicit "consumption_dependency": None means no dependency,
-        # so the item must still be sampled here
-        if props.get("consumption_dependency") is not None:
-            # Deterministic (DAG) mean, plus any noise on top of it, is
-            # resolved later by _resolve_quantity_dependencies.
-            continue
-
-        cons_baseline = props.get("consumption", 0)
-        if has_cons_uncertainty:
-            (c_id, c_loc, c_scale, c_shape,
-             c_min, c_max) = _resolve_dist_params(
-                cons_cfg,
-                default_loc=cons_baseline,
-                default_scale=cons_std,
-                default_min=max(0.0, cons_baseline - 2 * cons_std),
-                default_max=cons_baseline + 2 * cons_std,
-            )
-            variable_opex_consumption_samples[item] = sample_distribution(
-                c_id, num_samples, loc=c_loc, scale=c_scale, shape=c_shape,
-                minimum=c_min, maximum=c_max, random_state=rng,
-            )
-        else:
-            # No uncertainty configured: still report a constant so this
-            # process parameter always shows up alongside its price in the
-            # Monte Carlo inputs/plots (dist_id 1 is a no-op for `rng`).
-            variable_opex_consumption_samples[item] = sample_distribution(
-                1, num_samples, loc=cons_baseline, random_state=rng,
+        if props.get("consumption_dependency") is None:
+            variable_opex_consumption_samples[item] = _sample_process_value(
+                props.get("consumption_uncertainty", {}),
+                props.get("consumption", 0), num_samples, rng,
             )
 
     have_product_prices = all(
@@ -1875,45 +1785,16 @@ def monte_carlo(plant,
     product_price_samples = {}
     if have_product_prices:
         for prod, props in plant.plant_products.items():
-            (p_id, p_loc, p_scale, p_shape,
-             p_min, p_max) = _resolve_price_dist_params(props)
-            product_price_samples[prod] = sample_distribution(
-                p_id, num_samples, loc=p_loc, scale=p_scale, shape=p_shape,
-                minimum=p_min, maximum=p_max, random_state=rng,
+            product_price_samples[prod] = _draw(
+                _resolve_item_dist_params(props, "price"), num_samples, rng,
             )
 
     product_production_samples = {}
     for prod, props in plant.plant_products.items():
-        prod_cfg = props.get("production_uncertainty", {})
-        prod_std = _resolve_scale(prod_cfg, 0)
-        has_prod_uncertainty = _has_uncertainty(prod_cfg)
-
-        # see the consumption gate above: None means no dependency
-        if props.get("production_dependency") is not None:
-            # Deterministic (DAG) mean, plus any noise on top of it, is
-            # resolved later by _resolve_quantity_dependencies.
-            continue
-
-        prod_baseline = props.get("production", 0)
-        if has_prod_uncertainty:
-            (pp_id, pp_loc, pp_scale, pp_shape,
-             pp_min, pp_max) = _resolve_dist_params(
-                prod_cfg,
-                default_loc=prod_baseline,
-                default_scale=prod_std,
-                default_min=max(0.0, prod_baseline - 2 * prod_std),
-                default_max=prod_baseline + 2 * prod_std,
-            )
-            product_production_samples[prod] = sample_distribution(
-                pp_id, num_samples, loc=pp_loc, scale=pp_scale, shape=pp_shape,
-                minimum=pp_min, maximum=pp_max, random_state=rng,
-            )
-        else:
-            # No uncertainty configured: still report a constant so this
-            # process parameter always shows up alongside its price in the
-            # Monte Carlo inputs/plots (dist_id 1 is a no-op for `rng`).
-            product_production_samples[prod] = sample_distribution(
-                1, num_samples, loc=prod_baseline, random_state=rng,
+        if props.get("production_dependency") is None:
+            product_production_samples[prod] = _sample_process_value(
+                props.get("production_uncertainty", {}),
+                props.get("production", 0), num_samples, rng,
             )
 
     _resolve_quantity_dependencies(

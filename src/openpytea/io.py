@@ -121,6 +121,7 @@ def _build_equipment_list(data):
                 f"or 'purchased_cost'."
             )
 
+        # ponytail: copies keys by hand; Equipment(**{'param': 0.0, **entry})
         eq = Equipment(
             name=entry["name"],
             param=entry.get("param", 0.0),
@@ -281,6 +282,7 @@ def load_results(filepath):
     return data["results"]
 
 
+# ponytail: only caller is its own test; str(eq) covers it
 def export_equipment_strings(equipment_list, filepath):
     """
     Export a list of equipment objects to a text file.
@@ -345,6 +347,7 @@ def export_equipment_results(equipment_list, filepath):
 
     equipment_data = [eq.to_dict() for eq in equipment_list]
 
+    # ponytail: metadata+mkdir+json.dump written 3x; one _write_json(path, payload)
     total_purchased = sum((eq.get("purchased_cost") or 0.0)
                           for eq in equipment_data)
     total_direct = sum((eq.get("direct_cost") or 0.0)
@@ -691,94 +694,31 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
     # ======================================================
     # EXPORT PLOTS
     # ======================================================
+    def _save(fig, stem):
+        fig.savefig(
+            output_dir / f"{fname}_{stem}.{plot_format}",
+            dpi=dpi,
+            bbox_inches="tight",
+        )
+        plt.close(fig)  # Free the figure
+
     if save_plots:
-        if "direct_costs" in results:
-            fig, ax = plot_stacked_bar(
-                results["direct_costs"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_direct_costs.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
+        for key, plot_fn in (
+            ("direct_costs", plot_stacked_bar),
+            ("fixed_capital", plot_stacked_bar),
+            ("fixed_opex", plot_stacked_bar),
+            ("variable_opex", plot_stacked_bar),
+            ("levelized_cost", plot_stacked_bar),
+            ("cash_flow", plot_cash_flow),
+        ):
+            if key in results:
+                _save(plot_fn(results[key], show=False)[0], key)
 
-        if "fixed_capital" in results:
-            fig, ax = plot_stacked_bar(
-                results["fixed_capital"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_fixed_capital.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
-
-        if "fixed_opex" in results:
-            fig, ax = plot_stacked_bar(
-                results["fixed_opex"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_fixed_opex.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
-
-        if "variable_opex" in results:
-            fig, ax = plot_stacked_bar(
-                results["variable_opex"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_variable_opex.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
-
-        if "levelized_cost" in results:
-            fig, ax = plot_stacked_bar(
-                results["levelized_cost"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_levelized_cost.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
-
-        if "cash_flow" in results:
-            fig, ax = plot_cash_flow(
-                results["cash_flow"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_cash_flow.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
-
-        if "sensitivity" in results:
-            for name, data in results["sensitivity"].items():
-                fig, ax = plot_sensitivity(data, show=False)
-                fig.savefig(
-                    output_dir /
-                    f"{fname}_sensitivity_{name}.{plot_format}",
-                    dpi=dpi,
-                    bbox_inches="tight",
-                )
-                plt.close(fig)  # Free the figure
+        for name, data in results.get("sensitivity", {}).items():
+            _save(plot_sensitivity(data, show=False)[0], f"sensitivity_{name}")
 
         if "tornado" in results:
-            fig, ax = plot_tornado(
-                results["tornado"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_tornado.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
+            _save(plot_tornado(results["tornado"], show=False)[0], "tornado")
 
         if "monte_carlo" in results:
             mc_results = results["monte_carlo"]
@@ -810,18 +750,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                     metric=metric_name,
                     show=False,
                 )
-
-                filename = (
-                    f"{fname}_monte_carlo_"
-                    f"{metric_name.lower()}.{plot_format}"
-                )
-                fig.savefig(
-                    output_dir / filename,
-                    dpi=dpi,
-                    bbox_inches="tight",
-                )
-
-                plt.close(fig)  # Free the figure
+                _save(fig, f"monte_carlo_{metric_name.lower()}")
 
             if mc_cfg.get("plot_inputs", False):
                 fig_process, _, fig_economic, _ = plot_monte_carlo_inputs(
@@ -833,13 +762,6 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 ):
                     if fig is None:
                         continue  # no inputs sampled for this group
-                    fig.savefig(
-                        output_dir /
-                        f"{fname}_monte_carlo_inputs_"
-                        f"{group_name}.{plot_format}",
-                        dpi=dpi,
-                        bbox_inches="tight",
-                    )
-                    plt.close(fig)  # Free the figure
+                    _save(fig, f"monte_carlo_inputs_{group_name}")
 
     return results

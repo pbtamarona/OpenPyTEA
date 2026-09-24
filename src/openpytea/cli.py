@@ -23,6 +23,7 @@ def _print_run_summary(results, output_dir):
     print(f"Results written to: {dest}")
 
 
+# ponytail: _cmd_* only remap args; lambdas in set_defaults
 def _cmd_run(args):
     results = run_openpytea(
         config_path=args.config,

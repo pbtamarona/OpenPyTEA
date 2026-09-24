@@ -150,6 +150,8 @@ class CostCorrelationDB:
             return units, s / units
         return 1, s
 
+    # ponytail: ce * units in all 6 branches, log10/ln quadratic identical, _parallelize
+    #   one caller
     def evaluate(self, key: str, s: float, s2: float | None = None):
         """
         Calculate purchased equipment cost based on correlation key and size.
@@ -539,6 +541,7 @@ class Equipment:
         self.category = category
         self.type = type
         self.num_units = num_units
+        # ponytail: x if x is not None else None is just x
         self.cost_year = (
             cost_year if cost_year is not None else None
         )
@@ -574,6 +577,8 @@ class Equipment:
             )
 
         _pf = self.process_factors[process_type]
+        # ponytail: factor resolution duplicated in CompositeEquipment; one _FACTOR_KEYS
+        #   table + helper
         self.erection_factor = (
             erection_factor if erection_factor is not None else _pf["fer"]
         )
@@ -631,6 +636,7 @@ class Equipment:
             )
         self.direct_cost = (
             self.calculate_direct_cost()
+        # ponytail: stale comment below
         )  # your existing method
 
     def _resolve_key(self) -> str:
@@ -977,6 +983,7 @@ class CompositeEquipment:
             self.components.append(obj)
 
         _pf = Equipment.process_factors[process_type]
+        # ponytail: duplicate of Equipment factor resolution; share _FACTOR_KEYS helper
         self.erection_factor = (
             erection_factor if erection_factor is not None else _pf["fer"]
         )
@@ -1041,6 +1048,7 @@ class CompositeEquipment:
                 * self.num_units
             )
         else:
+            # ponytail: copy of Equipment formula; Equipment.calculate_direct_cost(self)
             self.direct_cost = self.purchased_cost * (
                 (1 + self.piping_factor) * self.material_factor
                 + (
@@ -1152,6 +1160,8 @@ class CompositeEquipment:
             ``installation``, ``components_purchased_cost`` and
             ``components`` (a list of the components' own dicts).
         """
+        # ponytail: first 11 keys repeat Equipment.to_dict; {**Equipment.to_dict(self),
+        #   ...}
         return {
             "name": self.name,
             "category": self.category,

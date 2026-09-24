@@ -143,6 +143,7 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     # --- Ax/fig handling ---
     created_fig = None
     if ax is None:
+        # ponytail: base_w, base_h = figsize
         if (
             isinstance(figsize, (tuple, list))
             and len(figsize) == 2
@@ -683,6 +684,7 @@ def plot_monte_carlo(
             currency = data.get("currency", _tex_escape("$"))
             label = _default_metric_label(currency, metric)
 
+    # ponytail: list-of-plants pooling has no callers; drop Case 2
     # --- Case 2: Plant object(s) ---
     elif hasattr(data, "monte_carlo_metrics") or (
         isinstance(data, (list, tuple)) and all(
@@ -722,6 +724,7 @@ def plot_monte_carlo(
         if label is None:
             label = _default_metric_label(_tex_escape("$"), metric)
 
+    # ponytail: non-finite filter copied 3x; one _finite(values, what) helper
     n_total = values.size
     finite_mask = np.isfinite(values)
     n_filtered = n_total - np.count_nonzero(finite_mask)
@@ -758,6 +761,8 @@ def plot_monte_carlo(
         label="Samples",
     )
 
+    # ponytail: fit/sigma-label block copied in plot_multiple_monte_carlo; one
+    #   _plot_normal_fit()
     if show_fit:
         mu, std = norm.fit(values)
 
@@ -828,6 +833,7 @@ def _is_process_monte_carlo_input(label):
     return normalized.endswith("consumption") or normalized.endswith("production")
 
 
+# ponytail: show param unused
 def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title, show):
     """
     Build one figure of histograms (one subplot per input, 3 columns) for
@@ -1013,6 +1019,7 @@ def plot_monte_carlo_inputs(
             group_inputs, figsize, bins, hist_color, title, show
         )
 
+    # ponytail: process/economic branches identical; one dict-driven branch
     if category == "process":
         fig, axes = _build(process_inputs, "Process Parameters")
         if show and fig is not None:
@@ -1077,6 +1084,7 @@ def plot_multiple_monte_carlo(
 
     created_fig = None
     if ax is None:
+        # ponytail: plt.subplots(figsize=None) already works
         if figsize is None:
             created_fig, ax = plt.subplots()
         else:
