@@ -4,7 +4,8 @@ import warnings
 import numpy as np
 import pandas as pd
 from copy import deepcopy
-from typing import List, Dict, Literal, Optional
+from types import SimpleNamespace
+from typing import List, Dict, Optional
 from scipy.optimize import root_scalar
 
 
@@ -1314,36 +1315,24 @@ class Plant:
         )
 
         # --- Revenue & cost arrays ---
-        # ponytail: per-year loops vectorizable; cash_flow[:, yr] write is dead
-        #   (recomputed below)
-        for yr in range(n_years):
-            prod = nameplate * ramp[yr]
-            prod_array[:, yr] = prod
-            main_prod_price = self.plant_products[
-                self.main_product
-            ].get("price")
-            if main_prod_price is None:
-                main_revenue[:, yr] = 0
-            else:
-                main_revenue[:, yr] = prod * main_prod_price
-            side_revenue[:, yr] = sum(
-                self.plant_products[p]["production"]
-                * 365.0
-                * self.plant_utilization
-                * ramp[yr]
-                * self.plant_products[p].get("price", 0)
-                for p in self.plant_products
-                if p != self.main_product
-            )
-            revenue[:, yr] = (
-                main_revenue[:, yr] + side_revenue[:, yr]
-            )
-            cash_cost[:, yr] = (
-                fixed_opex + var_opex * ramp[yr]
-            )
-            gross_profit[:, yr] = (
-                revenue[:, yr] - cash_cost[:, yr]
-            )
+        def per_sample(x):
+            # scalar or per-sample array -> column broadcasting over years
+            return np.asarray(x, dtype=float)[..., None]
+
+        main = self.plant_products[self.main_product]
+        prod_array[:] = per_sample(nameplate) * ramp
+        if main.get("price") is not None:
+            main_revenue[:] = prod_array * per_sample(main["price"])
+        side_revenue[:] = sum(
+            per_sample(props["production"] * 365.0 * self.plant_utilization)
+            * ramp
+            * per_sample(props.get("price", 0))
+            for name, props in self.plant_products.items()
+            if name != self.main_product
+        )
+        revenue[:] = main_revenue + side_revenue
+        cash_cost[:] = per_sample(fixed_opex) + per_sample(var_opex) * ramp
+        gross_profit[:] = revenue - cash_cost
 
         # --- Depreciation (each sample has its own config) ---
         dep_cfg = getattr(self, "depreciation", None)
@@ -1360,23 +1349,12 @@ class Plant:
                 )
             )
 
-        # --- Tax and cash flow (with 1-year lag) ---
-        for yr in range(n_years):
-            taxable_income[:, yr] = (
-                gross_profit[:, yr] - depreciation[:, yr]
-            )
-            if yr == 0:
-                tax_paid[:, yr] = 0
-            else:
-                prev = taxable_income[:, yr - 1]
-                tax_paid[:, yr] = np.where(
-                    prev > 0, self.tax_rate * prev, 0
-                )
-            cash_flow[:, yr] = (
-                gross_profit[:, yr]
-                - tax_paid[:, yr]
-                - capex[:, yr]
-            )
+        # --- Tax (with 1-year lag; nothing is paid in year 1) ---
+        taxable_income[:] = gross_profit - depreciation
+        prev = taxable_income[:, :-1]
+        tax_paid[:, 1:] = np.where(
+            prev > 0, per_sample(self.tax_rate) * prev, 0
+        )
 
         # --- Zero out years past each sample's own lifetime ---
         # Each sample's table must end at its own lifetime (a scalar run
@@ -1532,6 +1510,23 @@ class Plant:
 
         return final_npv
 
+    def _discounted_totals(self):
+        """
+        Discounted sums of capital cost, cash cost, side revenue and
+        production over the project years, one entry per sample (a single
+        entry when inputs are scalar). Year ``t`` (1-based) is discounted
+        by ``(1 + interest_rate) ** t``; years past a sample's lifetime
+        are zero in the cash-flow arrays, so they add nothing.
+        """
+        n_years = self.cash_cost_array.shape[1]
+        rate = np.atleast_1d(np.asarray(self.interest_rate, dtype=float))
+        discount = (1 + rate)[:, None] ** np.arange(1, n_years + 1)
+        return tuple(
+            np.sum(np.asarray(arr, dtype=float) / discount, axis=1)
+            for arr in (self.capital_cost_array, self.cash_cost_array,
+                        self.side_revenue_array, self.prod_array)
+        )
+
     def calculate_levelized_cost(self, print_results=False):
         """
         Calculate the levelized cost of production (LCOP).
@@ -1561,61 +1556,15 @@ class Plant:
         self.calculate_revenue()
         self.calculate_cash_flow()
 
-        # ponytail: scalar/vector branches with per-year loops; one (1+r)[:, None] **
-        #   arange broadcast
+        disc_capex, disc_opex, disc_side_rev, disc_prod = (
+            self._discounted_totals()
+        )
+        lcop = np.maximum(
+            (disc_capex + disc_opex - disc_side_rev) / disc_prod, 0
+        )
+
         is_array = isinstance(self.project_lifetime, (list, np.ndarray))
-
-        capital_cost = self.capital_cost_array
-        prod = self.prod_array
-        cash_cost = self.cash_cost_array
-        side_rev = self.side_revenue_array
-
-        # ---- VECTOR CASE (Monte Carlo) ----
-        if is_array:
-            n_samples = len(self.project_lifetime)
-
-            lcop = np.zeros(n_samples)
-
-            for i in range(n_samples):
-                disc_capex = 0.0
-                disc_opex = 0.0
-                disc_prod = 0.0
-                disc_side_rev = 0.0
-
-                for year in range(len(cash_cost[i])):
-                    discount_factor = (1 + self.interest_rate[i]) ** (year + 1)
-
-                    disc_capex += capital_cost[i][year] / discount_factor
-                    disc_opex += cash_cost[i][year] / discount_factor
-                    disc_side_rev += side_rev[i][year] / discount_factor
-                    disc_prod += prod[i][year] / discount_factor
-
-                value = (disc_capex + disc_opex - disc_side_rev) / disc_prod
-                lcop[i] = max(value, 0)
-
-            self.levelized_cost = lcop
-
-        # ---- SCALAR CASE ----
-        else:
-            n_years = int(self.project_lifetime)
-
-            disc_capex = 0.0
-            disc_opex = 0.0
-            disc_prod = 0.0
-            disc_side_rev = 0.0
-
-            for year in range(n_years):
-                discount_factor = (1 + self.interest_rate) ** (year + 1)
-
-                disc_capex += capital_cost[0][year] / discount_factor
-                disc_opex += cash_cost[0][year] / discount_factor
-                disc_side_rev += side_rev[0][year] / discount_factor
-                disc_prod += prod[0][year] / discount_factor
-
-            self.levelized_cost = max(
-                (disc_capex + disc_opex - disc_side_rev) / disc_prod,
-                0,
-            )
+        self.levelized_cost = lcop if is_array else lcop[0]
 
         if print_results:
             print(
@@ -2108,11 +2057,6 @@ class Plant:
 
 
 # Depreciation models
-# ponytail: only annotates DepreciationConfig; drop with it
-DepMethod = Literal[
-    "straight_line", "declining_balance", "macrs"
-]
-
 # MACRS half-year convention percentage tables (IRS Pub 946).
 # https://www.irs.gov/pub/irs-pdf/p946.pdf
 # Values are FRACTIONS (not %). Sum to 1.0 within rounding.
@@ -2185,48 +2129,20 @@ _MACRS_HALF_YEAR: Dict[int, List[float]] = {
 }
 
 
-# ponytail: bare namespace class; _DEP_DEFAULTS dict + SimpleNamespace
-class DepreciationConfig:
-    """
-    Configuration for asset depreciation calculations.
-
-    This class defines the parameters needed to compute depreciation
-    using various methods.
-
-    Attributes:
-        method (DepMethod): The depreciation method to use.
-        Defaults to "straight_line".
-        Options: "straight_line", "declining_balance", "macrs".
-        life (Optional[int]): The useful life of the asset in years.
-            Used by straight_line and declining_balance methods.
-            Defaults to None.
-        db_factor (float): The declining balance factor (multiplier).
-            Only used by the declining_balance method. Defaults to 2.0.
-        salvage_fraction (float): The salvage value as a fraction
-            of the initial cost.
-            Used by straight_line and declining_balance methods.
-            Defaults to 0.0.
-        macrs_class (int): The MACRS property class (1-20).
-            Only used by the macrs method. Defaults to 7.
-        convention (str): The depreciation convention for MACRS.
-            Only used by the macrs method. Defaults to "half_year".
-        service_start_year (int): The year index (starting from 0)
-            when the asset is placed in service. Defaults to 2.
-    """
-
-    method: DepMethod = "straight_line"
-    life: Optional[int] = (
-        None  # straight_line / declining_balance
-    )
-    db_factor: float = 2.0  # declining_balance only
-    salvage_fraction: float = (
-        0.0  # straight_line / declining_balance only
-    )
-    macrs_class: int = 7  # macrs only
-    convention: str = "half_year"  # macrs only
-    service_start_year: int = (
-        2  # year index when asset is placed in service
-    )
+# Depreciation config keys and their defaults (the "depreciation" dict of a
+# plant config may override any of them; other keys are ignored)
+_DEP_DEFAULTS = {
+    # "straight_line", "declining_balance" or "macrs"
+    "method": "straight_line",
+    # useful life in years (straight_line / declining_balance); None means
+    # min(15, project_life - service_start_year)
+    "life": None,
+    "db_factor": 2.0,  # declining_balance multiplier (2.0 = 200% DDB)
+    "salvage_fraction": 0.0,  # of the initial cost (straight_line / DB)
+    "macrs_class": 7,  # MACRS property class, a key of _MACRS_HALF_YEAR
+    "convention": "half_year",  # MACRS convention (only half_year)
+    "service_start_year": 2,  # year index when the asset enters service
+}
 
 
 # Fixed OPEX line items: (to_dict key, Plant attribute, printed label)
@@ -2416,22 +2332,23 @@ def _validate_project_uncertainties(cfg: dict) -> None:
 
 def _normalize_dep_config(
     project_life: int, dep_cfg: Optional[dict]
-) -> DepreciationConfig:
+) -> SimpleNamespace:
     """
     Normalize and validate a depreciation configuration.
-    This function creates a DepreciationConfig object from a dictionary of
-    configuration parameters, applies sensible defaults, and validates
+    This function builds a namespace of the :data:`_DEP_DEFAULTS` keys from a
+    dictionary of configuration parameters, applies sensible defaults, and
+    validates
     the configuration based on the depreciation method and project life.
     Args:
         project_life (int): The expected life of the project in years.
             Used to set a sensible default for the depreciation life
             if not specified.
         dep_cfg (Optional[dict]): A dictionary containing depreciation
-            configuration parameters. Keys should correspond to
-            DepreciationConfig attributes. If None, defaults are applied.
+            configuration parameters. Keys should be :data:`_DEP_DEFAULTS`
+            keys; others are ignored. If None, defaults are applied.
     Returns:
-        DepreciationConfig: A validated depreciation configuration object
-            with all required parameters set.
+        SimpleNamespace: A validated depreciation configuration with every
+            :data:`_DEP_DEFAULTS` key set as an attribute.
     Raises:
         ValueError: If the MACRS convention is not "half_year" when
             using the "macrs" depreciation method.
@@ -2446,11 +2363,10 @@ def _normalize_dep_config(
         - MACRS class validation only occurs when the depreciation
             method is "macrs".
     """
-    cfg = DepreciationConfig()
-    if dep_cfg:
-        for k, v in dep_cfg.items():
-            if hasattr(cfg, k):
-                setattr(cfg, k, v)
+    cfg = SimpleNamespace(**{
+        **_DEP_DEFAULTS,
+        **{k: v for k, v in (dep_cfg or {}).items() if k in _DEP_DEFAULTS},
+    })
 
     # Sensible defaults: cap the default life at the usable horizon
     # (assets enter service at service_start_year) so the out-of-the-box

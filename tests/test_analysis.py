@@ -747,3 +747,13 @@ def test_tornado_and_sensitivity_center_on_configured_fc(test_plant):
     curve = sens["curves"][0]
     mid = curve["y"][len(curve["y"]) // 2]
     assert np.isclose(mid, curve["baseline"])
+
+
+def test_sensitivity_operator_hourly_rate_dict(test_plant):
+    """A dict-style operator_hourly_rate is varied around its rate."""
+    sens = sensitivity_data(
+        test_plant, "operator_hourly_rate", plus_minus_value=0.2,
+        n_points=3, metric="LCOP",
+    )
+    y = sens["curves"][0]["y"]
+    assert y[0] < y[1] < y[2]

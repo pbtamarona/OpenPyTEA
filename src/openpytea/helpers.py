@@ -571,10 +571,11 @@ def _get_original_value(plant, full_key):
     from the accessed value. For objects, it retrieves attributes directly by
     name.
 
-    The two three-part quantity keys --
-    "variable_opex_inputs.<item>.consumption" and
-    "plant_products.<product>.production" -- name a dependency-graph node
-    rather than a price, and are read through
+    Keys that name a dependency-graph node rather than a price -- the
+    economic scalars ("fixed_capital" -> the fc multiplier,
+    "operator_hourly_rate" -> its rate, ...) and the three-part quantity
+    keys "variable_opex_inputs.<item>.consumption" /
+    "plant_products.<product>.production" -- are read through
     :func:`_dependency_node_value` instead.
 
     Args:
@@ -601,7 +602,7 @@ def _get_original_value(plant, full_key):
         250
     """
     node = _sensitivity_key_node(full_key)
-    if node is not None and node[0] in ("consumption", "production"):
+    if node is not None:
         return _dependency_node_value(plant, node)
 
     keys = full_key.split(".")
@@ -618,7 +619,6 @@ def _update_and_evaluate(
         plant,
         factor,
         value,
-        nested_price_keys,
         metric="LCOP",
         additional_capex: bool = False,
         ):
@@ -647,10 +647,6 @@ def _update_and_evaluate(
         "project_lifetime")
     value : float
         The new value for the parameter being updated.
-    nested_price_keys : list or set
-        Collection of valid nested price keys
-        (e.g., ["variable_opex_inputs.item1", "plant_products.product1"])
-        used to identify which factors are nested.
     metric : str, optional
         The economic metric to calculate and return, by default "LCOP".
         Supported metrics:
@@ -670,8 +666,7 @@ def _update_and_evaluate(
     Raises
     ------
     ValueError
-        If the specified factor contains an unsupported nested root, or if the
-        requested metric is not supported.
+        If the requested metric is not supported.
     Notes
     -----
     - The original plant object is not modified; a deep copy is created
@@ -706,39 +701,10 @@ def _update_and_evaluate(
     elif factor == "fixed_opex":
         plant_copy.calculate_fixed_opex(fp=value)
 
-    elif factor in nested_price_keys:
-        # factor can be:
-        #   "variable_opex_inputs.<name>"  or
-        #   "plant_products.<name>"
-        parts = factor.split(
-            "."
-        )  # ['variable_opex_inputs' | 'plant_products', '<name>']
-        root, name = parts[0], parts[1]
-
-        # ponytail: builds same dict twice, ValueError unreachable;
-        #   update_configuration({root: {name: {'price': value}}})
-        if root == "variable_opex_inputs":
-            config = {
-                "variable_opex_inputs": {
-                    name: {
-                        "price": value,
-                    }
-                }
-            }
-        elif root == "plant_products":
-            config = {
-                "plant_products": {
-                    name: {
-                        "price": value,
-                    }
-                }
-            }
-        else:
-            raise ValueError(
-                f"Unsupported nested price root '{root}' in factor '{factor}'."
-            )
-
-        plant_copy.update_configuration(config)
+    elif factor.split(".")[0] in ("variable_opex_inputs", "plant_products"):
+        # "variable_opex_inputs.<name>" or "plant_products.<name>": a price
+        root, name = factor.split(".")
+        plant_copy.update_configuration({root: {name: {"price": value}}})
 
     elif factor == "operator_hourly_rate":
         # Support both dict-style {"rate": ...} and
@@ -767,42 +733,8 @@ def _update_and_evaluate(
     # the plant has no dependencies configured.
     _apply_dependencies(plant_copy)
 
-    # --- 3. Recompute economics ---
-
-    # This builds fixed_capital, opex, revenue, cash_flow, etc.
-    plant_copy.calculate_levelized_cost()
-
-    # ponytail: copy of _evaluate_metric; return _evaluate_metric(plant_copy, metric,
-    #   additional_capex)
-    # --- 4. Return requested metric ---
-
-    if metric == "LCOP":
-        return plant_copy.levelized_cost
-
-    elif metric == "ROI":
-        plant_copy.calculate_roi(
-            additional_capex=additional_capex
-        )
-        return plant_copy.roi
-
-    elif metric == "NPV":
-        # With MC-aware calculate_npv this can be scalar or array.
-        # In sensitivity/tornado we are effectively in a single-scenario.
-        return plant_copy.calculate_npv()
-
-    elif metric in ("PBT", "PAYBACK", "PAYBACK_TIME"):
-        return plant_copy.calculate_payback_time(
-            additional_capex=additional_capex
-        )
-    elif metric == "IRR":
-        plant_copy.calculate_irr()
-        return plant_copy.irr
-
-    else:
-        raise ValueError(
-            f"Unsupported metric '{metric}'. \n"
-            f"Use 'LCOP', 'ROI', 'NPV', 'PBT', or 'IRR'."
-        )
+    # --- 3. Recompute economics and return the requested metric ---
+    return _evaluate_metric(plant_copy, metric, additional_capex)
 
 
 def _ensure_list(plants):
@@ -978,8 +910,7 @@ def _collect_sensitivity_keys(plant, metric, include_process_params=False):
     """
     Collect sensitivity analysis keys for a given plant and metric.
     This function identifies which parameters should be included in sensitivity
-    analysis based on the specified metric. It returns both all relevant keys
-    and the nested keys separately.
+    analysis based on the specified metric.
     Args:
         plant: A plant object containing variable_opex_inputs and
                 plant_products attributes with their respective keys.
@@ -990,15 +921,10 @@ def _collect_sensitivity_keys(plant, metric, include_process_params=False):
                     every product's production. Default False, which keeps
                     the factor set to prices and economic scalars.
     Returns:
-        tuple: A tuple containing:
-            - all_keys (list): Complete list of all sensitivity keys including
-                              top-level keys and nested keys based on metric
-                              type.
-            - nested_keys (list): List of nested keys (variable_opex_inputs and
-                                 optionally plant_products keys).
-                                 For "LCOP" metric: only variable_opex_inputs
-                                 keys. For other metrics: both
-                                 variable_opex_inputs and plant_products keys.
+        list: All sensitivity keys: the top-level keys, then the price keys
+            (for "LCOP" only variable_opex_inputs keys; for other metrics
+            both variable_opex_inputs and plant_products keys), then any
+            quantity keys.
     Notes:
         Top-level keys always included: fixed_capital, fixed_opex,
         project_lifetime, interest_rate, operator_hourly_rate.
@@ -1034,7 +960,7 @@ def _collect_sensitivity_keys(plant, metric, include_process_params=False):
 
     dependents = _collect_dependency_specs(plant)
     if not dependents and not include_process_params:
-        return top_level_keys + nested, nested
+        return top_level_keys + nested
 
     top_level_keys = [
         k for k in top_level_keys
@@ -1053,11 +979,11 @@ def _collect_sensitivity_keys(plant, metric, include_process_params=False):
             if ("production", prod) not in dependents
         ]
 
-    return top_level_keys + nested + quantity_keys, nested
+    return top_level_keys + nested + quantity_keys
 
 
-def _run_tornado_sensitivity(plant, keys, nested_keys,
-                             pm, metric, additional_capex=False):
+def _run_tornado_sensitivity(plant, keys, pm, metric,
+                             additional_capex=False):
     """
     Perform tornado sensitivity analysis on plant parameters.
     This function evaluates how changes in specified plant parameters affect
@@ -1066,8 +992,7 @@ def _run_tornado_sensitivity(plant, keys, nested_keys,
     Args:
         plant: Plant object containing parameters to be analyzed.
         keys (list): List of parameter names to perform sensitivity analysis
-            on. nested_keys (list or dict): Nested key structure for accessing
-            parameters in hierarchical plant configurations.
+            on.
         pm (float): Perturbation multiplier as a fraction (e.g., 0.1 for ±10%).
             Used to calculate low and high parameter values as (1 - pm) and
             (1 + pm) of the original value.
@@ -1081,57 +1006,22 @@ def _run_tornado_sensitivity(plant, keys, nested_keys,
             representing the metric values at low and high perturbation levels
             respectively.
     Notes:
-        - "fixed_capital" and "fixed_opex" perturb the plant's configured
-        fc/fp multiplier (1.0 when unset) by (1 ± pm).
-        - "operator_hourly_rate" is handled specially to extract rate from
-        dict format
-            or convert scalar values to float.
-        - All other parameters use _get_original_value() to retrieve their
-        current value.
+        Each parameter is perturbed around the value _get_original_value()
+        reads, so "fixed_capital"/"fixed_opex" move the plant's configured
+        fc/fp multiplier (1.0 when unset) and "operator_hourly_rate" its
+        rate.
     """
     results = {}
-
-    # ponytail: original-value branches duplicate _dependency_node_value; route through
-    #   _get_original_value
     for key in keys:
-        if key in ["fixed_capital", "fixed_opex"]:
-            # Perturb around the plant's actual configured factor, not
-            # an assumed 1.0 -- with e.g. fc=1.3 both bar ends would
-            # otherwise land on the same side of the baseline
-            factor = (
-                plant.fc if key == "fixed_capital" else plant.fp
-            )
-            original = 1.0 if factor is None else factor
-            low = original * (1 - pm)
-            high = original * (1 + pm)
-
-        elif key == "operator_hourly_rate":
-            current = getattr(
-                plant, "operator_hourly_rate", None
-            )
-            if isinstance(current, dict):
-                original = current.get("rate", 0.0)
-            else:
-                original = (
-                    0.0
-                    if current is None
-                    else float(current)
-                )
-            low = original * (1 - pm)
-            high = original * (1 + pm)
-
-        else:
-            original = _get_original_value(plant, key)
-            low = original * (1 - pm)
-            high = original * (1 + pm)
-
-        metric_low = _update_and_evaluate(plant, key, low,
-                                          nested_keys, metric,
-                                          additional_capex=additional_capex)
-        metric_high = _update_and_evaluate(plant, key, high,
-                                           nested_keys, metric,
-                                           additional_capex=additional_capex)
-
+        original = _get_original_value(plant, key)
+        metric_low = _update_and_evaluate(
+            plant, key, original * (1 - pm), metric,
+            additional_capex=additional_capex,
+        )
+        metric_high = _update_and_evaluate(
+            plant, key, original * (1 + pm), metric,
+            additional_capex=additional_capex,
+        )
         results[key] = [metric_low, metric_high]
 
     return results
@@ -1170,46 +1060,3 @@ def _read_json(filepath):
     filepath = Path(filepath)
     with filepath.open("r", encoding="utf-8") as f:
         return json.load(f)
-
-
-# ponytail: json.dump(..., default=lambda o: o.tolist()) replaces this
-def _to_jsonable(obj):
-    """
-    Convert a Python object to a JSON-serializable format.
-
-    This function recursively traverses through nested data structures
-    and converts non-JSON-serializable objects (such as NumPy arrays
-    and scalar types) into their JSON-compatible equivalents.
-
-    Args:
-        obj: The object to convert. Can be a dict, list, tuple, NumPy array,
-             NumPy scalar, or any JSON-serializable type.
-
-    Returns:
-        A JSON-serializable representation of the input object, where:
-        - dicts are recursively processed with all values converted
-        - lists and tuples are recursively processed (returned as lists)
-        - NumPy arrays are converted to lists via tolist()
-        - NumPy scalars are converted to native Python types via item()
-        - other objects are returned unchanged
-
-    Examples:
-        >>> import numpy as np
-        >>> _to_jsonable({'array': np.array([1, 2, 3])})
-        {'array': [1, 2, 3]}
-
-        >>> _to_jsonable([np.float64(1.5), np.int32(42)])
-        [1.5, 42]
-
-        >>> _to_jsonable((np.array([1, 2]), [3, 4]))
-        [[1, 2], [3, 4]]
-    """
-    if isinstance(obj, dict):
-        return {k: _to_jsonable(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
-        return [_to_jsonable(v) for v in obj]
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    if isinstance(obj, np.generic):
-        return obj.item()
-    return obj

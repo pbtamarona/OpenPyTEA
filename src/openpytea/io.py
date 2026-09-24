@@ -27,7 +27,6 @@ from openpytea.plotting import (
     plot_monte_carlo_inputs,
 )
 from openpytea.helpers import (
-    _to_jsonable,
     _read_json
 )
 
@@ -684,12 +683,14 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 "generated_by": f"OpenPyTEA Version {__version__}",
                 "date_generated": datetime.now(timezone.utc).isoformat(),
             },
-            "results": _to_jsonable(results),
+            "results": results,
         }
 
         results_file = output_dir / f"{fname}_analysis_results.json"
         with results_file.open("w", encoding="utf-8") as f:
-            json.dump(analysis_output, f, indent=4)
+            # numpy arrays/scalars -> lists/Python numbers
+            json.dump(analysis_output, f, indent=4,
+                      default=lambda o: o.tolist())
 
     # ======================================================
     # EXPORT PLOTS

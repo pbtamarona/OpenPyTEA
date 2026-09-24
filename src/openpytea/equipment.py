@@ -348,6 +348,28 @@ class CostCorrelationDB:
         return str(val).strip()
 
 
+# Installation factor attribute -> key in Equipment.process_factors
+_FACTOR_KEYS = {
+    "erection_factor": "fer",
+    "piping_factor": "fp",
+    "instrumentation_factor": "fi",
+    "electrical_factor": "fel",
+    "civil_factor": "fc",
+    "structural_factor": "fs",
+    "lagging_factor": "fl",
+}
+
+
+def _set_install_factors(obj, process_factors, **given):
+    """
+    Set the seven installation factors on ``obj``: a given (non-None)
+    value wins, else the process type's default from ``process_factors``.
+    """
+    for attr, key in _FACTOR_KEYS.items():
+        value = given[attr]
+        setattr(obj, attr, process_factors[key] if value is None else value)
+
+
 class Equipment:
     """
     Equipment cost estimation class for process equipment.
@@ -576,29 +598,15 @@ class Equipment:
                 f"Valid options are: {valid_materials}"
             )
 
-        _pf = self.process_factors[process_type]
-        # ponytail: factor resolution duplicated in CompositeEquipment; one _FACTOR_KEYS
-        #   table + helper
-        self.erection_factor = (
-            erection_factor if erection_factor is not None else _pf["fer"]
-        )
-        self.piping_factor          = (
-            piping_factor          if piping_factor          is not None else _pf["fp"]
-        )
-        self.instrumentation_factor = (
-            instrumentation_factor if instrumentation_factor is not None else _pf["fi"]
-        )
-        self.electrical_factor      = (
-            electrical_factor      if electrical_factor      is not None else _pf["fel"]
-        )
-        self.civil_factor           = (
-            civil_factor           if civil_factor           is not None else _pf["fc"]
-        )
-        self.structural_factor      = (
-            structural_factor      if structural_factor      is not None else _pf["fs"]
-        )
-        self.lagging_factor         = (
-            lagging_factor         if lagging_factor         is not None else _pf["fl"]
+        _set_install_factors(
+            self, self.process_factors[process_type],
+            erection_factor=erection_factor,
+            piping_factor=piping_factor,
+            instrumentation_factor=instrumentation_factor,
+            electrical_factor=electrical_factor,
+            civil_factor=civil_factor,
+            structural_factor=structural_factor,
+            lagging_factor=lagging_factor,
         )
         if material_factor is not None:
             self.material_factor = material_factor
@@ -982,30 +990,15 @@ class CompositeEquipment:
                 )
             self.components.append(obj)
 
-        _pf = Equipment.process_factors[process_type]
-        # ponytail: duplicate of Equipment factor resolution; share _FACTOR_KEYS helper
-        self.erection_factor = (
-            erection_factor if erection_factor is not None else _pf["fer"]
-        )
-        self.piping_factor = (
-            piping_factor if piping_factor is not None else _pf["fp"]
-        )
-        self.instrumentation_factor = (
-            instrumentation_factor
-            if instrumentation_factor is not None
-            else _pf["fi"]
-        )
-        self.electrical_factor = (
-            electrical_factor if electrical_factor is not None else _pf["fel"]
-        )
-        self.civil_factor = (
-            civil_factor if civil_factor is not None else _pf["fc"]
-        )
-        self.structural_factor = (
-            structural_factor if structural_factor is not None else _pf["fs"]
-        )
-        self.lagging_factor = (
-            lagging_factor if lagging_factor is not None else _pf["fl"]
+        _set_install_factors(
+            self, Equipment.process_factors[process_type],
+            erection_factor=erection_factor,
+            piping_factor=piping_factor,
+            instrumentation_factor=instrumentation_factor,
+            electrical_factor=electrical_factor,
+            civil_factor=civil_factor,
+            structural_factor=structural_factor,
+            lagging_factor=lagging_factor,
         )
         self.material_factor = (
             material_factor if material_factor is not None else 1.0
@@ -1048,18 +1041,7 @@ class CompositeEquipment:
                 * self.num_units
             )
         else:
-            # ponytail: copy of Equipment formula; Equipment.calculate_direct_cost(self)
-            self.direct_cost = self.purchased_cost * (
-                (1 + self.piping_factor) * self.material_factor
-                + (
-                    self.erection_factor
-                    + self.electrical_factor
-                    + self.instrumentation_factor
-                    + self.civil_factor
-                    + self.structural_factor
-                    + self.lagging_factor
-                )
-            )
+            Equipment.calculate_direct_cost(self)
         return self.direct_cost
 
     def leaves(self, _prefix: str = "", _multiplier: int | None = None):
@@ -1160,20 +1142,8 @@ class CompositeEquipment:
             ``installation``, ``components_purchased_cost`` and
             ``components`` (a list of the components' own dicts).
         """
-        # ponytail: first 11 keys repeat Equipment.to_dict; {**Equipment.to_dict(self),
-        #   ...}
         return {
-            "name": self.name,
-            "category": self.category,
-            "type": self.type,
-            "material": self.material,
-            "process_type": self.process_type,
-            "param": self.param,
-            "num_units": self.num_units,
-            "cost_year": self.cost_year,
-            "target_year": self.target_year,
-            "purchased_cost": float(self.purchased_cost),
-            "direct_cost": float(self.direct_cost),
+            **Equipment.to_dict(self),
             "installation": self.installation,
             "components_purchased_cost": self.components_purchased_cost,
             "components": [obj.to_dict() for obj in self.components],

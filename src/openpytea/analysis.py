@@ -18,7 +18,8 @@ from openpytea.helpers import (_make_label,
                                _dependency_parents,
                                _resolve_dependency_dag,
                                _sensitivity_key_node,
-                               _node_sensitivity_key)
+                               _node_sensitivity_key,
+                               _TOP_LEVEL_DEPENDENCY_NODES)
 
 
 # ======================================================
@@ -346,23 +347,10 @@ def levelized_cost_data(plants, pct=False):
     xlabels = []
 
     for plant in plants:
-        # ponytail: repeats Plant.calculate_levelized_cost discounting; share one
-        #   broadcast helper
         plant.calculate_levelized_cost()
-
-        n_years = int(plant.project_lifetime)
-        years = np.arange(1, n_years + 1, dtype=float)
-        discount_factors = (1 + plant.interest_rate) ** years
-
-        capital_cost = np.asarray(plant.capital_cost_array, dtype=float)[0, :n_years]
-        cash_cost = np.asarray(plant.cash_cost_array, dtype=float)[0, :n_years]
-        side_rev = np.asarray(plant.side_revenue_array, dtype=float)[0, :n_years]
-        prod = np.asarray(plant.prod_array, dtype=float)[0, :n_years]
-
-        disc_capex = float(np.sum(capital_cost / discount_factors))
-        disc_opex = float(np.sum(cash_cost / discount_factors))
-        disc_side_rev = float(np.sum(side_rev / discount_factors))
-        disc_prod = float(np.sum(prod / discount_factors))
+        disc_capex, disc_opex, disc_side_rev, disc_prod = (
+            float(total[0]) for total in plant._discounted_totals()
+        )
 
         components = {
             "CAPEX": disc_capex / disc_prod,
@@ -486,6 +474,24 @@ def cash_flow_data(plants):
     }
 
 
+def _sensitivity_param_keys(plant, metric):
+    """
+    ``(price_keys, quantity_keys)`` a sensitivity analysis can vary on
+    ``plant``. For LCOP the main product's price is not a price key: it is
+    what LCOP solves for, so only by-product prices count.
+    """
+    products = list(plant.plant_products)
+    priced = products[1:] if metric == "LCOP" else products
+    price_keys = {
+        f"variable_opex_inputs.{k}" for k in plant.variable_opex_inputs
+    } | {f"plant_products.{k}" for k in priced}
+    quantity_keys = {
+        f"variable_opex_inputs.{k}.consumption"
+        for k in plant.variable_opex_inputs
+    } | {f"plant_products.{k}.production" for k in products}
+    return price_keys, quantity_keys
+
+
 def sensitivity_data(plants,
                      parameter,
                      plus_minus_value,
@@ -591,63 +597,16 @@ def sensitivity_data(plants,
             plants[0].currency if plants else r"\$", metric
         )
 
-    # --- Top-level parameters ---
-    # ponytail: key sets built globally then again per plant; top_level_keys copies
-    #   _TOP_LEVEL_DEPENDENCY_NODES
-    top_level_keys = [
-        "fixed_capital",
-        "fixed_opex",
-        "project_lifetime",
-        "interest_rate",
-        "operator_hourly_rate",
-        "plant_utilization",
-        "tax_rate",
-    ]
-
-    # --- Process quantity keys across all plants ---
-    # Consumption/production rates. These are dependency-graph nodes, so
-    # varying one here also moves whatever depends on it.
-    quantity_keys_all = set(
-        f"variable_opex_inputs.{k}.consumption"
-        for plant in plants
-        for k in plant.variable_opex_inputs
-    ).union(
-        f"plant_products.{k}.production"
-        for plant in plants
-        for k in plant.plant_products
-    )
-
-    # --- Nested price keys across all plants ---
-    var_opex_keys_all = set(
-        f"variable_opex_inputs.{k}"
-        for plant in plants
-        for k in plant.variable_opex_inputs
-    )
-
-    product_keys_all = set(
-        f"plant_products.{k}"
-        for plant in plants
-        for k in plant.plant_products
-    )
-
-    byproduct_keys_all = set()
-    for plant in plants:
-        prod_keys = list(plant.plant_products.keys())
-        for k in prod_keys[1:]:
-            byproduct_keys_all.add(f"plant_products.{k}")
-
-    if metric == "LCOP":
-        nested_price_keys_all = var_opex_keys_all.union(
-            byproduct_keys_all
-        )
-    else:
-        nested_price_keys_all = var_opex_keys_all.union(
-            product_keys_all
-        )
-
+    # --- Valid parameters: top-level ones, plus each plant's price and
+    # process quantity keys (consumption/production rates -- these are
+    # dependency-graph nodes, so varying one also moves whatever depends
+    # on it) ---
+    top_level_keys = list(_TOP_LEVEL_DEPENDENCY_NODES)
+    plant_keys = [_sensitivity_param_keys(plant, metric) for plant in plants]
+    quantity_keys_all = set().union(*(q for _, q in plant_keys))
     valid_parameters = set(top_level_keys).union(
-        nested_price_keys_all
-    ).union(quantity_keys_all)
+        *(prices | quantities for prices, quantities in plant_keys)
+    )
 
     # --- Shorthand resolution with ambiguity check ---
     short_to_full = {}
@@ -737,35 +696,8 @@ def sensitivity_data(plants,
     results = []
 
     for i, plant in enumerate(plants):
-        # Plant-specific valid parameters
-        var_opex_keys = set(
-            f"variable_opex_inputs.{k}"
-            for k in plant.variable_opex_inputs
-        )
-
-        prod_key_list = list(plant.plant_products.keys())
-        all_prod_keys = set(
-            f"plant_products.{k}" for k in prod_key_list
-        )
-        byprod_keys = set(
-            f"plant_products.{k}" for k in prod_key_list[1:]
-        )
-
-        if metric == "LCOP":
-            nested_price_keys = var_opex_keys.union(byprod_keys)
-        else:
-            nested_price_keys = var_opex_keys.union(all_prod_keys)
-
-        plant_quantity_keys = set(
-            f"variable_opex_inputs.{k}.consumption"
-            for k in plant.variable_opex_inputs
-        ).union(
-            f"plant_products.{k}.production" for k in prod_key_list
-        )
-
-        plant_valid_params = set(top_level_keys).union(
-            nested_price_keys
-        ).union(plant_quantity_keys)
+        prices, quantities = plant_keys[i]
+        plant_valid_params = set(top_level_keys) | prices | quantities
 
         # Baseline, with this plant's dependencies resolved so it lines up
         # with the perturbed points either side of it
@@ -780,23 +712,9 @@ def sensitivity_data(plants,
                 pct_axis, fill_value=base_value, dtype=float
             )
         else:
-            # ponytail: hand-written original-value branches;
-            #   _get_original_value/_dependency_node_value cover them
-            if parameter == "fixed_capital":
-                # Perturb the plant's actual configured multiplier, not
-                # an assumed 1.0 (see the tornado twin in helpers)
-                original_value = (
-                    1.0 if plant.fc is None else plant.fc
-                )
-            elif parameter == "fixed_opex":
-                original_value = (
-                    1.0 if plant.fp is None else plant.fp
-                )
-            else:
-                original_value = _get_original_value(
-                    plant, parameter
-                )
-
+            # fixed_capital/fixed_opex perturb the plant's actual
+            # configured multiplier, not an assumed 1.0
+            original_value = _get_original_value(plant, parameter)
             param_values = original_value * (1 + pct_changes)
 
             metric_values = [
@@ -804,7 +722,6 @@ def sensitivity_data(plants,
                     plant,
                     parameter,
                     v,
-                    list(nested_price_keys),
                     metric=metric,
                     additional_capex=additional_capex,
                 )
@@ -920,7 +837,7 @@ def tornado_data(plant,
     if label is None:
         label = _default_metric_label(plant.currency, metric)
 
-    keys, nested_price_keys = _collect_sensitivity_keys(
+    keys = _collect_sensitivity_keys(
         plant, metric, include_process_params=include_process_params
     )
 
@@ -929,7 +846,6 @@ def tornado_data(plant,
     sensitivity_results = _run_tornado_sensitivity(
         plant,
         keys,
-        nested_price_keys,
         plus_minus_value,
         metric,
         additional_capex=additional_capex,

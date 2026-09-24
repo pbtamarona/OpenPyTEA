@@ -724,20 +724,7 @@ def plot_monte_carlo(
         if label is None:
             label = _default_metric_label(_tex_escape("$"), metric)
 
-    # ponytail: non-finite filter copied 3x; one _finite(values, what) helper
-    n_total = values.size
-    finite_mask = np.isfinite(values)
-    n_filtered = n_total - np.count_nonzero(finite_mask)
-    values = values[finite_mask]
-
-    if n_filtered > 0:
-        warnings.warn(
-            f"Filtered {n_filtered} non-finite value(s) "
-            f"from Monte Carlo data before plotting.",
-            RuntimeWarning,
-            stacklevel=2,
-        )
-
+    values = _finite(values, "Monte Carlo data", stacklevel=3)
     if values.size == 0:
         raise ValueError(
             "No finite Monte Carlo values available for plotting."
@@ -761,44 +748,8 @@ def plot_monte_carlo(
         label="Samples",
     )
 
-    # ponytail: fit/sigma-label block copied in plot_multiple_monte_carlo; one
-    #   _plot_normal_fit()
     if show_fit:
-        mu, std = norm.fit(values)
-
-        if std > 0:
-            x = np.linspace(values.min(), values.max(), 1000)
-            p = norm.pdf(x, mu, std)
-
-            std_exp = int(np.floor(np.log10(std)))
-
-            if std_exp == 0:
-                stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-            else:
-                std_mant = std / 10**std_exp
-                stat_label = (
-                    rf"$\mu$={mu:.3g}, "
-                    rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
-
-            ax.plot(
-                    x,
-                    p,
-                    color=line_color,
-                    linewidth=1.2,
-                    zorder=2,
-                    linestyle="-",
-                    label=stat_label,
-                )
-        else:
-            stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-            ax.axvline(
-                mu,
-                color=line_color,
-                linewidth=1.2,
-                zorder=2,
-                linestyle="-",
-                label=stat_label,
-            )
+        _plot_normal_fit(ax, values, line_color)
 
     ax.set_xlabel(label)
     ax.set_ylabel("Density")
@@ -819,6 +770,47 @@ def plot_monte_carlo(
         plt.show()
 
     return ax.figure, ax
+
+
+def _finite(values, what, stacklevel):
+    """
+    Drop non-finite values, warning (attributed ``stacklevel`` frames up)
+    when any were removed. ``what`` names the data in the message.
+    """
+    finite_mask = np.isfinite(values)
+    n_filtered = values.size - np.count_nonzero(finite_mask)
+    if n_filtered > 0:
+        warnings.warn(
+            f"Filtered {n_filtered} non-finite value(s) from "
+            f"{what} before plotting.",
+            RuntimeWarning,
+            stacklevel=stacklevel,
+        )
+    return values[finite_mask]
+
+
+def _plot_normal_fit(ax, values, color):
+    """
+    Overlay a fitted normal PDF on ``ax``, labelled with its mu and sigma
+    (a vertical line at mu when sigma is 0).
+    """
+    mu, std = norm.fit(values)
+    style = dict(color=color, linewidth=1.2, zorder=2, linestyle="-")
+
+    if std > 0:
+        x = np.linspace(values.min(), values.max(), 1000)
+        std_exp = int(np.floor(np.log10(std)))
+        if std_exp == 0:
+            stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+        else:
+            std_mant = std / 10**std_exp
+            stat_label = (
+                rf"$\mu$={mu:.3g}, "
+                rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
+        ax.plot(x, norm.pdf(x, mu, std), label=stat_label, **style)
+    else:
+        stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+        ax.axvline(mu, label=stat_label, **style)
 
 
 def _is_process_monte_carlo_input(label):
@@ -855,19 +847,11 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title, show):
     for idx, (label, arr) in enumerate(inputs.items()):
         ax = axes[idx]
 
-        values = np.asarray(arr, dtype=float)
-        finite_mask = np.isfinite(values)
-        n_filtered = values.size - np.count_nonzero(finite_mask)
-        values = values[finite_mask]
-
-        if n_filtered > 0:
-            warnings.warn(
-                f"Filtered {n_filtered} non-finite value(s) from "
-                f"Monte Carlo input '{label}' before plotting.",
-                RuntimeWarning,
-                stacklevel=3,
-            )
-
+        values = _finite(
+            np.asarray(arr, dtype=float),
+            f"Monte Carlo input '{label}'",
+            stacklevel=4,
+        )
         if values.size == 0:
             raise ValueError(
                 f"No finite values available for Monte Carlo input '{label}'."
@@ -1121,19 +1105,9 @@ def plot_multiple_monte_carlo(
         else:
             continue
 
-        n_total = values.size
-        finite_mask = np.isfinite(values)
-        n_filtered = n_total - np.count_nonzero(finite_mask)
-        values = values[finite_mask]
-
-        if n_filtered > 0:
-            warnings.warn(
-                f"Filtered {n_filtered} non-finite value(s) from "
-                f"Monte Carlo data for '{name}' before plotting.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-
+        values = _finite(
+            values, f"Monte Carlo data for '{name}'", stacklevel=3
+        )
         if values.size == 0:
             warnings.warn(
                 f"No finite values available for Monte Carlo data "
@@ -1159,41 +1133,7 @@ def plot_multiple_monte_carlo(
         )
 
         if show_fit:
-            mu, std = norm.fit(values)
-
-            if std > 0:
-                x = np.linspace(values.min(), values.max(), 1000)
-                p = norm.pdf(x, mu, std)
-
-                std_exp = int(np.floor(np.log10(std)))
-
-                if std_exp == 0:
-                    stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-                else:
-                    std_mant = std / 10**std_exp
-                    stat_label = (
-                        rf"$\mu$={mu:.3g}, "
-                        rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
-
-                ax.plot(
-                    x,
-                    p,
-                    color=color,
-                    linewidth=1.2,
-                    zorder=2,
-                    linestyle="-",
-                    label=stat_label,
-                )
-            else:
-                stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-                ax.axvline(
-                    mu,
-                    color=color,
-                    linewidth=1.2,
-                    zorder=2,
-                    linestyle="-",
-                    label=stat_label,
-                )
+            _plot_normal_fit(ax, values, color)
 
     if label is None:
         label = _default_metric_label(currency, metric)
