@@ -99,7 +99,7 @@ def test_input_histogram_grid_single_input():
 
     fig, axes = _plot_input_histogram_grid(
         {"Only input": np.random.default_rng(0).normal(5, 1, 200)},
-        None, 30, "tab:blue", "Process parameters", show=False,
+        None, 30, "tab:blue", "Process parameters",
     )
     assert axes[0].has_data()
     # the two unused grid cells are turned off
@@ -164,27 +164,6 @@ def test_plot_tornado_fractional_percentage_label(test_plant):
     labels = [t.get_text() for t in ax.get_legend().get_texts()]
     assert labels == ["-7.5%", "+7.5%"]
     plt.close(fig)
-
-
-def test_input_histogram_grid_layout_independent_of_show():
-    """Saved figures (show=False) get the same suptitle layout as shown
-    ones -- the margin math must not be gated on show."""
-    import numpy as np
-    from openpytea.plotting import _plot_input_histogram_grid
-
-    rng = np.random.default_rng(1)
-    inputs = {f"Input {i}": rng.normal(size=100) for i in range(4)}
-
-    fig_saved, _ = _plot_input_histogram_grid(
-        inputs, None, 30, "tab:blue", "Grid", show=False)
-    fig_shown, _ = _plot_input_histogram_grid(
-        inputs, None, 30, "tab:blue", "Grid", show=True)
-
-    assert fig_saved.subplotpars.top == fig_shown.subplotpars.top
-    # tight_layout actually ran (top moved off the rc default)
-    assert fig_saved.subplotpars.top != plt.rcParams["figure.subplot.top"]
-    plt.close(fig_saved)
-    plt.close(fig_shown)
 
 
 def test_plot_multiple_monte_carlo_returns_live_figure(test_plant, test_plant_b):

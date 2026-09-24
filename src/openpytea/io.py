@@ -281,33 +281,25 @@ def load_results(filepath):
     return data["results"]
 
 
-# ponytail: only caller is its own test; str(eq) covers it
-def export_equipment_strings(equipment_list, filepath):
+def _write_json(filepath, payload, **metadata):
     """
-    Export a list of equipment objects to a text file.
-    Each equipment object is converted to a string representation and written
-    to a separate line in the output file.
-    Args:
-        equipment_list (list): A list of equipment objects to export.
-        filepath (str or Path): The file path where the equipment strings will
-                                be written. Can be a string or a Path object.
-    Returns:
-        None
-    Raises:
-        IOError: If the file cannot be opened or written to.
-        TypeError: If equipment_list is not iterable.
-    Example:
-        >>> equipment_list = [Equipment("pump"), Equipment("motor")]
-        >>> export_equipment_strings(equipment_list, "equipment.txt")
+    Write ``payload`` to ``filepath`` as indented JSON, after a
+    ``"metadata"`` block (OpenPyTEA version, UTC timestamp, plus any
+    ``metadata`` fields), creating parent directories as needed.
     """
     filepath = Path(filepath)
-
-    # Ensure directory exists, like the sibling exporters
     filepath.parent.mkdir(parents=True, exist_ok=True)
-
+    output = {
+        "metadata": {
+            "generated_by": f"OpenPyTEA Version {__version__}",
+            "date_generated": datetime.now(timezone.utc).isoformat(),
+            **metadata,
+        },
+        **payload,
+    }
     with filepath.open("w", encoding="utf-8") as f:
-        for eq in equipment_list:
-            f.write(str(eq) + "\n")
+        # numpy arrays/scalars -> lists/Python numbers
+        json.dump(output, f, indent=4, default=lambda o: o.tolist())
 
 
 def export_equipment_results(equipment_list, filepath):
@@ -339,34 +331,19 @@ def export_equipment_results(equipment_list, filepath):
     >>> equipment_list = [eq1, eq2, eq3]
     >>> export_equipment_results(equipment_list, "equipment_export.json")
     """
-    filepath = Path(filepath)
-
-    # Ensure directory exists
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-
     equipment_data = [eq.to_dict() for eq in equipment_list]
-
-    # ponytail: metadata+mkdir+json.dump written 3x; one _write_json(path, payload)
     total_purchased = sum((eq.get("purchased_cost") or 0.0)
                           for eq in equipment_data)
     total_direct = sum((eq.get("direct_cost") or 0.0)
                        for eq in equipment_data)
 
-    output = {
-        "metadata": {
-            "generated_by": f"OpenPyTEA Version {__version__}",
-            "date_generated": datetime.now(timezone.utc).isoformat(),
-            "n_equipment": len(equipment_data),
-        },
+    _write_json(filepath, {
         "equipment": equipment_data,
         "totals": {
             "total_purchased_cost": total_purchased,
             "total_direct_cost": total_direct,
         },
-    }
-
-    with filepath.open("w", encoding="utf-8") as f:
-        json.dump(output, f, indent=4)
+    }, n_equipment=len(equipment_data))
 
 
 def export_plant_results(plant, filepath):
@@ -398,21 +375,7 @@ def export_plant_results(plant, filepath):
     >>> plant = Plant(...)
     >>> export_plant_results(plant, "output/plant_results.json")
     """
-    filepath = Path(filepath)
-
-    # Ensure directory exists
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-
-    output = {
-        "metadata": {
-            "generated_by": f"OpenPyTEA Version {__version__}",
-            "date_generated": datetime.now(timezone.utc).isoformat(),
-        },
-        **plant.to_dict(),
-    }
-
-    with filepath.open("w", encoding="utf-8") as f:
-        json.dump(output, f, indent=4)
+    _write_json(filepath, plant.to_dict())
 
 
 def run_equipment(input_path, output_path):
@@ -678,19 +641,10 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
             output_dir / f"{fname}_plant_results.json",
         )
 
-        analysis_output = {
-            "metadata": {
-                "generated_by": f"OpenPyTEA Version {__version__}",
-                "date_generated": datetime.now(timezone.utc).isoformat(),
-            },
-            "results": results,
-        }
-
-        results_file = output_dir / f"{fname}_analysis_results.json"
-        with results_file.open("w", encoding="utf-8") as f:
-            # numpy arrays/scalars -> lists/Python numbers
-            json.dump(analysis_output, f, indent=4,
-                      default=lambda o: o.tolist())
+        _write_json(
+            output_dir / f"{fname}_analysis_results.json",
+            {"results": results},
+        )
 
     # ======================================================
     # EXPORT PLOTS

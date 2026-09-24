@@ -585,9 +585,7 @@ def sensitivity_data(plants,
     resolved the same way. See
     :func:`~openpytea.helpers._apply_dependencies`.
     """
-    # ponytail: inline _ensure_list; use plants = _ensure_list(plants)
-    if not isinstance(plants, (list, tuple)):
-        plants = [plants]
+    plants = _ensure_list(plants)
 
     metric = metric.upper()
 
@@ -870,9 +868,8 @@ def tornado_data(plant,
         "highs": highs_sorted,
         "base_value": base_value,
         "labels": labels_sorted,
-        # ponytail: stale comments on these return keys
-        "plus_minus_value": plus_minus_value,   # ✅ add this
-        "metric": metric,                       # optional
+        "plus_minus_value": plus_minus_value,
+        "metric": metric,
         "xlabel": label,
     }
 

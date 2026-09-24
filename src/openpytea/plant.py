@@ -233,28 +233,6 @@ class Plant:
         configuration : dict
             Partial or full plant configuration. Only supplied keys are updated.
         """
-        # ponytail: self.config mirroring only read by one test; keep deepcopy in
-        #   __init__, drop mirroring
-        # keep the stored config up to date
-        if (
-            not hasattr(self, "config")
-            or self.config is None
-        ):
-            self.config = {}
-        # shallow-merge top-level keys first
-        self.config.update(
-            {
-                k: v
-                for k, v in configuration.items()
-                if k
-                not in [
-                    "variable_opex_inputs",
-                    "plant_products",
-                    "operator_hourly_rate",
-                ]
-            }
-        )
-
         for key, (attr, _) in _SCALARS.items():
             if key in configuration:
                 setattr(self, attr, configuration[key])
@@ -338,8 +316,6 @@ class Plant:
                     original, updates, dep_key, unc_key,
                 )
             recursive_update(original, updates)
-            # also mirror into stored config
-            recursive_update(self.config.setdefault(key, {}), updates)
 
         if "project_uncertainties" in configuration:
             _validate_project_uncertainties(self.project_uncertainties)
@@ -534,53 +510,29 @@ class Plant:
             + self.contigency
         )
 
-        # ponytail: two print branches differ by one line; print shared lines once
         if print_results:
-            if (
-                additional_capex
-                and self.additional_capex_cost is not None
-            ):
-                # Print the results
-                print("Capital cost estimation")
-                print("===================================")
-                print(f"ISBL: {self.isbl:,.2f} {self.currency}")
-                print(f"OSBL: {self.osbl:,.2f} {self.currency}")
-                print(
-                    f"Design and engineering: {self.dne:,.2f} {self.currency}"
-                )
-                print(
-                    f"Contingency: {self.contigency:,.2f} {self.currency}"
-                )
+            show_extra = (
+                additional_capex and self.additional_capex_cost is not None
+            )
+            print("Capital cost estimation")
+            print("===================================")
+            print(f"ISBL: {self.isbl:,.2f} {self.currency}")
+            print(f"OSBL: {self.osbl:,.2f} {self.currency}")
+            print(f"Design and engineering: {self.dne:,.2f} {self.currency}")
+            print(f"Contingency: {self.contigency:,.2f} {self.currency}")
+            if show_extra:
                 print(
                     f"Additional CAPEX: "
                     f"{sum(self.additional_capex_cost):,.2f} {self.currency}"
                 )
-                print("===================================")
-                total_capex = (
-                    self.fixed_capital
-                    + sum(self.additional_capex_cost)
-                )
-                print(
-                    f"Fixed capital investment: "
-                    f"{total_capex:,.2f} {self.currency}"
-                )
-            else:
-                # Print the results
-                print("Capital cost estimation")
-                print("===================================")
-                print(f"ISBL: {self.isbl:,.2f} {self.currency}")
-                print(f"OSBL: {self.osbl:,.2f} {self.currency}")
-                print(
-                    f"Design and engineering: {self.dne:,.2f} {self.currency}"
-                )
-                print(
-                    f"Contingency: {self.contigency:,.2f} {self.currency}"
-                )
-                print("===================================")
-                print(
-                    f"Fixed capital investment: "
-                    f"{self.fixed_capital:,.2f} {self.currency}"
-                )
+            print("===================================")
+            total_capex = self.fixed_capital + (
+                sum(self.additional_capex_cost) if show_extra else 0
+            )
+            print(
+                f"Fixed capital investment: "
+                f"{total_capex:,.2f} {self.currency}"
+            )
         else:
             return self.fixed_capital
 
@@ -702,42 +654,6 @@ class Plant:
         else:
             return self.revenue
 
-    # ponytail: two internal callers, same args; inline as sum(...)
-    def count_process_steps(
-        self,
-        equipments,
-        target_process_types,
-        excluded_cats=None,
-    ):
-        """
-        Count equipment units matching a set of process types.
-
-        Parameters
-        ----------
-        equipments : list
-            List of Equipment objects to scan.
-        target_process_types : set
-            Process type labels to match (e.g. ``{"Fluids", "Mixed"}``).
-        excluded_cats : set or None, optional
-            Equipment categories to skip. Default is None (no exclusions).
-
-        Returns
-        -------
-        int
-            Number of matching equipment units.
-        """
-        if excluded_cats is None:
-            excluded_cats = {}
-        count = 0
-        for equipment in equipments:
-            if (
-                equipment.process_type
-                in target_process_types
-                and equipment.category not in excluded_cats
-            ):
-                count += 1
-        return count
-
     def calculate_operators_per_shift(
         self,
         no_fluid_process=None,
@@ -786,17 +702,20 @@ class Plant:
             )
         is_batch = self.production_type == "batch"
 
+        # Process steps = equipment of a matching process type, not
+        # counting pumps and vessels
+        excluded_cats = {"Pumps", "Pressure vessels"}
         if no_fluid_process is None:
-            no_fluid_process = self.count_process_steps(
-                self.equipment_list,
-                {"Fluids", "Mixed"},
-                {"Pumps", "Pressure vessels"},
+            no_fluid_process = sum(
+                eq.process_type in {"Fluids", "Mixed"}
+                and eq.category not in excluded_cats
+                for eq in self.equipment_list
             )
         if no_solid_process is None:
-            no_solid_process = self.count_process_steps(
-                self.equipment_list,
-                {"Solids", "Mixed"},
-                {"Pumps", "Pressure vessels"},
+            no_solid_process = sum(
+                eq.process_type in {"Solids", "Mixed"}
+                and eq.category not in excluded_cats
+                for eq in self.equipment_list
             )
 
         # --- Beyond Turton's validated range: fall back to chart rule
@@ -1125,10 +1044,8 @@ class Plant:
         Extend ``project_lifetime`` by one year if you need the last
         settlement inside the analysis horizon.
         """
-        # 0) Upstream calcs (capital, opex breakdowns)
-        # ponytail: calculate_fixed_opex already calls fixed_capital and variable_opex
-        self.calculate_fixed_capital(fc=self.fc)
-        self.calculate_variable_opex()
+        # 0) Upstream calcs (fixed OPEX runs fixed capital and variable
+        # OPEX itself)
         self.calculate_fixed_opex(fp=self.fp)
         self.calculate_revenue()
 
@@ -1180,20 +1097,8 @@ class Plant:
         prod_array = np.zeros(shape)
 
         # --- Resolve and validate CAPEX ramp ---
-        # ponytail: capex/production ramp checks duplicated; one _as_ramp() helper
         if self.capex_ramp is not None:
-            try:
-                capex_ramp = np.asarray(
-                    self.capex_ramp, dtype=float
-                )
-            except (TypeError, ValueError):
-                raise ValueError(
-                    "capex_ramp must be a list or array of numbers."
-                )
-            if capex_ramp.ndim != 1 or len(capex_ramp) == 0:
-                raise ValueError(
-                    "capex_ramp must be a non-empty 1-D list or array."
-                )
+            capex_ramp = _as_ramp(self.capex_ramp, "capex_ramp")
             if np.any(capex_ramp < 0):
                 raise ValueError(
                     "All values in capex_ramp must be >= 0."
@@ -1214,19 +1119,7 @@ class Plant:
 
         # --- Resolve and validate production ramp ---
         if self.production_ramp is not None:
-            try:
-                prod_ramp = np.asarray(
-                    self.production_ramp, dtype=float
-                )
-            except (TypeError, ValueError):
-                raise ValueError(
-                    "production_ramp must be a list or array of numbers."
-                )
-            if prod_ramp.ndim != 1 or len(prod_ramp) == 0:
-                raise ValueError(
-                    "production_ramp must be a non-empty 1-D list "
-                    "or array."
-                )
+            prod_ramp = _as_ramp(self.production_ramp, "production_ramp")
             if np.any(prod_ramp < 0) or np.any(prod_ramp > 1):
                 raise ValueError(
                     "All values in production_ramp must be between "
@@ -1438,15 +1331,6 @@ class Plant:
             If ``interest_rate`` is an array whose length does not match the
             number of cash flow scenarios.
         """
-        # ponytail: calculate_cash_flow recomputes all of these; keep only that call
-        self.calculate_fixed_capital(
-            fc=1.0 if self.fc is None else self.fc
-        )
-        self.calculate_variable_opex()
-        self.calculate_fixed_opex(
-            fp=1.0 if self.fp is None else self.fp
-        )
-        self.calculate_revenue()
         self.calculate_cash_flow()
 
         # Ensure 2D cash_flow: [n_scenarios, n_years]
@@ -1545,15 +1429,6 @@ class Plant:
         float or np.ndarray
             Levelized cost per unit of main product (scalar or array).
         """
-        # ponytail: calculate_cash_flow recomputes all of these; keep only that call
-        self.calculate_fixed_capital(
-            fc=1.0 if self.fc is None else self.fc
-        )
-        self.calculate_variable_opex()
-        self.calculate_fixed_opex(
-            fp=1.0 if self.fp is None else self.fp
-        )
-        self.calculate_revenue()
         self.calculate_cash_flow()
 
         disc_capex, disc_opex, disc_side_rev, disc_prod = (
@@ -1854,8 +1729,10 @@ class Plant:
             ``equipment_summary``, ``capital_costs``, ``variable_opex``,
             ``fixed_opex``, ``revenue``, ``cash_flow``, and ``metrics``.
         """
-        equipment_items = []
+        def as_list(x):
+            return x.tolist() if isinstance(x, np.ndarray) else x
 
+        equipment_items = []
         for eq in self.equipment_list:
             equipment_items.append({
                 "name": getattr(eq, "name", None),
@@ -1872,8 +1749,8 @@ class Plant:
                 "process_type": self.process_type,
                 "country": self.country,
                 "region": self.region,
-                "currency": getattr(self, "currency", "USD"),
-                "exchange_rate": getattr(self, "exchange_rate", 1.0),
+                "currency": self.currency,
+                "exchange_rate": self.exchange_rate,
                 "interest_rate": self.interest_rate,
                 "project_lifetime": self.project_lifetime,
                 "plant_utilization": self.plant_utilization,
@@ -1888,19 +1765,12 @@ class Plant:
                 "plant_products": deepcopy(self.plant_products),
                 "variable_opex_inputs": deepcopy(self.variable_opex_inputs),
                 "working_capital": self.working_capital,
-                # ponytail: repeated .tolist() ternaries, deepcopy of fresh list,
-                #   getattr on always-set attrs
                 "additional_capex_cost": deepcopy(
-                    self.additional_capex_cost.tolist()
-                    if isinstance(self.additional_capex_cost, np.ndarray)
-                    else self.additional_capex_cost
-                ) if self.additional_capex_cost is not None else None,
-
+                    as_list(self.additional_capex_cost)
+                ),
                 "additional_capex_years": deepcopy(
-                    self.additional_capex_years.tolist()
-                    if isinstance(self.additional_capex_years, np.ndarray)
-                    else self.additional_capex_years
-                ) if self.additional_capex_years is not None else None,
+                    as_list(self.additional_capex_years)
+                ),
                 "fc": self.fc,
                 "fp": self.fp,
                 "depreciation": deepcopy(self.depreciation),
@@ -1917,15 +1787,9 @@ class Plant:
                 "fixed_capital": float(getattr(self, "fixed_capital", 0.0)),
                 "working_capital": float(getattr(self, "working_capital", 0.0))
                 if self.working_capital is not None else None,
-                "additional_capex_cost": (
-                    self.additional_capex_cost.tolist()
-                    if isinstance(self.additional_capex_cost, np.ndarray)
-                    else self.additional_capex_cost
-                ),
-                "additional_capex_years": (
-                    self.additional_capex_years.tolist()
-                    if isinstance(self.additional_capex_years, np.ndarray)
-                    else self.additional_capex_years
+                "additional_capex_cost": as_list(self.additional_capex_cost),
+                "additional_capex_years": as_list(
+                    self.additional_capex_years
                 ),
             },
             "variable_opex": {
@@ -1967,23 +1831,16 @@ class Plant:
             },
         }
 
-        additional_capex_cost = getattr(self, "additional_capex_cost", None)
         # After calculate_cash_flow this is a numpy array, whose truth
         # value is ambiguous for 2+ entries -- test length explicitly
-        if additional_capex_cost is not None and len(
-            np.atleast_1d(additional_capex_cost)
+        if self.additional_capex_cost is not None and len(
+            np.atleast_1d(self.additional_capex_cost)
         ) > 0:
-            self.calculate_roi(additional_capex=True)
-            self.calculate_payback_time(additional_capex=True)
             plant_dict["metrics"]["roi_with_additional_capex"] = float(
-                getattr(self, "roi", None)
-            ) if hasattr(self, "roi") else None
-            plant_dict["metrics"][
-                "payback_time_with_additional_capex"
-            ] = (
-                float(getattr(self, "payback_time", None))
-                if hasattr(self, "payback_time")
-                else None
+                self.calculate_roi(additional_capex=True)
+            )
+            plant_dict["metrics"]["payback_time_with_additional_capex"] = (
+                float(self.calculate_payback_time(additional_capex=True))
             )
 
         return plant_dict
@@ -2223,8 +2080,16 @@ _UNCERTAINTY_SUB_KEYS = {"std", "min", "max"} | {
     # analysis._reject_std_scale_for_dependent).
     "noise",
 }
-# Parameters whose values must stay within [0, 1]
-_UNIT_INTERVAL_PARAMS = {"plant_utilization", "tax_rate"}
+# param -> (test for an invalid min/max bound, the rule it breaks)
+_BOUND_RULES = {
+    "fixed_capital_factor": (lambda v: v <= 0, "must be > 0"),
+    "fixed_opex_factor": (lambda v: v <= 0, "must be > 0"),
+    "interest_rate": (lambda v: v <= 0, "must be > 0"),
+    "project_lifetime": (lambda v: v < 1, "must be ≥ 1"),
+    "plant_utilization": (lambda v: not (0 <= v <= 1),
+                          "must be between 0 and 1"),
+    "tax_rate": (lambda v: not (0 <= v <= 1), "must be between 0 and 1"),
+}
 
 
 def _validate_project_uncertainties(cfg: dict) -> None:
@@ -2275,59 +2140,37 @@ def _validate_project_uncertainties(cfg: dict) -> None:
                 f"'project_uncertainties['{param}']['std']' must be ≥ 0, "
                 f"got {sub['std']}."
             )
-        # ponytail: min/max check written twice + four bound loops; one _BOUND_RULES
-        #   table
-        if "min" in sub and "max" in sub and sub["min"] >= sub["max"]:
-            raise ValueError(
-                f"'project_uncertainties['{param}']': "
-                f"'min' ({sub['min']}) must be less than 'max' ({sub['max']})."
-            )
-        # Same pairing check for the new-style bound keys.
-        if (
-            "minimum" in sub
-            and "maximum" in sub
-            and sub["minimum"] >= sub["maximum"]
-        ):
-            raise ValueError(
-                f"'project_uncertainties['{param}']': 'minimum' "
-                f"({sub['minimum']}) must be less than 'maximum' "
-                f"({sub['maximum']})."
-            )
+        for lo, hi in (("min", "max"), ("minimum", "maximum")):
+            if lo in sub and hi in sub and sub[lo] >= sub[hi]:
+                raise ValueError(
+                    f"'project_uncertainties['{param}']': '{lo}' "
+                    f"({sub[lo]}) must be less than '{hi}' ({sub[hi]})."
+                )
         # The range checks below assume min/max bound the parameter's own
         # absolute value. For a dependent that value comes from the
         # dependency instead, and min/max bound its additive *noise* around
         # zero -- so they legitimately go negative, and these rules would
         # reject every valid noise band. Skip them for dependents.
-        if "dependency" in sub:
+        if "dependency" in sub or param not in _BOUND_RULES:
             continue
-        if param in ("fixed_capital_factor", "fixed_opex_factor"):
-            for bound in ("min", "max", "minimum", "maximum"):
-                if bound in sub and sub[bound] <= 0:
-                    raise ValueError(
-                        f"'project_uncertainties['{param}']['{bound}']' "
-                        f"must be > 0, got {sub[bound]}."
-                    )
-        if param == "interest_rate":
-            for bound in ("min", "max", "minimum", "maximum"):
-                if bound in sub and sub[bound] <= 0:
-                    raise ValueError(
-                        f"'project_uncertainties['interest_rate']['{bound}']' "
-                        f"must be > 0, got {sub[bound]}."
-                    )
-        if param == "project_lifetime":
-            for bound in ("min", "max", "minimum", "maximum"):
-                if bound in sub and sub[bound] < 1:
-                    raise ValueError(
-                        f"'project_uncertainties['project_lifetime']"
-                        f"['{bound}']' must be ≥ 1, got {sub[bound]}."
-                    )
-        if param in _UNIT_INTERVAL_PARAMS:
-            for bound in ("min", "max", "minimum", "maximum"):
-                if bound in sub and not (0 <= sub[bound] <= 1):
-                    raise ValueError(
-                        f"'project_uncertainties['{param}']['{bound}']' "
-                        f"must be between 0 and 1, got {sub[bound]}."
-                    )
+        is_bad, rule = _BOUND_RULES[param]
+        for bound in ("min", "max", "minimum", "maximum"):
+            if bound in sub and is_bad(sub[bound]):
+                raise ValueError(
+                    f"'project_uncertainties['{param}']['{bound}']' "
+                    f"{rule}, got {sub[bound]}."
+                )
+
+
+def _as_ramp(value, name):
+    """``value`` as a non-empty 1-D float array, else ValueError."""
+    try:
+        ramp = np.asarray(value, dtype=float)
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} must be a list or array of numbers.")
+    if ramp.ndim != 1 or len(ramp) == 0:
+        raise ValueError(f"{name} must be a non-empty 1-D list or array.")
+    return ramp
 
 
 def _normalize_dep_config(

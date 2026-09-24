@@ -129,29 +129,6 @@ class CostCorrelationDB:
         df["form"] = df["form"].str.lower()
         self.df = df
 
-    def _parallelize(self, s: float, cap: float | None):
-        """
-        Calculate parallel units and adjusted size when capacity is exceeded.
-
-        Parameters
-        ----------
-        s : float
-            Equipment size/capacity.
-        cap : float | None
-            Unit capacity limit. If None or NaN, no parallelization occurs.
-
-        Returns
-        -------
-        tuple[int, float]
-            (number_of_units, adjusted_size_per_unit).
-        """
-        if pd.notna(cap) and s > cap:
-            units = int(np.ceil(s / cap))
-            return units, s / units
-        return 1, s
-
-    # ponytail: ce * units in all 6 branches, log10/ln quadratic identical, _parallelize
-    #   one caller
     def evaluate(self, key: str, s: float, s2: float | None = None):
         """
         Calculate purchased equipment cost based on correlation key and size.
@@ -214,27 +191,35 @@ class CostCorrelationDB:
                     f"s2={s2} above upper bound {s2_upper} for key '{key}'"
                 )
 
-        units, s_adj = self._parallelize(s, cap)
+        # Split a size above the unit capacity into equal parallel units
+        units, s_adj = 1, s
+        if pd.notna(cap) and s > cap:
+            units = int(np.ceil(s / cap))
+            s_adj = s / units
         form = r.get("form", "linear")
         year = int(r["cost_year"])
 
         if form == "offset power-law":
             a, b, n = r["a"], r["b"], r["n"]
             ce = a + b * (s_adj**n)
-            purchased = ce * units
 
         elif form == "exponential":
             a, b = r["a"], r["b"]
             ce = a * np.exp(b * s_adj)
-            purchased = ce * units
 
-        elif form == "log-log quadratic":
+        elif form in ("log-log quadratic", "ln-ln quadratic"):
+            # log(Ce) is a polynomial (up to 4th order) in log(S), base 10
+            # or e
+            log, unlog = (
+                (np.log10, lambda x: 10**x) if form == "log-log quadratic"
+                else (np.log, np.exp)
+            )
             K1, K2, K3 = r["k1"], r["k2"], r["k3"]
             K4 = r.get("k4") if pd.notna(r.get("k4")) else 0.0
             K5 = r.get("k5") if pd.notna(r.get("k5")) else 0.0
 
-            logS = np.log10(s_adj)
-            logCe = (
+            logS = log(s_adj)
+            ce = unlog(
                 K1
                 + K2 * logS
                 + K3 * (logS**2)
@@ -242,30 +227,9 @@ class CostCorrelationDB:
                 + K5 * (logS**4)
             )
 
-            ce = 10**logCe
-            purchased = ce * units
-
-        elif form == "ln-ln quadratic":
-            K1, K2, K3 = r["k1"], r["k2"], r["k3"]
-            K4 = r.get("k4") if pd.notna(r.get("k4")) else 0.0
-            K5 = r.get("k5") if pd.notna(r.get("k5")) else 0.0
-
-            lnS = np.log(s_adj)
-            lnCe = (
-                K1
-                + K2 * lnS
-                + K3 * (lnS**2)
-                + K4 * (lnS**3)
-                + K5 * (lnS**4)
-            )
-
-            ce = np.exp(lnCe)
-            purchased = ce * units
-
         elif form == "power-sizing":
             C0, S0, f = r["c0"], r["s0"], r["f"]
             ce = C0 * (s_adj / S0) ** f
-            purchased = ce * units
 
         elif form == "2-var power-law":
             if s2 is None:
@@ -276,13 +240,13 @@ class CostCorrelationDB:
                 )
             a, b, n1, n2 = r["a"], r["b"], r["n"], r["n2"]
             ce = a + b * (s_adj**n1) * (s2**n2)
-            purchased = ce * units
 
         else:
             raise ValueError(
                 f"Unsupported form '{form}' for key '{key}'"
             )
 
+        purchased = ce * units
         return float(purchased), int(units), year
 
     def key_for_category_type(
@@ -563,10 +527,7 @@ class Equipment:
         self.category = category
         self.type = type
         self.num_units = num_units
-        # ponytail: x if x is not None else None is just x
-        self.cost_year = (
-            cost_year if cost_year is not None else None
-        )
+        self.cost_year = cost_year
         self.target_year = target_year
         self._cost_func = cost_func
         self._db = CostCorrelationDB()

@@ -3,6 +3,8 @@ assessment of chemical process plants and energy systems with
 economic sensitivity and uncertainty evaluation.
 """
 
+from importlib.metadata import version
+
 from .plant import Plant
 from .equipment import Equipment, CompositeEquipment, inflation_adjustment
 from .analysis import (direct_costs_data, fixed_capital_data,
@@ -19,18 +21,9 @@ from .plotting import (plot_stacked_bar, plot_cash_flow,
 from .io import (load_results, load_openpytea_config,
                  run_equipment, run_plant, run_tea, run_openpytea)
 
-# ponytail: hardcoded, can drift; importlib.metadata.version;
-#   __description__/__email__/__url__ unread
-__version__ = "3.0.0"
+__version__ = version("openpytea")
 __author__ = "Panji B. Tamarona"
-__email__ = "P.B.Tamarona@tudelft.nl"
 __license__ = "MIT"
-__description__ = (
-    "OpenPyTEA: An open-source python toolkit for techno-economic"
-    " assessment of chemical process plants and energy systems with"
-    " economic sensitivity and uncertainty evaluation"
-)
-__url__ = "https://github.com/PBTamarona/OpenPyTEA"
 
 __all__ = [
     "Plant",

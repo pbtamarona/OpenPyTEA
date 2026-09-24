@@ -143,14 +143,7 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     # --- Ax/fig handling ---
     created_fig = None
     if ax is None:
-        # ponytail: base_w, base_h = figsize
-        if (
-            isinstance(figsize, (tuple, list))
-            and len(figsize) == 2
-        ):
-            base_w, base_h = figsize
-        else:
-            base_w, base_h = 1.2, 1.8
+        base_w, base_h = figsize or (1.2, 1.8)
         auto_width = max(base_w * n_bars, base_w)
         created_fig, ax = plt.subplots(
             figsize=(auto_width, base_h)
@@ -734,8 +727,7 @@ def plot_monte_carlo(
     if ax is None:
         created_fig, ax = plt.subplots(figsize=figsize)
 
-    hist_color = next(cycle(plt.cm.tab10.colors))
-    line_color = next(cycle(plt.cm.tab10.colors))
+    hist_color = line_color = plt.cm.tab10.colors[0]
 
     ax.hist(
         values,
@@ -825,8 +817,7 @@ def _is_process_monte_carlo_input(label):
     return normalized.endswith("consumption") or normalized.endswith("production")
 
 
-# ponytail: show param unused
-def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title, show):
+def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title):
     """
     Build one figure of histograms (one subplot per input, 3 columns) for
     the given ``{label: samples}`` dict, with a bold suptitle. Shared by the
@@ -989,9 +980,7 @@ def plot_monte_carlo_inputs(
         if not _is_process_monte_carlo_input(label)
     }
 
-    color_cycle = cycle(plt.cm.tab10.colors)
-    next(color_cycle)
-    hist_color = next(color_cycle)
+    hist_color = plt.cm.tab10.colors[1]
 
     def _build(group_inputs, title):
         if not group_inputs:
@@ -1000,18 +989,15 @@ def plot_monte_carlo_inputs(
             )
             return None, None
         return _plot_input_histogram_grid(
-            group_inputs, figsize, bins, hist_color, title, show
+            group_inputs, figsize, bins, hist_color, title
         )
 
-    # ponytail: process/economic branches identical; one dict-driven branch
-    if category == "process":
-        fig, axes = _build(process_inputs, "Process Parameters")
-        if show and fig is not None:
-            plt.show()
-        return fig, axes
-
-    if category == "economic":
-        fig, axes = _build(economic_inputs, "Economic Parameters")
+    groups = {
+        "process": (process_inputs, "Process Parameters"),
+        "economic": (economic_inputs, "Economic Parameters"),
+    }
+    if category in groups:
+        fig, axes = _build(*groups[category])
         if show and fig is not None:
             plt.show()
         return fig, axes
@@ -1068,11 +1054,7 @@ def plot_multiple_monte_carlo(
 
     created_fig = None
     if ax is None:
-        # ponytail: plt.subplots(figsize=None) already works
-        if figsize is None:
-            created_fig, ax = plt.subplots()
-        else:
-            created_fig, ax = plt.subplots(figsize=figsize)
+        created_fig, ax = plt.subplots(figsize=figsize)
 
     color_cycle = cycle(plt.cm.tab10.colors)
     currency = _tex_escape("$")

@@ -23,25 +23,6 @@ def _print_run_summary(results, output_dir):
     print(f"Results written to: {dest}")
 
 
-# ponytail: _cmd_* only remap args; lambdas in set_defaults
-def _cmd_run(args):
-    results = run_openpytea(
-        config_path=args.config,
-        output_dir=args.output_dir,
-    )
-    _print_run_summary(results, args.output_dir)
-
-
-def _cmd_tea(args):
-    results = run_tea(
-        equipment_input_path=args.equipment,
-        plant_input_path=args.plant,
-        analysis_input_path=args.analysis,
-        output_dir=args.output_dir,
-    )
-    _print_run_summary(results, args.output_dir)
-
-
 def _cmd_equipment(args):
     equipment_list = run_equipment(
         input_path=args.input,
@@ -98,7 +79,10 @@ def build_parser():
             "Defaults to 'results' if neither is set."
         ),
     )
-    run_parser.set_defaults(func=_cmd_run)
+    run_parser.set_defaults(func=lambda args: _print_run_summary(
+        run_openpytea(config_path=args.config, output_dir=args.output_dir),
+        args.output_dir,
+    ))
 
     tea_parser = subparsers.add_parser(
         "tea",
@@ -121,7 +105,15 @@ def build_parser():
             "'output.directory'. Defaults to 'results' if neither is set."
         ),
     )
-    tea_parser.set_defaults(func=_cmd_tea)
+    tea_parser.set_defaults(func=lambda args: _print_run_summary(
+        run_tea(
+            equipment_input_path=args.equipment,
+            plant_input_path=args.plant,
+            analysis_input_path=args.analysis,
+            output_dir=args.output_dir,
+        ),
+        args.output_dir,
+    ))
 
     equipment_parser = subparsers.add_parser(
         "equipment",

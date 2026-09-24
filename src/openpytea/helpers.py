@@ -96,8 +96,7 @@ def _default_metric_label(currency: str, metric: str) -> str:
     ``text.usetex`` is active (see :func:`_tex_escape`).
     """
     metric = metric.upper()
-    # ponytail: 'levelized_cost' can never match after .upper(); drop it
-    if metric == "LCOP" or metric == "levelized_cost":
+    if metric == "LCOP":
         return rf"Levelized cost / [{currency}$\cdot$unit$^{-1}$]"
     elif metric == "ROI":
         return f"Return on investment / [{_tex_escape('%')}]"
@@ -898,11 +897,6 @@ def _evaluate_baseline_metric(plant, metric, additional_capex=False):
 
     plant_copy = deepcopy(plant)
     _apply_dependencies(plant_copy)
-    # ponytail: redundant, _evaluate_metric already recomputes
-    # Resolving the graph can move the plant's inputs off the values its
-    # cached levelized_cost was computed from, and _evaluate_metric reuses
-    # that cache for "LCOP" rather than recomputing.
-    plant_copy.calculate_levelized_cost()
     return _evaluate_metric(plant_copy, metric, additional_capex)
 
 
