@@ -29,6 +29,10 @@ try:
     if not _latex_available():
         _styles.append("no-latex")
     plt.style.use(_styles)
+    # ieee sets figure.dpi to 600, which renders huge inline in Jupyter;
+    # lower the display dpi (same proportions) but keep saved files at 600
+    plt.rcParams["figure.dpi"] = 200
+    plt.rcParams["savefig.dpi"] = 600
 except (AttributeError, ImportError):
     warnings.warn(
         "scienceplots could not be loaded due to a matplotlib "
@@ -828,7 +832,11 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title):
     n_rows = (n_params + n_cols - 1) // n_cols
 
     fig_size = figsize if figsize is not None else (n_cols * 5, n_rows * 3)
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=fig_size)
+    # The default grid is ~5x wider than the other plots, so show it at a
+    # third of the display dpi (same look, fewer pixels); savefig.dpi still
+    # controls saved files
+    dpi = plt.rcParams["figure.dpi"] / 3 if figsize is None else None
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=fig_size, dpi=dpi)
 
     # plt.subplots always returns an array here (n_cols is fixed at 3),
     # so flattening covers every n_params, including 1 -- the loop below
