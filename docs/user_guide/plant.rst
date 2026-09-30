@@ -593,7 +593,9 @@ The method returns a styled DataFrame and, when ``print_results=True``, displays
    * - Revenue
      - Annual product revenue, scaled by the production ramp.
    * - Cash cost
-     - Total annual OPEX (fixed + variable), scaled by the production ramp.
+     - Total annual OPEX. Variable OPEX is scaled by the production ramp;
+       fixed OPEX is charged in full from the first production year onwards
+       and is zero during construction (Towler & Sinnott (2022), Table 9.2).
    * - Gross profit
      - Revenue − Cash cost.
    * - Depreciation

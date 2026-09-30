@@ -1035,6 +1035,11 @@ class Plant:
 
         Notes
         -----
+        Operating costs follow Towler & Sinnott Table 9.2: variable
+        costs scale with the production ramp, while fixed costs are
+        charged in full from the first production year onwards and are
+        not charged during construction.
+
         Income tax follows the Towler & Sinnott 1-year lag: tax on year
         ``n``'s taxable income is paid in year ``n + 1``. Because the
         table ends at the project lifetime, the tax on the final
@@ -1224,7 +1229,15 @@ class Plant:
             if name != self.main_product
         )
         revenue[:] = main_revenue + side_revenue
-        cash_cost[:] = per_sample(fixed_opex) + per_sample(var_opex) * ramp
+        # Towler & Sinnott Table 9.2: fixed costs are charged in full from
+        # the first production year onwards (never during construction);
+        # only variable costs follow the ramp. cumsum latches on at start-up
+        # so a later zero-production year (turnaround) still pays fixed OPEX.
+        in_production = np.cumsum(ramp) > 0
+        cash_cost[:] = (
+            per_sample(fixed_opex) * in_production
+            + per_sample(var_opex) * ramp
+        )
         gross_profit[:] = revenue - cash_cost
 
         # --- Depreciation (each sample has its own config) ---

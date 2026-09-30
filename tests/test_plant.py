@@ -196,6 +196,30 @@ def test_production_ramp_custom(test_plant):
     assert isinstance(npv, (int, float))
 
 
+def test_fixed_opex_starts_with_production(test_plant):
+    # Towler & Sinnott Table 9.2: no operating cost during construction,
+    # then full FCOP plus ramped VCOP from the first production year.
+    test_plant.production_ramp = [0, 0, 0.4, 0.8]
+    test_plant.calculate_cash_flow()
+    fcop = float(test_plant.fixed_production_costs)
+    vcop = float(test_plant.variable_production_costs)
+    cash_cost = test_plant.cash_cost_array[0]
+
+    assert np.allclose(cash_cost[:2], 0)
+    assert np.isclose(cash_cost[2], fcop + 0.4 * vcop)
+    assert np.isclose(cash_cost[3], fcop + 0.8 * vcop)
+    assert np.isclose(cash_cost[4], fcop + vcop)
+
+
+def test_fixed_opex_charged_in_shutdown_year(test_plant):
+    # A zero-production year after start-up is a turnaround, not construction:
+    # fixed costs continue, variable costs stop.
+    test_plant.production_ramp = [0, 0, 1.0, 0.0]
+    test_plant.calculate_cash_flow()
+    fcop = float(test_plant.fixed_production_costs)
+    assert np.isclose(test_plant.cash_cost_array[0][3], fcop)
+
+
 def test_production_ramp_out_of_bounds(test_plant):
     test_plant.production_ramp = [0.0, 1.5]  # 1.5 > 1.0
     with pytest.raises(ValueError, match="between 0 and 1"):
