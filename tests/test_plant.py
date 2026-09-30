@@ -220,6 +220,62 @@ def test_fixed_opex_charged_in_shutdown_year(test_plant):
     assert np.isclose(test_plant.cash_cost_array[0][3], fcop)
 
 
+def test_working_capital_interest_defaults_to_zero(test_plant):
+    # Treatment A: the cash flow already carries working capital as an
+    # investment, so no interest is charged on top of it by default.
+    test_plant.calculate_fixed_opex()
+    assert float(test_plant.interest_working_capital) == 0.0
+
+
+def test_working_capital_interest_opt_in(test_plant):
+    # Treatment B is available through the factor, and an absolute
+    # component override beats the factor.
+    test_plant.fixed_opex_factors = {"working_capital_interest": 0.08}
+    test_plant.calculate_fixed_opex()
+    assert np.isclose(float(test_plant.interest_working_capital),
+                      float(test_plant.working_capital) * 0.08)
+
+    test_plant.fixed_opex_components = {"interest_working_capital": 123.0}
+    test_plant.calculate_fixed_opex()
+    assert float(test_plant.interest_working_capital) == 123.0
+
+
+def test_working_capital_interest_duplicates_cash_flow(test_plant):
+    # Why the default is 0: charging interest at the discount rate has the
+    # same present value as the draw/release already in the cash flow.
+    # Exact when working capital is drawn the year before production starts.
+    rate = test_plant.interest_rate
+    life = test_plant.project_lifetime
+    test_plant.capex_ramp = [0.2, 0.5, 0.2, 0.1]          # drawn in year 4
+    test_plant.production_ramp = [0, 0, 0, 0, 0.4, 0.8]   # starts in year 5
+    test_plant.fixed_opex_factors = {"working_capital_interest": rate}
+    test_plant.calculate_cash_flow()
+
+    wc = float(test_plant.working_capital)
+    interest = float(test_plant.interest_working_capital)
+    pv_investment = wc / (1 + rate) ** 4 - wc / (1 + rate) ** life
+    pv_interest = sum(interest / (1 + rate) ** t for t in range(5, life + 1))
+    assert np.isclose(pv_interest, pv_investment)
+
+
+def test_working_capital_conventions_are_exclusive(test_plant):
+    # Opting into the interest charge switches convention rather than
+    # adding to it: the cash flow then omits the draw and the release.
+    test_plant.capex_ramp = [0.2, 0.5, 0.2, 0.1]
+    test_plant.production_ramp = [0, 0, 0, 0, 0.4, 0.8]
+    test_plant.calculate_cash_flow()
+    wc = float(test_plant.working_capital)
+    invested = test_plant.capital_cost_array[0].copy()
+    assert np.isclose(invested[-1], -wc)
+
+    test_plant.fixed_opex_factors = {"working_capital_interest": 0.08}
+    test_plant.calculate_cash_flow()
+    financed = test_plant.capital_cost_array[0]
+
+    assert np.isclose(invested[3] - financed[3], wc)
+    assert np.isclose(financed[-1], 0.0)
+
+
 def test_production_ramp_out_of_bounds(test_plant):
     test_plant.production_ramp = [0.0, 1.5]  # 1.5 > 1.0
     with pytest.raises(ValueError, match="between 0 and 1"):

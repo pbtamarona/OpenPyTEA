@@ -113,6 +113,9 @@ class Plant:
                     "general_plant_overhead"– 0.65  × (labor + supervision
                                                         + direct_salary_overhead)
                     "working_capital"       – 0.15 × fixed_capital
+                    "working_capital_interest"
+                                            – 0.0 × working_capital
+                                              (>0 = debt-funded convention)
                     "patents_royalties"     – 0.02 × cash cost of production
                     "distribution_selling"  – 0.02 × cash cost of production
                     "rnd"                   – 0.03 × cash cost of production
@@ -126,8 +129,9 @@ class Plant:
                     "laboratory_charges", "maintenance_costs",
                     "taxes_insurance_costs", "rent_of_land_costs",
                     "environmental_charges", "operating_supplies",
-                    "general_plant_overhead", "patents_royalties",
-                    "distribution_selling_costs", "RnD_costs"
+                    "general_plant_overhead", "interest_working_capital",
+                    "patents_royalties", "distribution_selling_costs",
+                    "RnD_costs"
         Additional Capex:
             additional_capex_years (array): Years when additional capex occurs.
             additional_capex_cost (array): Corresponding capex amounts.
@@ -876,6 +880,7 @@ class Plant:
             "operating_supplies": 0.009,
             "general_plant_overhead": 0.65,
             "working_capital": 0.15,
+            "working_capital_interest": 0.0,
             "patents_royalties": 0.02,
             "distribution_selling": 0.02,
             "rnd": 0.03,
@@ -937,8 +942,14 @@ class Plant:
             self.working_capital = (
                 f["working_capital"] * self.fixed_capital
             )
-        self.interest_working_capital = (
-            self.working_capital * self.interest_rate
+        # Default 0: the cash flow already carries working capital as an
+        # investment, and the two have the same present value. A non-zero
+        # rate selects the debt-funded convention instead (Towler &
+        # Sinnott, 2022, Ch. 8), which drops the draw/release in
+        # calculate_cash_flow.
+        self.interest_working_capital = c.get(
+            "interest_working_capital",
+            f["working_capital_interest"] * self.working_capital,
         )
 
         self.fixed_production_costs = (
@@ -1146,16 +1157,25 @@ class Plant:
         for yr, frac in enumerate(capex_ramp):
             if yr < n_years:
                 capex[:, yr] += fixed_capital * frac
-        wc_year = len(capex_ramp) - 1
-        if wc_year < n_years:
-            capex[:, wc_year] += self.working_capital
-        # Release working capital in each sample's own final year, not
-        # the longest sample's (n_years is the max lifetime across samples)
-        working_capital = np.broadcast_to(
-            np.atleast_1d(self.working_capital).astype(float),
-            n_samples,
+        # Working capital is priced either as this draw/release or as
+        # interest in fixed OPEX, never both: same present value.
+        # calculate_fixed_opex ran above, so a non-zero charge means the
+        # debt-funded convention was chosen and the draw/release is off.
+        financed = bool(
+            np.any(np.asarray(self.interest_working_capital,
+                              dtype=float) != 0.0)
         )
-        capex[np.arange(n_samples), lifetime - 1] -= working_capital
+        if not financed:
+            wc_year = len(capex_ramp) - 1
+            if wc_year < n_years:
+                capex[:, wc_year] += self.working_capital
+            # Release in each sample's own final year, not the longest
+            # sample's (n_years is the max lifetime across samples)
+            working_capital = np.broadcast_to(
+                np.atleast_1d(self.working_capital).astype(float),
+                n_samples,
+            )
+            capex[np.arange(n_samples), lifetime - 1] -= working_capital
 
         # --- Add additional CAPEX at specified years ---
         if (

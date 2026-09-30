@@ -390,8 +390,8 @@ lists every component, its default calculation basis, and the
      - 0.65 × (labor + supervision + overhead)
      - ``"general_plant_overhead"``
    * - Interest on working capital
-     - working capital × interest rate
-     - ``"working_capital"`` (default: 0.15 × FCI)
+     - 0 by default (see note below)
+     - ``"working_capital_interest"``
    * - Patents & royalties
      - 0.02 × cash cost of production\*
      - ``"patents_royalties"``
@@ -403,6 +403,28 @@ lists every component, its default calculation basis, and the
      - ``"rnd"``
 
 \* Cash cost of production = (variable + fixed costs so far) / (1 − sum of the three rates above), ensuring these fractions are expressed consistently as a share of total cash cost.
+
+.. note::
+
+   **Interest on working capital defaults to 0.** The two ways of pricing
+   working capital have the same present value, so OpenPyTEA applies one or
+   the other, never both.
+
+   * **Owner-funded (default).** ``calculate_cash_flow`` draws working
+     capital in the last construction year and releases it in the final
+     year, so discounting alone prices the capital tied up.
+   * **Debt-funded** (Towler & Sinnott, 2022, Chapter 8). Working capital is
+     funded entirely by debt, so its only cost is the annual interest at a
+     corporate bond rate. Set a non-zero rate to select it; the draw and
+     release are then dropped::
+
+         plant.update_configuration({
+             "fixed_opex_factors": {"working_capital_interest": 0.08},
+         })
+
+   The rate is a borrowing rate, independent of ``interest_rate``. Interest
+   is tax-deductible where an investment is not, so the debt-funded
+   convention gives a higher NPV once ``tax_rate`` > 0.
 
 Override factors or fix absolute component values:
 
