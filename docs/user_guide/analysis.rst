@@ -304,7 +304,7 @@ Supported ``metric`` values:
    * - Value
      - Description
    * - ``"LCOP"``
-     - Levelized cost of the primary product (default).
+     - Pre-tax levelized cost of the primary product (default).
    * - ``"NPV"``
      - Net Present Value.
    * - ``"IRR"``

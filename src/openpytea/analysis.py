@@ -304,7 +304,7 @@ def fixed_opex_data(plants, pct=False):
 def levelized_cost_data(plants, pct=False):
     """
     Generate levelized cost of production (LCOP) breakdown data for one or
-    more plants.
+    more plants. LCOP is a pre-tax metric: ``tax_rate`` is not used.
     This function discounts capital costs, cash costs, side-product revenue,
     and production over each plant's project lifetime at its interest rate
     (mirroring ``Plant.calculate_levelized_cost``), then divides the
@@ -764,7 +764,7 @@ def tornado_data(plant,
         The percentage or absolute value to vary each parameter by
         (e.g., 0.1 for ±10%).
     metric : str, optional
-        The metric to analyze. Default is "LCOP" (Levelized Cost of Power).
+        The metric to analyze. Default is "LCOP" (pre-tax levelized cost of the main product).
         Common metrics: "LCOP", "LCOH", "IRR", "NPV".
     label : str, optional
         Custom label for the metric on the x-axis. If None, uses default label

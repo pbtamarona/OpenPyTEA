@@ -1432,6 +1432,11 @@ class Plant:
         project lifetime at ``interest_rate``. Side-product revenues are
         subtracted before dividing by discounted production.
 
+        This is a **pre-tax** break-even price: ``tax_rate`` is not used.
+        It equals the selling price that sets NPV = 0 only when
+        ``tax_rate = 0``; with a non-zero tax rate the true break-even
+        price is higher.
+
         Parameters
         ----------
         print_results : bool, optional

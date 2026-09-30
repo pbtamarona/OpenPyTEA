@@ -649,7 +649,7 @@ def _update_and_evaluate(
     metric : str, optional
         The economic metric to calculate and return, by default "LCOP".
         Supported metrics:
-        - "LCOP": Levelized cost of product
+        - "LCOP": Levelized cost of product (pre-tax)
         - "ROI": Return on investment
         - "NPV": Net present value
         - "PBT", "PAYBACK", "PAYBACK_TIME": Payback time
@@ -827,7 +827,7 @@ def _evaluate_metric(plant, metric, additional_capex=False):
     Args:
         plant: A plant object with methods to calculate financial metrics.
         metric (str): The metric to evaluate. Supported values are:
-            - "LCOP": Levelized Cost of Power
+            - "LCOP": Levelized cost of product (pre-tax)
             - "ROI": Return on Investment
             - "NPV": Net Present Value
             - "PBT", "PAYBACK", "PAYBACK_TIME": Payback Time

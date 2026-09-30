@@ -39,7 +39,7 @@ Creating a ``Plant``
        "interest_rate": 0.09,                       # optional, defaults to 0.09
        "project_lifetime": 30,                      # int ≥ 3, optional, defaults to 20
        "plant_utilization": 0.90,                   # 0–1, optional, defaults to 1
-       "tax_rate": 0.25,                            # 0–1, not used in LCOP, defaults to 0
+       "tax_rate": 0.25,                            # 0–1, not used in LCOP (pre-tax), defaults to 0
 
        # Operator labor
        "operator_hourly_rate": {"rate": 35},        # USD/hr, optional, defaults to $38.11/hr
@@ -766,7 +766,8 @@ Net Present Value (NPV)
 Levelized Cost of Product (LCOP)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Break-even selling price of the main product that sets NPV = 0:
+Pre-tax break-even selling price of the main product: the price at which
+discounted revenues exactly cover discounted capital and operating costs.
 
 .. math::
 
@@ -778,6 +779,15 @@ Break-even selling price of the main product that sets NPV = 0:
 
 where :math:`R^{\text{side}}_t` is co-product revenue and :math:`Q_t` is
 main-product production in year :math:`t`.
+
+.. note::
+
+   LCOP is a **pre-tax** metric: ``tax_rate`` does not appear in the
+   formula. It equals the selling price that sets NPV = 0 only when
+   ``tax_rate = 0``. With a non-zero tax rate the true break-even price
+   is higher, since tax is levied on the resulting profit, and it cannot
+   be recovered by grossing up with :math:`1/(1 - t)` because
+   depreciation shields part of the taxable income.
 
 .. code-block:: python
 
