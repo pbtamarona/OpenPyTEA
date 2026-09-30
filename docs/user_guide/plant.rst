@@ -819,16 +819,33 @@ main-product production in year :math:`t`.
 Payback time (PBT)
 ~~~~~~~~~~~~~~~~~~~
 
-Total fixed capital divided by the mean annual cash flow across revenue-generating years:
+Two payback measures are available. They answer different questions and
+generally differ.
+
+``payback_time`` is the **break-even year**: where the undiscounted cumulative
+cash flow first crosses back above zero, linearly interpolated between the
+surrounding years, on an axis where 0 is project start. It accounts for the
+timing of every cash flow, additional CAPEX included, and is ``nan`` if the
+project never recovers.
+
+``simple_payback_time`` is total fixed capital divided by the mean annual cash
+flow across revenue-generating years. It ignores timing entirely:
 
 .. math::
 
-   PBT = \frac{FCI}{\overline{CF}}
+   PBT_{simple} = \frac{FCI}{\overline{CF}}
 
 .. code-block:: python
 
    plant.calculate_payback_time(print_results=True)
-   print(plant.payback_time)
+   print(plant.payback_time)             # break-even year
+
+   plant.calculate_simple_payback_time(additional_capex=True,
+                                       print_results=True)
+   print(plant.simple_payback_time)      # FCI / mean cash flow
+
+``calculate_payback_time`` takes no ``additional_capex`` flag, because
+additional CAPEX is already part of the cash flow it walks.
 
 Return on Investment (ROI)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -254,7 +254,7 @@ cash_flow = cash_flow_data(ammonia_plant)
 fig, ax = plot_cash_flow(cash_flow)
 ```
 
-As with the cost breakdowns, passing a **list of plants** overlays their cumulative cash flow curves — each with its own shaded debt region and break-even line — for direct comparison. The returned dictionary also carries the underlying figures (`max_investment`, `max_investment_year`, `breakeven_year`/`payback_time`) for use outside the plot, e.g. in reports.
+As with the cost breakdowns, passing a **list of plants** overlays their cumulative cash flow curves — each with its own shaded debt region and break-even line — for direct comparison. The returned dictionary also carries the underlying figures (`max_investment`, `max_investment_year`, `breakeven_year`) for use outside the plot, e.g. in reports.
 
 ### 5. **Sensitivity and uncertainty analysis**
 

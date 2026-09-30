@@ -202,9 +202,9 @@ same color as the curve.
 The returned dict has one entry per plant under ``"curves"``, each carrying
 the cumulative curve itself (``"years"``, ``"cumulative"``) alongside the
 derived figures ``"max_investment"``, ``"max_investment_year"``,
-``"breakeven_year"`` (``None`` if the project never recovers), and its alias
-``"payback_time"`` — useful for pulling numbers into a report without
-re-deriving them from the curve:
+and ``"breakeven_year"`` (``None`` if the project never recovers), which is
+the same figure as ``Plant.payback_time`` — useful for pulling numbers into
+a report without re-deriving them from the curve:
 
 .. code-block:: python
 
@@ -312,7 +312,11 @@ Supported ``metric`` values:
    * - ``"ROI"``
      - Return on Investment.
    * - ``"PBT"``
-     - Simple payback time in years.
+     - Payback time in years: the cumulative cash flow break-even year
+       (aliases ``"PAYBACK"``, ``"PAYBACK_TIME"``).
+   * - ``"SIMPLE_PBT"``
+     - Simple payback time in years: fixed capital over mean annual cash
+       flow (aliases ``"SIMPLE_PAYBACK"``, ``"SIMPLE_PAYBACK_TIME"``).
 
 For metrics that depend on revenue (NPV, ROI, IRR, PBT), product prices are
 included in the evaluation automatically.

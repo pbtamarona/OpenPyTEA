@@ -276,6 +276,51 @@ def test_working_capital_conventions_are_exclusive(test_plant):
     assert np.isclose(financed[-1], 0.0)
 
 
+def test_payback_metrics_are_distinct(test_plant):
+    # payback_time is the cumulative break-even year; simple_payback_time is
+    # fixed capital over mean annual cash flow. They answer different
+    # questions and generally differ.
+    test_plant.plant_products["hydrogen"]["price"] = 200.0
+    test_plant.calculate_cash_flow()
+    simple = float(test_plant.calculate_simple_payback_time())
+    breakeven = float(test_plant.calculate_payback_time())
+    assert not np.isclose(simple, breakeven)
+
+    # break-even must land where the cumulative curve actually crosses zero
+    cumulative = np.concatenate(([0.0], np.cumsum(test_plant.cash_flow[0])))
+    k = int(np.floor(breakeven))
+    assert cumulative[k] < 0 <= cumulative[k + 1]
+
+
+def test_payback_time_matches_cash_flow_data(test_plant):
+    from openpytea.analysis import cash_flow_data
+    test_plant.plant_products["hydrogen"]["price"] = 200.0
+    test_plant.calculate_cash_flow()
+    curve = cash_flow_data(test_plant)["curves"][0]
+    assert np.isclose(curve["breakeven_year"],
+                      float(test_plant.calculate_payback_time()))
+    assert "payback_time" not in curve
+
+
+def test_payback_time_nan_when_never_recovers(test_plant):
+    test_plant.plant_products["hydrogen"]["price"] = 0.001
+    test_plant.calculate_cash_flow()
+    assert np.isnan(test_plant.calculate_payback_time())
+
+
+def test_payback_metric_strings(test_plant):
+    from openpytea.helpers import _evaluate_baseline_metric
+    test_plant.plant_products["hydrogen"]["price"] = 200.0
+    breakeven = float(np.atleast_1d(
+        _evaluate_baseline_metric(deepcopy(test_plant), "PBT"))[0])
+    simple = float(np.atleast_1d(
+        _evaluate_baseline_metric(deepcopy(test_plant), "SIMPLE_PBT"))[0])
+    test_plant.calculate_cash_flow()
+    assert np.isclose(breakeven, float(test_plant.calculate_payback_time()))
+    assert np.isclose(simple,
+                      float(test_plant.calculate_simple_payback_time()))
+
+
 def test_production_ramp_out_of_bounds(test_plant):
     test_plant.production_ramp = [0.0, 1.5]  # 1.5 > 1.0
     with pytest.raises(ValueError, match="between 0 and 1"):

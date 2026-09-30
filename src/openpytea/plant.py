@@ -1494,25 +1494,28 @@ class Plant:
             return np.sum(self.additional_capex_cost)
         return 0.0
 
-    def calculate_payback_time(self, additional_capex: bool = False,
-                               print_results: bool = False):
+    def calculate_simple_payback_time(self, additional_capex: bool = False,
+                                      print_results: bool = False):
         """
         Calculate simple payback time.
 
         Divides total fixed capital (optionally including additional CAPEX) by
-        the mean annual cash flow across revenue-generating years.
+        the mean annual cash flow across revenue-generating years. This ignores
+        the timing of the cash flows; see ``calculate_payback_time`` for the
+        year the cumulative cash flow actually turns positive.
 
         Parameters
         ----------
         additional_capex : bool, optional
             Include additional CAPEX in the total investment. Default is False.
         print_results : bool, optional
-            Print the payback time. Default is False.
+            Print the simple payback time. Default is False.
 
         Returns
         -------
         float or np.ndarray
-            Payback time in years (``nan`` if no revenue-generating years exist).
+            Simple payback time in years (``nan`` if no revenue-generating
+            years exist, or if the mean cash flow is not positive).
         """
         # One row per sample (a single row when inputs are scalar)
         revenue = np.atleast_2d(np.asarray(self.revenue_array, dtype=float))
@@ -1533,18 +1536,68 @@ class Plant:
                 pbt[i] = total_fixed_capital[i] / average_annual_cash_flow
 
         is_array = isinstance(self.project_lifetime, (list, np.ndarray))
+        self.simple_payback_time = pbt if is_array else pbt[0]
+
+        if print_results:
+            self._print_payback("Simple payback time",
+                                self.simple_payback_time)
+        else:
+            return self.simple_payback_time
+
+    def calculate_payback_time(self, print_results: bool = False):
+        """
+        Calculate payback time as the cumulative cash flow break-even year.
+
+        Walks the undiscounted cumulative cash flow from project start and
+        returns the point where it first crosses back above zero after having
+        been negative, linearly interpolated between the two surrounding
+        years. Additional CAPEX needs no flag here: it is already part of the
+        cash flow. See ``calculate_simple_payback_time`` for the ratio of
+        fixed capital to mean annual cash flow, which ignores timing.
+
+        Parameters
+        ----------
+        print_results : bool, optional
+            Print the payback time. Default is False.
+
+        Returns
+        -------
+        float or np.ndarray
+            Break-even year on an axis where 0 is project start (``nan`` if
+            the project never goes into debt, or never recovers).
+        """
+        cash_flow = np.atleast_2d(np.asarray(self.cash_flow, dtype=float))
+
+        pbt = np.full(len(cash_flow), np.nan)
+        for i, cf in enumerate(cash_flow):
+            # Year 0 is project start, before any cash has moved
+            cumulative = np.concatenate(([0.0], np.cumsum(cf)))
+            crossings = np.flatnonzero(
+                (cumulative[:-1] < 0) & (cumulative[1:] >= 0)
+            )
+            if crossings.size == 0:
+                continue
+            k = int(crossings[0])
+            span = cumulative[k + 1] - cumulative[k]
+            frac = (-cumulative[k] / span) if span != 0 else 0.0
+            pbt[i] = k + frac
+
+        is_array = isinstance(self.project_lifetime, (list, np.ndarray))
         self.payback_time = pbt if is_array else pbt[0]
 
         if print_results:
-            if np.ndim(self.payback_time) == 0:
-                print(f"Payback time: {self.payback_time:.2f} years")
-            else:
-                print(
-                    f"Payback time: mean = "
-                    f"{np.nanmean(self.payback_time):.2f} years"
-                )
+            self._print_payback("Payback time", self.payback_time)
         else:
             return self.payback_time
+
+    @staticmethod
+    def _print_payback(label, value):
+        """Print a scalar payback figure, or the mean across samples."""
+        if np.ndim(value) == 0:
+            print(f"{label}: {value:.2f} years")
+        else:
+            print(f"{label}: mean = {np.nanmean(value):.2f} years")
+
 
     def calculate_roi(self, additional_capex: bool = False,
                       print_results: bool = False):
@@ -1731,13 +1784,15 @@ class Plant:
         Calls ``calculate_fixed_capital``, ``calculate_variable_opex``,
         ``calculate_fixed_opex``, ``calculate_revenue``, ``calculate_cash_flow``,
         ``calculate_npv``, ``calculate_levelized_cost``,
-        ``calculate_payback_time``, ``calculate_roi``, and ``calculate_irr``.
+        ``calculate_simple_payback_time``, ``calculate_payback_time``,
+        ``calculate_roi``, and ``calculate_irr``.
 
         Parameters
         ----------
         additional_capex : bool, optional
-            Pass through to ``calculate_fixed_capital``, ``calculate_payback_time``,
-            and ``calculate_roi``. Default is False.
+            Pass through to ``calculate_fixed_capital``,
+            ``calculate_simple_payback_time`` and ``calculate_roi``.
+            Default is False.
         print_results : bool, optional
             Print results from each sub-calculation. Default is False.
         """
@@ -1750,8 +1805,10 @@ class Plant:
         self.calculate_cash_flow(print_results=print_results)
         self.calculate_npv(print_results=print_results)
         self.calculate_levelized_cost(print_results=print_results)
-        self.calculate_payback_time(additional_capex=additional_capex,
-                                    print_results=print_results)
+        self.calculate_simple_payback_time(
+            additional_capex=additional_capex,
+            print_results=print_results)
+        self.calculate_payback_time(print_results=print_results)
         self.calculate_roi(additional_capex=additional_capex,
                            print_results=print_results)
         self.calculate_irr(print_results=print_results)
@@ -1864,6 +1921,9 @@ class Plant:
                 if hasattr(self, "roi") else None,
                 "payback_time": float(getattr(self, "payback_time", 0.0))
                 if hasattr(self, "payback_time") else None,
+                "simple_payback_time":
+                float(getattr(self, "simple_payback_time", 0.0))
+                if hasattr(self, "simple_payback_time") else None,
                 "irr": float(getattr(self, "irr", 0.0))
                 if hasattr(self, "irr") else None,
             },
@@ -1877,8 +1937,10 @@ class Plant:
             plant_dict["metrics"]["roi_with_additional_capex"] = float(
                 self.calculate_roi(additional_capex=True)
             )
-            plant_dict["metrics"]["payback_time_with_additional_capex"] = (
-                float(self.calculate_payback_time(additional_capex=True))
+            plant_dict["metrics"][
+                "simple_payback_time_with_additional_capex"
+            ] = float(
+                self.calculate_simple_payback_time(additional_capex=True)
             )
 
         return plant_dict

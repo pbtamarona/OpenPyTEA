@@ -104,6 +104,9 @@ def _default_metric_label(currency: str, metric: str) -> str:
         return rf"Net present value / [{currency}]"
     elif metric in ("PBT", "PAYBACK", "PAYBACK_TIME"):
         return "Payback time / [years]"
+    elif metric in ("SIMPLE_PBT", "SIMPLE_PAYBACK",
+                    "SIMPLE_PAYBACK_TIME"):
+        return "Simple payback time / [years]"
     elif metric == "IRR":
         return "Internal rate of return / [-]"
     return metric
@@ -864,7 +867,12 @@ def _evaluate_metric(plant, metric, additional_capex=False):
 
     elif metric in ("PBT", "PAYBACK", "PAYBACK_TIME"):
         plant.calculate_levelized_cost()
-        return plant.calculate_payback_time(
+        return plant.calculate_payback_time()
+
+    elif metric in ("SIMPLE_PBT", "SIMPLE_PAYBACK",
+                    "SIMPLE_PAYBACK_TIME"):
+        plant.calculate_levelized_cost()
+        return plant.calculate_simple_payback_time(
             additional_capex=additional_capex
         )
 
