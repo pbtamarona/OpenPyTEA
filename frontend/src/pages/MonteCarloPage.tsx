@@ -6,6 +6,46 @@ import {
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
 
+/** Name and unit of an MC output metric — the same wording and units as
+    the library's matplotlib figures (helpers._default_metric_label). */
+function metricInfo(metric: string, cur: string): { name: string; unit: string | null } {
+  switch (metric.toUpperCase()) {
+    case "LCOP": return { name: "Levelized cost", unit: `${cur}/unit` };
+    case "NPV": return { name: "Net present value", unit: cur };
+    case "ROI": return { name: "Return on investment", unit: "%" };
+    case "PBT": case "PAYBACK": case "PAYBACK_TIME": return { name: "Payback time", unit: "years" };
+    case "SIMPLE_PBT": case "SIMPLE_PAYBACK": case "SIMPLE_PAYBACK_TIME":
+      return { name: "Simple payback time", unit: "years" };
+    case "IRR": return { name: "Internal rate of return", unit: "-" };
+    default: return { name: metric, unit: null };
+  }
+}
+
+/** Unit of a sampled MC input, from the library's input naming: prices
+    are per unit of the item, consumption/production quantities per year
+    (consumption × price = annual cost), factors and rates are fractions. */
+function inputUnit(name: string, cur: string): string | null {
+  if (/ price$/i.test(name)) return `${cur}/unit`;
+  if (/ (consumption|production)$/i.test(name)) return "unit/yr";
+  switch (name.toLowerCase()) {
+    case "operator hourly rate": return `${cur}/h`;
+    case "project lifetime": return "years";
+    case "interest rate": case "fixed capital factor": case "fixed opex factor": return "-";
+    default: return null;
+  }
+}
+
+const withUnit = (label: string, unit: string | null) => (unit ? `${label} / [${unit}]` : label);
+
+/** Axis tick: compact for large magnitudes (NPV), else up to 2 decimals. */
+function axisTick(v: number): string {
+  const a = Math.abs(v);
+  if (a >= 1e9) return (v / 1e9).toFixed(2).replace(/\.?0+$/, "") + "B";
+  if (a >= 1e6) return (v / 1e6).toFixed(2).replace(/\.?0+$/, "") + "M";
+  if (a >= 1e4) return (v / 1e3).toFixed(1).replace(/\.?0+$/, "") + "k";
+  return Number(v.toFixed(2)).toString();
+}
+
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
 
 interface Props {
@@ -69,14 +109,17 @@ function buildOverlayData(plants: MonteCarloResult[], metric: string, pdfPoints 
   return xs.map((x) => {
     const row: OverlayRow = { x };
     series.forEach((s) => {
-      // Histogram density at x: lookup which bin the x falls inside
+      // Histogram density at x: the height of the bin x falls inside. Every
+      // x within the histogram's range gets a value (not just bin centres),
+      // otherwise the step Area has no adjacent points to join and the
+      // bars never render. Outside the range stays undefined (no bars).
       const edges = s.stats.histogram.bin_edges;
       const counts = s.stats.histogram.counts;
-      for (let i = 0; i < counts.length; i++) {
+      const last = counts.length - 1;
+      for (let i = 0; i <= last; i++) {
         const lo = edges[i];
         const hi = edges[i + 1];
-        const center = (lo + hi) / 2;
-        if (Math.abs(center - x) < 1e-9) {
+        if (x >= lo && (x < hi || (i === last && x <= hi))) {
           const w = hi - lo;
           if (w > 0) row[`${s.name}__hist`] = counts[i] / (s.num_samples * w);
           break;
@@ -197,7 +240,7 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
               <table>
                 <thead>
                   <tr>
-                    <th>Plant</th><th>Metric</th><th>Mean</th><th>Std</th>
+                    <th>Plant</th><th>Metric</th><th>Unit</th><th>Mean</th><th>Std</th>
                     <th>P5</th><th>P25</th><th>Median</th><th>P75</th><th>P95</th>
                     <th>Min</th><th>Max</th>
                   </tr>
@@ -211,6 +254,7 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                           <strong>{p.name}</strong>
                         </td>
                         <td>{name}</td>
+                        <td>{metricInfo(name, p.currency).unit ?? ""}</td>
                         <td className="number">{fmt(stats.mean)}</td>
                         <td className="number">{fmt(stats.std)}</td>
                         <td className="number">{fmt(stats.p5)}</td>
@@ -233,6 +277,10 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
             const data = buildOverlayData(plants, metric);
             if (data.length === 0) return null;
             const seriesPlants = plants.filter((p) => p.metrics[metric] != null);
+            // Overlaid plants share one axis: name the currency only if they agree
+            const currencies = [...new Set(seriesPlants.map((p) => p.currency))];
+            const info = metricInfo(metric, currencies.length === 1 ? currencies[0] : "currency");
+            const xLabel = withUnit(info.name, info.unit);
 
             return (
               <div key={metric} className="card">
@@ -256,12 +304,12 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                         dataKey="x"
                         type="number"
                         domain={["dataMin", "dataMax"]}
-                        tickFormatter={(v: number) => v.toFixed(2)}
-                        label={{ value: metric, position: "insideBottom", offset: -30, style: { fontSize: 14, fill: "#666" } }}
+                        tickFormatter={axisTick}
+                        label={{ value: xLabel, position: "insideBottom", offset: -30, style: { fontSize: 14, fill: "#666" } }}
                       />
                       <YAxis width={74} tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v === 0 ? "0" : Number(v).toExponential(1))} label={{ value: "Probability density", angle: -90, position: "insideLeft", offset: 0, style: { fontSize: 14, fill: "#666", textAnchor: "middle" } }} />
                       <Tooltip
-                        labelFormatter={(v) => `${metric}: ${Number(v).toFixed(3)}`}
+                        labelFormatter={(v) => `${metric}: ${Number(v).toFixed(3)}${info.unit && info.unit !== "-" ? ` ${info.unit}` : ""}`}
                         formatter={(v, name) => {
                           const label = String(name);
                           const isHist = label.endsWith("__hist");
@@ -335,12 +383,13 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
               </div>
               <table>
                 <thead>
-                  <tr><th>Input</th><th>Mean</th><th>Std</th><th>Min</th><th>Max</th></tr>
+                  <tr><th>Input</th><th>Unit</th><th>Mean</th><th>Std</th><th>Min</th><th>Max</th></tr>
                 </thead>
                 <tbody>
                   {Object.entries(plants[0].inputs).map(([name, stats]) => (
                     <tr key={name}>
                       <td>{name}</td>
+                      <td>{inputUnit(name, plants[0].currency) ?? ""}</td>
                       <td className="number">{fmt(stats.mean)}</td>
                       <td className="number">{fmt(stats.std)}</td>
                       <td className="number">{fmt(stats.min)}</td>
@@ -361,23 +410,25 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                     const rows = inputHistRows(stats.histogram, plants[0].num_samples);
                     if (rows.length === 0) return null;
                     const color = COLORS[i % COLORS.length];
+                    const unit = inputUnit(name, plants[0].currency);
                     return (
                       <div key={name}>
                         <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: "var(--text-secondary)" }}>{name}</div>
-                        <DownloadableChart filename={`mc_input_${name.replace(/\W+/g, "_")}`} height={180}>
+                        <DownloadableChart filename={`mc_input_${name.replace(/\W+/g, "_")}`} height={unit ? 196 : 180}>
                           <ResponsiveContainer>
-                            <ComposedChart data={rows} margin={{ bottom: 8, left: 4, top: 4, right: 8 }}>
+                            <ComposedChart data={rows} margin={{ bottom: unit ? 22 : 8, left: 4, top: 4, right: 8 }}>
                               <CartesianGrid strokeDasharray="3 3" />
                               <XAxis
                                 dataKey="x"
                                 type="number"
                                 domain={["dataMin", "dataMax"]}
                                 tick={{ fontSize: 11 }}
-                                tickFormatter={(v: number) => Number(v).toPrecision(3)}
+                                tickFormatter={(v: number) => (Math.abs(v) >= 1e4 ? axisTick(v) : Number(v).toPrecision(3))}
+                                label={unit ? { value: `[${unit}]`, position: "insideBottom", offset: -16, style: { fontSize: 11, fill: "#666" } } : undefined}
                               />
                               <YAxis tick={{ fontSize: 11 }} width={48} tickFormatter={(v: number) => (v === 0 ? "0" : Number(v).toExponential(0))} />
                               <Tooltip
-                                labelFormatter={(v) => `${name}: ${Number(v).toPrecision(4)}`}
+                                labelFormatter={(v) => `${name}: ${Number(v).toPrecision(4)}${unit && unit !== "-" ? ` ${unit}` : ""}`}
                                 formatter={(v) => [Number(v).toExponential(2), "density"]}
                               />
                               <Area
