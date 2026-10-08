@@ -1,14 +1,26 @@
 """Save/load project + example presets endpoints."""
 
 import json
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, UploadFile, File
-from fastapi.responses import JSONResponse
+
+from openpytea.analysis import (
+    direct_costs_data, fixed_capital_data, fixed_opex_data,
+    variable_opex_data, levelized_cost_data, cash_flow_data,
+    sensitivity_data, tornado_data,
+)
+from openpytea.io import (
+    export_equipment_results, export_plant_results,
+    _write_json, _safe_filename,
+)
 
 from app import state
-from app.plant_factory import build_equipment_list
-from app.schemas import LoadResponse, LoadExampleResponse, ExamplePreset
+from app.plant_factory import build_equipment_list, require_active_plant
+from app.schemas import (
+    LoadResponse, LoadExampleResponse, ExamplePreset, ExportJsonResponse,
+)
 from app.util import to_jsonable
 
 router = APIRouter()
@@ -30,6 +42,7 @@ def new_project():
     state.plant_config = {}
     state.plant = None
     state.results = {}
+    state.reset_analysis_runs()
     return {"ok": True}
 
 
@@ -71,6 +84,63 @@ def save_project():
     return project
 
 
+@router.post("/export-json", response_model=ExportJsonResponse)
+def export_json():
+    """Return the three result files run_tea writes for this plant.
+
+    <plant>_equipment_results.json, <plant>_plant_results.json and
+    <plant>_analysis_results.json are produced by the library's own
+    exporters, so they match a Python run_tea() byte-for-byte in shape.
+    The analysis file always holds the deterministic breakdowns; tornado,
+    sensitivity and Monte Carlo are included when they were run in the GUI
+    (MC only if the configuration hasn't changed since that run).
+    """
+    plant = require_active_plant()
+
+    results = {
+        "direct_costs": direct_costs_data(plant),
+        "fixed_capital": fixed_capital_data(plant),
+        "fixed_opex": fixed_opex_data(plant),
+        "variable_opex": variable_opex_data(plant),
+        "levelized_cost": levelized_cost_data(plant),
+        "cash_flow": cash_flow_data(plant),
+    }
+    if state.tornado_args:
+        try:
+            results["tornado"] = tornado_data(plant, **state.tornado_args)
+        except (ValueError, KeyError):
+            pass  # e.g. a varied item was since removed from the config
+    if state.mc_raw and state.mc_snapshot == state.calc_snapshot:
+        results["monte_carlo"] = state.mc_raw[0]
+
+    sensitivity = {}
+    params = [p for p, _ in state.sensitivity_args]
+    for (param, metric), args in state.sensitivity_args.items():
+        # Case name is the parameter, plus the metric when the same
+        # parameter was run against several metrics
+        name = param if params.count(param) == 1 else f"{param} ({metric})"
+        try:
+            sensitivity[name] = sensitivity_data(plant, **args)
+        except (ValueError, KeyError):
+            pass
+    if sensitivity:
+        results["sensitivity"] = sensitivity
+
+    fname = _safe_filename(plant.name)
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp)
+        export_equipment_results(
+            state.equipment_list, out / f"{fname}_equipment_results.json")
+        export_plant_results(plant, out / f"{fname}_plant_results.json")
+        _write_json(out / f"{fname}_analysis_results.json",
+                    {"results": results})
+        files = [
+            {"name": f.name, "content": f.read_text(encoding="utf-8")}
+            for f in sorted(out.glob("*.json"))
+        ]
+    return {"files": files}
+
+
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 
 
@@ -84,6 +154,7 @@ def _restore_project_state(data: dict) -> int:
     state.plant_config = data.get("plant", {})
     state.plant = None
     state.results = {}
+    state.reset_analysis_runs()
     return len(state.equipment_list)
 
 
@@ -150,5 +221,6 @@ def load_example(example_id: str):
     state.plant_config = data.get("plant", {})
     state.plant = None
     state.results = {}
+    state.reset_analysis_runs()
 
     return {"ok": True, "title": data.get("title"), "equipment_count": len(state.equipment_list)}

@@ -259,6 +259,7 @@ fn build_app_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let open = MenuItem::with_id(app, "menu:open", "Open…", true, Some("CmdOrCtrl+O"))?;
     let save = MenuItem::with_id(app, "menu:save", "Save", true, Some("CmdOrCtrl+S"))?;
     let save_as = MenuItem::with_id(app, "menu:save-as", "Save As…", true, Some("CmdOrCtrl+Shift+S"))?;
+    let export_json = MenuItem::with_id(app, "menu:export-json", "Save as JSON Files…", true, Some("CmdOrCtrl+Shift+E"))?;
 
     let file = Submenu::with_items(
         app,
@@ -270,6 +271,7 @@ fn build_app_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &PredefinedMenuItem::separator(app)?,
             &save,
             &save_as,
+            &export_json,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::close_window(app, None)?,
         ],

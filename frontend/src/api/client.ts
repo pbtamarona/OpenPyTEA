@@ -113,6 +113,11 @@ export const newProject = () =>
 
 export const saveProject = () => request<unknown>("/project/save", { method: "POST" });
 
+/** The three run_tea result files (<plant>_equipment/plant/analysis_results.json)
+ *  for the active plant, as file name + JSON text. */
+export const exportJsonResults = () =>
+  request<{ files: { name: string; content: string }[] }>("/project/export-json", { method: "POST" });
+
 export const loadProject = async (file: File) => {
   const base = await getBase();
   const form = new FormData();

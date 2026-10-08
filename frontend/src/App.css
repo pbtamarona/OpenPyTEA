@@ -14,6 +14,8 @@
   --hover-bg: #f0f4ff;
   --error-bg: #fee2e2;
   --error-text: #991b1b;
+  --success-bg: #dcfce7;
+  --success-text: #166534;
   --modal-bg: #fff;
   --modal-shadow: 0 20px 60px rgba(0,0,0,.2);
   --dropdown-bg: #fff;
@@ -39,6 +41,8 @@
   --hover-bg: rgba(67,97,238,.12);
   --error-bg: #3b1c1c;
   --error-text: #f87171;
+  --success-bg: #14301f;
+  --success-text: #4ade80;
   --modal-bg: #1c1e2a;
   --modal-shadow: 0 20px 60px rgba(0,0,0,.5);
   --dropdown-bg: #1c1e2a;
@@ -330,6 +334,15 @@
   font-size: 18px;
   cursor: pointer;
   color: var(--error-text);
+}
+
+.notice-bar {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.notice-bar button {
+  color: var(--success-text);
 }
 
 .main {

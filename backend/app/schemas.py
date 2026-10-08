@@ -16,6 +16,15 @@ class LoadResponse(BaseModel):
     equipment_count: int
 
 
+class ExportedFile(BaseModel):
+    name: str
+    content: str
+
+
+class ExportJsonResponse(BaseModel):
+    files: list[ExportedFile]
+
+
 class LoadExampleResponse(BaseModel):
     ok: bool = True
     title: str | None = None

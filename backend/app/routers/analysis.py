@@ -73,6 +73,13 @@ def run_sensitivity(data: SensitivityIn):
         )
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Sensitivity analysis failed: {e}")
+    state.sensitivity_args[(data.parameter, data.metric.upper())] = {
+        "parameter": data.parameter,
+        "plus_minus_value": data.plus_minus_value,
+        "n_points": data.n_points,
+        "metric": data.metric,
+        "additional_capex": data.additional_capex,
+    }
     return to_jsonable(result)
 
 
@@ -106,6 +113,11 @@ def run_tornado(data: TornadoIn):
             "base_value": r["base_value"],
         })
 
+    state.tornado_args = {
+        "plus_minus_value": data.plus_minus_value,
+        "metric": data.metric,
+        "additional_capex": data.additional_capex,
+    }
     return to_jsonable({
         "plants": per_plant,
         "plus_minus_value": data.plus_minus_value,
@@ -197,5 +209,6 @@ def run_monte_carlo(data: MonteCarloIn):
     # can re-render this exact run with the library's matplotlib functions.
     state.mc_raw = raws
     state.mc_results = summaries[0] if summaries else None
+    state.mc_snapshot = state.calc_snapshot
 
     return {"plants": summaries}

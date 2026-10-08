@@ -5,7 +5,7 @@ import ResultsPage from "./pages/ResultsPage";
 import AnalysisPage from "./pages/AnalysisPage";
 import MonteCarloPage from "./pages/MonteCarloPage";
 import {
-  saveProject, loadProject, loadProjectFromText,
+  saveProject, exportJsonResults, loadProject, loadProjectFromText,
   newProject, getExamples, loadExample, runCalculations,
 } from "./api/client";
 import type { ExamplePreset } from "./api/client";
@@ -40,6 +40,7 @@ function App() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Plant Config");
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [examples, setExamples] = useState<ExamplePreset[]>([]);
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -412,6 +413,47 @@ function App() {
     }
   }, [currentPath, handleSaveAs]);
 
+  /** Save as JSON Files: write the run_tea result files
+      (<plant>_equipment/plant/analysis_results.json) so the results can be
+      picked up from Python with openpytea.io.load_results / json.load.
+      This is an export — it doesn't change the project's saved state. */
+  const handleExportJson = useCallback(async () => {
+    setError(null);
+    setNotice(null);
+    try {
+      if (await detectTauri()) {
+        const { open } = await import("@tauri-apps/plugin-dialog");
+        const dir = await open({ directory: true, title: "Choose a folder for the JSON result files" });
+        if (!dir || typeof dir !== "string") return; // user cancelled
+        setLoadingMsg("Saving JSON files…");
+        const { files } = await exportJsonResults();
+        const { join } = await import("@tauri-apps/api/path");
+        const { invoke } = await import("@tauri-apps/api/core");
+        for (const f of files) {
+          await invoke("write_project_text", { path: await join(dir, f.name), contents: f.content });
+        }
+        setNotice(`Saved ${files.map((f) => f.name).join(", ")} to ${dir}`);
+      } else {
+        setLoadingMsg("Saving JSON files…");
+        const { files } = await exportJsonResults();
+        for (const f of files) {
+          const url = URL.createObjectURL(new Blob([f.content], { type: "application/json" }));
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = f.name;
+          a.click();
+          URL.revokeObjectURL(url);
+          // Browsers drop back-to-back downloads triggered in one tick
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      }
+    } catch (e: unknown) {
+      setError(`Save as JSON failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setLoadingMsg(null);
+    }
+  }, []);
+
   const handleLoadExample = async (id: string) => {
     setExamplesOpen(false);
     if (!(await confirmIfDirty("Load an example"))) return;
@@ -447,8 +489,8 @@ function App() {
   // File-action dispatch — used by both the native menu (Tauri) and the
   // browser-dev keydown listener. Ref-stored so listeners always see the
   // freshest closure without re-attaching on every render.
-  const handlersRef = useRef({ handleNew, handleOpen, handleSave, handleSaveAs });
-  handlersRef.current = { handleNew, handleOpen, handleSave, handleSaveAs };
+  const handlersRef = useRef({ handleNew, handleOpen, handleSave, handleSaveAs, handleExportJson });
+  handlersRef.current = { handleNew, handleOpen, handleSave, handleSaveAs, handleExportJson };
 
   // Native menu events (Tauri): the Rust shell emits "menu" with the item
   // id (e.g. "menu:new") whenever the user clicks File ▸ New or hits ⌘N.
@@ -469,6 +511,7 @@ function App() {
         else if (payload === "menu:open") h.handleOpen();
         else if (payload === "menu:save") h.handleSave();
         else if (payload === "menu:save-as") h.handleSaveAs();
+        else if (payload === "menu:export-json") h.handleExportJson();
       });
       if (!active) { un(); return; }
       unlisten = un;
@@ -685,6 +728,7 @@ function App() {
               <button className="btn-secondary" onClick={handleNew} title={`New project (${cmdKey}N)`}>New</button>
               <button className="btn-secondary" onClick={handleOpen} title={`Open (${cmdKey}O)`}>Open</button>
               <button className="btn-secondary" onClick={handleSave} title={`Save (${cmdKey}S)`}>Save</button>
+              <button className="btn-secondary" onClick={handleExportJson} title="Save the run_tea result files (equipment, plant, analysis) as JSON">Save JSON</button>
               <input ref={fileRef} type="file" accept=".openpytea,.json" hidden onChange={handleBrowserLoad} />
             </>
           )}
@@ -694,6 +738,7 @@ function App() {
         </div>
       </header>
       {error && <div className="error-bar">{error}<button onClick={() => setError(null)}>&times;</button></div>}
+      {notice && <div className="error-bar notice-bar">{notice}<button onClick={() => setNotice(null)}>&times;</button></div>}
       <main className="main">
         {tab === "Equipment" && <EquipmentPage key={refreshKey} setError={setError} markDirty={markDirty} />}
         {tab === "Plant Config" && <PlantConfigPage key={refreshKey} setError={setError} markDirty={markDirty} />}

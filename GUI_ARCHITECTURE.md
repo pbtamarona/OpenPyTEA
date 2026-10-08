@@ -95,6 +95,7 @@ frontend/
 | Method | Path | Purpose |
 |--------|------|---------|
 | POST | `/save` | Return full project state as JSON |
+| POST | `/export-json` | The three `run_tea` result files (`<plant>_equipment/plant/analysis_results.json`) as name + text — File ▸ Save as JSON Files… |
 | POST | `/load` | Upload JSON file, restore equipment + config |
 | GET | `/examples` | List available example presets (id, title, description) |
 | POST | `/examples/{id}` | Load an example preset into the session |
