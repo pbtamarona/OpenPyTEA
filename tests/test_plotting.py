@@ -1,5 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 from openpytea import (
     direct_costs_data,
     cash_flow_data,
@@ -98,7 +99,7 @@ def test_input_histogram_grid_single_input():
 
     fig, axes = _plot_input_histogram_grid(
         {"Only input": np.random.default_rng(0).normal(5, 1, 200)},
-        None, 30, "tab:blue", "Process parameters", show=False,
+        None, 30, "tab:blue", "Process parameters",
     )
     assert axes[0].has_data()
     # the two unused grid cells are turned off
@@ -133,10 +134,11 @@ def test_tornado_legend_has_no_literal_backslash(test_plant):
 def test_plot_cash_flow_accepts_round_tripped_results(test_plant):
     """Results reloaded from JSON arrive as lists, not arrays."""
     import json
-    from openpytea.helpers import _to_jsonable
 
     data = cash_flow_data(test_plant)
-    round_tripped = json.loads(json.dumps(_to_jsonable(data)))
+    round_tripped = json.loads(
+        json.dumps(data, default=lambda o: o.tolist())
+    )
     assert isinstance(
         round_tripped["curves"][0]["cumulative"], list
     )
@@ -164,27 +166,6 @@ def test_plot_tornado_fractional_percentage_label(test_plant):
     plt.close(fig)
 
 
-def test_input_histogram_grid_layout_independent_of_show():
-    """Saved figures (show=False) get the same suptitle layout as shown
-    ones -- the margin math must not be gated on show."""
-    import numpy as np
-    from openpytea.plotting import _plot_input_histogram_grid
-
-    rng = np.random.default_rng(1)
-    inputs = {f"Input {i}": rng.normal(size=100) for i in range(4)}
-
-    fig_saved, _ = _plot_input_histogram_grid(
-        inputs, None, 30, "tab:blue", "Grid", show=False)
-    fig_shown, _ = _plot_input_histogram_grid(
-        inputs, None, 30, "tab:blue", "Grid", show=True)
-
-    assert fig_saved.subplotpars.top == fig_shown.subplotpars.top
-    # tight_layout actually ran (top moved off the rc default)
-    assert fig_saved.subplotpars.top != plt.rcParams["figure.subplot.top"]
-    plt.close(fig_saved)
-    plt.close(fig_shown)
-
-
 def test_plot_multiple_monte_carlo_returns_live_figure(test_plant, test_plant_b):
     from openpytea import monte_carlo, plot_multiple_monte_carlo
 
@@ -194,4 +175,15 @@ def test_plot_multiple_monte_carlo_returns_live_figure(test_plant, test_plant_b)
     fig, _ = plot_multiple_monte_carlo([r1, r2], metric="LCOP", show=False)
     # the returned figure must still be registered with pyplot
     assert plt.fignum_exists(fig.number)
+    plt.close(fig)
+
+
+def test_plot_monte_carlo_sigma_label_uses_times():
+    """A sigma outside [1, 10) is labelled as mantissa x 10^exp."""
+    from openpytea.plotting import plot_monte_carlo
+
+    values = np.random.default_rng(0).normal(500, 50, 1000)
+    fig, ax = plot_monte_carlo(values, metric="LCOP", show=False)
+    labels = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert r"$\times 10^{1}$" in labels[1]
     plt.close(fig)

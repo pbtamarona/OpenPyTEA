@@ -29,6 +29,10 @@ try:
     if not _latex_available():
         _styles.append("no-latex")
     plt.style.use(_styles)
+    # ieee sets figure.dpi to 600, which renders huge inline in Jupyter;
+    # lower the display dpi (same proportions) but keep saved files at 600
+    plt.rcParams["figure.dpi"] = 200
+    plt.rcParams["savefig.dpi"] = 600
 except (AttributeError, ImportError):
     warnings.warn(
         "scienceplots could not be loaded due to a matplotlib "
@@ -143,13 +147,7 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     # --- Ax/fig handling ---
     created_fig = None
     if ax is None:
-        if (
-            isinstance(figsize, (tuple, list))
-            and len(figsize) == 2
-        ):
-            base_w, base_h = figsize
-        else:
-            base_w, base_h = 1.2, 1.8
+        base_w, base_h = figsize or (1.2, 1.8)
         auto_width = max(base_w * n_bars, base_w)
         created_fig, ax = plt.subplots(
             figsize=(auto_width, base_h)
@@ -683,6 +681,7 @@ def plot_monte_carlo(
             currency = data.get("currency", _tex_escape("$"))
             label = _default_metric_label(currency, metric)
 
+    # ponytail: list-of-plants pooling has no callers; drop Case 2
     # --- Case 2: Plant object(s) ---
     elif hasattr(data, "monte_carlo_metrics") or (
         isinstance(data, (list, tuple)) and all(
@@ -722,19 +721,7 @@ def plot_monte_carlo(
         if label is None:
             label = _default_metric_label(_tex_escape("$"), metric)
 
-    n_total = values.size
-    finite_mask = np.isfinite(values)
-    n_filtered = n_total - np.count_nonzero(finite_mask)
-    values = values[finite_mask]
-
-    if n_filtered > 0:
-        warnings.warn(
-            f"Filtered {n_filtered} non-finite value(s) "
-            f"from Monte Carlo data before plotting.",
-            RuntimeWarning,
-            stacklevel=2,
-        )
-
+    values = _finite(values, "Monte Carlo data", stacklevel=3)
     if values.size == 0:
         raise ValueError(
             "No finite Monte Carlo values available for plotting."
@@ -744,8 +731,7 @@ def plot_monte_carlo(
     if ax is None:
         created_fig, ax = plt.subplots(figsize=figsize)
 
-    hist_color = next(cycle(plt.cm.tab10.colors))
-    line_color = next(cycle(plt.cm.tab10.colors))
+    hist_color = line_color = plt.cm.tab10.colors[0]
 
     ax.hist(
         values,
@@ -759,41 +745,7 @@ def plot_monte_carlo(
     )
 
     if show_fit:
-        mu, std = norm.fit(values)
-
-        if std > 0:
-            x = np.linspace(values.min(), values.max(), 1000)
-            p = norm.pdf(x, mu, std)
-
-            std_exp = int(np.floor(np.log10(std)))
-
-            if std_exp == 0:
-                stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-            else:
-                std_mant = std / 10**std_exp
-                stat_label = (
-                    rf"$\mu$={mu:.3g}, "
-                    rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
-
-            ax.plot(
-                    x,
-                    p,
-                    color=line_color,
-                    linewidth=1.2,
-                    zorder=2,
-                    linestyle="-",
-                    label=stat_label,
-                )
-        else:
-            stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-            ax.axvline(
-                mu,
-                color=line_color,
-                linewidth=1.2,
-                zorder=2,
-                linestyle="-",
-                label=stat_label,
-            )
+        _plot_normal_fit(ax, values, line_color)
 
     ax.set_xlabel(label)
     ax.set_ylabel("Density")
@@ -816,6 +768,47 @@ def plot_monte_carlo(
     return ax.figure, ax
 
 
+def _finite(values, what, stacklevel):
+    """
+    Drop non-finite values, warning (attributed ``stacklevel`` frames up)
+    when any were removed. ``what`` names the data in the message.
+    """
+    finite_mask = np.isfinite(values)
+    n_filtered = values.size - np.count_nonzero(finite_mask)
+    if n_filtered > 0:
+        warnings.warn(
+            f"Filtered {n_filtered} non-finite value(s) from "
+            f"{what} before plotting.",
+            RuntimeWarning,
+            stacklevel=stacklevel,
+        )
+    return values[finite_mask]
+
+
+def _plot_normal_fit(ax, values, color):
+    """
+    Overlay a fitted normal PDF on ``ax``, labelled with its mu and sigma
+    (a vertical line at mu when sigma is 0).
+    """
+    mu, std = norm.fit(values)
+    style = dict(color=color, linewidth=1.2, zorder=2, linestyle="-")
+
+    if std > 0:
+        x = np.linspace(values.min(), values.max(), 1000)
+        std_exp = int(np.floor(np.log10(std)))
+        if std_exp == 0:
+            stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+        else:
+            std_mant = std / 10**std_exp
+            stat_label = (
+                rf"$\mu$={mu:.3g}, "
+                rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
+        ax.plot(x, norm.pdf(x, mu, std), label=stat_label, **style)
+    else:
+        stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
+        ax.axvline(mu, label=stat_label, **style)
+
+
 def _is_process_monte_carlo_input(label):
     """
     True if a Monte Carlo input display name is a process quantity
@@ -828,7 +821,7 @@ def _is_process_monte_carlo_input(label):
     return normalized.endswith("consumption") or normalized.endswith("production")
 
 
-def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title, show):
+def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title):
     """
     Build one figure of histograms (one subplot per input, 3 columns) for
     the given ``{label: samples}`` dict, with a bold suptitle. Shared by the
@@ -839,7 +832,11 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title, show):
     n_rows = (n_params + n_cols - 1) // n_cols
 
     fig_size = figsize if figsize is not None else (n_cols * 5, n_rows * 3)
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=fig_size)
+    # The default grid is ~5x wider than the other plots, so show it at a
+    # third of the display dpi (same look, fewer pixels); savefig.dpi still
+    # controls saved files
+    dpi = plt.rcParams["figure.dpi"] / 3 if figsize is None else None
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=fig_size, dpi=dpi)
 
     # plt.subplots always returns an array here (n_cols is fixed at 3),
     # so flattening covers every n_params, including 1 -- the loop below
@@ -849,19 +846,11 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title, show):
     for idx, (label, arr) in enumerate(inputs.items()):
         ax = axes[idx]
 
-        values = np.asarray(arr, dtype=float)
-        finite_mask = np.isfinite(values)
-        n_filtered = values.size - np.count_nonzero(finite_mask)
-        values = values[finite_mask]
-
-        if n_filtered > 0:
-            warnings.warn(
-                f"Filtered {n_filtered} non-finite value(s) from "
-                f"Monte Carlo input '{label}' before plotting.",
-                RuntimeWarning,
-                stacklevel=3,
-            )
-
+        values = _finite(
+            np.asarray(arr, dtype=float),
+            f"Monte Carlo input '{label}'",
+            stacklevel=4,
+        )
         if values.size == 0:
             raise ValueError(
                 f"No finite values available for Monte Carlo input '{label}'."
@@ -999,9 +988,7 @@ def plot_monte_carlo_inputs(
         if not _is_process_monte_carlo_input(label)
     }
 
-    color_cycle = cycle(plt.cm.tab10.colors)
-    next(color_cycle)
-    hist_color = next(color_cycle)
+    hist_color = plt.cm.tab10.colors[1]
 
     def _build(group_inputs, title):
         if not group_inputs:
@@ -1010,17 +997,15 @@ def plot_monte_carlo_inputs(
             )
             return None, None
         return _plot_input_histogram_grid(
-            group_inputs, figsize, bins, hist_color, title, show
+            group_inputs, figsize, bins, hist_color, title
         )
 
-    if category == "process":
-        fig, axes = _build(process_inputs, "Process Parameters")
-        if show and fig is not None:
-            plt.show()
-        return fig, axes
-
-    if category == "economic":
-        fig, axes = _build(economic_inputs, "Economic Parameters")
+    groups = {
+        "process": (process_inputs, "Process Parameters"),
+        "economic": (economic_inputs, "Economic Parameters"),
+    }
+    if category in groups:
+        fig, axes = _build(*groups[category])
         if show and fig is not None:
             plt.show()
         return fig, axes
@@ -1077,10 +1062,7 @@ def plot_multiple_monte_carlo(
 
     created_fig = None
     if ax is None:
-        if figsize is None:
-            created_fig, ax = plt.subplots()
-        else:
-            created_fig, ax = plt.subplots(figsize=figsize)
+        created_fig, ax = plt.subplots(figsize=figsize)
 
     color_cycle = cycle(plt.cm.tab10.colors)
     currency = _tex_escape("$")
@@ -1113,19 +1095,9 @@ def plot_multiple_monte_carlo(
         else:
             continue
 
-        n_total = values.size
-        finite_mask = np.isfinite(values)
-        n_filtered = n_total - np.count_nonzero(finite_mask)
-        values = values[finite_mask]
-
-        if n_filtered > 0:
-            warnings.warn(
-                f"Filtered {n_filtered} non-finite value(s) from "
-                f"Monte Carlo data for '{name}' before plotting.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-
+        values = _finite(
+            values, f"Monte Carlo data for '{name}'", stacklevel=3
+        )
         if values.size == 0:
             warnings.warn(
                 f"No finite values available for Monte Carlo data "
@@ -1151,41 +1123,7 @@ def plot_multiple_monte_carlo(
         )
 
         if show_fit:
-            mu, std = norm.fit(values)
-
-            if std > 0:
-                x = np.linspace(values.min(), values.max(), 1000)
-                p = norm.pdf(x, mu, std)
-
-                std_exp = int(np.floor(np.log10(std)))
-
-                if std_exp == 0:
-                    stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-                else:
-                    std_mant = std / 10**std_exp
-                    stat_label = (
-                        rf"$\mu$={mu:.3g}, "
-                        rf"$\sigma$={std_mant:.2f}$\times 10^{{{std_exp}}}$")
-
-                ax.plot(
-                    x,
-                    p,
-                    color=color,
-                    linewidth=1.2,
-                    zorder=2,
-                    linestyle="-",
-                    label=stat_label,
-                )
-            else:
-                stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
-                ax.axvline(
-                    mu,
-                    color=color,
-                    linewidth=1.2,
-                    zorder=2,
-                    linestyle="-",
-                    label=stat_label,
-                )
+            _plot_normal_fit(ax, values, color)
 
     if label is None:
         label = _default_metric_label(currency, metric)

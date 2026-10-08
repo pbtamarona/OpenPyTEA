@@ -129,27 +129,6 @@ class CostCorrelationDB:
         df["form"] = df["form"].str.lower()
         self.df = df
 
-    def _parallelize(self, s: float, cap: float | None):
-        """
-        Calculate parallel units and adjusted size when capacity is exceeded.
-
-        Parameters
-        ----------
-        s : float
-            Equipment size/capacity.
-        cap : float | None
-            Unit capacity limit. If None or NaN, no parallelization occurs.
-
-        Returns
-        -------
-        tuple[int, float]
-            (number_of_units, adjusted_size_per_unit).
-        """
-        if pd.notna(cap) and s > cap:
-            units = int(np.ceil(s / cap))
-            return units, s / units
-        return 1, s
-
     def evaluate(self, key: str, s: float, s2: float | None = None):
         """
         Calculate purchased equipment cost based on correlation key and size.
@@ -212,27 +191,35 @@ class CostCorrelationDB:
                     f"s2={s2} above upper bound {s2_upper} for key '{key}'"
                 )
 
-        units, s_adj = self._parallelize(s, cap)
+        # Split a size above the unit capacity into equal parallel units
+        units, s_adj = 1, s
+        if pd.notna(cap) and s > cap:
+            units = int(np.ceil(s / cap))
+            s_adj = s / units
         form = r.get("form", "linear")
         year = int(r["cost_year"])
 
         if form == "offset power-law":
             a, b, n = r["a"], r["b"], r["n"]
             ce = a + b * (s_adj**n)
-            purchased = ce * units
 
         elif form == "exponential":
             a, b = r["a"], r["b"]
             ce = a * np.exp(b * s_adj)
-            purchased = ce * units
 
-        elif form == "log-log quadratic":
+        elif form in ("log-log quadratic", "ln-ln quadratic"):
+            # log(Ce) is a polynomial (up to 4th order) in log(S), base 10
+            # or e
+            log, unlog = (
+                (np.log10, lambda x: 10**x) if form == "log-log quadratic"
+                else (np.log, np.exp)
+            )
             K1, K2, K3 = r["k1"], r["k2"], r["k3"]
             K4 = r.get("k4") if pd.notna(r.get("k4")) else 0.0
             K5 = r.get("k5") if pd.notna(r.get("k5")) else 0.0
 
-            logS = np.log10(s_adj)
-            logCe = (
+            logS = log(s_adj)
+            ce = unlog(
                 K1
                 + K2 * logS
                 + K3 * (logS**2)
@@ -240,30 +227,9 @@ class CostCorrelationDB:
                 + K5 * (logS**4)
             )
 
-            ce = 10**logCe
-            purchased = ce * units
-
-        elif form == "ln-ln quadratic":
-            K1, K2, K3 = r["k1"], r["k2"], r["k3"]
-            K4 = r.get("k4") if pd.notna(r.get("k4")) else 0.0
-            K5 = r.get("k5") if pd.notna(r.get("k5")) else 0.0
-
-            lnS = np.log(s_adj)
-            lnCe = (
-                K1
-                + K2 * lnS
-                + K3 * (lnS**2)
-                + K4 * (lnS**3)
-                + K5 * (lnS**4)
-            )
-
-            ce = np.exp(lnCe)
-            purchased = ce * units
-
         elif form == "power-sizing":
             C0, S0, f = r["c0"], r["s0"], r["f"]
             ce = C0 * (s_adj / S0) ** f
-            purchased = ce * units
 
         elif form == "2-var power-law":
             if s2 is None:
@@ -274,13 +240,13 @@ class CostCorrelationDB:
                 )
             a, b, n1, n2 = r["a"], r["b"], r["n"], r["n2"]
             ce = a + b * (s_adj**n1) * (s2**n2)
-            purchased = ce * units
 
         else:
             raise ValueError(
                 f"Unsupported form '{form}' for key '{key}'"
             )
 
+        purchased = ce * units
         return float(purchased), int(units), year
 
     def key_for_category_type(
@@ -344,6 +310,28 @@ class CostCorrelationDB:
         if pd.isna(val) or str(val).strip().lower() == "n.a.":
             return None
         return str(val).strip()
+
+
+# Installation factor attribute -> key in Equipment.process_factors
+_FACTOR_KEYS = {
+    "erection_factor": "fer",
+    "piping_factor": "fp",
+    "instrumentation_factor": "fi",
+    "electrical_factor": "fel",
+    "civil_factor": "fc",
+    "structural_factor": "fs",
+    "lagging_factor": "fl",
+}
+
+
+def _set_install_factors(obj, process_factors, **given):
+    """
+    Set the seven installation factors on ``obj``: a given (non-None)
+    value wins, else the process type's default from ``process_factors``.
+    """
+    for attr, key in _FACTOR_KEYS.items():
+        value = given[attr]
+        setattr(obj, attr, process_factors[key] if value is None else value)
 
 
 class Equipment:
@@ -539,9 +527,7 @@ class Equipment:
         self.category = category
         self.type = type
         self.num_units = num_units
-        self.cost_year = (
-            cost_year if cost_year is not None else None
-        )
+        self.cost_year = cost_year
         self.target_year = target_year
         self._cost_func = cost_func
         self._db = CostCorrelationDB()
@@ -573,27 +559,15 @@ class Equipment:
                 f"Valid options are: {valid_materials}"
             )
 
-        _pf = self.process_factors[process_type]
-        self.erection_factor = (
-            erection_factor if erection_factor is not None else _pf["fer"]
-        )
-        self.piping_factor          = (
-            piping_factor          if piping_factor          is not None else _pf["fp"]
-        )
-        self.instrumentation_factor = (
-            instrumentation_factor if instrumentation_factor is not None else _pf["fi"]
-        )
-        self.electrical_factor      = (
-            electrical_factor      if electrical_factor      is not None else _pf["fel"]
-        )
-        self.civil_factor           = (
-            civil_factor           if civil_factor           is not None else _pf["fc"]
-        )
-        self.structural_factor      = (
-            structural_factor      if structural_factor      is not None else _pf["fs"]
-        )
-        self.lagging_factor         = (
-            lagging_factor         if lagging_factor         is not None else _pf["fl"]
+        _set_install_factors(
+            self, self.process_factors[process_type],
+            erection_factor=erection_factor,
+            piping_factor=piping_factor,
+            instrumentation_factor=instrumentation_factor,
+            electrical_factor=electrical_factor,
+            civil_factor=civil_factor,
+            structural_factor=structural_factor,
+            lagging_factor=lagging_factor,
         )
         if material_factor is not None:
             self.material_factor = material_factor
@@ -631,6 +605,7 @@ class Equipment:
             )
         self.direct_cost = (
             self.calculate_direct_cost()
+        # ponytail: stale comment below
         )  # your existing method
 
     def _resolve_key(self) -> str:
@@ -976,29 +951,15 @@ class CompositeEquipment:
                 )
             self.components.append(obj)
 
-        _pf = Equipment.process_factors[process_type]
-        self.erection_factor = (
-            erection_factor if erection_factor is not None else _pf["fer"]
-        )
-        self.piping_factor = (
-            piping_factor if piping_factor is not None else _pf["fp"]
-        )
-        self.instrumentation_factor = (
-            instrumentation_factor
-            if instrumentation_factor is not None
-            else _pf["fi"]
-        )
-        self.electrical_factor = (
-            electrical_factor if electrical_factor is not None else _pf["fel"]
-        )
-        self.civil_factor = (
-            civil_factor if civil_factor is not None else _pf["fc"]
-        )
-        self.structural_factor = (
-            structural_factor if structural_factor is not None else _pf["fs"]
-        )
-        self.lagging_factor = (
-            lagging_factor if lagging_factor is not None else _pf["fl"]
+        _set_install_factors(
+            self, Equipment.process_factors[process_type],
+            erection_factor=erection_factor,
+            piping_factor=piping_factor,
+            instrumentation_factor=instrumentation_factor,
+            electrical_factor=electrical_factor,
+            civil_factor=civil_factor,
+            structural_factor=structural_factor,
+            lagging_factor=lagging_factor,
         )
         self.material_factor = (
             material_factor if material_factor is not None else 1.0
@@ -1041,17 +1002,7 @@ class CompositeEquipment:
                 * self.num_units
             )
         else:
-            self.direct_cost = self.purchased_cost * (
-                (1 + self.piping_factor) * self.material_factor
-                + (
-                    self.erection_factor
-                    + self.electrical_factor
-                    + self.instrumentation_factor
-                    + self.civil_factor
-                    + self.structural_factor
-                    + self.lagging_factor
-                )
-            )
+            Equipment.calculate_direct_cost(self)
         return self.direct_cost
 
     def leaves(self, _prefix: str = "", _multiplier: int | None = None):
@@ -1153,17 +1104,7 @@ class CompositeEquipment:
             ``components`` (a list of the components' own dicts).
         """
         return {
-            "name": self.name,
-            "category": self.category,
-            "type": self.type,
-            "material": self.material,
-            "process_type": self.process_type,
-            "param": self.param,
-            "num_units": self.num_units,
-            "cost_year": self.cost_year,
-            "target_year": self.target_year,
-            "purchased_cost": float(self.purchased_cost),
-            "direct_cost": float(self.direct_cost),
+            **Equipment.to_dict(self),
             "installation": self.installation,
             "components_purchased_cost": self.components_purchased_cost,
             "components": [obj.to_dict() for obj in self.components],

@@ -10,8 +10,8 @@ Beyond its functionality, **OpenPyTEA is designed as a community-driven TEA plat
 
 Whether used for early-stage process design, technology screening, or teaching, **OpenPyTEA** makes TEA more accessible, consistent, and aligned with FAIR research principles (Findable, Accessible, Interoperable, and Reusable).
 
-**For a full walkthrough of the features and usage of OpenPyTEA, refer to the `walkthrough.ipynb` notebook**:  
-https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb
+**For a full walkthrough of the features and usage of OpenPyTEA, refer to the notebooks in the `walkthrough` folder** (five parts, from equipment costing to Monte Carlo analysis):  
+https://github.com/pbtamarona/OpenPyTEA/tree/main/walkthrough
 
 **For the full documentation of the package, visit the ReadTheDocs page:**  
 https://openpytea.readthedocs.io
@@ -62,16 +62,34 @@ Lunch, snacks, coffee, and drinks will be provided!
 pip install openpytea
 ```
 
+If you work in Jupyter notebooks or want to run the walkthrough and example notebooks, we recommend installing with the `ipython` extra:
+
+```bash
+pip install "openpytea[ipython]"
+```
+
+The difference:
+
+- `pip install openpytea` installs the core package. This is enough for Python scripts and the command-line interface.
+- `pip install "openpytea[ipython]"` also installs `ipython` and `ipywidgets`, which OpenPyTEA uses to show a live progress bar in notebooks during Monte Carlo runs. Without them, the progress bar falls back to plain text and Jupyter shows a warning. Jupyter itself is not included; install it separately if needed (e.g. `pip install jupyter`).
+
 ### 2. **Install from GitHub (development version)**
 
 ```bash
 pip install git+https://github.com/pbtamarona/OpenPyTEA
 ```
 
+or, with the `ipython` extra for notebooks:
+
+```bash
+pip install "openpytea[ipython] @ git+https://github.com/pbtamarona/OpenPyTEA"
+```
+
 or with `uv`:
 
 ```bash
 uv add git+https://github.com/pbtamarona/OpenPyTEA
+uv add "openpytea[ipython] @ git+https://github.com/pbtamarona/OpenPyTEA"  # with notebook extras
 ```
 
 **OpenPyTEA** requires **Python ≥ 3.10**.  
@@ -97,7 +115,7 @@ src/openpytea/
 ├── helpers.py              # Helper functions for data handling and common operations
 └── data/                   # Cost correlations database and CEPCI data
 examples/                   # Example notebooks and case studies
-walkthrough.ipynb           # Walkthrough of the package
+walkthrough/                # Walkthrough of the package, split into five notebooks (part_1 ... part_5)
 pyproject.toml
 README.md
 ```
@@ -293,7 +311,7 @@ cash_flow = cash_flow_data(ammonia_plant)
 fig, ax = plot_cash_flow(cash_flow)
 ```
 
-As with the cost breakdowns, passing a **list of plants** overlays their cumulative cash flow curves — each with its own shaded debt region and break-even line — for direct comparison. The returned dictionary also carries the underlying figures (`max_investment`, `max_investment_year`, `breakeven_year`/`payback_time`) for use outside the plot, e.g. in reports.
+As with the cost breakdowns, passing a **list of plants** overlays their cumulative cash flow curves — each with its own shaded debt region and break-even line — for direct comparison. The returned dictionary also carries the underlying figures (`max_investment`, `max_investment_year`, `breakeven_year`) for use outside the plot, e.g. in reports.
 
 ### 5. **Sensitivity and uncertainty analysis**
 

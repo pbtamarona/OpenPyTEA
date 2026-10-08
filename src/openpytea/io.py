@@ -27,7 +27,6 @@ from openpytea.plotting import (
     plot_monte_carlo_inputs,
 )
 from openpytea.helpers import (
-    _to_jsonable,
     _read_json
 )
 
@@ -121,6 +120,7 @@ def _build_equipment_list(data):
                 f"or 'purchased_cost'."
             )
 
+        # ponytail: copies keys by hand; Equipment(**{'param': 0.0, **entry})
         eq = Equipment(
             name=entry["name"],
             param=entry.get("param", 0.0),
@@ -281,32 +281,25 @@ def load_results(filepath):
     return data["results"]
 
 
-def export_equipment_strings(equipment_list, filepath):
+def _write_json(filepath, payload, **metadata):
     """
-    Export a list of equipment objects to a text file.
-    Each equipment object is converted to a string representation and written
-    to a separate line in the output file.
-    Args:
-        equipment_list (list): A list of equipment objects to export.
-        filepath (str or Path): The file path where the equipment strings will
-                                be written. Can be a string or a Path object.
-    Returns:
-        None
-    Raises:
-        IOError: If the file cannot be opened or written to.
-        TypeError: If equipment_list is not iterable.
-    Example:
-        >>> equipment_list = [Equipment("pump"), Equipment("motor")]
-        >>> export_equipment_strings(equipment_list, "equipment.txt")
+    Write ``payload`` to ``filepath`` as indented JSON, after a
+    ``"metadata"`` block (OpenPyTEA version, UTC timestamp, plus any
+    ``metadata`` fields), creating parent directories as needed.
     """
     filepath = Path(filepath)
-
-    # Ensure directory exists, like the sibling exporters
     filepath.parent.mkdir(parents=True, exist_ok=True)
-
+    output = {
+        "metadata": {
+            "generated_by": f"OpenPyTEA Version {__version__}",
+            "date_generated": datetime.now(timezone.utc).isoformat(),
+            **metadata,
+        },
+        **payload,
+    }
     with filepath.open("w", encoding="utf-8") as f:
-        for eq in equipment_list:
-            f.write(str(eq) + "\n")
+        # numpy arrays/scalars -> lists/Python numbers
+        json.dump(output, f, indent=4, default=lambda o: o.tolist())
 
 
 def export_equipment_results(equipment_list, filepath):
@@ -338,33 +331,19 @@ def export_equipment_results(equipment_list, filepath):
     >>> equipment_list = [eq1, eq2, eq3]
     >>> export_equipment_results(equipment_list, "equipment_export.json")
     """
-    filepath = Path(filepath)
-
-    # Ensure directory exists
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-
     equipment_data = [eq.to_dict() for eq in equipment_list]
-
     total_purchased = sum((eq.get("purchased_cost") or 0.0)
                           for eq in equipment_data)
     total_direct = sum((eq.get("direct_cost") or 0.0)
                        for eq in equipment_data)
 
-    output = {
-        "metadata": {
-            "generated_by": f"OpenPyTEA Version {__version__}",
-            "date_generated": datetime.now(timezone.utc).isoformat(),
-            "n_equipment": len(equipment_data),
-        },
+    _write_json(filepath, {
         "equipment": equipment_data,
         "totals": {
             "total_purchased_cost": total_purchased,
             "total_direct_cost": total_direct,
         },
-    }
-
-    with filepath.open("w", encoding="utf-8") as f:
-        json.dump(output, f, indent=4)
+    }, n_equipment=len(equipment_data))
 
 
 def export_plant_results(plant, filepath):
@@ -396,21 +375,7 @@ def export_plant_results(plant, filepath):
     >>> plant = Plant(...)
     >>> export_plant_results(plant, "output/plant_results.json")
     """
-    filepath = Path(filepath)
-
-    # Ensure directory exists
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-
-    output = {
-        "metadata": {
-            "generated_by": f"OpenPyTEA Version {__version__}",
-            "date_generated": datetime.now(timezone.utc).isoformat(),
-        },
-        **plant.to_dict(),
-    }
-
-    with filepath.open("w", encoding="utf-8") as f:
-        json.dump(output, f, indent=4)
+    _write_json(filepath, plant.to_dict())
 
 
 def run_equipment(input_path, output_path):
@@ -676,109 +641,39 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
             output_dir / f"{fname}_plant_results.json",
         )
 
-        analysis_output = {
-            "metadata": {
-                "generated_by": f"OpenPyTEA Version {__version__}",
-                "date_generated": datetime.now(timezone.utc).isoformat(),
-            },
-            "results": _to_jsonable(results),
-        }
-
-        results_file = output_dir / f"{fname}_analysis_results.json"
-        with results_file.open("w", encoding="utf-8") as f:
-            json.dump(analysis_output, f, indent=4)
+        _write_json(
+            output_dir / f"{fname}_analysis_results.json",
+            {"results": results},
+        )
 
     # ======================================================
     # EXPORT PLOTS
     # ======================================================
+    def _save(fig, stem):
+        fig.savefig(
+            output_dir / f"{fname}_{stem}.{plot_format}",
+            dpi=dpi,
+            bbox_inches="tight",
+        )
+        plt.close(fig)  # Free the figure
+
     if save_plots:
-        if "direct_costs" in results:
-            fig, ax = plot_stacked_bar(
-                results["direct_costs"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_direct_costs.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
+        for key, plot_fn in (
+            ("direct_costs", plot_stacked_bar),
+            ("fixed_capital", plot_stacked_bar),
+            ("fixed_opex", plot_stacked_bar),
+            ("variable_opex", plot_stacked_bar),
+            ("levelized_cost", plot_stacked_bar),
+            ("cash_flow", plot_cash_flow),
+        ):
+            if key in results:
+                _save(plot_fn(results[key], show=False)[0], key)
 
-        if "fixed_capital" in results:
-            fig, ax = plot_stacked_bar(
-                results["fixed_capital"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_fixed_capital.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
-
-        if "fixed_opex" in results:
-            fig, ax = plot_stacked_bar(
-                results["fixed_opex"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_fixed_opex.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
-
-        if "variable_opex" in results:
-            fig, ax = plot_stacked_bar(
-                results["variable_opex"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_variable_opex.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
-
-        if "levelized_cost" in results:
-            fig, ax = plot_stacked_bar(
-                results["levelized_cost"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_levelized_cost.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
-
-        if "cash_flow" in results:
-            fig, ax = plot_cash_flow(
-                results["cash_flow"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_cash_flow.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
-
-        if "sensitivity" in results:
-            for name, data in results["sensitivity"].items():
-                fig, ax = plot_sensitivity(data, show=False)
-                fig.savefig(
-                    output_dir /
-                    f"{fname}_sensitivity_{name}.{plot_format}",
-                    dpi=dpi,
-                    bbox_inches="tight",
-                )
-                plt.close(fig)  # Free the figure
+        for name, data in results.get("sensitivity", {}).items():
+            _save(plot_sensitivity(data, show=False)[0], f"sensitivity_{name}")
 
         if "tornado" in results:
-            fig, ax = plot_tornado(
-                results["tornado"], show=False
-            )
-            fig.savefig(
-                output_dir / f"{fname}_tornado.{plot_format}",
-                dpi=dpi,
-                bbox_inches="tight",
-            )
-            plt.close(fig)  # Free the figure
+            _save(plot_tornado(results["tornado"], show=False)[0], "tornado")
 
         if "monte_carlo" in results:
             mc_results = results["monte_carlo"]
@@ -810,18 +705,7 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                     metric=metric_name,
                     show=False,
                 )
-
-                filename = (
-                    f"{fname}_monte_carlo_"
-                    f"{metric_name.lower()}.{plot_format}"
-                )
-                fig.savefig(
-                    output_dir / filename,
-                    dpi=dpi,
-                    bbox_inches="tight",
-                )
-
-                plt.close(fig)  # Free the figure
+                _save(fig, f"monte_carlo_{metric_name.lower()}")
 
             if mc_cfg.get("plot_inputs", False):
                 fig_process, _, fig_economic, _ = plot_monte_carlo_inputs(
@@ -833,13 +717,6 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                 ):
                     if fig is None:
                         continue  # no inputs sampled for this group
-                    fig.savefig(
-                        output_dir /
-                        f"{fname}_monte_carlo_inputs_"
-                        f"{group_name}.{plot_format}",
-                        dpi=dpi,
-                        bbox_inches="tight",
-                    )
-                    plt.close(fig)  # Free the figure
+                    _save(fig, f"monte_carlo_inputs_{group_name}")
 
     return results

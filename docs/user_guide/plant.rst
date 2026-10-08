@@ -14,7 +14,7 @@ techno-economic assessment, covering:
 * **Scenario arrays** — pass an array for any scalar parameter to evaluate multiple scenarios in one call
 
 To see the outputs of all code examples below, refer to the
-`walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_.
+`walkthrough notebook, Part 2: Creating the Plant <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_2_plant.ipynb>`_.
 
 Creating a ``Plant``
 ---------------------
@@ -39,7 +39,7 @@ Creating a ``Plant``
        "interest_rate": 0.09,                       # optional, defaults to 0.09
        "project_lifetime": 30,                      # int ≥ 3, optional, defaults to 20
        "plant_utilization": 0.90,                   # 0–1, optional, defaults to 1
-       "tax_rate": 0.25,                            # 0–1, not used in LCOP, defaults to 0
+       "tax_rate": 0.25,                            # 0–1, not used in LCOP (pre-tax), defaults to 0
 
        # Operator labor
        "operator_hourly_rate": {"rate": 35},        # USD/hr, optional, defaults to $38.11/hr
@@ -390,8 +390,8 @@ lists every component, its default calculation basis, and the
      - 0.65 × (labor + supervision + overhead)
      - ``"general_plant_overhead"``
    * - Interest on working capital
-     - working capital × interest rate
-     - ``"working_capital"`` (default: 0.15 × FCI)
+     - 0 by default (see note below)
+     - ``"working_capital_interest"``
    * - Patents & royalties
      - 0.02 × cash cost of production\*
      - ``"patents_royalties"``
@@ -403,6 +403,28 @@ lists every component, its default calculation basis, and the
      - ``"rnd"``
 
 \* Cash cost of production = (variable + fixed costs so far) / (1 − sum of the three rates above), ensuring these fractions are expressed consistently as a share of total cash cost.
+
+.. note::
+
+   **Interest on working capital defaults to 0.** The two ways of pricing
+   working capital have the same present value, so OpenPyTEA applies one or
+   the other, never both.
+
+   * **Owner-funded (default).** ``calculate_cash_flow`` draws working
+     capital in the last construction year and releases it in the final
+     year, so discounting alone prices the capital tied up.
+   * **Debt-funded** (Towler & Sinnott, 2022, Chapter 8). Working capital is
+     funded entirely by debt, so its only cost is the annual interest at a
+     corporate bond rate. Set a non-zero rate to select it; the draw and
+     release are then dropped::
+
+         plant.update_configuration({
+             "fixed_opex_factors": {"working_capital_interest": 0.08},
+         })
+
+   The rate is a borrowing rate, independent of ``interest_rate``. Interest
+   is tax-deductible where an investment is not, so the debt-funded
+   convention gives a higher NPV once ``tax_rate`` > 0.
 
 Override factors or fix absolute component values:
 
@@ -593,7 +615,9 @@ The method returns a styled DataFrame and, when ``print_results=True``, displays
    * - Revenue
      - Annual product revenue, scaled by the production ramp.
    * - Cash cost
-     - Total annual OPEX (fixed + variable), scaled by the production ramp.
+     - Total annual OPEX. Variable OPEX is scaled by the production ramp;
+       fixed OPEX is charged in full from the first production year onwards
+       and is zero during construction (Towler & Sinnott (2022), Table 9.2).
    * - Gross profit
      - Revenue − Cash cost.
    * - Depreciation
@@ -764,7 +788,8 @@ Net Present Value (NPV)
 Levelized Cost of Product (LCOP)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Break-even selling price of the main product that sets NPV = 0:
+Pre-tax break-even selling price of the main product: the price at which
+discounted revenues exactly cover discounted capital and operating costs.
 
 .. math::
 
@@ -777,6 +802,15 @@ Break-even selling price of the main product that sets NPV = 0:
 where :math:`R^{\text{side}}_t` is co-product revenue and :math:`Q_t` is
 main-product production in year :math:`t`.
 
+.. note::
+
+   LCOP is a **pre-tax** metric: ``tax_rate`` does not appear in the
+   formula. It equals the selling price that sets NPV = 0 only when
+   ``tax_rate = 0``. With a non-zero tax rate the true break-even price
+   is higher, since tax is levied on the resulting profit, and it cannot
+   be recovered by grossing up with :math:`1/(1 - t)` because
+   depreciation shields part of the taxable income.
+
 .. code-block:: python
 
    plant.calculate_levelized_cost(print_results=True)
@@ -785,16 +819,33 @@ main-product production in year :math:`t`.
 Payback time (PBT)
 ~~~~~~~~~~~~~~~~~~~
 
-Total fixed capital divided by the mean annual cash flow across revenue-generating years:
+Two payback measures are available. They answer different questions and
+generally differ.
+
+``payback_time`` is the **break-even year**: where the undiscounted cumulative
+cash flow first crosses back above zero, linearly interpolated between the
+surrounding years, on an axis where 0 is project start. It accounts for the
+timing of every cash flow, additional CAPEX included, and is ``nan`` if the
+project never recovers.
+
+``simple_payback_time`` is total fixed capital divided by the mean annual cash
+flow across revenue-generating years. It ignores timing entirely:
 
 .. math::
 
-   PBT = \frac{FCI}{\overline{CF}}
+   PBT_{simple} = \frac{FCI}{\overline{CF}}
 
 .. code-block:: python
 
    plant.calculate_payback_time(print_results=True)
-   print(plant.payback_time)
+   print(plant.payback_time)             # break-even year
+
+   plant.calculate_simple_payback_time(additional_capex=True,
+                                       print_results=True)
+   print(plant.simple_payback_time)      # FCI / mean cash flow
+
+``calculate_payback_time`` takes no ``additional_capex`` flag, because
+additional CAPEX is already part of the cash flow it walks.
 
 Return on Investment (ROI)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -843,7 +894,7 @@ See also
 
 * :class:`~openpytea.plant.Plant` — full API reference
 * :doc:`analysis` — sensitivity and Monte Carlo analysis
-* `Walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_ — end-to-end worked example
+* `Walkthrough Part 2: Creating the Plant <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_2_plant.ipynb>`_ — worked plant-configuration and financial-metric examples
 
 References
 ----------

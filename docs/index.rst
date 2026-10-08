@@ -89,8 +89,8 @@ Source code, issue tracker, and contributions:
       :link: tutorials
       :link-type: doc
 
-      Walkthrough notebook covering the full OpenPyTEA workflow
-      step by step.
+      Walkthrough notebooks covering the full OpenPyTEA workflow
+      step by step, in five parts.
 
    .. grid-item-card:: :octicon:`browser` Graphical User Interface
       :link: gui
@@ -128,7 +128,6 @@ Contents
    user_guide/equipment
    user_guide/plant
    user_guide/analysis
-   user_guide/plotting
    user_guide/io_workflow
 
 .. toctree::

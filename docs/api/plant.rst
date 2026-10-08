@@ -11,7 +11,3 @@ openpytea.plant
 .. autoclass:: openpytea.plant.Plant
    :members:
    :show-inheritance:
-
-.. autoclass:: openpytea.plant.DepreciationConfig
-   :members:
-   :show-inheritance:

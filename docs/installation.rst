@@ -15,6 +15,23 @@ The recommended way to install OpenPyTEA is via ``pip``:
 
    pip install OpenPyTEA
 
+If you work in Jupyter notebooks or want to run the walkthrough and example
+notebooks, we recommend installing with the ``ipython`` extra:
+
+.. code-block:: bash
+
+   pip install "OpenPyTEA[ipython]"
+
+The difference:
+
+* ``pip install OpenPyTEA`` installs the core package. This is enough for
+  Python scripts and the command-line interface.
+* ``pip install "OpenPyTEA[ipython]"`` also installs ``ipython`` and
+  ``ipywidgets``, which OpenPyTEA uses to show a live progress bar in
+  notebooks during Monte Carlo runs. Without them, the progress bar falls
+  back to plain text and Jupyter shows a warning. Jupyter itself is not
+  included; install it separately if needed (e.g. ``pip install jupyter``).
+
 Clone from source
 -----------------
 
@@ -26,7 +43,7 @@ locks the full environment so the virtual environment can be exactly reproduced:
 
    git clone https://github.com/PBTamarona/OpenPyTEA.git
    cd OpenPyTEA
-   uv sync
+   uv sync --extra ipython
 
 ``uv sync`` reads the lockfile and creates a ``.venv`` with all dependencies
 pinned, making it easy to share and replicate the environment across machines.
@@ -37,7 +54,7 @@ If you prefer plain pip instead:
 
    git clone https://github.com/PBTamarona/OpenPyTEA.git
    cd OpenPyTEA
-   pip install -e .
+   pip install -e ".[ipython]"
 
 Dependencies
 ------------

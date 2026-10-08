@@ -271,7 +271,7 @@ Usage examples
 
 The examples below show the main ways to create ``Equipment`` objects.
 To see the printed outputs of each code cell, refer to the
-`walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_.
+`walkthrough notebook, Part 1: Defining Equipment <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_1_equipment.ipynb>`_.
 
 Example 1 — Standard usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -800,7 +800,7 @@ See also
 * :class:`~openpytea.equipment.CompositeEquipment` — equipment assembled from sub-components
 * :class:`~openpytea.equipment.CostCorrelationDB` — database interface
 * :func:`~openpytea.equipment.inflation_adjustment` — CEPCI utility
-* `Walkthrough notebook <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough.ipynb>`_ — end-to-end worked example
+* `Walkthrough Part 1: Defining Equipment <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_1_equipment.ipynb>`_ — worked equipment-costing examples
 
 .. _equip-references:
 
