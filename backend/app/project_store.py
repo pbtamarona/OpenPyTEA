@@ -7,7 +7,8 @@ unchanged. Every plant of the project — the active one included — has a
 slot in state.plants:
 
     {"id", "name", "equipment": [spec], "plant": config, "results": dict|None,
-     "analysis": {"tornado_args", "sensitivity_args"}}
+     "analysis": {"tornado_args", "sensitivity_args", "mc_raw", "mc_results",
+                  "mc_current"}}
 
 Only inactive slots are authoritative; the active slot is refreshed from
 the live session by park_active() before anything reads it.
@@ -130,6 +131,10 @@ def park_active():
     slot = active_slot()
     if slot is None:
         return
+    # The plant's Monte Carlo run travels with it (the MC tab keeps showing
+    # it); whether it still matches the inputs is checked here, before
+    # active_results() may recalculate, so Save as JSON can skip a stale run
+    mc_current = state.mc_raw is not None and state.mc_snapshot == _calc_snapshot()
     slot["equipment"] = copy.deepcopy(equipment_specs(state.equipment_list))
     slot["plant"] = copy.deepcopy(state.plant_config)
     slot["name"] = state.plant_config.get("plant_name") or slot["name"]
@@ -137,6 +142,9 @@ def park_active():
     slot["analysis"] = {
         "tornado_args": state.tornado_args,
         "sensitivity_args": dict(state.sensitivity_args),
+        "mc_raw": state.mc_raw,
+        "mc_results": state.mc_results,
+        "mc_current": mc_current,
     }
 
 
@@ -154,6 +162,11 @@ def _load_slot(slot: dict):
     state.results = _extract_results(plant) if plant else {}
     if plant:
         mark_plant_fresh()
+        # the plant's last Monte Carlo run (figure downloads, Save as JSON)
+        if slot["analysis"].get("mc_raw") is not None:
+            state.mc_raw = slot["analysis"]["mc_raw"]
+            state.mc_results = slot["analysis"]["mc_results"]
+            state.mc_snapshot = state.calc_snapshot if slot["analysis"]["mc_current"] else None
     slot["results"] = state.results or None
 
 
