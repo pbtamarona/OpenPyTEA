@@ -3,7 +3,8 @@ import {
   getEquipment, addEquipment, updateEquipment, deleteEquipment,
   getCostDBCategories, getProcessTypes, getMaterials,
 } from "../api/client";
-import type { EquipmentItem, EquipmentInput, CostDBEntry } from "../types";
+import type { EquipmentItem, EquipmentInput, CostDBEntry, ProjectOverview } from "../types";
+import PlantPicker from "../components/PlantPicker";
 
 const defaultInput: EquipmentInput = {
   name: "", param: null, process_type: "Fluids", category: "",
@@ -227,9 +228,11 @@ function EquipmentFields({ draft, setDraft, categories, processTypes, materials,
 interface Props {
   setError: (e: string | null) => void;
   markDirty: () => void;
+  project: ProjectOverview | null;
+  onSwitchPlant: (id: string) => void;
 }
 
-export default function EquipmentPage({ setError, markDirty }: Props) {
+export default function EquipmentPage({ setError, markDirty, project, onSwitchPlant }: Props) {
   const [items, setItems] = useState<EquipmentItem[]>([]);
   const [categories, setCategories] = useState<Record<string, CostDBEntry[]>>({});
   const [processTypes, setProcessTypes] = useState<string[]>([]);
@@ -367,6 +370,7 @@ export default function EquipmentPage({ setError, markDirty }: Props) {
 
   return (
     <div>
+      <PlantPicker project={project} onSwitch={onSwitchPlant} hint="the equipment list below belongs to the selected plant" />
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h2>Equipment List</h2>

@@ -20,6 +20,8 @@ import "./App.css";
 
 const TABS = ["Project", "Plant Config", "Equipment", "Results", "Analysis", "Monte Carlo", "Compare"] as const;
 const PROJECT_EXT = "openpytea";
+// Tabs that show a plant picker in the page, so the header one is hidden
+const PAGES_WITH_PICKER = new Set<string>(["Plant Config", "Equipment", "Results"]);
 
 /** Detect Tauri at runtime. Cached on first call. */
 let _isTauriCache: boolean | null = null;
@@ -773,8 +775,8 @@ function App() {
           ))}
         </nav>
         <div className="header-actions">
-          {/* Plant Config has its own picker (which saves unsaved edits first) */}
-          {project && project.plants.length > 1 && tab !== "Plant Config" && (
+          {/* Plant Config, Equipment and Results have their own picker */}
+          {project && project.plants.length > 1 && !PAGES_WITH_PICKER.has(tab) && (
             <label className="plant-switcher" title="Plant that Plant Config, Equipment, Results, Analysis and Monte Carlo work on">
               Plant
               <select value={project.active_plant_id} onChange={(e) => handleSwitchPlant(e.target.value)}>
@@ -831,7 +833,15 @@ function App() {
             markDirty={markDirty}
           />
         )}
-        {tab === "Equipment" && <EquipmentPage key={refreshKey} setError={setError} markDirty={markDirty} />}
+        {tab === "Equipment" && (
+          <EquipmentPage
+            key={refreshKey}
+            setError={setError}
+            markDirty={markDirty}
+            project={project}
+            onSwitchPlant={handleSwitchPlant}
+          />
+        )}
         {tab === "Plant Config" && (
           <PlantConfigPage
             key={refreshKey}
@@ -842,7 +852,17 @@ function App() {
             onAddPlant={handleAddPlant}
           />
         )}
-        {tab === "Results" && <ResultsPage results={results} setResults={setResults} setError={setError} onAddToComparison={addToComparison} />}
+        {tab === "Results" && (
+          <ResultsPage
+            key={refreshKey}
+            results={results}
+            setResults={setResults}
+            setError={setError}
+            onAddToComparison={addToComparison}
+            project={project}
+            onSwitchPlant={handleSwitchPlant}
+          />
+        )}
         {tab === "Analysis" && <AnalysisPage setError={setError} comparedPlants={comparedPlants} />}
         {tab === "Monte Carlo" && <MonteCarloPage setError={setError} comparedPlants={comparedPlants} />}
         {tab === "Compare" && (

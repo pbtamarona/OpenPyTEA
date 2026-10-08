@@ -1,19 +1,22 @@
 import { useState, useEffect } from "react";
 import { runCalculations, getPlantConfig, fetchPlotPng } from "../api/client";
-import type { CalculationResults, PlantConfig } from "../types";
+import type { CalculationResults, PlantConfig, ProjectOverview } from "../types";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
+import PlantPicker from "../components/PlantPicker";
 
 interface Props {
   results: CalculationResults | null;
   setResults: (r: CalculationResults | null) => void;
   setError: (e: string | null) => void;
   onAddToComparison: (name: string, currency: string, r: CalculationResults) => void;
+  project: ProjectOverview | null;
+  onSwitchPlant: (id: string) => void;
 }
 
-export default function ResultsPage({ results, setResults, setError, onAddToComparison }: Props) {
+export default function ResultsPage({ results, setResults, setError, onAddToComparison, project, onSwitchPlant }: Props) {
   const [loading, setLoading] = useState(false);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [plantConfig, setPlantConfig] = useState<PlantConfig | null>(null);
@@ -53,14 +56,21 @@ export default function ResultsPage({ results, setResults, setError, onAddToComp
   const pct = (n: number | null | undefined) =>
     n != null ? (n * 100).toFixed(2) + "%" : "-";
 
+  const picker = (
+    <PlantPicker project={project} onSwitch={onSwitchPlant} hint="results are for the selected plant" />
+  );
+
   if (!results) {
     return (
+      <div>
+      {picker}
       <div className="card" style={{ textAlign: "center", padding: 40 }}>
         <p style={{ color: "#868e96", marginBottom: 16 }}>Configure equipment and plant, then run calculations.</p>
         <button className="btn-primary" style={{ padding: "12px 32px", fontSize: 16 }} onClick={calculate} disabled={loading}>
           {loading && <span className="spinner" />}
           {loading ? "Calculating..." : "Run Calculations"}
         </button>
+      </div>
       </div>
     );
   }
@@ -108,6 +118,7 @@ export default function ResultsPage({ results, setResults, setError, onAddToComp
 
   return (
     <div>
+      {picker}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 16 }}>
         <button
           className="btn-secondary"

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import PlantPicker from "../components/PlantPicker";
 import { getPlantConfig, setPlantConfig, getLocations } from "../api/client";
 import type { PlantConfig, DependencyBlock, UncertaintyBlock, ProjectOverview } from "../types";
 import UncertaintyEditor, { DISTRIBUTIONS, paramSummary } from "../components/UncertaintyEditor";
@@ -410,37 +411,15 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
 
   return (
     <div>
-      {/* Plant picker: every plant of the project, by its Plant Name */}
-      {project && (
-        <div className="card plant-picker">
-          <label htmlFor="plant-picker-select">Plant</label>
-          <select
-            id="plant-picker-select"
-            value={project.active_plant_id}
-            disabled={switching}
-            onChange={(e) => {
-              // read now: after the save below React has already reset the
-              // controlled select to the open plant
-              const id = e.target.value;
-              leavePlant(() => onSwitchPlant(id));
-            }}
-          >
-            {project.plants.map((p) => (
-              <option key={p.id} value={p.id}>
-                {/* the open plant shows its name as currently typed */}
-                {p.id === project.active_plant_id ? config.plant_name || p.name : p.name}
-              </option>
-            ))}
-          </select>
-          <button className="btn-secondary" disabled={switching} onClick={() => leavePlant(onAddPlant)}>
-            + New Plant
-          </button>
-          <span className="plant-picker-hint">
-            {project.plants.length} plant{project.plants.length !== 1 ? "s" : ""} in this project
-            {" · "}unsaved changes are saved when you switch
-          </span>
-        </div>
-      )}
+      <PlantPicker
+        project={project}
+        disabled={switching}
+        // the open plant shows its name as currently typed
+        activeLabel={config.plant_name}
+        onSwitch={(id) => leavePlant(() => onSwitchPlant(id))}
+        onAdd={() => leavePlant(onAddPlant)}
+        hint="unsaved changes are saved when you switch"
+      />
 
       {/* General */}
       <div className="card">
