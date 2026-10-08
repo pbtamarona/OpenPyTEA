@@ -8,6 +8,7 @@ import {
   BarChart, Bar, ReferenceLine, Cell, Legend,
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
+import { fmtTick, fmtValue } from "../format";
 
 const METRICS = ["LCOP", "NPV", "IRR", "ROI", "PBT"];
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
@@ -365,7 +366,7 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   type="number"
-                  tickFormatter={(v) => (v + tornBase).toFixed(tornMetric === "IRR" ? 3 : 2)}
+                  tickFormatter={(v: number) => fmtTick(v + tornBase)}
                   label={{ value: tornXLabel, position: "insideBottom", offset: -34, style: { fontWeight: "bold", fontSize: 14, fill: "#666" } }}
                 />
                 <YAxis type="category" dataKey="label" width={150} tick={{ fontSize: 12, fontWeight: "bold" }} />
@@ -373,7 +374,7 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
                   formatter={(v) => {
                     const unit = tornXLabel.match(/\[(.+)\]/)?.[1] ?? "";
                     const actual = typeof v === "number" ? v + tornBase : v;
-                    const val = typeof actual === "number" ? actual.toFixed(tornMetric === "IRR" ? 3 : 2) : actual;
+                    const val = typeof actual === "number" ? fmtValue(actual, tornMetric === "IRR" ? 3 : 2) : actual;
                     return (unit && tornMetric !== "IRR") ? `${val} ${unit}` : val;
                   }}
                   labelStyle={{ fontWeight: "bold", color: "#000" }}
@@ -466,6 +467,14 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, serve
       return row;
     });
   }, [result, scale]);
+  // Room for the widest separated tick label (e.g. "-1,250.5")
+  const yAxisWidth = useMemo(() => {
+    let longest = 4;
+    chartData.forEach((row) => Object.entries(row).forEach(([k, v]) => {
+      if (k !== "x") longest = Math.max(longest, fmtTick(v).length);
+    }));
+    return Math.max(60, longest * 7 + 16);
+  }, [chartData]);
 
   const yLabel = result
     ? (scale === 1e6 ? cleanLatex(result.ylabel).replace("/ [", "/ [million ") : cleanLatex(result.ylabel))
@@ -512,13 +521,13 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, serve
             <ResponsiveContainer>
               <LineChart data={chartData} margin={{ left: 10, bottom: 52, top: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="x" tickFormatter={(v) => parseFloat(v.toFixed(4)).toString()} label={{ value: xLabel, position: "insideBottom", offset: -34, style: { fontWeight: "bold", fontSize: compact ? 13 : 14, fill: "#666" } }} />
-                <YAxis width={60} />
+                <XAxis dataKey="x" tickFormatter={fmtTick} label={{ value: xLabel, position: "insideBottom", offset: -34, style: { fontWeight: "bold", fontSize: compact ? 13 : 14, fill: "#666" } }} />
+                <YAxis width={yAxisWidth} tickFormatter={fmtTick} />
                 <Tooltip
                   labelFormatter={(v) => `x: ${typeof v === "number" ? v.toFixed(2) : parseFloat(String(v)).toFixed(2)} %`}
                   formatter={(v, name) => {
                     const unit = yLabel.match(/\[(.+)\]/)?.[1] ?? "";
-                    const val = typeof v === "number" ? v.toFixed(panel.metric === "IRR" ? 3 : 2) : v;
+                    const val = typeof v === "number" ? fmtValue(v, panel.metric === "IRR" ? 3 : 2) : v;
                     return [`${val}${unit ? ` ${unit}` : ""}`, name];
                   }}
                   labelStyle={{ color: "#000" }}

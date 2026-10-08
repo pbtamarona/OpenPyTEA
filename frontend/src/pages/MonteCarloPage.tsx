@@ -5,6 +5,7 @@ import {
   ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
+import { fmtTick, fmtValue, niceTicks } from "../format";
 
 /** Name and unit of an MC output metric — the same wording and units as
     the library's matplotlib figures (helpers._default_metric_label). */
@@ -36,15 +37,6 @@ function inputUnit(name: string, cur: string): string | null {
 }
 
 const withUnit = (label: string, unit: string | null) => (unit ? `${label} / [${unit}]` : label);
-
-/** Axis tick: compact for large magnitudes (NPV), else up to 2 decimals. */
-function axisTick(v: number): string {
-  const a = Math.abs(v);
-  if (a >= 1e9) return (v / 1e9).toFixed(2).replace(/\.?0+$/, "") + "B";
-  if (a >= 1e6) return (v / 1e6).toFixed(2).replace(/\.?0+$/, "") + "M";
-  if (a >= 1e4) return (v / 1e3).toFixed(1).replace(/\.?0+$/, "") + "k";
-  return Number(v.toFixed(2)).toString();
-}
 
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
 
@@ -304,12 +296,13 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                         dataKey="x"
                         type="number"
                         domain={["dataMin", "dataMax"]}
-                        tickFormatter={axisTick}
+                        ticks={niceTicks(data[0].x, data[data.length - 1].x)}
+                        tickFormatter={fmtTick}
                         label={{ value: xLabel, position: "insideBottom", offset: -30, style: { fontSize: 14, fill: "#666" } }}
                       />
                       <YAxis width={74} tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v === 0 ? "0" : Number(v).toExponential(1))} label={{ value: "Probability density", angle: -90, position: "insideLeft", offset: 0, style: { fontSize: 14, fill: "#666", textAnchor: "middle" } }} />
                       <Tooltip
-                        labelFormatter={(v) => `${metric}: ${Number(v).toFixed(3)}${info.unit && info.unit !== "-" ? ` ${info.unit}` : ""}`}
+                        labelFormatter={(v) => `${metric}: ${fmtValue(Number(v), 3)}${info.unit && info.unit !== "-" ? ` ${info.unit}` : ""}`}
                         formatter={(v, name) => {
                           const label = String(name);
                           const isHist = label.endsWith("__hist");
@@ -423,12 +416,13 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                                 type="number"
                                 domain={["dataMin", "dataMax"]}
                                 tick={{ fontSize: 11 }}
-                                tickFormatter={(v: number) => (Math.abs(v) >= 1e4 ? axisTick(v) : Number(v).toPrecision(3))}
+                                ticks={niceTicks(rows[0].x, rows[rows.length - 1].x, 4)}
+                                tickFormatter={fmtTick}
                                 label={unit ? { value: `[${unit}]`, position: "insideBottom", offset: -16, style: { fontSize: 11, fill: "#666" } } : undefined}
                               />
                               <YAxis tick={{ fontSize: 11 }} width={48} tickFormatter={(v: number) => (v === 0 ? "0" : Number(v).toExponential(0))} />
                               <Tooltip
-                                labelFormatter={(v) => `${name}: ${Number(v).toPrecision(4)}${unit && unit !== "-" ? ` ${unit}` : ""}`}
+                                labelFormatter={(v) => `${name}: ${fmtTick(Number(v))}${unit && unit !== "-" ? ` ${unit}` : ""}`}
                                 formatter={(v) => [Number(v).toExponential(2), "density"]}
                               />
                               <Area
