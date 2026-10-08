@@ -7,14 +7,18 @@ import MonteCarloPage from "./pages/MonteCarloPage";
 import {
   saveProject, exportJsonResults, loadProject, loadProjectFromText,
   newProject, getExamples, loadExample, runCalculations,
+  getProject, activatePlant,
 } from "./api/client";
 import type { ExamplePreset } from "./api/client";
 import ComparePage from "./pages/ComparePage";
 import WelcomePage from "./pages/WelcomePage";
-import type { CalculationResults, ComparedPlant, PlantInput } from "./types";
+import ProjectPage from "./pages/ProjectPage";
+import type {
+  CalculationResults, ComparedPlant, PlantInput, PlantSnapshot, ProjectOverview,
+} from "./types";
 import "./App.css";
 
-const TABS = ["Plant Config", "Equipment", "Results", "Analysis", "Monte Carlo", "Compare"] as const;
+const TABS = ["Project", "Plant Config", "Equipment", "Results", "Analysis", "Monte Carlo", "Compare"] as const;
 const PROJECT_EXT = "openpytea";
 
 /** Detect Tauri at runtime. Cached on first call. */
@@ -37,7 +41,15 @@ const basename = (path: string | null): string => {
 };
 
 function App() {
-  const [tab, setTab] = useState<(typeof TABS)[number]>("Plant Config");
+  const [tab, setTab] = useState<(typeof TABS)[number]>("Project");
+  const [project, setProject] = useState<ProjectOverview | null>(null);
+  // Bumped when a different project loads (new / open): remounts the
+  // Project tab so its form starts from the new project's details.
+  const [projectEpoch, setProjectEpoch] = useState(0);
+  const resetProjectView = () => {
+    setProject(null);
+    setProjectEpoch((n) => n + 1);
+  };
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -84,6 +96,8 @@ function App() {
   comparisonDirtyRef.current = comparisonDirty;
   comparedPlantsRef.current = comparedPlants;
   currentPathRef.current = currentPath;
+  const projectRef = useRef(project);
+  projectRef.current = project;
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -110,6 +124,32 @@ function App() {
     // the load-example/open prompts and would otherwise block the typical
     // "load A, add, load B, add, …" flow. comparisonDirty is only checked
     // on app close.
+  };
+
+  const addSnapshotToComparison = (snap: PlantSnapshot) => {
+    setComparedPlants((prev) => [...prev, { id: crypto.randomUUID(), ...snap }]);
+    setComparisonDirty(true);
+  };
+
+  /** Apply a project overview from the backend. When the open plant
+      changed, the plant-level pages must reload and Results follow it. */
+  const applyProject = useCallback((o: ProjectOverview, switched: boolean) => {
+    setProject(o);
+    if (switched) {
+      setResults(o.results);
+      setRefreshKey((k) => k + 1);
+    }
+  }, []);
+
+  const handleSwitchPlant = async (id: string) => {
+    try {
+      setLoadingMsg("Opening plant…");
+      applyProject(await activatePlant(id), true);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Could not open plant");
+    } finally {
+      setLoadingMsg(null);
+    }
   };
 
   const removeFromComparison = (id: string) => {
@@ -168,9 +208,19 @@ function App() {
     });
   }, [showWelcome]);
 
+  // Keep the project overview (plant names, metrics) current: plant names
+  // change on Plant Config and metrics on Results, so refetch on tab change.
+  useEffect(() => {
+    if (showWelcome) return;
+    getProject().then((o) => setProject(o)).catch(() => {
+      // non-critical — the Project tab shows a loading state
+    });
+  }, [showWelcome, tab, refreshKey]);
+
   // Window title reflects current project + dirty state.
   useEffect(() => {
-    const title = `OpenPyTEA — ${basename(currentPath)}${dirty ? " •" : ""}`;
+    const name = currentPath ? basename(currentPath) : project?.meta.name || "Untitled";
+    const title = `OpenPyTEA — ${name}${dirty ? " •" : ""}`;
     document.title = title;
     (async () => {
       if (!(await detectTauri())) return;
@@ -181,7 +231,7 @@ function App() {
         // ignore — title is cosmetic
       }
     })();
-  }, [currentPath, dirty]);
+  }, [currentPath, dirty, project?.meta.name]);
 
   // ── Project file operations ───────────────────────────────────────────
 
@@ -217,8 +267,9 @@ function App() {
       setDirty(false);
       setResults(null);
       setError(null);
+      resetProjectView();
       setRefreshKey((k) => k + 1);
-      setTab("Plant Config");
+      setTab("Project");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "New project failed");
     } finally {
@@ -266,8 +317,9 @@ function App() {
       setCurrentPath(path);
       setDirty(false);
       setError(null);
+      resetProjectView();
       setRefreshKey((k) => k + 1);
-      setTab("Plant Config");
+      setTab("Project");
       // If the user opens a file from Finder while the welcome screen is up,
       // skip straight to the main app.
       setShowWelcome(false);
@@ -326,8 +378,14 @@ function App() {
       setDirty(false);
       setResults(null);
       setError(null);
+      resetProjectView();
       setRefreshKey((k) => k + 1);
-      setTab("Plant Config");
+      setTab("Project");
+      try {
+        setResults(await runCalculations());
+      } catch {
+        // the open plant can't be calculated yet
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Load failed");
     }
@@ -362,12 +420,16 @@ function App() {
     await invoke("write_project_text", { path, contents: text });
   };
 
+  /** File name for a never-saved project: the project name, if set. */
+  const defaultFileStem = () =>
+    (projectRef.current?.meta.name ?? "").replace(/[\\/:*?"<>|]/g, "_").trim() || "untitled";
+
   const handleSaveAs = useCallback(async (): Promise<boolean> => {
     try {
       if (await detectTauri()) {
         const { save } = await import("@tauri-apps/plugin-dialog");
         const path = await save({
-          defaultPath: currentPath ?? `untitled.${PROJECT_EXT}`,
+          defaultPath: currentPath ?? `${defaultFileStem()}.${PROJECT_EXT}`,
           filters: [{ name: "OpenPyTEA Project", extensions: [PROJECT_EXT] }],
         });
         if (!path) return false; // user cancelled
@@ -384,7 +446,7 @@ function App() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `${basename(currentPath)}.${PROJECT_EXT}`;
+        a.download = `${currentPath ? basename(currentPath) : defaultFileStem()}.${PROJECT_EXT}`;
         a.click();
         URL.revokeObjectURL(url);
         setDirty(false);
@@ -456,18 +518,15 @@ function App() {
 
   const handleLoadExample = async (id: string) => {
     setExamplesOpen(false);
-    if (!(await confirmIfDirty("Load an example"))) return;
     try {
       setLoadingMsg("Loading example…");
+      // The example becomes a new plant of the current project (or takes
+      // over an untouched blank plant), so nothing is discarded and no
+      // unsaved-changes prompt is needed. It only counts as an edit of a
+      // project that has a file — an untitled project assembled from
+      // examples shouldn't nag on quit, as before.
       await loadExample(id);
-      // Intentionally NOT clearing comparedPlants — the typical multi-plant
-      // comparison workflow is: load A → calculate → Add to comparison →
-      // load B → calculate → Add to comparison → overlay both on the
-      // analysis tabs. Clearing would break that.
-      setCurrentPath(null);
-      setDirty(false);
-      // Comparison list is unchanged by example loads; leave comparisonDirty
-      // alone so building a comparison still counts as unsaved work.
+      if (currentPathRef.current) setDirty(true);
       setError(null);
       setRefreshKey((k) => k + 1);
       setTab("Plant Config");
@@ -702,6 +761,14 @@ function App() {
           ))}
         </nav>
         <div className="header-actions">
+          {project && project.plants.length > 1 && (
+            <label className="plant-switcher" title="Plant that Plant Config, Equipment, Results, Analysis and Monte Carlo work on">
+              Plant
+              <select value={project.active_plant_id} onChange={(e) => handleSwitchPlant(e.target.value)}>
+                {project.plants.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+          )}
           <div className="examples-dropdown">
             <button className="btn-examples" onClick={() => setExamplesOpen(!examplesOpen)}>
               Examples
@@ -740,6 +807,17 @@ function App() {
       {error && <div className="error-bar">{error}<button onClick={() => setError(null)}>&times;</button></div>}
       {notice && <div className="error-bar notice-bar">{notice}<button onClick={() => setNotice(null)}>&times;</button></div>}
       <main className="main">
+        {tab === "Project" && (
+          <ProjectPage
+            key={projectEpoch}
+            project={project}
+            onProjectChange={applyProject}
+            onOpenPlant={() => setTab("Plant Config")}
+            onAddToComparison={addSnapshotToComparison}
+            setError={setError}
+            markDirty={markDirty}
+          />
+        )}
         {tab === "Equipment" && <EquipmentPage key={refreshKey} setError={setError} markDirty={markDirty} />}
         {tab === "Plant Config" && <PlantConfigPage key={refreshKey} setError={setError} markDirty={markDirty} />}
         {tab === "Results" && <ResultsPage results={results} setResults={setResults} setError={setError} onAddToComparison={addToComparison} />}

@@ -28,6 +28,8 @@ backend/
       plant.py        # Plant config get/set + calculate endpoint (calls plant.calculate_all())
       analysis.py     # Sensitivity, tornado, Monte Carlo endpoints (calls openpytea.analysis functions)
       io.py           # Save/load full project as JSON (file upload/download)
+      project.py      # Project metadata + plant list (add/open/duplicate/rename/delete)
+    project_store.py  # Multi-plant bookkeeping around the single-plant session
 
 frontend/
   src/
@@ -38,12 +40,13 @@ frontend/
                              # button that fetches the backend matplotlib figure when a
                              # serverPlot fetcher is given (screen-render PNG as fallback)
     pages/
+      ProjectPage     # Project details (name, description, user, date) + plant list
       EquipmentPage   # Equipment table + add/edit modal with cost DB category/type picker
       PlantConfigPage # Forms: general, financial, labor, products, variable OPEX
       ResultsPage     # Triggers calculate, shows metric cards + charts + cash flow table
       AnalysisPage    # Sensitivity line chart + tornado horizontal bar chart
       MonteCarloPage  # MC config, summary stats table, histogram per metric
-    App.tsx           # Tab navigation (5 tabs) + save/load buttons in header
+    App.tsx           # Tab navigation (7 tabs) + plant switcher + save/load in header
     App.css           # All styling: cards, forms, tables, modals, metric cards, spinner
 ```
 
@@ -96,9 +99,20 @@ frontend/
 |--------|------|---------|
 | POST | `/save` | Return full project state as JSON |
 | POST | `/export-json` | The three `run_tea` result files (`<plant>_equipment/plant/analysis_results.json`) as name + text — File ▸ Save as JSON Files… |
-| POST | `/load` | Upload JSON file, restore equipment + config |
+| POST | `/load` | Upload JSON file, restore the project (v2 multi-plant, or a v1 single plant) |
 | GET | `/examples` | List available example presets (id, title, description) |
-| POST | `/examples/{id}` | Load an example preset into the session |
+| POST | `/examples/{id}` | Add an example preset to the project as a new plant (takes over an untouched blank plant) |
+| GET | `` | Project overview: metadata, plant rows (name, currency, equipment count, metrics), open plant |
+| PUT | `/meta` | Set project name / description / user (date created is set on New) |
+| POST | `/plants` | Add a blank plant (default config) and open it |
+| POST | `/plants/{id}/activate` | Open a plant (parks the current one, recalculates the new one) |
+| POST | `/plants/{id}/duplicate` | Copy a plant and open the copy |
+| PATCH | `/plants/{id}` | Rename a plant (also sets its `plant_name`) |
+| DELETE | `/plants/{id}` | Delete a plant (not the last one) |
+| GET | `/plants/{id}/snapshot` | Name, currency, results and inputs of a plant, for the Compare tab |
+
+Mutating project endpoints return the new overview plus the open plant's
+results, so the Results tab follows a plant switch.
 
 ### Utility
 | Method | Path | Purpose |
@@ -106,6 +120,11 @@ frontend/
 | GET | `/api/health` | Health check |
 
 ## Frontend Pages
+
+### ProjectPage
+- Project details: name, user name (defaults to the OS login), date created (read-only), description; saved on blur
+- Plants table: open-plant marker, name, currency, equipment count, LCOP, NPV, IRR, payback; Open / Rename / Duplicate / Compare / Delete per row; "+ Add Plant" and "Add all to Compare"
+- Header shows a plant switcher whenever the project has more than one plant
 
 ### EquipmentPage
 - Table with columns: #, Name, Category, Type, Material, Process, Param, Units, Purchased ($), Direct ($), actions
@@ -215,9 +234,9 @@ frontend/
 
 4. **Plant is stateful** — `state.plant` holds the last-calculated Plant object. Analysis endpoints operate on this object. If equipment or config changes, the user must recalculate.
 
-5. **Single-session model** — one equipment list, one plant, one set of results at a time. No multi-project support. Save/load provides persistence via JSON files.
+5. **Multi-plant project, single open plant** — a project holds several plants, but the session fields (`equipment_list`, `plant_config`, `plant`, `results`, analysis runs) always hold the *open* plant, so plant-level routers are unaware of the project. `project_store` parks the open plant into its slot (input specs + config + results) before switching and rebuilds the target. Save files are format version 2 (`project`, `plants`, `active_plant`) and also mirror the open plant at the top level (`equipment`, `plant`, `results`) so older builds still open them; v1 files load as one-plant projects.
 
-6. **Example presets** — JSON preset files live in `backend/app/presets/`. Each contains a complete project (equipment + plant config) extracted from the case study notebooks. The frontend header has an "Examples" dropdown that lists them via `GET /api/project/examples` and loads one via `POST /api/project/examples/{id}`. Loading a preset replaces the current session and navigates to the Equipment tab. Adding a new example is just adding a `.json` file to the presets directory — no code changes needed.
+6. **Example presets** — JSON preset files live in `backend/app/presets/`. Each contains a complete project (equipment + plant config) extracted from the case study notebooks. The frontend header has an "Examples" dropdown that lists them via `GET /api/project/examples` and loads one via `POST /api/project/examples/{id}`. Loading a preset adds it to the current project as a new plant (or takes over an untouched blank plant) and opens it on the Plant Config tab. Adding a new example is just adding a `.json` file to the presets directory — no code changes needed.
 
 7. **Response model validation** — all endpoints declare a `response_model` in their route decorator. FastAPI validates every response against typed Pydantic schemas before sending it to the client. This ensures the backend can never silently return malformed data, and auto-generates accurate OpenAPI/Swagger docs at `/docs`.
 
@@ -236,7 +255,6 @@ frontend/
 
 ## Known Limitations / Future Work
 
-- No multi-plant comparison in the GUI (the library supports passing lists of plants to analysis functions)
 - No depreciation method configuration UI (the field exists in PlantConfig but has no dedicated editor)
 - No additional CAPEX editor UI (fields exist but no dedicated add/remove interface)
 - Monte Carlo runs synchronously — large sample counts block the API response (could add background task + polling)

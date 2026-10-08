@@ -16,7 +16,7 @@ from openpytea.io import (
     _write_json, _safe_filename,
 )
 
-from app import state
+from app import project_store, state
 from app.plant_factory import build_equipment_list, require_active_plant
 from app.schemas import (
     LoadResponse, LoadExampleResponse, ExamplePreset, ExportJsonResponse,
@@ -31,57 +31,27 @@ PRESETS_DIR = Path(__file__).resolve().parent.parent / "presets"
 # whenever the on-disk shape changes in a way that the loader needs to detect
 # and migrate.
 PROJECT_FORMAT = "openpytea-project"
-PROJECT_VERSION = 1
+PROJECT_VERSION = 2  # 2: multi-plant projects (plants, project, active_plant)
 APP_VERSION = "0.1.0"
 
 
 @router.post("/new")
 def new_project():
-    """Clear the in-memory session — fresh start."""
-    state.equipment_list = []
-    state.plant_config = {}
-    state.plant = None
-    state.results = {}
-    state.reset_analysis_runs()
+    """Clear the in-memory session — a new project with one default plant."""
+    project_store.reset()
     return {"ok": True}
 
 
 @router.post("/save")
 def save_project():
-    """Return the full project state as a versioned JSON envelope."""
-    # Every equipment object is built via plant_factory.equipment_from_entry,
-    # which keeps the sanitized original input on _input_spec. Saving that
-    # spec (never derived values like the resolved num_units or an
-    # inflation-adjusted composite quote) makes save → load a clean rebuild
-    # from user inputs.
-    equipment_data = []
-    for eq in state.equipment_list:
-        spec = getattr(eq, "_input_spec", None)
-        if spec is None:
-            spec = {
-                "name": eq.name,
-                "param": list(eq.param) if isinstance(eq.param, tuple) else eq.param,
-                "process_type": eq.process_type,
-                "category": eq.category,
-                "type": eq.type,
-                "material": eq.material,
-                "num_units": getattr(eq, "_requested_num_units", None),
-                "purchased_cost": float(eq.purchased_cost) if eq.param is None else None,
-                "cost_year": eq.cost_year,
-                "target_year": eq.target_year,
-            }
-        equipment_data.append(spec)
-
-    project = {
+    """Return the full project (all plants) as a versioned JSON envelope."""
+    return to_jsonable({
         "format": PROJECT_FORMAT,
         "version": PROJECT_VERSION,
         "saved_at": datetime.now(timezone.utc).isoformat(),
         "app_version": APP_VERSION,
-        "equipment": equipment_data,
-        "plant": state.plant_config,
-        "results": to_jsonable(state.results) if state.results else None,
-    }
-    return project
+        **project_store.to_file_payload(),
+    })
 
 
 @router.post("/export-json", response_model=ExportJsonResponse)
@@ -142,20 +112,22 @@ def export_json():
 
 
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
+MAX_PLANTS = 50
 
 
 def _restore_project_state(data: dict) -> int:
-    """Apply a project payload to the in-memory state. Returns equipment count.
+    """Apply a project payload to the in-memory state. Returns the active
+    plant's equipment count.
 
-    Accepts both the current versioned envelope and the legacy flat shape —
-    both have `equipment` and `plant` at the top level.
+    Accepts the multi-plant envelope (v2) as well as v1 / legacy flat
+    files, which have a single plant's `equipment` and `plant` at the top
+    level and open as a one-plant project.
     """
-    state.equipment_list = build_equipment_list(data.get("equipment", []))
-    state.plant_config = data.get("plant", {})
-    state.plant = None
-    state.results = {}
-    state.reset_analysis_runs()
-    return len(state.equipment_list)
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail="Not an OpenPyTEA project file")
+    if len(data.get("plants") or []) > MAX_PLANTS:
+        raise HTTPException(status_code=400, detail=f"Too many plants (max {MAX_PLANTS})")
+    return project_store.restore(data)
 
 
 @router.post("/load", response_model=LoadResponse)
@@ -213,14 +185,17 @@ def load_example(example_id: str):
         raise HTTPException(status_code=404, detail="Example not found")
 
     data = json.loads(preset_file.read_text())
+    equipment = data.get("equipment", [])
+    config = data.get("plant", {})
+    build_equipment_list(equipment)  # validate before touching the project
 
-    # Restore equipment
-    state.equipment_list = build_equipment_list(data.get("equipment", []))
-
-    # Restore plant config
-    state.plant_config = data.get("plant", {})
-    state.plant = None
-    state.results = {}
-    state.reset_analysis_runs()
+    # An example becomes a new plant of the current project, so building a
+    # multi-plant comparison from examples never discards work — except
+    # that it takes over an untouched blank plant (e.g. a fresh project's)
+    project_store.ensure_project()
+    if project_store.active_is_blank():
+        project_store.replace_active(equipment, config)
+    else:
+        project_store.add_plant(config.get("plant_name"), equipment, config)
 
     return {"ok": True, "title": data.get("title"), "equipment_count": len(state.equipment_list)}

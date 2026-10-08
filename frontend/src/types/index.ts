@@ -220,3 +220,33 @@ export interface MonteCarloResult {
 export interface MonteCarloMultiResult {
   plants: MonteCarloResult[];
 }
+
+export interface ProjectMeta {
+  name: string;
+  description: string;
+  user: string;
+  created: string;
+}
+
+export interface ProjectPlantRow {
+  id: string;
+  name: string;
+  currency: string;
+  equipment_count: number;
+  metrics: CalculationResults["metrics"] | null;
+}
+
+export interface ProjectOverview {
+  meta: ProjectMeta;
+  active_plant_id: string;
+  plants: ProjectPlantRow[];
+  /** Results of the open plant after the action (null if not calculable). */
+  results: CalculationResults | null;
+}
+
+export interface PlantSnapshot {
+  name: string;
+  currency: string;
+  results: CalculationResults;
+  source: PlantInput;
+}

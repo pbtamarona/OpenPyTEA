@@ -1,7 +1,7 @@
 import type {
   EquipmentItem, EquipmentInput, CostDBEntry, PlantConfig,
   CalculationResults, SensitivityResult, TornadoResult,
-  MonteCarloMultiResult, PlantInput,
+  MonteCarloMultiResult, PlantInput, ProjectMeta, ProjectOverview, PlantSnapshot,
 } from "../types";
 
 // Resolve the API base URL once per page load.
@@ -106,6 +106,24 @@ export const runMonteCarlo = (params: {
   num_samples: number; batch_size: number; additional_capex: boolean; extra_plants?: PlantInput[];
 }) =>
   request<MonteCarloMultiResult>("/analysis/monte-carlo", { method: "POST", body: JSON.stringify(params) });
+
+// Project (metadata + plant list). Every mutation returns the new overview,
+// including the open plant's results.
+export const getProject = () => request<ProjectOverview>("/project");
+export const setProjectMeta = (meta: ProjectMeta) =>
+  request<ProjectOverview>("/project/meta", { method: "PUT", body: JSON.stringify(meta) });
+export const addPlant = (name?: string) =>
+  request<ProjectOverview>("/project/plants", { method: "POST", body: JSON.stringify({ name: name ?? null }) });
+export const activatePlant = (id: string) =>
+  request<ProjectOverview>(`/project/plants/${id}/activate`, { method: "POST" });
+export const duplicatePlant = (id: string) =>
+  request<ProjectOverview>(`/project/plants/${id}/duplicate`, { method: "POST" });
+export const renamePlant = (id: string, name: string) =>
+  request<ProjectOverview>(`/project/plants/${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+export const deletePlant = (id: string) =>
+  request<ProjectOverview>(`/project/plants/${id}`, { method: "DELETE" });
+export const getPlantSnapshot = (id: string) =>
+  request<PlantSnapshot>(`/project/plants/${id}/snapshot`);
 
 // Project I/O
 export const newProject = () =>

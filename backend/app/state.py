@@ -15,6 +15,11 @@ plant_config: dict = {}
 # (config deep-copy, equipment ids) the active plant was built from —
 # plant_factory.require_active_plant() rebuilds the plant when it drifts
 calc_snapshot: tuple | None = None
+# Multi-plant project wrapper (see project_store): metadata, one slot per
+# plant, and which slot the fields above currently hold.
+project_meta: dict = {}
+plants: list[dict] = []
+active_plant_id: str | None = None
 # Analyses run on the active plant this session, replayed by
 # /api/project/export-json: last tornado args, sensitivity args per
 # (parameter, metric), and the calc_snapshot the cached MC run used.

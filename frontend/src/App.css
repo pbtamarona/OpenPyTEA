@@ -639,3 +639,74 @@ td input[type="number"] {
   border-radius: 4px;
   padding: 4px 6px;
 }
+
+/* Project tab */
+.project-page .btn-secondary {
+  color: var(--text);
+  border: 1px solid var(--input-border);
+  background: transparent;
+}
+.project-page .btn-secondary:hover:not(:disabled) { background: var(--hover-bg); }
+.project-page button:disabled { opacity: .45; cursor: not-allowed; }
+.project-page .btn-small { padding: 4px 10px; font-size: 12px; border-radius: 4px; }
+.project-page textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+  background: var(--input-bg);
+  color: var(--text);
+  outline: none;
+}
+.project-page textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(67,97,238,.15);
+}
+.project-page .form-group input:disabled { opacity: .7; }
+.project-plants-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.project-plants-header h2 { margin: 0; }
+.project-plants-actions { display: flex; gap: 8px; }
+.project-hint { margin: 8px 0 12px; font-size: 13px; color: var(--text-muted); }
+.project-dot { color: var(--accent); text-align: center; }
+.project-row-active td { background: var(--hover-bg); }
+.project-row-active .project-plant-name { font-weight: 600; }
+.project-row-actions { white-space: nowrap; text-align: right; }
+.project-row-actions button + button { margin-left: 4px; }
+.project-rename {
+  padding: 4px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  font-size: 13px;
+  background: var(--input-bg);
+  color: var(--text);
+  outline: none;
+  width: 100%;
+  min-width: 160px;
+}
+
+/* Header plant switcher */
+.plant-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255,255,255,.75);
+  font-size: 12px;
+}
+.plant-switcher select {
+  max-width: 200px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.3);
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+}
+.plant-switcher select option { color: #000; }

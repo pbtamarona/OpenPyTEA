@@ -329,3 +329,41 @@ class MonteCarloResult(BaseModel):
 
 class MonteCarloMultiResult(BaseModel):
     plants: list[MonteCarloResult]
+
+
+# ── Project (multi-plant) ──────────────────────────────────────────
+
+
+class ProjectMeta(BaseModel):
+    name: str = Field(default="", max_length=200)
+    description: str = Field(default="", max_length=5000)
+    user: str = Field(default="", max_length=200)
+    created: str = Field(default="", max_length=40)
+
+
+class ProjectPlantRow(BaseModel):
+    id: str
+    name: str
+    currency: str = ""
+    equipment_count: int
+    metrics: Metrics | None = None
+
+
+class ProjectOverview(BaseModel):
+    meta: ProjectMeta
+    active_plant_id: str
+    plants: list[ProjectPlantRow]
+    # Results of the active plant after the action (None if it can't be
+    # calculated yet), so the Results tab follows a plant switch
+    results: CalculationResults | None = None
+
+
+class PlantNameIn(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+class PlantSnapshot(BaseModel):
+    name: str
+    currency: str
+    results: CalculationResults
+    source: PlantInput
