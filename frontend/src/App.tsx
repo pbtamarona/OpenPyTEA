@@ -7,7 +7,7 @@ import MonteCarloPage from "./pages/MonteCarloPage";
 import {
   saveProject, exportJsonResults, loadProject, loadProjectFromText,
   newProject, getExamples, loadExample, runCalculations,
-  getProject, activatePlant,
+  getProject, activatePlant, addPlant,
 } from "./api/client";
 import type { ExamplePreset } from "./api/client";
 import ComparePage from "./pages/ComparePage";
@@ -147,6 +147,18 @@ function App() {
       applyProject(await activatePlant(id), true);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Could not open plant");
+    } finally {
+      setLoadingMsg(null);
+    }
+  };
+
+  const handleAddPlant = async () => {
+    try {
+      setLoadingMsg("Adding plant…");
+      applyProject(await addPlant(), true);
+      markDirty();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Could not add plant");
     } finally {
       setLoadingMsg(null);
     }
@@ -761,7 +773,8 @@ function App() {
           ))}
         </nav>
         <div className="header-actions">
-          {project && project.plants.length > 1 && (
+          {/* Plant Config has its own picker (which saves unsaved edits first) */}
+          {project && project.plants.length > 1 && tab !== "Plant Config" && (
             <label className="plant-switcher" title="Plant that Plant Config, Equipment, Results, Analysis and Monte Carlo work on">
               Plant
               <select value={project.active_plant_id} onChange={(e) => handleSwitchPlant(e.target.value)}>
@@ -819,7 +832,16 @@ function App() {
           />
         )}
         {tab === "Equipment" && <EquipmentPage key={refreshKey} setError={setError} markDirty={markDirty} />}
-        {tab === "Plant Config" && <PlantConfigPage key={refreshKey} setError={setError} markDirty={markDirty} />}
+        {tab === "Plant Config" && (
+          <PlantConfigPage
+            key={refreshKey}
+            setError={setError}
+            markDirty={markDirty}
+            project={project}
+            onSwitchPlant={handleSwitchPlant}
+            onAddPlant={handleAddPlant}
+          />
+        )}
         {tab === "Results" && <ResultsPage results={results} setResults={setResults} setError={setError} onAddToComparison={addToComparison} />}
         {tab === "Analysis" && <AnalysisPage setError={setError} comparedPlants={comparedPlants} />}
         {tab === "Monte Carlo" && <MonteCarloPage setError={setError} comparedPlants={comparedPlants} />}

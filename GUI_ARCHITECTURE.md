@@ -124,7 +124,7 @@ results, so the Results tab follows a plant switch.
 ### ProjectPage
 - Project details: name, user name (defaults to the OS login), date created (read-only), description; saved on blur
 - Plants table: open-plant marker, name, currency, equipment count, LCOP, NPV, IRR, payback; Open / Rename / Duplicate / Compare / Delete per row; "+ Add Plant" and "Add all to Compare"
-- Header shows a plant switcher whenever the project has more than one plant
+- Header shows a plant switcher whenever the project has more than one plant (except on Plant Config, which has its own picker)
 
 ### EquipmentPage
 - Table with columns: #, Name, Category, Type, Material, Process, Param, Units, Purchased ($), Direct ($), actions
@@ -160,6 +160,7 @@ results, so the Results tab follows a plant switch.
   never round-tripped as inputs)
 
 ### PlantConfigPage
+- Plant picker at the top: dropdown of every plant in the project (by Plant Name) + "+ New Plant". Unsaved form edits are saved before switching. The header plant switcher is hidden on this tab.
 - Card sections: General, Financial, Labor, Products, Variable OPEX,
   Parameter Dependencies
 - Country/region are cascading dropdowns from `Plant.locFactors`

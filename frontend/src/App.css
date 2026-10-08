@@ -710,3 +710,37 @@ td input[type="number"] {
   font-size: 13px;
 }
 .plant-switcher select option { color: #000; }
+
+/* Plant picker (top of Plant Config) */
+.plant-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 20px;
+}
+.plant-picker label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.plant-picker select {
+  min-width: 260px;
+  padding: 8px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--input-bg);
+  color: var(--text);
+}
+.plant-picker .btn-secondary {
+  color: var(--text);
+  border: 1px solid var(--input-border);
+  background: transparent;
+}
+.plant-picker .btn-secondary:hover:not(:disabled) { background: var(--hover-bg); }
+.plant-picker button:disabled, .plant-picker select:disabled { opacity: .5; cursor: not-allowed; }
+.plant-picker-hint { margin-left: auto; font-size: 12px; color: var(--text-muted); }

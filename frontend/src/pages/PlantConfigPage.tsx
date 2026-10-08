@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getPlantConfig, setPlantConfig, getLocations } from "../api/client";
-import type { PlantConfig, DependencyBlock, UncertaintyBlock } from "../types";
+import type { PlantConfig, DependencyBlock, UncertaintyBlock, ProjectOverview } from "../types";
 import UncertaintyEditor, { DISTRIBUTIONS, paramSummary } from "../components/UncertaintyEditor";
 
 // ── Parameter dependencies (3.0 dependency DAG) ────────────────────
@@ -141,16 +141,27 @@ const defaultConfig: PlantConfig = {
 interface Props {
   setError: (e: string | null) => void;
   markDirty: () => void;
+  /** Plants of the project, for the plant picker (null while loading). */
+  project: ProjectOverview | null;
+  onSwitchPlant: (id: string) => Promise<void>;
+  onAddPlant: () => Promise<void>;
 }
 
-export default function PlantConfigPage({ setError, markDirty }: Props) {
+export default function PlantConfigPage({ setError, markDirty, project, onSwitchPlant, onAddPlant }: Props) {
   const [config, setConfig] = useState<PlantConfig>({ ...defaultConfig });
+  // Config as last loaded from / saved to the backend — the form has
+  // unsaved edits whenever it differs.
+  const savedJson = useRef(JSON.stringify(defaultConfig));
+  const [switching, setSwitching] = useState(false);
   const [locations, setLocations] = useState<Record<string, unknown>>({});
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     getPlantConfig().then((c) => {
-      if (c && Object.keys(c).length > 0) setConfig(c as PlantConfig);
+      if (c && Object.keys(c).length > 0) {
+        setConfig(c as PlantConfig);
+        savedJson.current = JSON.stringify(c);
+      }
     }).catch((e: unknown) => {
       setError(e instanceof Error ? e.message : "Failed to load plant config");
     });
@@ -176,11 +187,31 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
     setSaveError(null);
     try {
       await setPlantConfig(config);
+      savedJson.current = JSON.stringify(config);
       markDirty();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (e: unknown) {
       setSaveError(e instanceof Error ? e.message : "Save failed");
+    }
+  };
+
+  /** Switch plant / add one, saving this form's unsaved edits first so
+      they aren't lost when the page reloads for the other plant. */
+  const leavePlant = async (go: () => Promise<void>) => {
+    setError(null);
+    setSwitching(true);
+    try {
+      if (JSON.stringify(config) !== savedJson.current) {
+        await setPlantConfig(config);
+        savedJson.current = JSON.stringify(config);
+        markDirty();
+      }
+      await go();
+    } catch (e: unknown) {
+      setError(`Couldn't save this plant before switching: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSwitching(false);
     }
   };
 
@@ -329,6 +360,7 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
     setSaveError(null);
     setPlantConfig(next)
       .then(() => {
+        savedJson.current = JSON.stringify(next);
         markDirty();
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
@@ -378,6 +410,38 @@ export default function PlantConfigPage({ setError, markDirty }: Props) {
 
   return (
     <div>
+      {/* Plant picker: every plant of the project, by its Plant Name */}
+      {project && (
+        <div className="card plant-picker">
+          <label htmlFor="plant-picker-select">Plant</label>
+          <select
+            id="plant-picker-select"
+            value={project.active_plant_id}
+            disabled={switching}
+            onChange={(e) => {
+              // read now: after the save below React has already reset the
+              // controlled select to the open plant
+              const id = e.target.value;
+              leavePlant(() => onSwitchPlant(id));
+            }}
+          >
+            {project.plants.map((p) => (
+              <option key={p.id} value={p.id}>
+                {/* the open plant shows its name as currently typed */}
+                {p.id === project.active_plant_id ? config.plant_name || p.name : p.name}
+              </option>
+            ))}
+          </select>
+          <button className="btn-secondary" disabled={switching} onClick={() => leavePlant(onAddPlant)}>
+            + New Plant
+          </button>
+          <span className="plant-picker-hint">
+            {project.plants.length} plant{project.plants.length !== 1 ? "s" : ""} in this project
+            {" · "}unsaved changes are saved when you switch
+          </span>
+        </div>
+      )}
+
       {/* General */}
       <div className="card">
         <h2>General</h2>
