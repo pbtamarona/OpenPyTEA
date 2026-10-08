@@ -20,6 +20,9 @@ import "./App.css";
 
 const TABS = ["Project", "Plant Config", "Equipment", "Results", "Analysis", "Monte Carlo", "Compare"] as const;
 const PROJECT_EXT = "openpytea";
+// Tabs whose results live in the page itself: kept mounted (just hidden)
+// after the first visit so switching tabs doesn't discard them
+const KEEP_ALIVE = new Set<string>(["Analysis", "Monte Carlo"]);
 // Tabs that show a plant picker in the page, so the header one is hidden
 const PAGES_WITH_PICKER = new Set<string>(["Plant Config", "Equipment", "Results"]);
 
@@ -45,6 +48,9 @@ const basename = (path: string | null): string => {
 function App() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Project");
   const [project, setProject] = useState<ProjectOverview | null>(null);
+  // Keep-alive tabs visited since the open plant/project last changed
+  // (refreshKey); a change drops them, as their results were for that plant.
+  const [kept, setKept] = useState<{ key: number; tabs: string[] }>({ key: 0, tabs: [] });
   // Bumped when a different project loads (new / open): remounts the
   // Project tab so its form starts from the new project's details.
   const [projectEpoch, setProjectEpoch] = useState(0);
@@ -221,6 +227,15 @@ function App() {
       console.warn("Examples fetch failed:", e);
     });
   }, [showWelcome]);
+
+  useEffect(() => {
+    if (!KEEP_ALIVE.has(tab)) return;
+    setKept((prev) => {
+      const tabs = prev.key === refreshKey ? prev.tabs : [];
+      return tabs.includes(tab) ? prev : { key: refreshKey, tabs: [...tabs, tab] };
+    });
+  }, [tab, refreshKey]);
+  const isKept = (t: string) => tab === t || (kept.key === refreshKey && kept.tabs.includes(t));
 
   // Keep the project overview (plant names, metrics) current: plant names
   // change on Plant Config and metrics on Results, so refetch on tab change.
@@ -863,8 +878,16 @@ function App() {
             onSwitchPlant={handleSwitchPlant}
           />
         )}
-        {tab === "Analysis" && <AnalysisPage setError={setError} comparedPlants={comparedPlants} />}
-        {tab === "Monte Carlo" && <MonteCarloPage setError={setError} comparedPlants={comparedPlants} />}
+        {isKept("Analysis") && (
+          <div hidden={tab !== "Analysis"}>
+            <AnalysisPage key={refreshKey} setError={setError} comparedPlants={comparedPlants} active={tab === "Analysis"} />
+          </div>
+        )}
+        {isKept("Monte Carlo") && (
+          <div hidden={tab !== "Monte Carlo"}>
+            <MonteCarloPage key={refreshKey} setError={setError} comparedPlants={comparedPlants} />
+          </div>
+        )}
         {tab === "Compare" && (
           <ComparePage
             plants={comparedPlants}

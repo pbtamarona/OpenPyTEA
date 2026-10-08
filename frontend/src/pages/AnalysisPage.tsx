@@ -34,6 +34,9 @@ interface Panel {
 interface Props {
   setError: (e: string | null) => void;
   comparedPlants: ComparedPlant[];
+  /** The page stays mounted (results kept) while hidden on other tabs;
+      false while hidden. */
+  active: boolean;
 }
 
 const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2): Panel => ({
@@ -45,7 +48,7 @@ const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2): Pane
   loading: false,
 });
 
-export default function AnalysisPage({ setError, comparedPlants }: Props) {
+export default function AnalysisPage({ setError, comparedPlants, active }: Props) {
   const [parameters, setParameters] = useState<string[]>([]);
   const [sensPoints, setSensPoints] = useState(21);
   const [panels, setPanels] = useState<Panel[]>([newPanel()]);
@@ -62,7 +65,10 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
     [comparedPlants],
   );
 
+  // Refetched every time the tab is shown: the configuration may have
+  // gained or lost items while the user was on another tab
   useEffect(() => {
+    if (!active) return;
     getSensitivityParameters().then((p) => {
       setParameters(p);
       setPanels((prev) =>
@@ -72,7 +78,7 @@ export default function AnalysisPage({ setError, comparedPlants }: Props) {
       setError(e instanceof Error ? e.message : "Failed to load parameters");
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [active]);
 
   const updatePanel = (id: string, patch: Partial<Panel>) =>
     setPanels((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
