@@ -808,3 +808,36 @@ td input[type="number"] {
   align-items: center;
 }
 .brand-menu .dropdown-menu { left: 0; right: auto; min-width: 220px; }
+
+/* Bottom ribbon: paper citation + GUI credit (always visible) */
+.app-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px 16px;
+  padding: 6px 24px;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.app-footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.app-footer a:hover { text-decoration: underline; }
+/* keep the welcome card's button clear of the fixed ribbon */
+.welcome { padding-bottom: 64px; }
+.welcome .app-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  background: rgba(15, 17, 23, .85);
+  border-top-color: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.65);
+}
+.welcome .app-footer a { color: #8fb0ff; }

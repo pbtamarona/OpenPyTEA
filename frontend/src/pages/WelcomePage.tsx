@@ -1,3 +1,5 @@
+import AppFooter from "../components/AppFooter";
+
 interface Props {
   onContinue: () => void;
 }
@@ -43,6 +45,7 @@ export default function WelcomePage({ onContinue }: Props) {
           Get Started →
         </button>
       </div>
+      <AppFooter />
     </div>
   );
 }

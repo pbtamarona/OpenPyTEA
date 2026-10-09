@@ -315,6 +315,18 @@ fn open_in_browser(url: &Url) {
     }
 }
 
+/// Open an http(s) link from the GUI (e.g. the paper in the footer) in the
+/// system browser — a plain link would navigate the app window itself.
+#[tauri::command]
+fn open_external(url: String) -> Result<(), String> {
+    let url = Url::parse(&url).map_err(|e| e.to_string())?;
+    if !matches!(url.scheme(), "http" | "https") {
+        return Err("only http(s) links can be opened".into());
+    }
+    open_in_browser(&url);
+    Ok(())
+}
+
 /// Async so the window is built off the main thread (building a webview
 /// window from a sync command can deadlock on Windows).
 #[tauri::command]
@@ -422,6 +434,7 @@ pub fn run() {
             read_project_text,
             write_project_text,
             open_docs,
+            open_external,
         ])
         .on_window_event(|window, event| {
             // Fired when the user clicks the red close button. Cancel the

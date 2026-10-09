@@ -14,6 +14,7 @@ import ComparePage from "./pages/ComparePage";
 import WelcomePage from "./pages/WelcomePage";
 import ProjectPage from "./pages/ProjectPage";
 import { openDocs } from "./docs";
+import AppFooter from "./components/AppFooter";
 import type {
   CalculationResults, ComparedPlant, PlantInput, PlantSnapshot, ProjectOverview,
 } from "./types";
@@ -928,6 +929,7 @@ function App() {
           />
         )}
       </main>
+      <AppFooter />
     </div>
   );
 }
