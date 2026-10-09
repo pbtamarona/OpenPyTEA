@@ -413,7 +413,7 @@ lists every component, its default calculation basis, and the
    * **Owner-funded (default).** ``calculate_cash_flow`` draws working
      capital in the last construction year and releases it in the final
      year, so discounting alone prices the capital tied up.
-   * **Debt-funded** (Towler & Sinnott, 2022, Chapter 8). Working capital is
+   * **Debt-funded** (Towler & Sinnott (2022), Chapter 8). Working capital is
      funded entirely by debt, so its only cost is the annual interest at a
      corporate bond rate. Set a non-zero rate to select it; the draw and
      release are then dropped::
