@@ -759,7 +759,8 @@ def tornado_data(plant,
         The percentage or absolute value to vary each parameter by
         (e.g., 0.1 for ±10%).
     metric : str, optional
-        The metric to analyze. Default is "LCOP" (pre-tax levelized cost of the main product).
+        The metric to analyze. Default is "LCOP"
+        (pre-tax levelized cost of the main product).
         Common metrics: "LCOP", "LCOH", "IRR", "NPV".
     label : str, optional
         Custom label for the metric on the x-axis. If None, uses default label
