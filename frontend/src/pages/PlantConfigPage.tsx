@@ -3,6 +3,7 @@ import PlantPicker from "../components/PlantPicker";
 import { getPlantConfig, setPlantConfig, getLocations } from "../api/client";
 import type { PlantConfig, DependencyBlock, UncertaintyBlock, ProjectOverview } from "../types";
 import UncertaintyEditor, { DISTRIBUTIONS, paramSummary } from "../components/UncertaintyEditor";
+import HelpTip from "../components/HelpTip";
 
 // ── Parameter dependencies (3.0 dependency DAG) ────────────────────
 // A dependency ties one parameter to others: dependent = Σ weight·parent
@@ -426,35 +427,35 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
         <h2>General</h2>
         <div className="form-grid">
           <div className="form-group">
-            <label>Plant Name</label>
+            <label>Plant Name<HelpTip id="plant.plant_name" /></label>
             <input value={config.plant_name} onChange={(e) => u("plant_name", e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Process Type</label>
+            <label>Process Type<HelpTip id="plant.process_type" /></label>
             <select value={config.process_type} onChange={(e) => u("process_type", e.target.value)}>
               <option>Solids</option><option>Fluids</option><option>Mixed</option>
             </select>
           </div>
           <div className="form-group">
-            <label>Country</label>
+            <label>Country<HelpTip id="plant.country" /></label>
             <select value={config.country} onChange={(e) => { u("country", e.target.value); u("region", ""); }}>
               {Object.keys(locations).map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
           {regions.length > 0 && (
             <div className="form-group">
-              <label>Region</label>
+              <label>Region<HelpTip id="plant.region" /></label>
               <select value={config.region} onChange={(e) => u("region", e.target.value)}>
                 {regions.map((r) => <option key={r}>{r}</option>)}
               </select>
             </div>
           )}
           <div className="form-group">
-            <label>Currency</label>
+            <label>Currency<HelpTip id="plant.currency" /></label>
             <input value={config.currency} onChange={(e) => u("currency", e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Exchange Rate</label>
+            <label>Exchange Rate<HelpTip id="plant.exchange_rate" /></label>
             <input type="number" step="0.01" value={config.exchange_rate} onChange={(e) => u("exchange_rate", +e.target.value)} />
           </div>
         </div>
@@ -465,23 +466,23 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
         <h2>Financial Parameters</h2>
         <div className="form-grid">
           <div className="form-group">
-            <label>Interest Rate</label>
+            <label>Interest Rate<HelpTip id="plant.interest_rate" /></label>
             <input type="number" step="0.01" value={config.interest_rate} onChange={(e) => u("interest_rate", +e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Project Lifetime (years)</label>
+            <label>Project Lifetime (years)<HelpTip id="plant.project_lifetime" /></label>
             <input type="number" value={config.project_lifetime} onChange={(e) => u("project_lifetime", +e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Plant Utilization (0-1)</label>
+            <label>Plant Utilization (0-1)<HelpTip id="plant.plant_utilization" /></label>
             <input type="number" step="0.01" value={config.plant_utilization} onChange={(e) => u("plant_utilization", +e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Tax Rate</label>
+            <label>Tax Rate<HelpTip id="plant.tax_rate" /></label>
             <input type="number" step="0.01" value={config.tax_rate} onChange={(e) => u("tax_rate", +e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Working Capital (blank=auto)</label>
+            <label>Working Capital (blank=auto)<HelpTip id="plant.working_capital" /></label>
             <input type="number" value={config.working_capital ?? ""} onChange={(e) => u("working_capital", e.target.value ? +e.target.value : null)} />
           </div>
         </div>
@@ -492,12 +493,12 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
         <h2>Labor & Operations</h2>
         <div className="form-grid">
           <div className="form-group">
-            <label>Operator Hourly Rate ($)</label>
+            <label>Operator Hourly Rate ($)<HelpTip id="plant.operator_hourly_rate" /></label>
             <input type="number" step="0.01" value={config.operator_hourly_rate.rate}
               onChange={(e) => setConfig((p) => ({ ...p, operator_hourly_rate: { ...p.operator_hourly_rate, rate: +e.target.value } }))} />
           </div>
           <div className="form-group">
-            <label>Rate Uncertainty (MC)</label>
+            <label>Rate Uncertainty (MC)<HelpTip id="plant.rate_uncertainty" /></label>
             {config.operator_hourly_rate.dependency != null ? (
               <span style={{ fontSize: 12, color: "#868e96", padding: "8px 0" }} title="Set by a parameter dependency — its spread comes from the parents (plus optional noise)">via dependency</span>
             ) : (
@@ -505,19 +506,19 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
             )}
           </div>
           <div className="form-group">
-            <label>Operators/Shift (blank=auto)</label>
+            <label>Operators/Shift (blank=auto)<HelpTip id="plant.operators_per_shift" /></label>
             <input type="number" value={config.operators_per_shift ?? ""} onChange={(e) => u("operators_per_shift", e.target.value ? +e.target.value : null)} />
           </div>
           <div className="form-group">
-            <label>Working Weeks/Year</label>
+            <label>Working Weeks/Year<HelpTip id="plant.working_weeks_per_year" /></label>
             <input type="number" value={config.working_weeks_per_year} onChange={(e) => u("working_weeks_per_year", +e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Working Shifts/Week</label>
+            <label>Working Shifts/Week<HelpTip id="plant.working_shifts_per_week" /></label>
             <input type="number" value={config.working_shifts_per_week} onChange={(e) => u("working_shifts_per_week", +e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Operating Shifts/Day</label>
+            <label>Operating Shifts/Day<HelpTip id="plant.operating_shifts_per_day" /></label>
             <input type="number" value={config.operating_shifts_per_day} onChange={(e) => u("operating_shifts_per_day", +e.target.value)} />
           </div>
         </div>
@@ -525,7 +526,7 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
 
       {/* Products */}
       <div className="card">
-        <h2>Plant Products</h2>
+        <h2>Plant Products<HelpTip id="plant.plant_products" /></h2>
         {Object.keys(config.plant_products).length === 0 ? (
           <p style={{ color: "#868e96", fontSize: 13 }}>No products defined. First product is the main product.</p>
         ) : (
@@ -533,7 +534,7 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
             <thead>
               <tr>
                 <th>Product</th><th>Production (daily)</th><th>Price ($/unit)</th>
-                <th>Price uncertainty (MC)</th><th>Production uncertainty (MC)</th><th></th>
+                <th>Price uncertainty (MC)<HelpTip id="plant.price_uncertainty" /></th><th>Production uncertainty (MC)<HelpTip id="plant.quantity_uncertainty" /></th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -585,7 +586,7 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
 
       {/* Variable OPEX */}
       <div className="card">
-        <h2>Variable OPEX Inputs</h2>
+        <h2>Variable OPEX Inputs<HelpTip id="plant.variable_opex_inputs" /></h2>
         {Object.keys(config.variable_opex_inputs).length === 0 ? (
           <p style={{ color: "#868e96", fontSize: 13 }}>No variable costs defined yet.</p>
         ) : (
@@ -593,7 +594,7 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
             <thead>
               <tr>
                 <th>Item</th><th>Consumption (daily)</th><th>Price ($/unit)</th>
-                <th>Price uncertainty (MC)</th><th>Consumption uncertainty (MC)</th><th></th>
+                <th>Price uncertainty (MC)<HelpTip id="plant.price_uncertainty" /></th><th>Consumption uncertainty (MC)<HelpTip id="plant.quantity_uncertainty" /></th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -645,7 +646,7 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
 
       {/* Parameter dependencies (3.0 dependency DAG) */}
       <div className="card">
-        <h2>Parameter Dependencies</h2>
+        <h2>Parameter Dependencies<HelpTip id="plant.dependencies" /></h2>
         <p style={{ color: "#868e96", fontSize: 13, marginBottom: 12 }}>
           Tie a parameter to others: <em>dependent = Σ weight × parent + offset</em>. A dependent is never
           sampled or varied on its own — Monte Carlo, sensitivity, and tornado all propagate its parents'

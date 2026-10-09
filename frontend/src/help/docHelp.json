@@ -1,0 +1,330 @@
+{
+  "plant.plant_name": {
+    "text": "Name used in plots and reports. (Default: \"\".)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.process_type": {
+    "text": "\"Solids\", \"Fluids\", or \"Mixed\" — sets default cost factors. (Default: required.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.country": {
+    "text": "Country for location factor lookup. (Default: \"United States\".)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.region": {
+    "text": "Region within the country (required for countries with regional factors). (Default: \"Gulf Coast\".)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.loc_factor": {
+    "text": "Direct location factor override. Bypasses country/region lookup. (Default: None.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.currency": {
+    "text": "Currency label for display. Use $ when using symbol to avoid RST syntax errors. (Default: \"USD\".)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.exchange_rate": {
+    "text": "Conversion from USD to currency (1 USD = exchange_rate × currency unit). (Default: 1.0.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.equipment": {
+    "text": "List of Equipment objects. (Default: required.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.interest_rate": {
+    "text": "Discount rate for NPV, capital recovery, and working-capital interest. (Default: 0.09.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.project_lifetime": {
+    "text": "Project duration in years (integer ≥ 3). Accepts an array for scenario analysis. (Default: 20.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.plant_utilization": {
+    "text": "Annual capacity utilization (0–1). Scales production and variable OPEX. (Default: 1.0.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.tax_rate": {
+    "text": "Corporate income tax rate (0–1). Not applied to levelized cost calculations. (Default: 0.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.working_capital": {
+    "text": "Working capital in USD. Defaults to 0.15 × FCI when None. (Default: None.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.plant_products": {
+    "text": "Products dict. First entry is the main product for LCOP; others are co-products. Each entry takes production (units/day) and price (USD/unit), plus the optional Monte Carlo keys price_uncertainty, production_uncertainty, and production_dependency — see uncertainty-keys. (Default: {}.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.variable_opex_inputs": {
+    "text": "Utilities and raw materials, each with consumption (units/day) and price (USD/unit), plus the optional Monte Carlo keys price_uncertainty, consumption_uncertainty, and consumption_dependency — see uncertainty-keys. (Default: {}.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.project_uncertainties": {
+    "text": "Per-parameter uncertainty for the six project-level scalars (fixed_capital_factor, fixed_opex_factor, project_lifetime, interest_rate, plant_utilization, tax_rate). Read by monte_carlo() only — see uncertainty-keys. (Default: {}.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.operator_hourly_rate": {
+    "text": "Operator wage in USD/hr, under \"rate\". Monte Carlo uncertainty goes in a nested \"rate_uncertainty\" sub-dict (same fields as price_uncertainty; the legacy flat layout still works). Also accepts the dependency key of a project-level scalar. (Default: {\"rate\": 38.11}.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.working_weeks_per_year": {
+    "text": "Annual working weeks per operator. (Default: 49.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.working_shifts_per_week": {
+    "text": "Shifts per operator per week. (Default: 5.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.operating_shifts_per_day": {
+    "text": "Daily operating shifts (continuous plants typically run 3). (Default: 3.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.operators_hired": {
+    "text": "Total headcount. Computed automatically from process type; override to fix. (Default: auto.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.operators_per_shift": {
+    "text": "Operators per shift. Computed automatically; override to fix. (Default: auto.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.production_type": {
+    "text": "\"continuous\" or \"batch\". Only affects the auto-calculated operators_per_shift (applies the chart's minimum of 3 operators/shift for batch processes); does not change capital, OPEX, or cash-flow calculations elsewhere. (Default: \"continuous\".)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.fixed_capital_factors": {
+    "text": "Per-key overrides for OSBL, D&E, and contingency factors. (Default: {}.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.fixed_capital_components": {
+    "text": "Absolute cost overrides for any FCI component (takes precedence over factors). (Default: {}.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.fixed_opex_factors": {
+    "text": "Per-key factor overrides for fixed OPEX components. (Default: {}.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.fixed_opex_components": {
+    "text": "Absolute cost overrides for any fixed OPEX component. (Default: {}.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.capex_ramp": {
+    "text": "CAPEX spending fractions by construction year (must sum to 1.0). (Default: [0.3, 0.6, 0.1].)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.production_ramp": {
+    "text": "Capacity fractions by project year. Years beyond the list default to 1.0. (Default: [0, 0, 0.4, 0.8].)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.depreciation": {
+    "text": "Depreciation settings (method, life, etc.) — see depreciation. (Default: {}.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "equipment.name": {
+    "text": "Identifier for this equipment item (used in plots and reports).",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.param": {
+    "text": "Size/capacity parameter. Units depend on the equipment type — check cost_correlations.csv. Pass a 2-element (S1, S2) tuple/list for two-parameter forms such as \"2-var power-law\" (see Example 10). Ignored when purchased_cost is given.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.process_type": {
+    "text": "\"Solids\", \"Fluids\", \"Mixed\", or \"Electrical\" — controls default installation factor values.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.category": {
+    "text": "Equipment category — must match a row in cost_correlations.csv (case-insensitive).",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.type": {
+    "text": "Equipment sub-type within the category. Required when a category has multiple types.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.material": {
+    "text": "Construction material. Default: None, which uses the resolved correlation's default material (falling back to \"Carbon steel\" if there's no match). A material that matches this resolved default — whether auto-filled or passed explicitly — always gets f_m = 1.0, since the correlation's cost already prices that material in. Passing a different material instead uses the ratio of the two materials' factors from the table below (target f_m divided by default f_m, using 1.0 for a default material not in the table, e.g. \"Cast iron\"), so the factor stays relative to the correlation's actual cost basis instead of double-counting it. Raises if the target material isn't found in the table.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.target_year": {
+    "text": "Year to inflate costs to. Default: 2024.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.purchased_cost": {
+    "text": "Supply your own purchased cost (the total for all units) and bypass the correlation entirely.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.cost_year": {
+    "text": "Reference year of a manually supplied purchased_cost. If given, CEPCI inflation is applied from this year to target_year.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.cost_func": {
+    "text": "Explicit correlation key (the key column in the CSV). Use this to select a specific correlation when multiple exist for the same category/type.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.num_units": {
+    "text": "Number of identical units. With a correlation, param describes one unit and the correlation cost is multiplied by num_units. With a manual purchased_cost it is a label only (the cost is the total). By default it is 1 for a manual purchased_cost, or the number of parallel units the parallelization logic splits param into (that cost already covers all of them).",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.piping_factor": {
+    "text": "Per-factor overrides. None uses the process_type default.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.erection_factor": {
+    "text": "Per-factor overrides. None uses the process_type default.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.lagging_factor": {
+    "text": "Per-factor overrides. None uses the process_type default.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "equipment.material_factor": {
+    "text": "Override the material factor. None uses 1.0 when material matches the resolved default, or the ratio of the two materials' table factors otherwise.",
+    "doc": "user_guide/equipment.html#the-equipment-class"
+  },
+  "composite.name": {
+    "text": "Composite identifier.",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.process_type": {
+    "text": "\"Solids\", \"Fluids\", \"Mixed\", or \"Electrical\". Used by the plant's operator estimate and, under the \"composite\" installation rule, as the factor table for the whole composite.",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.components": {
+    "text": "Equipment or CompositeEquipment objects. Several identical units of a component are priced by setting num_units on the component itself, exactly as for stand-alone equipment.",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.category": {
+    "text": "Free labels used for reporting. Default category is \"Composite\".",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.type": {
+    "text": "Free labels used for reporting. Default category is \"Composite\".",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.installation": {
+    "text": "\"component\" (default): the direct cost is the sum of each component's own direct cost, so every part keeps its own process-type and material factors. \"composite\": the composite's own process-type factors are applied once to the total purchased cost, i.e. the assembly is installed as one item.",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.purchased_cost": {
+    "text": "Optional vendor quote for the whole composite (the total for all num_units, not multiplied). It replaces the component sum, which is kept as components_purchased_cost; the composite is then installed as one item.",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.cost_year": {
+    "text": "Optional vendor quote for the whole composite (the total for all num_units, not multiplied). It replaces the component sum, which is kept as components_purchased_cost; the composite is then installed as one item.",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.num_units": {
+    "text": "Number of identical composites. Multiplies the component-based purchased and direct cost. Default 1.",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.target_year": {
+    "text": "Must match every component's target_year. Default 2024.",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.piping_factor": {
+    "text": "Overrides used by the \"composite\" installation rule.",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "composite.material_factor": {
+    "text": "Overrides used by the \"composite\" installation rule.",
+    "doc": "user_guide/equipment.html#composite-equipment"
+  },
+  "project_uncertainty.fixed_capital_factor": {
+    "text": "Multiplicative factor on total installed CAPEX. (Default std: 0.30 (30%).)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "project_uncertainty.fixed_opex_factor": {
+    "text": "Multiplicative factor on annual fixed OPEX. (Default std: 0.30 (30%).)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "project_uncertainty.project_lifetime": {
+    "text": "Economic project life (years). (Default std: 5 years.)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "project_uncertainty.interest_rate": {
+    "text": "Discount / financing rate. (Default std: 0.03 (3 pp).)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "project_uncertainty.plant_utilization": {
+    "text": "Yearly fraction of operating time. (Default std: 0 (opt-in).)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "project_uncertainty.tax_rate": {
+    "text": "Corporate tax rate. (Default std: 0 (opt-in).)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.0": {
+    "text": "Fixed value — loc — No randomness; every draw equals loc.",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.1": {
+    "text": "Fixed value — loc — No randomness; every draw equals loc.",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.2": {
+    "text": "Lognormal — loc (μ), scale (σ) — Optional min/max truncate the drawn samples.",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.3": {
+    "text": "Normal (default) — loc (mean), scale (std) — Optional min/max truncate the drawn samples.",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.4": {
+    "text": "Uniform — min, max",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.5": {
+    "text": "Triangular — loc (mode), min, max",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.6": {
+    "text": "Bernoulli — loc (probability p), scale (success value, default 1) — Draws are 0 or scale. Optional min/max truncate.",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.7": {
+    "text": "Discrete uniform — min, max — Integers, inclusive of max.",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.8": {
+    "text": "Weibull — loc (offset), scale (λ), shape (k)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.9": {
+    "text": "Gamma — loc (offset), scale (θ), shape (k)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.10": {
+    "text": "Beta — loc (α), shape (β), max (upper bound, default 1)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.11": {
+    "text": "Generalized extreme value (GEV) — loc (μ), scale (σ), shape (ξ)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "dist.12": {
+    "text": "Student's t — loc (median), scale, shape (ν, degrees of freedom)",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
+  "metric.LCOP": {
+    "text": "Pre-tax levelized cost of the primary product (default).",
+    "doc": "user_guide/analysis.html#one-way-sensitivity-analysis"
+  },
+  "metric.NPV": {
+    "text": "Net Present Value.",
+    "doc": "user_guide/analysis.html#one-way-sensitivity-analysis"
+  },
+  "metric.IRR": {
+    "text": "Internal Rate of Return.",
+    "doc": "user_guide/analysis.html#one-way-sensitivity-analysis"
+  },
+  "metric.ROI": {
+    "text": "Return on Investment.",
+    "doc": "user_guide/analysis.html#one-way-sensitivity-analysis"
+  },
+  "metric.PBT": {
+    "text": "Payback time in years: the cumulative cash flow break-even year (aliases \"PAYBACK\", \"PAYBACK_TIME\").",
+    "doc": "user_guide/analysis.html#one-way-sensitivity-analysis"
+  },
+  "metric.SIMPLE_PBT": {
+    "text": "Simple payback time in years: fixed capital over mean annual cash flow (aliases \"SIMPLE_PAYBACK\", \"SIMPLE_PAYBACK_TIME\").",
+    "doc": "user_guide/analysis.html#one-way-sensitivity-analysis"
+  }
+}

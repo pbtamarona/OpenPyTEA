@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { UncertaintyBlock } from "../types";
+import HelpTip from "./HelpTip";
 
 // The distribution families the library's make_distribution() supports,
 // with the fields each one actually reads. `key` is the config key the
@@ -193,7 +194,7 @@ export default function UncertaintyEditor({ title, value, initialDistId, onSave,
         {err && <div style={{ color: "#e63946", marginBottom: 12, fontSize: 13 }}>{err}</div>}
         <div className="form-grid">
           <div className="form-group">
-            <label>Distribution</label>
+            <label>Distribution<HelpTip id={`dist.${distId}`} /></label>
             <select value={distId} onChange={(e) => { setDistId(+e.target.value); setErr(null); }}>
               {DISTRIBUTIONS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>

@@ -217,6 +217,28 @@ results, so the Results tab follows a plant switch.
 - Histogram chart per metric with labeled axes (metric name + frequency), downloadable as PNG
 - Input distributions summary table
 
+## Documentation and (?) help
+
+- **Bundled docs.** `scripts/build_docs.py` builds the Sphinx sources in
+  `docs/` into `frontend/public/docs/` (git-ignored; Vite serves it at
+  `/docs/` and it ships inside the app). MathJax and DataTables are
+  downloaded into the build and remote badges stripped, so the docs work
+  offline under the desktop CSP. CI runs it before `tauri build`;
+  `start.sh` runs it once when the folder is missing.
+- **Opening them.** Desktop: OpenPyTEA ▸ OpenPyTEA Documentation opens a
+  separate `docs` window (Rust `open_docs_window`; links leaving the docs
+  open in the system browser; closing it never triggers the unsaved-work
+  prompt). Browser dev: the header logo opens a menu with the same item
+  (new tab). Both go through `openDocs(path)` in `src/docs.ts`.
+- **(?) tips.** `components/HelpTip.tsx` shows a hover/focus bubble and opens
+  the matching docs section on click. Text comes from
+  `src/help/help.ts`: entries keyed after config keys (`plant.interest_rate`,
+  `equipment.param`, `composite.installation`, `metric.NPV`, `dist.3`, ...)
+  are extracted from the user guide's reference tables into
+  `src/help/docHelp.json` by `python scripts/build_docs.py --help-only`
+  (committed; rerun after editing those tables), GUI-only inputs are
+  written in `help.ts`.
+
 ## Key Design Decisions
 
 1. **Recharts on screen, matplotlib on download** — backend returns raw data and the

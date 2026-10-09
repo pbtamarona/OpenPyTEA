@@ -4,6 +4,7 @@ import {
   deletePlant, getPlantSnapshot,
 } from "../api/client";
 import type { ProjectMeta, ProjectOverview, PlantSnapshot } from "../types";
+import HelpTip from "../components/HelpTip";
 
 interface Props {
   project: ProjectOverview | null;
@@ -124,7 +125,7 @@ export default function ProjectPage({
         <h2>Project Details</h2>
         <div className="form-grid">
           <div className="form-group">
-            <label>Project Name</label>
+            <label>Project Name<HelpTip id="project.name" /></label>
             <input
               value={meta.name}
               placeholder="Untitled project"
@@ -133,7 +134,7 @@ export default function ProjectPage({
             />
           </div>
           <div className="form-group">
-            <label>User Name</label>
+            <label>User Name<HelpTip id="project.user" /></label>
             <input
               value={meta.user}
               onChange={(e) => setMeta({ ...meta, user: e.target.value })}
@@ -141,12 +142,12 @@ export default function ProjectPage({
             />
           </div>
           <div className="form-group">
-            <label>Date Created</label>
+            <label>Date Created<HelpTip id="project.created" /></label>
             <input value={meta.created} readOnly disabled />
           </div>
         </div>
         <div className="form-group" style={{ marginTop: 12 }}>
-          <label>Project Description</label>
+          <label>Project Description<HelpTip id="project.description" /></label>
           <textarea
             rows={3}
             value={meta.description}
@@ -159,7 +160,7 @@ export default function ProjectPage({
 
       <div className="card">
         <div className="project-plants-header">
-          <h2>Plants</h2>
+          <h2>Plants<HelpTip id="project.plants" /></h2>
           <div className="project-plants-actions">
             <button
               className="btn-secondary"

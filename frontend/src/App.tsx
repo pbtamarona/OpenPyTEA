@@ -13,6 +13,7 @@ import type { ExamplePreset } from "./api/client";
 import ComparePage from "./pages/ComparePage";
 import WelcomePage from "./pages/WelcomePage";
 import ProjectPage from "./pages/ProjectPage";
+import { openDocs } from "./docs";
 import type {
   CalculationResults, ComparedPlant, PlantInput, PlantSnapshot, ProjectOverview,
 } from "./types";
@@ -63,6 +64,7 @@ function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [examples, setExamples] = useState<ExamplePreset[]>([]);
   const [examplesOpen, setExamplesOpen] = useState(false);
+  const [brandOpen, setBrandOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("openpytea-theme");
@@ -789,7 +791,28 @@ function App() {
       {loadingBanner}
       {closeConfirmModal}
       <header className="header">
-        <img src="/logo.png" alt="OpenPyTEA" className="brand-logo" />
+        {/* Desktop: OpenPyTEA ▸ Documentation lives in the native app menu.
+            Browser dev mode has no native menu, so the logo opens one. */}
+        {inTauri ? (
+          <img src="/logo.png" alt="OpenPyTEA" className="brand-logo" />
+        ) : (
+          <div className="brand-menu">
+            <button className="brand-button" onClick={() => setBrandOpen((o) => !o)} title="OpenPyTEA menu">
+              <img src="/logo.png" alt="OpenPyTEA" className="brand-logo" />
+            </button>
+            {brandOpen && (
+              <>
+                <div className="dropdown-backdrop" onClick={() => setBrandOpen(false)} />
+                <div className="dropdown-menu">
+                  <button className="dropdown-item" onClick={() => { setBrandOpen(false); openDocs(); }}>
+                    <span className="dropdown-item-title">OpenPyTEA Documentation</span>
+                    <span className="dropdown-item-desc">User guide, tutorials and API reference</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
         <nav className="tabs">
           {TABS.map((t) => (
             <button key={t} className={tab === t ? "tab active" : "tab"} onClick={() => setTab(t)}>

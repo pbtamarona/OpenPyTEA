@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
 import { fmtTick, fmtValue, niceTicks } from "../format";
+import HelpTip from "../components/HelpTip";
 
 /** Name and unit of an MC output metric — the same wording and units as
     the library's matplotlib figures (helpers._default_metric_label). */
@@ -23,11 +24,12 @@ function metricInfo(metric: string, cur: string): { name: string; unit: string |
 }
 
 /** Unit of a sampled MC input, from the library's input naming: prices
-    are per unit of the item, consumption/production quantities per year
-    (consumption × price = annual cost), factors and rates are fractions. */
+    are per unit of the item, consumption/production quantities per day
+    (the library annualizes them × 365 × utilization), factors and rates
+    are fractions. */
 function inputUnit(name: string, cur: string): string | null {
   if (/ price$/i.test(name)) return `${cur}/unit`;
-  if (/ (consumption|production)$/i.test(name)) return "unit/yr";
+  if (/ (consumption|production)$/i.test(name)) return "unit/day";
   switch (name.toLowerCase()) {
     case "operator hourly rate": return `${cur}/h`;
     case "project lifetime": return "years";
@@ -179,11 +181,11 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
         <h2>Monte Carlo Uncertainty Analysis</h2>
         <div className="form-grid" style={{ marginBottom: 16 }}>
           <div className="form-group">
-            <label>Number of Samples</label>
+            <label>Number of Samples<HelpTip id="mc.num_samples" /></label>
             <input type="number" value={numSamples} onChange={(e) => setNumSamples(+e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Batch Size</label>
+            <label>Batch Size<HelpTip id="mc.batch_size" /></label>
             <input type="number" value={batchSize} onChange={(e) => setBatchSize(+e.target.value)} />
           </div>
         </div>

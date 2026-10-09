@@ -744,3 +744,67 @@ td input[type="number"] {
 .plant-picker .btn-secondary:hover:not(:disabled) { background: var(--hover-bg); }
 .plant-picker button:disabled, .plant-picker select:disabled { opacity: .5; cursor: not-allowed; }
 .plant-picker-hint { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+
+/* (?) help tips */
+.help-tip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-left: 5px;
+  border-radius: 50%;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0;
+  vertical-align: middle;
+  cursor: help;
+  user-select: none;
+  flex-shrink: 0;
+}
+.help-tip:hover, .help-tip:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+.help-bubble {
+  position: fixed;
+  z-index: 3000;
+  max-width: 320px;
+  transform: translateX(-50%);
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: var(--modal-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: pre-line;
+  pointer-events: none;
+}
+.help-bubble.above { transform: translate(-50%, -100%); }
+.help-bubble-more {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+/* Logo menu (browser-dev mode; the desktop app uses its native menu) */
+.brand-menu { position: relative; }
+.brand-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.brand-menu .dropdown-menu { left: 0; right: auto; min-width: 220px; }

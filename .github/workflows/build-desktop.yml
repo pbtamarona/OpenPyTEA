@@ -85,6 +85,14 @@ jobs:
       - name: Build backend sidecar (PyInstaller)
         run: python scripts/build_sidecar.py
 
+      # The Sphinx docs ship inside the app (OpenPyTEA ▸ Documentation and
+      # the (?) help links). Also regenerates the (?) help text from the
+      # docs' reference tables.
+      - name: Build bundled documentation
+        run: |
+          pip install -r docs/requirements.txt
+          python scripts/build_docs.py
+
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci

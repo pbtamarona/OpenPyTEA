@@ -21,6 +21,14 @@ fi
 # shellcheck disable=SC1091
 source "$VENV/bin/activate"
 
+# Bundled docs (OpenPyTEA ▸ Documentation and the (?) links) — built once
+if [[ ! -f "$ROOT/frontend/public/docs/index.html" ]]; then
+  echo "→ Building the documentation (one-time setup)"
+  pip install -q -r "$ROOT/docs/requirements.txt" \
+    && python "$ROOT/scripts/build_docs.py" \
+    || echo "! Docs build failed — the Documentation links will 404 until 'python scripts/build_docs.py' succeeds" >&2
+fi
+
 if [[ ! -d "$ROOT/frontend/node_modules" ]]; then
   echo "→ Installing frontend deps (one-time setup)"
   (cd "$ROOT/frontend" && npm install)

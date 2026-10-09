@@ -5,6 +5,7 @@ import {
 } from "../api/client";
 import type { EquipmentItem, EquipmentInput, CostDBEntry, ProjectOverview } from "../types";
 import PlantPicker from "../components/PlantPicker";
+import HelpTip from "../components/HelpTip";
 
 const defaultInput: EquipmentInput = {
   name: "", param: null, process_type: "Fluids", category: "",
@@ -113,18 +114,18 @@ function EquipmentFields({ draft, setDraft, categories, processTypes, materials,
     <>
       <div className="form-grid">
         <div className="form-group">
-          <label>Name</label>
+          <label>Name<HelpTip id="equipment.name" /></label>
           <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </div>
         <div className="form-group">
-          <label>Category</label>
+          <label>Category<HelpTip id="equipment.category" /></label>
           <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value, type: null, cost_func: null })}>
             <option value="">-- Select --</option>
             {Object.keys(categories).sort().map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div className="form-group">
-          <label>Type</label>
+          <label>Type<HelpTip id="equipment.type" /></label>
           <select
             value={selectedEntry?.key || ""}
             onChange={(e) => {
@@ -145,13 +146,13 @@ function EquipmentFields({ draft, setDraft, categories, processTypes, materials,
           </select>
         </div>
         <div className="form-group">
-          <label>Process Type</label>
+          <label>Process Type<HelpTip id="equipment.process_type" /></label>
           <select value={form.process_type} onChange={(e) => setForm({ ...form, process_type: e.target.value })}>
             {processTypes.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
         <div className="form-group">
-          <label>Material</label>
+          <label>Material<HelpTip id="equipment.material" /></label>
           <select value={form.material ?? ""} onChange={(e) => setForm({ ...form, material: e.target.value || null })}>
             <option value="">
               Auto{selectedEntry?.default_material ? ` — ${selectedEntry.default_material}` : " (correlation default)"}
@@ -161,12 +162,12 @@ function EquipmentFields({ draft, setDraft, categories, processTypes, materials,
         </div>
         {showTargetYear && (
           <div className="form-group">
-            <label>Target Year</label>
+            <label>Target Year<HelpTip id="equipment.target_year" /></label>
             <input type="number" value={form.target_year} onChange={(e) => setForm({ ...form, target_year: +e.target.value })} />
           </div>
         )}
         <div className="form-group">
-          <label>Number of Units</label>
+          <label>Number of Units<HelpTip id="equipment.num_units" /></label>
           <input
             type="number" min={1} placeholder="auto"
             value={form.num_units ?? ""}
@@ -178,18 +179,18 @@ function EquipmentFields({ draft, setDraft, categories, processTypes, materials,
       <div style={{ margin: "16px 0 8px" }}>
         <label style={{ fontSize: 13, cursor: "pointer" }}>
           <input type="checkbox" checked={draft.useDirectCost} onChange={(e) => setDraft({ ...draft, useDirectCost: e.target.checked })} style={{ marginRight: 6 }} />
-          Use direct cost input (instead of size parameter)
+          Use direct cost input (instead of size parameter)<HelpTip id="equipment.use_direct_cost" />
         </label>
       </div>
 
       {draft.useDirectCost ? (
         <div className="form-grid">
           <div className="form-group">
-            <label>Purchased Cost ($)</label>
+            <label>Purchased Cost ($)<HelpTip id="equipment.purchased_cost" /></label>
             <input type="number" value={form.purchased_cost ?? ""} onChange={(e) => setForm({ ...form, purchased_cost: e.target.value ? +e.target.value : null })} />
           </div>
           <div className="form-group">
-            <label>Cost Year</label>
+            <label>Cost Year<HelpTip id="equipment.cost_year" /></label>
             <input type="number" value={form.cost_year ?? ""} onChange={(e) => setForm({ ...form, cost_year: e.target.value ? +e.target.value : null })} />
           </div>
         </div>
@@ -197,7 +198,7 @@ function EquipmentFields({ draft, setDraft, categories, processTypes, materials,
         <div className="form-grid">
           <div className="form-group">
             <label>
-              Size Parameter
+              Size Parameter<HelpTip id="equipment.param" />
               {selectedEntry && (
                 <span style={{ fontWeight: 400, textTransform: "none" }}>
                   {" "}({units1 || selectedEntry.units}, range: {selectedEntry.s_lower ?? "?"} - {selectedEntry.s_upper ?? "?"})
@@ -467,32 +468,32 @@ export default function EquipmentPage({ setError, markDirty, project, onSwitchPl
                   <>
                     <div className="form-grid">
                       <div className="form-group">
-                        <label>Name</label>
+                        <label>Name<HelpTip id="composite.name" /></label>
                         <input value={composite.name} onChange={(e) => setComposite({ ...composite, name: e.target.value })} />
                       </div>
                       <div className="form-group">
-                        <label>Category (label)</label>
+                        <label>Category (label)<HelpTip id="composite.category" /></label>
                         <input value={composite.category} onChange={(e) => setComposite({ ...composite, category: e.target.value })} />
                       </div>
                       <div className="form-group">
-                        <label>Type (label)</label>
+                        <label>Type (label)<HelpTip id="composite.type" /></label>
                         <input value={composite.type} onChange={(e) => setComposite({ ...composite, type: e.target.value })} />
                       </div>
                       <div className="form-group">
-                        <label>Process Type</label>
+                        <label>Process Type<HelpTip id="composite.process_type" /></label>
                         <select value={composite.process_type} onChange={(e) => setComposite({ ...composite, process_type: e.target.value })}>
                           {processTypes.map((p) => <option key={p} value={p}>{p}</option>)}
                         </select>
                       </div>
                       <div className="form-group">
-                        <label>Installation</label>
+                        <label>Installation<HelpTip id="composite.installation" /></label>
                         <select value={composite.installation} onChange={(e) => setComposite({ ...composite, installation: e.target.value })}>
                           <option value="component">Per component (each keeps its own factors)</option>
                           <option value="composite">As one item (composite's factors on the total)</option>
                         </select>
                       </div>
                       <div className="form-group">
-                        <label>Number of Units</label>
+                        <label>Number of Units<HelpTip id="composite.num_units" /></label>
                         <input
                           type="number" min={1} placeholder="1"
                           value={composite.num_units ?? ""}
@@ -500,7 +501,7 @@ export default function EquipmentPage({ setError, markDirty, project, onSwitchPl
                         />
                       </div>
                       <div className="form-group">
-                        <label>Target Year</label>
+                        <label>Target Year<HelpTip id="composite.target_year" /></label>
                         <input type="number" value={composite.target_year} onChange={(e) => setComposite({ ...composite, target_year: +e.target.value })} />
                       </div>
                     </div>
@@ -514,18 +515,18 @@ export default function EquipmentPage({ setError, markDirty, project, onSwitchPl
                     {composite.useQuote && (
                       <div className="form-grid">
                         <div className="form-group">
-                          <label>Quoted Purchased Cost ($)</label>
+                          <label>Quoted Purchased Cost ($)<HelpTip id="composite.purchased_cost" /></label>
                           <input type="number" value={composite.purchased_cost ?? ""} onChange={(e) => setComposite({ ...composite, purchased_cost: e.target.value ? +e.target.value : null })} />
                         </div>
                         <div className="form-group">
-                          <label>Quote Year</label>
+                          <label>Quote Year<HelpTip id="composite.cost_year" /></label>
                           <input type="number" value={composite.cost_year ?? ""} onChange={(e) => setComposite({ ...composite, cost_year: e.target.value ? +e.target.value : null })} />
                         </div>
                       </div>
                     )}
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "16px 0 8px" }}>
-                      <label style={{ fontSize: 13, fontWeight: 600 }}>Components ({components.length})</label>
+                      <label style={{ fontSize: 13, fontWeight: 600 }}>Components ({components.length})<HelpTip id="composite.components" /></label>
                       <button className="btn-secondary" style={{ padding: "4px 10px", fontSize: 12 }} onClick={openComponentAdd}>+ Add Component</button>
                     </div>
                     {components.length === 0 ? (

@@ -10,7 +10,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
-use tauri::{AppHandle, Emitter, Manager, Runtime, RunEvent, WindowEvent};
+use tauri::{AppHandle, Emitter, Manager, Runtime, RunEvent, Url, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri_plugin_log::{Target, TargetKind};
 
@@ -251,6 +251,77 @@ fn write_project_text(path: String, contents: String) -> Result<(), String> {
     std::fs::write(&p, contents).map_err(|e| format!("could not write {}: {}", path, e))
 }
 
+/// Documentation: the Sphinx docs are bundled under `docs/` (built by
+/// scripts/build_docs.py into the frontend's public dir) and shown in their
+/// own window — OpenPyTEA ▸ Documentation, or a (?) help link in the GUI.
+///
+/// `path` is relative to the docs root, e.g.
+/// "user_guide/plant.html#configuration-reference".
+fn open_docs_window<R: Runtime>(app: &AppHandle<R>, path: Option<String>) -> Result<(), String> {
+    let path = path.unwrap_or_else(|| "index.html".into());
+    if path.contains("..") || path.contains(':') || path.starts_with('/') || path.starts_with('\\') {
+        return Err("invalid docs path".into());
+    }
+    // Resolve against the main window's URL so this works both with the
+    // dev server and with the bundled app protocol (tauri://localhost on
+    // macOS, http://tauri.localhost on Windows).
+    let base = app
+        .get_webview_window("main")
+        .ok_or("main window missing")?
+        .url()
+        .map_err(|e| e.to_string())?;
+    let url = base.join(&format!("docs/{}", path)).map_err(|e| e.to_string())?;
+
+    if let Some(w) = app.get_webview_window("docs") {
+        w.navigate(url).map_err(|e| e.to_string())?;
+        let _ = w.unminimize();
+        let _ = w.set_focus();
+        return Ok(());
+    }
+    WebviewWindowBuilder::new(app, "docs", WebviewUrl::External(url))
+        .title("OpenPyTEA Documentation")
+        .inner_size(1100.0, 820.0)
+        // Links leaving the bundled docs (GitHub, SciPy, ...) open in the
+        // system browser instead of replacing the docs in this window
+        .on_navigation(move |target| {
+            if same_origin(target, &base) {
+                return true;
+            }
+            open_in_browser(target);
+            false
+        })
+        .build()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+fn same_origin(a: &Url, b: &Url) -> bool {
+    // Compared field by field: tauri:// URLs have an opaque Url::origin()
+    a.scheme() == b.scheme() && a.host_str() == b.host_str() && a.port_or_known_default() == b.port_or_known_default()
+}
+
+fn open_in_browser(url: &Url) {
+    if !matches!(url.scheme(), "http" | "https" | "mailto") {
+        return;
+    }
+    #[cfg(target_os = "macos")]
+    let r = Command::new("open").arg(url.as_str()).spawn();
+    #[cfg(target_os = "windows")]
+    let r = Command::new("rundll32").args(["url.dll,FileProtocolHandler", url.as_str()]).spawn();
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let r = Command::new("xdg-open").arg(url.as_str()).spawn();
+    if let Err(e) = r {
+        log::warn!("could not open {} in the browser: {}", url, e);
+    }
+}
+
+/// Async so the window is built off the main thread (building a webview
+/// window from a sync command can deadlock on Windows).
+#[tauri::command]
+async fn open_docs(app: AppHandle, path: Option<String>) -> Result<(), String> {
+    open_docs_window(&app, path)
+}
+
 /// Build the native macOS-style menu bar (App / File / Edit). The same
 /// structure is used on Windows/Linux, where it renders as a window menu
 /// bar.
@@ -301,6 +372,7 @@ fn build_app_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         true,
         &[
             &PredefinedMenuItem::about(app, Some("About OpenPyTEA"), None)?,
+            &MenuItem::with_id(app, "docs:open", "OpenPyTEA Documentation", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::services(app, None)?,
             &PredefinedMenuItem::separator(app)?,
@@ -349,12 +421,18 @@ pub fn run() {
             close_handler_ready,
             read_project_text,
             write_project_text,
+            open_docs,
         ])
         .on_window_event(|window, event| {
             // Fired when the user clicks the red close button. Cancel the
             // close, ask the frontend to handle it (it may or may not show
             // a "save first?" modal depending on dirty state).
             if let WindowEvent::CloseRequested { api, .. } = event {
+                // Only the main window carries the project: closing the
+                // docs window must not trigger the unsaved-work flow
+                if window.label() != "main" {
+                    return;
+                }
                 let app = window.app_handle();
                 let already = app.state::<ConfirmedExit>().0.load(Ordering::Relaxed);
                 let ready = app.state::<FrontendReady>().0.load(Ordering::Relaxed);
@@ -374,7 +452,14 @@ pub fn run() {
             // "menu:". Forward those to the frontend; let predefined items
             // (cut/copy/paste/quit/etc.) be handled by the OS itself.
             let id = event.id().as_ref().to_string();
-            if id.starts_with("menu:") {
+            if id == "docs:open" {
+                let app = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(e) = open_docs_window(&app, None) {
+                        log::warn!("could not open the documentation: {}", e);
+                    }
+                });
+            } else if id.starts_with("menu:") {
                 let _ = app.emit("menu", id);
             }
         })

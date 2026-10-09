@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
 import { fmtTick, fmtValue } from "../format";
+import HelpTip from "../components/HelpTip";
 
 const METRICS = ["LCOP", "NPV", "IRR", "ROI", "PBT"];
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
@@ -271,7 +272,7 @@ export default function AnalysisPage({ setError, comparedPlants, active }: Props
             + Add panel
           </button>
           <label style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
-            Points
+            Points<HelpTip id="analysis.points" />
             <input
               type="number"
               value={sensPoints}
@@ -337,11 +338,11 @@ export default function AnalysisPage({ setError, comparedPlants, active }: Props
 
         <div className="form-grid" style={{ marginBottom: 16 }}>
           <div className="form-group">
-            <label>+/- Variation</label>
+            <label>+/- Variation<HelpTip id="analysis.tornado_plus_minus" /></label>
             <input type="number" step="0.05" value={tornPM} onChange={(e) => setTornPM(+e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Metric</label>
+            <label>Metric<HelpTip id="metric" /></label>
             <select value={tornMetric} onChange={(e) => setTornMetric(e.target.value)}>
               {METRICS.map((m) => <option key={m}>{m}</option>)}
             </select>
@@ -493,19 +494,19 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, serve
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "end", gap: 12, marginBottom: 12 }}>
         {label && <span style={{ fontWeight: 600, color: "var(--text-secondary)" }}>{label}</span>}
         <div className="form-group" style={{ flex: "1 1 200px", marginBottom: 0 }}>
-          <label style={{ fontSize: 12 }}>Parameter</label>
+          <label style={{ fontSize: 12 }}>Parameter<HelpTip id="analysis.parameter" /></label>
           <select value={panel.parameter} onChange={(e) => onChange({ parameter: e.target.value })}>
             {parameters.map((p) => <option key={p} value={p}>{formatParam(p)}</option>)}
           </select>
         </div>
         <div className="form-group" style={{ width: 100, marginBottom: 0 }}>
-          <label style={{ fontSize: 12 }}>Metric</label>
+          <label style={{ fontSize: 12 }}>Metric<HelpTip id="metric" /></label>
           <select value={panel.metric} onChange={(e) => onChange({ metric: e.target.value })}>
             {METRICS.map((m) => <option key={m}>{m}</option>)}
           </select>
         </div>
         <div className="form-group" style={{ width: 90, marginBottom: 0 }}>
-          <label style={{ fontSize: 12 }}>+/- Var</label>
+          <label style={{ fontSize: 12 }}>+/- Var<HelpTip id="analysis.plus_minus" /></label>
           <input
             type="number"
             step="0.05"
