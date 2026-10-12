@@ -14,17 +14,27 @@ interface Props {
   notCalculated: string[];
   /** Plants imported from saved files */
   plants: ComparedPlant[];
+  /** Plants unticked (not shown) */
+  hidden: Set<string>;
+  onToggle: (id: string) => void;
+  /** Colour slot of a plant, the same as on Analysis and Monte Carlo */
+  colorIndex: (id: string, fallback: number) => number;
   onRemove: (id: string) => void;
   onImport: (plant: ComparedPlant) => void;
   setError: (e: string | null) => void;
 }
 
-export default function ComparePage({ projectPlants, notCalculated, plants: imported, onRemove, onImport, setError }: Props) {
+export default function ComparePage({
+  projectPlants, notCalculated, plants: imported, hidden, onToggle, colorIndex, onRemove, onImport, setError,
+}: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const plants = [...projectPlants, ...imported];
+  const all = [...projectPlants, ...imported];
+  // Only the ticked plants are compared
+  const plants = all.filter((p) => !hidden.has(p.id));
+  const colorOf = (p: ComparedPlant) => COLORS[colorIndex(p.id, all.indexOf(p)) % COLORS.length];
   const importedIds = new Set(imported.map((p) => p.id));
   const pendingNote = notCalculated.length > 0 && (
-    <p style={{ color: "var(--text-muted)", fontSize: 13, margin: "0 0 16px" }}>
+    <p className="compare-plants-note">
       Not calculated yet (open on the Results tab to include): {notCalculated.join(", ")}
     </p>
   );
@@ -130,10 +140,10 @@ export default function ComparePage({ projectPlants, notCalculated, plants: impo
   function buildMetricBars(
     extractor: (r: CalculationResults) => number | null,
   ) {
-    return plants.map((p, i) => ({
+    return plants.map((p) => ({
       name: dn(p),
       value: extractor(p.results) ?? 0,
-      fill: COLORS[i % COLORS.length],
+      fill: colorOf(p),
     }));
   }
 
@@ -141,7 +151,7 @@ export default function ComparePage({ projectPlants, notCalculated, plants: impo
   const npvBars = buildMetricBars((r) => r.metrics.npv);
   const irrBars = buildMetricBars((r) => r.metrics.irr);
 
-  if (plants.length === 0) {
+  if (all.length === 0) {
     return (
       <div className="card" style={{ textAlign: "center", padding: 60 }}>
         <p style={{ color: "var(--text-muted)", marginBottom: 16 }}>
@@ -157,19 +167,48 @@ export default function ComparePage({ projectPlants, notCalculated, plants: impo
     );
   }
 
-  return (
-    <div>
-      {/* Toolbar */}
+  const toolbar = (
+    <>
       <div style={{ display: "flex", gap: 8, marginBottom: 20, alignItems: "center" }}>
         <button className="btn-primary" onClick={() => fileRef.current?.click()}>
           Import from JSON
         </button>
         <input ref={fileRef} type="file" accept=".json" hidden onChange={handleImport} />
         <span style={{ color: "var(--text-muted)", fontSize: 13 }}>
-          {plants.length} plant{plants.length !== 1 ? "s" : ""} in comparison
+          {plants.length} of {all.length} plant{all.length !== 1 ? "s" : ""} in comparison
         </span>
       </div>
-      {pendingNote}
+      <div className="card compare-plants">
+        <span className="compare-plants-label">Plants</span>
+        <div className="compare-plants-list">
+          {all.map((p) => (
+            <label key={p.id}>
+              <input type="checkbox" checked={!hidden.has(p.id)} onChange={() => onToggle(p.id)} />
+              <span className="compare-plants-swatch" style={{ background: colorOf(p) }} />
+              {dn(p)}
+              {imported.includes(p) && <span className="compare-plants-tag">imported</span>}
+            </label>
+          ))}
+        </div>
+        {pendingNote}
+      </div>
+    </>
+  );
+
+  if (plants.length === 0) {
+    return (
+      <div>
+        {toolbar}
+        <div className="card">
+          <p className="compare-plants-empty">No plants ticked. Tick a plant above to compare it.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {toolbar}
 
       {/* Metrics table */}
       <div className="card">
@@ -184,10 +223,10 @@ export default function ComparePage({ projectPlants, notCalculated, plants: impo
               </tr>
             </thead>
             <tbody>
-              {plants.map((p, i) => (
+              {plants.map((p) => (
                 <tr key={p.id}>
                   <td>
-                    <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", background: COLORS[i % COLORS.length], marginRight: 8, verticalAlign: "middle" }} />
+                    <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: "50%", background: colorOf(p), marginRight: 8, verticalAlign: "middle" }} />
                     {dn(p)}
                   </td>
                   <td>{p.currency}</td>
@@ -224,8 +263,8 @@ export default function ComparePage({ projectPlants, notCalculated, plants: impo
                 <YAxis tickFormatter={(v: number) => fmtCompact(v)} />
                 <Tooltip formatter={(v) => fmt(Number(v))} />
                 <Legend />
-                {plants.map((p, i) => (
-                  <Bar key={p.id} dataKey={dn(p)} fill={COLORS[i % COLORS.length]} radius={[4, 4, 0, 0]} />
+                {plants.map((p) => (
+                  <Bar key={p.id} dataKey={dn(p)} fill={colorOf(p)} radius={[4, 4, 0, 0]} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -245,8 +284,8 @@ export default function ComparePage({ projectPlants, notCalculated, plants: impo
                 <YAxis tickFormatter={(v: number) => fmtCompact(v)} />
                 <Tooltip formatter={(v) => fmt(Number(v))} />
                 <Legend />
-                {plants.map((p, i) => (
-                  <Bar key={p.id} dataKey={dn(p)} fill={COLORS[i % COLORS.length]} radius={[4, 4, 0, 0]} />
+                {plants.map((p) => (
+                  <Bar key={p.id} dataKey={dn(p)} fill={colorOf(p)} radius={[4, 4, 0, 0]} />
                 ))}
               </BarChart>
             </ResponsiveContainer>

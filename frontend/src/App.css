@@ -874,3 +874,7 @@ td input[type="number"] {
   color: var(--text-muted);
 }
 .compare-plants-note { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; }
+.compare-plants-empty { margin: 12px 0 0; font-size: 13px; color: var(--text-muted); }
+.card .compare-plants-empty { margin: 0; }
+.card.compare-plants { padding: 14px 20px; }
+.compare-plants-swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }

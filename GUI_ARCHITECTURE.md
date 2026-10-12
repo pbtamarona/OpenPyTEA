@@ -211,6 +211,7 @@ results, so the Results tab follows a plant switch.
 - Parameters list is fetched from `/sensitivity/parameters` (includes top-level + variable_opex + products)
 - Both charts downloadable as PNG
 - Plant checkboxes (`components/ComparePlants.tsx` + `usePlantSelection` in `plantSources.ts`, also on Monte Carlo), shown whenever the project has more than one plant. The open plant starts ticked; any plant can be ticked or unticked. The open plant is sent as `include_active`, the others as `extra_plants` entries (inputs fetched from `/project/plants/{id}/snapshot` when the run starts). Uncalculated plants are listed but disabled. Only runs that include the open plant are recorded for its Save as JSON analysis file.
+- Results follow the checkboxes: each result keeps the plant id of every curve / tornado / Monte Carlo plant, and only ticked plants are drawn (tables, charts and the matplotlib downloads, via the run's inputs). Ticking a plant that wasn't in the last run adds it: sensitivity reruns the panel's plants plus the new one, tornado runs the new plant alone; Monte Carlo shows "Run again to include …". Colours follow the plant's place in the project, so a plant keeps its colour on every tab.
 
 ### MonteCarloPage
 - Config: num_samples (default 50k), batch_size, plant checkboxes (as on Analysis)
@@ -221,6 +222,7 @@ results, so the Results tab follows a plant switch.
 ### ComparePage
 - Shows every calculated plant of the project automatically (snapshots loaded when the tab opens), plus plants imported from saved JSON files (only those can be removed; they are kept in the project file as `compared_plants`)
 - Lists project plants that haven't been calculated yet
+- Checkbox per plant (all ticked by default, kept while switching tabs); the table and charts show the ticked plants only
 
 ## Documentation and (?) help
 

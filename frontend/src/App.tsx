@@ -79,6 +79,23 @@ function App() {
   // own plants are always compared (projectCompared, loaded on the tab)
   const [comparedPlants, setComparedPlants] = useState<ComparedPlant[]>([]);
   const [projectCompared, setProjectCompared] = useState<ComparedPlant[]>([]);
+  // Plants unticked on the Compare tab
+  const [compareHidden, setCompareHidden] = useState<Set<string>>(new Set());
+  const toggleCompared = (id: string) =>
+    setCompareHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  // Colours follow the project's plant order (as on Analysis and Monte
+  // Carlo); imported plants come after the project's plants
+  const compareColorIndex = (id: string, fallback: number) => {
+    const plants = project?.plants ?? [];
+    const i = plants.findIndex((p) => `project:${p.id}` === id);
+    if (i >= 0) return i;
+    const j = comparedPlants.findIndex((p) => p.id === id);
+    return j >= 0 ? plants.length + j : fallback;
+  };
   const [showWelcome, setShowWelcome] = useState(true);
   const [inTauri, setInTauri] = useState(false);
 
@@ -917,6 +934,9 @@ function App() {
             projectPlants={projectCompared}
             notCalculated={project?.plants.filter((p) => p.metrics == null).map((p) => p.name) ?? []}
             plants={comparedPlants}
+            hidden={compareHidden}
+            onToggle={toggleCompared}
+            colorIndex={compareColorIndex}
             onRemove={removeFromComparison}
             onImport={(plant) => setComparedPlants((prev) => [...prev, plant])}
             setError={setError}

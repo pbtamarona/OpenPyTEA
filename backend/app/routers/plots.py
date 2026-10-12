@@ -143,6 +143,10 @@ def monte_carlo_plot(payload: MCPlotIn):
     raw = state.mc_raw
     if not raw:
         raise HTTPException(status_code=400, detail="Run a Monte Carlo simulation first")
+    if payload.plants is not None:
+        if not payload.plants or any(not 0 <= i < len(raw) for i in payload.plants):
+            raise HTTPException(status_code=400, detail="No such plant in the Monte Carlo run")
+        raw = [raw[i] for i in payload.plants]
     with _mpl_lock:
         try:
             if len(raw) == 1:
@@ -159,16 +163,19 @@ def monte_carlo_plot(payload: MCPlotIn):
 
 
 @router.get("/monte-carlo/inputs")
-def monte_carlo_inputs_plot(category: str = "process"):
-    """plot_monte_carlo_inputs() for the active plant's cached raw run."""
+def monte_carlo_inputs_plot(category: str = "process", plant: int = 0):
+    """plot_monte_carlo_inputs() for one plant (its position in the run) of
+    the cached raw run."""
     raw = state.mc_raw
     if not raw:
         raise HTTPException(status_code=400, detail="Run a Monte Carlo simulation first")
+    if not 0 <= plant < len(raw):
+        raise HTTPException(status_code=400, detail="No such plant in the Monte Carlo run")
     if category not in ("process", "economic"):
         raise HTTPException(status_code=400, detail="category must be 'process' or 'economic'")
     with _mpl_lock:
         try:
-            fig, _ = plot_monte_carlo_inputs(raw[0], category=category, show=False)
+            fig, _ = plot_monte_carlo_inputs(raw[plant], category=category, show=False)
         except HTTPException:
             raise
         except (ValueError, KeyError) as e:

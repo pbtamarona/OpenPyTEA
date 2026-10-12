@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { runMonteCarlo, fetchPlotPng } from "../api/client";
 import type { MonteCarloMultiResult, MonteCarloResult, ProjectOverview } from "../types";
 import {
@@ -57,6 +57,9 @@ const normalPdf = (x: number, mu: number, sigma: number) => {
   return Math.exp(-(z * z) / 2) / (sigma * SQRT_2PI);
 };
 
+/** A plant of the run, with its project id and its position in the run */
+type ShownPlant = MonteCarloResult & { pid: string; pos: number };
+
 interface OverlayRow {
   x: number;
   [series: string]: number;
@@ -76,9 +79,9 @@ function inputHistRows(hist: { bin_edges: number[]; counts: number[] }, n: numbe
   return rows;
 }
 
-function buildOverlayData(plants: MonteCarloResult[], metric: string, showFit: boolean, pdfPoints = 200): OverlayRow[] {
+function buildOverlayData(plants: ShownPlant[], metric: string, showFit: boolean, pdfPoints = 200): OverlayRow[] {
   const series = plants
-    .map((p) => ({ name: p.name, num_samples: p.num_samples, stats: p.metrics[metric] }))
+    .map((p) => ({ name: p.pid, num_samples: p.num_samples, stats: p.metrics[metric] }))
     .filter((s) => s.stats != null);
   if (series.length === 0) return [];
 
@@ -144,6 +147,8 @@ export default function MonteCarloPage({ setError, project }: Props) {
   const [batchSize, setBatchSize] = useState(1000);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MonteCarloMultiResult | null>(null);
+  // Plant id of each plant in the result
+  const [resultIds, setResultIds] = useState<string[]>([]);
   const selection = usePlantSelection(project);
   const [runCount, setRunCount] = useState(1);
 
@@ -151,12 +156,14 @@ export default function MonteCarloPage({ setError, project }: Props) {
     setLoading(true);
     setError(null);
     try {
-      setRunCount(selection.count());
+      const req = await selection.request();
+      setRunCount(req.ids.length);
       const r = await runMonteCarlo({
         num_samples: numSamples, batch_size: batchSize, additional_capex: false,
-        ...(await selection.request()),
+        ...req.body,
       });
       setResult(r);
+      setResultIds(req.ids);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Monte Carlo failed");
     } finally {
@@ -165,14 +172,19 @@ export default function MonteCarloPage({ setError, project }: Props) {
   };
 
   const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2 });
-  const plants = result?.plants ?? [];
+  // Only the ticked plants of the run are shown
+  const plants: ShownPlant[] = (result?.plants ?? [])
+    .map((p, i) => ({ ...p, pid: resultIds[i], pos: i }))
+    .filter((p) => selection.isTicked(p.pid));
+  const colorOf = (p: ShownPlant) => COLORS[selection.colorIndex(p.pid, p.pos) % COLORS.length];
+  // Ticked plants that weren't in the run (Monte Carlo is too slow to add
+  // them on the fly)
+  const missing = result
+    ? selection.tickedIds().filter((id) => !resultIds.includes(id)).map(selection.nameOf).filter(Boolean)
+    : [];
 
   // Collect all metric names that appeared on at least one plant
-  const metricNames = useMemo(() => {
-    const set = new Set<string>();
-    plants.forEach((p) => Object.keys(p.metrics).forEach((m) => set.add(m)));
-    return Array.from(set);
-  }, [plants]);
+  const metricNames = Array.from(new Set(plants.flatMap((p) => Object.keys(p.metrics))));
 
   return (
     <div>
@@ -200,6 +212,11 @@ export default function MonteCarloPage({ setError, project }: Props) {
           {loading && <span className="spinner" />}
           {loading ? "Running Monte Carlo..." : "Run Monte Carlo"}
         </button>
+        {!loading && missing.length > 0 && (
+          <p className="compare-plants-note" style={{ marginTop: 8 }}>
+            Run again to include {missing.join(", ")}.
+          </p>
+        )}
         {loading && (
           <p style={{ color: "#868e96", fontSize: 13, marginTop: 8 }}>
             This may take a while with {numSamples.toLocaleString()} samples
@@ -207,6 +224,10 @@ export default function MonteCarloPage({ setError, project }: Props) {
           </p>
         )}
       </div>
+
+      {result && plants.length === 0 && (
+        <div className="card"><p className="compare-plants-empty">No plants ticked. Tick a plant above to show its results.</p></div>
+      )}
 
       {plants.length > 0 && (
         <>
@@ -223,11 +244,11 @@ export default function MonteCarloPage({ setError, project }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {plants.flatMap((p, pi) =>
+                  {plants.flatMap((p) =>
                     Object.entries(p.metrics).map(([name, stats]) => (
-                      <tr key={`${p.name}-${name}`}>
+                      <tr key={`${p.pid}-${name}`}>
                         <td>
-                          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: COLORS[pi % COLORS.length], marginRight: 8, verticalAlign: "middle" }} />
+                          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: colorOf(p), marginRight: 8, verticalAlign: "middle" }} />
                           <strong>{p.name}</strong>
                         </td>
                         <td>{name}</td>
@@ -271,14 +292,14 @@ export default function MonteCarloPage({ setError, project }: Props) {
                   {seriesPlants.map((p) => {
                     const s = p.metrics[metric]!;
                     return (
-                      <span key={p.name} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ width: 12, height: 12, background: COLORS[plants.indexOf(p) % COLORS.length], display: "inline-block" }} />
+                      <span key={p.pid} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ width: 12, height: 12, background: colorOf(p), display: "inline-block" }} />
                         <strong>{p.name}</strong> μ={fmt(s.mean)}, σ={fmt(s.std)}
                       </span>
                     );
                   })}
                 </div>
-                <DownloadableChart filename={`mc_${metric}`} height={430} serverPlot={() => fetchPlotPng("/plots/monte-carlo", { metric, show_fit: showFit })}>
+                <DownloadableChart filename={`mc_${metric}`} height={430} serverPlot={() => fetchPlotPng("/plots/monte-carlo", { metric, show_fit: showFit, plants: seriesPlants.map((p) => p.pos) })}>
                   <ResponsiveContainer>
                     <ComposedChart data={data} margin={{ bottom: 46, left: 12, top: 10, right: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -297,18 +318,19 @@ export default function MonteCarloPage({ setError, project }: Props) {
                           const label = String(name);
                           const isHist = label.endsWith("__hist");
                           const isPdf = label.endsWith("__pdf");
-                          const plantName = label.replace(/__(hist|pdf)$/, "");
+                          const pid = label.replace(/__(hist|pdf)$/, "");
+                          const plantName = plants.find((p) => p.pid === pid)?.name ?? pid;
                           const tag = isHist ? "histogram" : isPdf ? "fitted normal" : "";
                           return [Number(v).toExponential(2), `${plantName}${tag ? ` (${tag})` : ""}`];
                         }}
                       />
                       {seriesPlants.map((p) => {
-                        const color = COLORS[plants.indexOf(p) % COLORS.length];
+                        const color = colorOf(p);
                         return [
                           <Area
-                            key={`${p.name}-hist`}
+                            key={`${p.pid}-hist`}
                             type="stepAfter"
-                            dataKey={`${p.name}__hist`}
+                            dataKey={`${p.pid}__hist`}
                             stroke={color}
                             strokeOpacity={0.5}
                             fill={color}
@@ -317,9 +339,9 @@ export default function MonteCarloPage({ setError, project }: Props) {
                             connectNulls={false}
                           />,
                           showFit && <Line
-                            key={`${p.name}-pdf`}
+                            key={`${p.pid}-pdf`}
                             type="monotone"
-                            dataKey={`${p.name}__pdf`}
+                            dataKey={`${p.pid}__pdf`}
                             stroke={color}
                             strokeWidth={2}
                             dot={false}
@@ -334,7 +356,7 @@ export default function MonteCarloPage({ setError, project }: Props) {
             );
           })}
 
-          {/* Input distributions — show active plant only (extras share the same priors) */}
+          {/* Input distributions — the first plant shown */}
           {plants[0] && Object.keys(plants[0].inputs).length > 0 && (
             <div className="card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
@@ -347,7 +369,7 @@ export default function MonteCarloPage({ setError, project }: Props) {
                       title="Download the library-rendered figure, exactly as plot_monte_carlo_inputs produces in Jupyter"
                       onClick={async () => {
                         try {
-                          const blob = await fetchPlotPng(`/plots/monte-carlo/inputs?category=${cat}`);
+                          const blob = await fetchPlotPng(`/plots/monte-carlo/inputs?category=${cat}&plant=${plants[0].pos}`);
                           await saveFigure(blob, `mc_inputs_${cat}.png`);
                         } catch (e: unknown) {
                           setError(e instanceof Error ? e.message : "Figure download failed");

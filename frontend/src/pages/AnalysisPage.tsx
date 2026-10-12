@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   getSensitivityParameters, runSensitivity, runTornado, fetchPlotPng,
 } from "../api/client";
@@ -11,7 +11,7 @@ import DownloadableChart from "../components/DownloadableChart";
 import { fmtTick, fmtValue } from "../format";
 import HelpTip from "../components/HelpTip";
 import ComparePlants from "../components/ComparePlants";
-import { usePlantSelection } from "../plantSources";
+import { usePlantSelection, type PlantsRequest } from "../plantSources";
 
 const METRICS = ["LCOP", "NPV", "IRR", "ROI", "PBT"];
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
@@ -25,14 +25,29 @@ const formatParam = (p: string) => {
   return p.includes(".") ? `${label} price` : label;
 };
 
+/** Inputs a sensitivity result was computed with */
+interface SensRun {
+  parameter: string;
+  plus_minus_value: number;
+  n_points: number;
+  metric: string;
+}
+
 interface Panel {
   id: string;
   parameter: string;
   metric: string;
   plus_minus_value: number;
   result: SensitivityResult | null;
+  /** Plant id of each result curve */
+  ids: string[];
+  ran: SensRun | null;
   loading: boolean;
 }
+
+const NoneTicked = () => (
+  <p className="compare-plants-empty">No plants ticked. Tick a plant above to show its results.</p>
+);
 
 interface Props {
   setError: (e: string | null) => void;
@@ -48,6 +63,8 @@ const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2): Pane
   metric,
   plus_minus_value,
   result: null,
+  ids: [],
+  ran: null,
   loading: false,
 });
 
@@ -60,6 +77,9 @@ export default function AnalysisPage({ setError, project, active }: Props) {
   const [tornPM, setTornPM] = useState(0.2);
   const [tornMetric, setTornMetric] = useState("LCOP");
   const [tornResult, setTornResult] = useState<TornadoResult | null>(null);
+  // Plant id of each tornado result, and the inputs of the run
+  const [tornIds, setTornIds] = useState<string[]>([]);
+  const [tornRan, setTornRan] = useState<{ plus_minus_value: number; metric: string } | null>(null);
   const [tornLoading, setTornLoading] = useState(false);
   const tornSelection = usePlantSelection(project);
 
@@ -94,7 +114,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
 
   const runAll = async () => {
     setError(null);
-    let plantsReq: Awaited<ReturnType<typeof sensPlants.request>>;
+    let plantsReq: PlantsRequest;
     try {
       plantsReq = await sensPlants.request();
     } catch (e: unknown) {
@@ -104,18 +124,17 @@ export default function AnalysisPage({ setError, project, active }: Props) {
     setPanels((prev) => prev.map((p) => ({ ...p, loading: true })));
 
     const tasks = panels.map(async (panel) => {
+      const ran: SensRun = {
+        parameter: panel.parameter,
+        plus_minus_value: panel.plus_minus_value,
+        n_points: sensPoints,
+        metric: panel.metric,
+      };
       try {
-        const r = await runSensitivity({
-          parameter: panel.parameter,
-          plus_minus_value: panel.plus_minus_value,
-          n_points: sensPoints,
-          metric: panel.metric,
-          additional_capex: false,
-          ...plantsReq,
-        });
-        return { id: panel.id, result: r as SensitivityResult | null, error: null as string | null };
+        const r = await runSensitivity({ ...ran, additional_capex: false, ...plantsReq.body });
+        return { id: panel.id, result: r as SensitivityResult | null, ran, error: null as string | null };
       } catch (e: unknown) {
-        return { id: panel.id, result: null, error: e instanceof Error ? e.message : "Sensitivity failed" };
+        return { id: panel.id, result: null, ran, error: e instanceof Error ? e.message : "Sensitivity failed" };
       }
     });
 
@@ -126,27 +145,85 @@ export default function AnalysisPage({ setError, project, active }: Props) {
     setPanels((prev) =>
       prev.map((p) => {
         const out = outcomes.find((o) => o.id === p.id);
-        return out ? { ...p, loading: false, result: out.result ?? p.result } : { ...p, loading: false };
+        if (!out) return { ...p, loading: false };
+        return out.result
+          ? { ...p, loading: false, result: out.result, ids: plantsReq.ids, ran: out.ran }
+          : { ...p, loading: false };
       }),
     );
+  };
+
+  /** A plant ticked after a run: rerun each panel's plants plus this one
+      with the inputs of that run (a plant alone may not have the varied
+      parameter, which the library rejects). */
+  const addSensPlant = async (plantId: string) => {
+    const targets = panels.filter((p) => p.result && p.ran && !p.ids.includes(plantId));
+    if (targets.length === 0) return;
+    const ids = new Set(targets.map((t) => t.id));
+    setPanels((prev) => prev.map((p) => (ids.has(p.id) ? { ...p, loading: true } : p)));
+    const outcomes = await Promise.all(targets.map(async (panel) => {
+      try {
+        const req = await sensPlants.requestFor([...panel.ids, plantId]);
+        const r = await runSensitivity({ ...panel.ran!, additional_capex: false, ...req.body });
+        return { id: panel.id, result: r as SensitivityResult | null, ids: req.ids, error: null as string | null };
+      } catch (e: unknown) {
+        return { id: panel.id, result: null, ids: panel.ids, error: e instanceof Error ? e.message : "Sensitivity failed" };
+      }
+    }));
+    const errors = outcomes.filter((o) => o.error).map((o) => o.error!);
+    if (errors.length) setError(errors.join(" • "));
+    setPanels((prev) =>
+      prev.map((p) => {
+        const out = outcomes.find((o) => o.id === p.id);
+        if (!out) return p;
+        return out.result ? { ...p, loading: false, result: out.result, ids: out.ids } : { ...p, loading: false };
+      }),
+    );
+  };
+
+  const toggleSensPlant = (plantId: string) => {
+    const adding = !sensPlants.isTicked(plantId);
+    sensPlants.toggle(plantId);
+    if (adding) addSensPlant(plantId);
   };
 
   const doTornado = async () => {
     setTornLoading(true);
     setError(null);
     try {
-      const r = await runTornado({
-        plus_minus_value: tornPM,
-        metric: tornMetric,
-        additional_capex: false,
-        ...(await tornSelection.request()),
-      });
+      const ran = { plus_minus_value: tornPM, metric: tornMetric };
+      const req = await tornSelection.request();
+      const r = await runTornado({ ...ran, additional_capex: false, ...req.body });
       setTornResult(r);
+      setTornIds(req.ids);
+      setTornRan(ran);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Tornado failed");
     } finally {
       setTornLoading(false);
     }
+  };
+
+  /** A plant ticked after a run: compute its tornado alone and add it. */
+  const addTornPlant = async (plantId: string) => {
+    if (!tornResult || !tornRan || tornIds.includes(plantId)) return;
+    setTornLoading(true);
+    try {
+      const req = await tornSelection.requestFor([plantId]);
+      const r = await runTornado({ ...tornRan, additional_capex: false, ...req.body });
+      setTornResult((prev) => (prev ? { ...prev, plants: [...prev.plants, ...r.plants] } : prev));
+      setTornIds((prev) => [...prev, ...req.ids]);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Tornado failed");
+    } finally {
+      setTornLoading(false);
+    }
+  };
+
+  const toggleTornPlant = (plantId: string) => {
+    const adding = !tornSelection.isTicked(plantId);
+    tornSelection.toggle(plantId);
+    if (adding) addTornPlant(plantId);
   };
 
   const anyLoading = panels.some((p) => p.loading);
@@ -156,8 +233,15 @@ export default function AnalysisPage({ setError, project, active }: Props) {
   // the x-axis tick formatter adds the base back to display actual metric
   // values; with multiple plants the bases differ, so we fall back to a pure
   // Δ display.
-  const tornPlants = tornResult?.plants ?? [];
+  // Only the ticked plants of the run are shown
+  const tornPlants = (tornResult?.plants ?? [])
+    .map((p, i) => ({ ...p, pid: tornIds[i] }))
+    .filter((p) => tornSelection.isTicked(p.pid));
   const isMultiTorn = tornPlants.length > 1;
+  const tornColor = (pid: string, pi: number) => COLORS[tornSelection.colorIndex(pid, pi) % COLORS.length];
+  const shownPM = tornRan?.plus_minus_value ?? tornPM;
+  const multiPlant = (project?.plants.length ?? 0) > 1;
+  const shownMetric = tornRan?.metric ?? tornMetric;
 
   const tornMaxDelta = tornPlants.reduce((acc, p) => {
     for (let i = 0; i < p.lows.length; i++) {
@@ -205,7 +289,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Sensitivity Analysis</h2>
 
-        <ComparePlants project={project} isTicked={sensPlants.isTicked} onToggle={sensPlants.toggle} />
+        <ComparePlants project={project} isTicked={sensPlants.isTicked} onToggle={toggleSensPlant} />
 
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <button className="btn-primary" onClick={runAll} disabled={anyLoading}>
@@ -253,14 +337,14 @@ export default function AnalysisPage({ setError, project, active }: Props) {
               showRemove={panels.length > 1}
               compact={isGrid}
               label={isGrid ? `(${String.fromCharCode(97 + idx)})` : undefined}
-              serverPlot={async () => fetchPlotPng("/plots/sensitivity", {
-                parameter: panel.parameter,
-                plus_minus_value: panel.plus_minus_value,
-                n_points: sensPoints,
-                metric: panel.metric,
-                additional_capex: false,
-                ...(await sensPlants.request()),
-              })}
+              isTicked={sensPlants.isTicked}
+              colorIndex={sensPlants.colorIndex}
+              showLegend={multiPlant}
+              serverPlot={async () => {
+                // The figure of the result on screen: its run, ticked plants only
+                const req = await sensPlants.requestFor(panel.ids.filter(sensPlants.isTicked));
+                return fetchPlotPng("/plots/sensitivity", { ...panel.ran!, additional_capex: false, ...req.body });
+              }}
               onChange={(patch) => updatePanel(panel.id, patch)}
               onRemove={() => removePanel(panel.id)}
             />
@@ -272,7 +356,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
       <div className="card">
         <h2>Tornado Analysis</h2>
 
-        <ComparePlants project={project} isTicked={tornSelection.isTicked} onToggle={tornSelection.toggle} />
+        <ComparePlants project={project} isTicked={tornSelection.isTicked} onToggle={toggleTornPlant} />
 
         <div className="form-grid" style={{ marginBottom: 16 }}>
           <div className="form-group">
@@ -290,16 +374,15 @@ export default function AnalysisPage({ setError, project, active }: Props) {
           {tornLoading && <span className="spinner" />}Run Tornado{isMultiTorn ? ` (${tornPlants.length} plants)` : ""}
         </button>
 
+        {tornResult && tornPlants.length === 0 && <NoneTicked />}
         {tornResult && tornChartData.length > 0 && (
           <DownloadableChart
             filename="tornado"
             maxWidth={800}
-            serverPlot={async () => fetchPlotPng("/plots/tornado", {
-              plus_minus_value: tornPM,
-              metric: tornMetric,
-              additional_capex: false,
-              ...(await tornSelection.request()),
-            })}
+            serverPlot={async () => {
+              const req = await tornSelection.requestFor(tornPlants.map((p) => p.pid));
+              return fetchPlotPng("/plots/tornado", { ...tornRan!, additional_capex: false, ...req.body });
+            }}
             height={Math.max(
               300,
               tornChartData.length * (isMultiTorn ? Math.max(40, tornPlants.length * 18) : 30) + 120,
@@ -319,7 +402,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
                   formatter={(v) => {
                     const unit = tornXLabel.match(/\[(.+)\]/)?.[1] ?? "";
                     const actual = typeof v === "number" ? v + tornBase : v;
-                    const val = typeof actual === "number" ? fmtValue(actual, tornMetric === "IRR" ? 3 : 2) : actual;
+                    const val = typeof actual === "number" ? fmtValue(actual, shownMetric === "IRR" ? 3 : 2) : actual;
                     return (unit && tornMetric !== "IRR") ? `${val} ${unit}` : val;
                   }}
                   labelStyle={{ fontWeight: "bold", color: "#000" }}
@@ -331,18 +414,20 @@ export default function AnalysisPage({ setError, project, active }: Props) {
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "flex-end", fontSize: 12, color: "var(--text-secondary)" }}>
                       {isMultiTorn
                         ? tornPlants.map((p, pi) => (
-                            <span key={p.name + pi} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                              <span style={{ width: 12, height: 12, background: COLORS[pi % COLORS.length], display: "inline-block" }} />
+                            <span key={p.pid} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <span style={{ width: 12, height: 12, background: tornColor(p.pid, pi), display: "inline-block" }} />
                               {p.name}
                             </span>
                           ))
                         : [
-                            { color: "#4361ee", label: `-${tornPM * 100}%` },
-                            { color: "#e63946", label: `+${tornPM * 100}%` },
+                            // Name the plant when the project has others
+                            ...(multiPlant && tornPlants[0] ? [{ color: "", label: tornPlants[0].name }] : []),
+                            { color: "#4361ee", label: `-${shownPM * 100}%` },
+                            { color: "#e63946", label: `+${shownPM * 100}%` },
                           ].map(({ color, label }) => (
                             <span key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                              <span style={{ width: 12, height: 12, background: color, display: "inline-block" }} />
-                              {label}
+                              {color && <span style={{ width: 12, height: 12, background: color, display: "inline-block" }} />}
+                              {color ? label : <strong>{label}</strong>}
                             </span>
                           ))}
                     </div>
@@ -354,10 +439,10 @@ export default function AnalysisPage({ setError, project, active }: Props) {
                     parameter row — each plant's low and high sit on opposite sides
                     of zero with the same color. */}
                 {tornPlants.map((p, pi) => {
-                  const color = isMultiTorn ? COLORS[pi % COLORS.length] : "#4361ee";
+                  const color = isMultiTorn ? tornColor(p.pid, pi) : "#4361ee";
                   return (
                     <Bar key={`p${pi}_low`} dataKey={`p${pi}_low`}
-                         name={isMultiTorn ? `${p.name} −${tornPM * 100}%` : `−${tornPM * 100}%`}>
+                         name={isMultiTorn ? `${p.name} −${shownPM * 100}%` : `−${shownPM * 100}%`}>
                       {tornChartData.map((_, i) => (
                         <Cell key={i} fill={color} fillOpacity={isMultiTorn ? 0.55 : 1} />
                       ))}
@@ -365,10 +450,10 @@ export default function AnalysisPage({ setError, project, active }: Props) {
                   );
                 })}
                 {tornPlants.map((p, pi) => {
-                  const color = isMultiTorn ? COLORS[pi % COLORS.length] : "#e63946";
+                  const color = isMultiTorn ? tornColor(p.pid, pi) : "#e63946";
                   return (
                     <Bar key={`p${pi}_high`} dataKey={`p${pi}_high`}
-                         name={isMultiTorn ? `${p.name} +${tornPM * 100}%` : `+${tornPM * 100}%`}>
+                         name={isMultiTorn ? `${p.name} +${shownPM * 100}%` : `+${shownPM * 100}%`}>
                       {tornChartData.map((_, i) => <Cell key={i} fill={color} />)}
                     </Bar>
                   );
@@ -388,38 +473,45 @@ interface PanelProps {
   showRemove: boolean;
   compact: boolean;
   label?: string;
+  isTicked: (plantId: string) => boolean;
+  colorIndex: (plantId: string, fallback: number) => number;
+  /** Name the plants even when one is shown (the project has several) */
+  showLegend: boolean;
   serverPlot: () => Promise<Blob>;
   onChange: (patch: Partial<Panel>) => void;
   onRemove: () => void;
 }
 
-function SensitivityPanel({ panel, parameters, showRemove, compact, label, serverPlot, onChange, onRemove }: PanelProps) {
+function SensitivityPanel({ panel, parameters, showRemove, compact, label, isTicked, colorIndex, showLegend, serverPlot, onChange, onRemove }: PanelProps) {
   const result = panel.result;
+  // Only the ticked plants of the run are shown
+  const curves = (result?.curves ?? [])
+    .map((c, i) => ({ ...c, pid: panel.ids[i] }))
+    .filter((c) => isTicked(c.pid));
 
-  const allY = result ? result.curves.flatMap((c) => c.y).filter((v): v is number => typeof v === "number") : [];
+  const allY = curves.flatMap((c) => c.y).filter((v): v is number => typeof v === "number");
   const maxAbs = allY.length ? Math.max(...allY.map(Math.abs)) : 0;
   const scale = maxAbs >= 1e6 ? 1e6 : 1;
 
-  const chartData = useMemo(() => {
-    if (!result || result.curves.length === 0) return [];
-    const xs = result.curves[0].x;
-    return xs.map((x, i) => {
+  const chartData = (() => {
+    if (curves.length === 0) return [];
+    return curves[0].x.map((x, i) => {
       const row: Record<string, number> = { x };
-      result.curves.forEach((c) => {
+      curves.forEach((c) => {
         const y = c.y[i];
-        if (typeof y === "number") row[c.plant] = y / scale;
+        if (typeof y === "number") row[c.pid] = y / scale;
       });
       return row;
     });
-  }, [result, scale]);
+  })();
   // Room for the widest separated tick label (e.g. "-1,250.5")
-  const yAxisWidth = useMemo(() => {
+  const yAxisWidth = (() => {
     let longest = 4;
     chartData.forEach((row) => Object.entries(row).forEach(([k, v]) => {
       if (k !== "x") longest = Math.max(longest, fmtTick(v).length);
     }));
     return Math.max(60, longest * 7 + 16);
-  }, [chartData]);
+  })();
 
   const yLabel = result
     ? (scale === 1e6 ? cleanLatex(result.ylabel).replace("/ [", "/ [million ") : cleanLatex(result.ylabel))
@@ -457,6 +549,7 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, serve
         )}
       </div>
 
+      {result && curves.length === 0 && <NoneTicked />}
       {result && chartData.length > 0 && (
         <DownloadableChart filename={`sensitivity_${panel.parameter}_${panel.metric}`} height={chartHeight} serverPlot={serverPlot} style={{ marginTop: 4 }}>
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 50, width: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -477,9 +570,9 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, serve
                   }}
                   labelStyle={{ color: "#000" }}
                 />
-                {result.curves.length > 1 && <Legend verticalAlign="top" height={28} />}
-                {result.curves.map((c, i) => (
-                  <Line key={c.plant} type="monotone" dataKey={c.plant} stroke={COLORS[i % COLORS.length]} strokeWidth={2} dot={false} connectNulls />
+                {(curves.length > 1 || showLegend) && <Legend verticalAlign="top" height={28} />}
+                {curves.map((c, i) => (
+                  <Line key={c.pid} type="monotone" dataKey={c.pid} name={c.plant} stroke={COLORS[colorIndex(c.pid, i) % COLORS.length]} strokeWidth={2} dot={false} connectNulls />
                 ))}
               </LineChart>
             </ResponsiveContainer>

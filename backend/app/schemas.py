@@ -265,6 +265,8 @@ class MCPlotIn(BaseModel):
     metric: str = "LCOP"
     # Overlay the fitted normal distribution (the library's show_fit)
     show_fit: bool = True
+    # Positions in the run of the plants to draw (None: every plant)
+    plants: list[int] | None = None
 
 
 # ── Analysis results ──────────────────────────────────────────────
