@@ -23,6 +23,16 @@ def _require_plant():
     return require_active_plant()
 
 
+def _plants_for(data):
+    """The plants a run covers: the open plant (unless left out) followed
+    by the extra plants, in the order they were sent."""
+    plants = [_require_plant()] if data.include_active else []
+    plants += _rehydrate_extras(data.extra_plants)
+    if not plants:
+        raise HTTPException(status_code=400, detail="Select at least one plant")
+    return plants
+
+
 def _rehydrate_extras(extras: list[PlantInput]):
     """Build Plant objects from saved-JSON-shaped payloads.
 
@@ -60,8 +70,7 @@ def get_sensitivity_parameters():
 
 @router.post("/sensitivity", response_model=SensitivityResult)
 def run_sensitivity(data: SensitivityIn):
-    plant = _require_plant()
-    plants = [plant] + _rehydrate_extras(data.extra_plants)
+    plants = _plants_for(data)
     try:
         result = sensitivity_data(
             plants,
@@ -73,6 +82,13 @@ def run_sensitivity(data: SensitivityIn):
         )
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Sensitivity analysis failed: {e}")
+    if data.include_active:
+        _record_sensitivity(data)
+    return to_jsonable(result)
+
+
+def _record_sensitivity(data: SensitivityIn):
+    """Remember the run for the open plant's Save as JSON analysis file."""
     state.sensitivity_args[(data.parameter, data.metric.upper())] = {
         "parameter": data.parameter,
         "plus_minus_value": data.plus_minus_value,
@@ -80,13 +96,11 @@ def run_sensitivity(data: SensitivityIn):
         "metric": data.metric,
         "additional_capex": data.additional_capex,
     }
-    return to_jsonable(result)
 
 
 @router.post("/tornado", response_model=TornadoResult)
 def run_tornado(data: TornadoIn):
-    plant = _require_plant()
-    plants = [plant] + _rehydrate_extras(data.extra_plants)
+    plants = _plants_for(data)
 
     per_plant: list[dict] = []
     xlabel = ""
@@ -113,11 +127,12 @@ def run_tornado(data: TornadoIn):
             "base_value": r["base_value"],
         })
 
-    state.tornado_args = {
-        "plus_minus_value": data.plus_minus_value,
-        "metric": data.metric,
-        "additional_capex": data.additional_capex,
-    }
+    if data.include_active:
+        state.tornado_args = {
+            "plus_minus_value": data.plus_minus_value,
+            "metric": data.metric,
+            "additional_capex": data.additional_capex,
+        }
     return to_jsonable({
         "plants": per_plant,
         "plus_minus_value": data.plus_minus_value,
@@ -195,8 +210,7 @@ def _run_mc_for_plant(plant, num_samples: int, batch_size: int, additional_capex
 
 @router.post("/monte-carlo", response_model=MonteCarloMultiResult)
 def run_monte_carlo(data: MonteCarloIn):
-    plant = _require_plant()
-    plants = [plant] + _rehydrate_extras(data.extra_plants)
+    plants = _plants_for(data)
 
     raws: list[dict] = []
     summaries: list[dict] = []
@@ -208,7 +222,9 @@ def run_monte_carlo(data: MonteCarloIn):
     # Cache the raw results (full sample arrays) so /api/plots/monte-carlo
     # can re-render this exact run with the library's matplotlib functions.
     state.mc_raw = raws
-    state.mc_results = summaries[0] if summaries else None
-    state.mc_snapshot = state.calc_snapshot
+    # Only a run that includes the open plant (first) counts as its
+    # Monte Carlo result for Save as JSON
+    state.mc_results = summaries[0] if data.include_active else None
+    state.mc_snapshot = state.calc_snapshot if data.include_active else None
 
     return {"plants": summaries}

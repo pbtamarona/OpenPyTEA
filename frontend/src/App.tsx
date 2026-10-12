@@ -11,6 +11,7 @@ import {
 } from "./api/client";
 import type { ExamplePreset } from "./api/client";
 import ComparePage from "./pages/ComparePage";
+import { projectComparison } from "./plantSources";
 import WelcomePage from "./pages/WelcomePage";
 import ProjectPage from "./pages/ProjectPage";
 import { openDocs } from "./docs";
@@ -26,9 +27,10 @@ const PROJECT_EXT = "openpytea";
 // mounted (just hidden) after its first visit, so switching tabs or plants
 // doesn't discard a plant's results
 const KEEP_ALIVE = new Set<string>(["Analysis", "Monte Carlo"]);
-// Tabs that show their own plant picker (Analysis and Monte Carlo: the
-// plant checkboxes), so the header one is hidden
-const PAGES_WITH_PICKER = new Set<string>(["Plant Config", "Equipment", "Results", "Analysis", "Monte Carlo"]);
+// Tabs where the header plant switcher is hidden: they have their own
+// picker (Analysis and Monte Carlo: the plant checkboxes), or, like
+// Compare, show every plant at once
+const PAGES_WITH_PICKER = new Set<string>(["Plant Config", "Equipment", "Results", "Analysis", "Monte Carlo", "Compare"]);
 
 /** Detect Tauri at runtime. Cached on first call. */
 let _isTauriCache: boolean | null = null;
@@ -73,7 +75,10 @@ function App() {
     if (saved) return saved === "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
+  // Plants imported on the Compare tab (from saved files); the project's
+  // own plants are always compared (projectCompared, loaded on the tab)
   const [comparedPlants, setComparedPlants] = useState<ComparedPlant[]>([]);
+  const [projectCompared, setProjectCompared] = useState<ComparedPlant[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
   const [inTauri, setInTauri] = useState(false);
 
@@ -112,31 +117,6 @@ function App() {
   projectRef.current = project;
 
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const addToComparison = async (name: string, currency: string, r: CalculationResults) => {
-    let source: PlantInput | undefined;
-    try {
-      const data = (await saveProject()) as { equipment?: unknown[]; plant?: unknown };
-      if (Array.isArray(data.equipment) && data.equipment.length > 0 && data.plant) {
-        source = {
-          name,
-          equipment: data.equipment as Record<string, unknown>[],
-          plant: data.plant as Record<string, unknown>,
-        };
-      }
-    } catch {
-      // non-fatal — plant just won't be available for analysis overlays
-    }
-    setComparedPlants((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), name, currency, results: r, source },
-    ]);
-    setComparisonDirty(true);
-    // We deliberately don't set the input-`dirty` flag — that one drives
-    // the load-example/open prompts and would otherwise block the typical
-    // "load A, add, load B, add, …" flow. comparisonDirty is only checked
-    // on app close.
-  };
 
   /** Apply a project overview from the backend. When the open plant
       changed, the plant-level pages must reload and Results follow it. */
@@ -253,6 +233,16 @@ function App() {
     });
   }, [showWelcome, tab, refreshKey]);
 
+  // The Compare tab shows every calculated plant of the project
+  useEffect(() => {
+    if (tab !== "Compare" || !project) return;
+    let stale = false;
+    projectComparison(project)
+      .then((r) => { if (!stale) setProjectCompared(r); })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Could not load the plants"));
+    return () => { stale = true; };
+  }, [tab, project]);
+
   // Window title reflects current project + dirty state.
   useEffect(() => {
     const name = currentPath ? basename(currentPath) : project?.meta.name || "Untitled";
@@ -313,12 +303,20 @@ function App() {
     }
   }, [dirty, comparisonDirty]);
 
-  /** Restore compared plants from a parsed save-file. UUIDs are
-      regenerated; everything else is taken verbatim. */
+  /** Restore the imported compared plants from a parsed save-file. UUIDs
+      are regenerated; everything else is taken verbatim. */
   const restoreComparedPlants = (parsed: unknown): ComparedPlant[] => {
-    const arr = (parsed as { compared_plants?: unknown }).compared_plants;
+    const file = parsed as {
+      compared_plants?: unknown; plants?: { name?: string }[]; plant?: { plant_name?: string };
+    };
+    const arr = file.compared_plants;
     if (!Array.isArray(arr)) return [];
-    return arr.map((p: unknown) => {
+    // Older files listed the project's own plants here too; those are now
+    // compared automatically
+    const own = new Set(
+      Array.isArray(file.plants) ? file.plants.map((p) => p.name) : [file.plant?.plant_name],
+    );
+    return arr.filter((p: { name?: string }) => !own.has(p?.name)).map((p: unknown) => {
       const obj = p as {
         name?: string; currency?: string;
         results?: CalculationResults; source?: PlantInput;
@@ -900,7 +898,6 @@ function App() {
             results={results}
             setResults={setResults}
             setError={setError}
-            onAddToComparison={addToComparison}
             project={project}
             onSwitchPlant={handleSwitchPlant}
           />
@@ -917,6 +914,8 @@ function App() {
         ))}
         {tab === "Compare" && (
           <ComparePage
+            projectPlants={projectCompared}
+            notCalculated={project?.plants.filter((p) => p.metrics == null).map((p) => p.name) ?? []}
             plants={comparedPlants}
             onRemove={removeFromComparison}
             onImport={(plant) => setComparedPlants((prev) => [...prev, plant])}

@@ -134,7 +134,8 @@ def park_active():
     # The plant's Monte Carlo run travels with it (the MC tab keeps showing
     # it); whether it still matches the inputs is checked here, before
     # active_results() may recalculate, so Save as JSON can skip a stale run
-    mc_current = state.mc_raw is not None and state.mc_snapshot == _calc_snapshot()
+    mc_current = (state.mc_raw is not None and state.mc_snapshot is not None
+                  and state.mc_snapshot == _calc_snapshot())
     slot["equipment"] = copy.deepcopy(equipment_specs(state.equipment_list))
     slot["plant"] = copy.deepcopy(state.plant_config)
     slot["name"] = state.plant_config.get("plant_name") or slot["name"]

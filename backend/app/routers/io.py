@@ -80,7 +80,7 @@ def export_json():
             results["tornado"] = tornado_data(plant, **state.tornado_args)
         except (ValueError, KeyError):
             pass  # e.g. a varied item was since removed from the config
-    if state.mc_raw and state.mc_snapshot == state.calc_snapshot:
+    if state.mc_raw and state.mc_snapshot is not None and state.mc_snapshot == state.calc_snapshot:
         results["monte_carlo"] = state.mc_raw[0]
 
     sensitivity = {}

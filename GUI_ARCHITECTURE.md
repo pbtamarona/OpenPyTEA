@@ -109,7 +109,7 @@ frontend/
 | POST | `/plants/{id}/duplicate` | Copy a plant and open the copy |
 | PATCH | `/plants/{id}` | Rename a plant (also sets its `plant_name`) |
 | DELETE | `/plants/{id}` | Delete a plant (not the last one) |
-| GET | `/plants/{id}/snapshot` | Name, currency, results and inputs of a plant, for the Compare tab |
+| GET | `/plants/{id}/snapshot` | Name, currency, results and inputs of a plant, for the Compare tab and the Analysis / Monte Carlo plant checkboxes |
 
 Mutating project endpoints return the new overview plus the open plant's
 results, so the Results tab follows a plant switch.
@@ -124,7 +124,7 @@ results, so the Results tab follows a plant switch.
 ### ProjectPage
 - Project details: name, user name (defaults to the OS login), date created (read-only), description; saved on blur
 - Plants table: open-plant marker, name, currency, equipment count, LCOP, NPV, IRR, payback; Open / Rename / Duplicate / Delete per row; "+ Add Plant"
-- Header shows a plant switcher whenever the project has more than one plant (except on Plant Config, Equipment, Results, Analysis and Monte Carlo, which have their own picker)
+- Header shows a plant switcher whenever the project has more than one plant (except on Plant Config, Equipment, Results, Analysis and Monte Carlo, which have their own picker, and Compare, which shows every plant)
 
 ### EquipmentPage
 - Table with columns: #, Name, Category, Type, Material, Process, Param, Units, Purchased ($), Direct ($), actions
@@ -210,13 +210,17 @@ results, so the Results tab follows a plant switch.
 - **Tornado section**: +/- variation, metric selector. Horizontal bar chart with low (blue) / high (red) deviations from baseline.
 - Parameters list is fetched from `/sensitivity/parameters` (includes top-level + variable_opex + products)
 - Both charts downloadable as PNG
-- Plant checkboxes (`components/ComparePlants.tsx`, also on Monte Carlo), shown whenever the project has more than one plant: the open plant is always included; ticking another calculated plant adds it to the run as an `extra_plants` entry (inputs fetched from `/project/plants/{id}/snapshot` when the run starts). Uncalculated plants are listed but disabled.
+- Plant checkboxes (`components/ComparePlants.tsx` + `usePlantSelection` in `plantSources.ts`, also on Monte Carlo), shown whenever the project has more than one plant. The open plant starts ticked; any plant can be ticked or unticked. The open plant is sent as `include_active`, the others as `extra_plants` entries (inputs fetched from `/project/plants/{id}/snapshot` when the run starts). Uncalculated plants are listed but disabled. Only runs that include the open plant are recorded for its Save as JSON analysis file.
 
 ### MonteCarloPage
 - Config: num_samples (default 50k), batch_size, plant checkboxes (as on Analysis)
 - Summary stats table per metric: mean, std, p5, p25, median, p75, p95, min, max
 - Histogram chart per metric with labeled axes (metric name + frequency), downloadable as PNG
 - Input distributions summary table
+
+### ComparePage
+- Shows every calculated plant of the project automatically (snapshots loaded when the tab opens), plus plants imported from saved JSON files (only those can be removed; they are kept in the project file as `compared_plants`)
+- Lists project plants that haven't been calculated yet
 
 ## Documentation and (?) help
 

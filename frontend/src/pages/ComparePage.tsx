@@ -8,14 +8,26 @@ import DownloadableChart from "../components/DownloadableChart";
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
 
 interface Props {
+  /** The project's calculated plants, always compared */
+  projectPlants: ComparedPlant[];
+  /** Names of project plants without results yet */
+  notCalculated: string[];
+  /** Plants imported from saved files */
   plants: ComparedPlant[];
   onRemove: (id: string) => void;
   onImport: (plant: ComparedPlant) => void;
   setError: (e: string | null) => void;
 }
 
-export default function ComparePage({ plants, onRemove, onImport, setError }: Props) {
+export default function ComparePage({ projectPlants, notCalculated, plants: imported, onRemove, onImport, setError }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const plants = [...projectPlants, ...imported];
+  const importedIds = new Set(imported.map((p) => p.id));
+  const pendingNote = notCalculated.length > 0 && (
+    <p style={{ color: "var(--text-muted)", fontSize: 13, margin: "0 0 16px" }}>
+      Not calculated yet (open on the Results tab to include): {notCalculated.join(", ")}
+    </p>
+  );
 
   const fmt = (n: number | null | undefined) =>
     n != null ? n.toLocaleString("en-US", { maximumFractionDigits: 2 }) : "-";
@@ -133,9 +145,10 @@ export default function ComparePage({ plants, onRemove, onImport, setError }: Pr
     return (
       <div className="card" style={{ textAlign: "center", padding: 60 }}>
         <p style={{ color: "var(--text-muted)", marginBottom: 16 }}>
-          No plants added yet. Run calculations on the Results tab and click
-          "Add to Comparison", or import a saved project JSON.
+          Every calculated plant of the project is compared here. Calculate a
+          plant on the Results tab, or import a saved project JSON.
         </p>
+        {pendingNote}
         <button className="btn-primary" onClick={() => fileRef.current?.click()}>
           Import from JSON
         </button>
@@ -156,6 +169,7 @@ export default function ComparePage({ plants, onRemove, onImport, setError }: Pr
           {plants.length} plant{plants.length !== 1 ? "s" : ""} in comparison
         </span>
       </div>
+      {pendingNote}
 
       {/* Metrics table */}
       <div className="card">
@@ -186,7 +200,11 @@ export default function ComparePage({ plants, onRemove, onImport, setError }: Pr
                   <td className="number">{pct(p.results.metrics.irr)}</td>
                   <td className="number">{p.results.metrics.roi != null ? p.results.metrics.roi.toFixed(2) + "%" : "-"}</td>
                   <td className="number">{fmt(p.results.metrics.payback_time)}</td>
-                  <td><button className="btn-danger" onClick={() => onRemove(p.id)}>Remove</button></td>
+                  <td>
+                    {importedIds.has(p.id) && (
+                      <button className="btn-danger" onClick={() => onRemove(p.id)} title="Remove this imported plant">Remove</button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

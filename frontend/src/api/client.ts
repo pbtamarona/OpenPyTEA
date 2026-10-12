@@ -94,16 +94,16 @@ export const runCalculations = () =>
 export const getSensitivityParameters = () => request<string[]>("/analysis/sensitivity/parameters");
 export const runSensitivity = (params: {
   parameter: string; plus_minus_value: number; n_points: number; metric: string;
-  additional_capex: boolean; extra_plants?: PlantInput[];
+  additional_capex: boolean; extra_plants?: PlantInput[]; include_active?: boolean;
 }) =>
   request<SensitivityResult>("/analysis/sensitivity", { method: "POST", body: JSON.stringify(params) });
 export const runTornado = (params: {
   plus_minus_value: number; metric: string; additional_capex: boolean;
-  extra_plants?: PlantInput[];
+  extra_plants?: PlantInput[]; include_active?: boolean;
 }) =>
   request<TornadoResult>("/analysis/tornado", { method: "POST", body: JSON.stringify(params) });
 export const runMonteCarlo = (params: {
-  num_samples: number; batch_size: number; additional_capex: boolean; extra_plants?: PlantInput[];
+  num_samples: number; batch_size: number; additional_capex: boolean; extra_plants?: PlantInput[]; include_active?: boolean;
 }) =>
   request<MonteCarloMultiResult>("/analysis/monte-carlo", { method: "POST", body: JSON.stringify(params) });
 

@@ -34,8 +34,9 @@ from openpytea.plotting import (  # noqa: E402
 )
 
 from app import state  # noqa: E402
-from app.plant_factory import build_plant, require_active_plant  # noqa: E402
-from app.schemas import SensitivityIn, TornadoIn, MCPlotIn, PlantInput  # noqa: E402
+from app.plant_factory import require_active_plant  # noqa: E402
+from app.routers.analysis import _plants_for  # noqa: E402
+from app.schemas import SensitivityIn, TornadoIn, MCPlotIn  # noqa: E402
 
 router = APIRouter()
 
@@ -55,16 +56,6 @@ def _png(fig) -> Response:
 
 def _require_plant():
     return require_active_plant()
-
-
-def _rehydrate_extras(extras: list[PlantInput]):
-    plants = []
-    for extra in extras:
-        p = build_plant(extra.equipment, extra.plant)
-        if extra.name:
-            p.name = extra.name
-        plants.append(p)
-    return plants
 
 
 _STACKED_DATA_FUNCS = {
@@ -95,8 +86,7 @@ def stacked_plot(kind: str):
 @router.post("/sensitivity")
 def sensitivity_plot(payload: SensitivityIn):
     """plot_sensitivity() over the same inputs the analysis endpoint uses."""
-    plant = _require_plant()
-    plants = [plant] + _rehydrate_extras(payload.extra_plants)
+    plants = _plants_for(payload)
     with _mpl_lock:
         try:
             data = sensitivity_data(
@@ -118,8 +108,7 @@ def sensitivity_plot(payload: SensitivityIn):
 @router.post("/tornado")
 def tornado_plot(payload: TornadoIn):
     """plot_tornado(); multiple plants become side-by-side subplots."""
-    plant = _require_plant()
-    plants = [plant] + _rehydrate_extras(payload.extra_plants)
+    plants = _plants_for(payload)
     with _mpl_lock:
         try:
             datas = [

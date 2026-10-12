@@ -11,7 +11,7 @@ import DownloadableChart from "../components/DownloadableChart";
 import { fmtTick, fmtValue } from "../format";
 import HelpTip from "../components/HelpTip";
 import ComparePlants from "../components/ComparePlants";
-import { selectedSources } from "../plantSources";
+import { usePlantSelection } from "../plantSources";
 
 const METRICS = ["LCOP", "NPV", "IRR", "ROI", "PBT"];
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
@@ -55,13 +55,13 @@ export default function AnalysisPage({ setError, project, active }: Props) {
   const [parameters, setParameters] = useState<string[]>([]);
   const [sensPoints, setSensPoints] = useState(21);
   const [panels, setPanels] = useState<Panel[]>([newPanel()]);
-  const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set());
+  const sensPlants = usePlantSelection(project);
 
   const [tornPM, setTornPM] = useState(0.2);
   const [tornMetric, setTornMetric] = useState("LCOP");
   const [tornResult, setTornResult] = useState<TornadoResult | null>(null);
   const [tornLoading, setTornLoading] = useState(false);
-  const [selectedTornExtras, setSelectedTornExtras] = useState<Set<string>>(new Set());
+  const tornSelection = usePlantSelection(project);
 
   // Refetched every time the tab is shown: the configuration may have
   // gained or lost items while the user was on another tab
@@ -92,30 +92,11 @@ export default function AnalysisPage({ setError, project, active }: Props) {
     ]);
   };
 
-  const toggleExtra = (id: string) => {
-    setSelectedExtras((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleTornExtra = (id: string) => {
-    setSelectedTornExtras((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-
-  const collectTornExtras = () => selectedSources(project, selectedTornExtras);
-  const collectExtras = () => selectedSources(project, selectedExtras);
-
   const runAll = async () => {
     setError(null);
-    let extra_plants;
+    let plantsReq: Awaited<ReturnType<typeof sensPlants.request>>;
     try {
-      extra_plants = await collectExtras();
+      plantsReq = await sensPlants.request();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Could not load the selected plants");
       return;
@@ -130,7 +111,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
           n_points: sensPoints,
           metric: panel.metric,
           additional_capex: false,
-          extra_plants,
+          ...plantsReq,
         });
         return { id: panel.id, result: r as SensitivityResult | null, error: null as string | null };
       } catch (e: unknown) {
@@ -154,12 +135,11 @@ export default function AnalysisPage({ setError, project, active }: Props) {
     setTornLoading(true);
     setError(null);
     try {
-      const extra_plants = await collectTornExtras();
       const r = await runTornado({
         plus_minus_value: tornPM,
         metric: tornMetric,
         additional_capex: false,
-        extra_plants,
+        ...(await tornSelection.request()),
       });
       setTornResult(r);
     } catch (e: unknown) {
@@ -225,7 +205,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Sensitivity Analysis</h2>
 
-        <ComparePlants project={project} selected={selectedExtras} onToggle={toggleExtra} />
+        <ComparePlants project={project} isTicked={sensPlants.isTicked} onToggle={sensPlants.toggle} />
 
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <button className="btn-primary" onClick={runAll} disabled={anyLoading}>
@@ -279,7 +259,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
                 n_points: sensPoints,
                 metric: panel.metric,
                 additional_capex: false,
-                extra_plants: await collectExtras(),
+                ...(await sensPlants.request()),
               })}
               onChange={(patch) => updatePanel(panel.id, patch)}
               onRemove={() => removePanel(panel.id)}
@@ -292,7 +272,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
       <div className="card">
         <h2>Tornado Analysis</h2>
 
-        <ComparePlants project={project} selected={selectedTornExtras} onToggle={toggleTornExtra} />
+        <ComparePlants project={project} isTicked={tornSelection.isTicked} onToggle={tornSelection.toggle} />
 
         <div className="form-grid" style={{ marginBottom: 16 }}>
           <div className="form-group">
@@ -318,7 +298,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
               plus_minus_value: tornPM,
               metric: tornMetric,
               additional_capex: false,
-              extra_plants: await collectTornExtras(),
+              ...(await tornSelection.request()),
             })}
             height={Math.max(
               300,

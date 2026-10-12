@@ -9,7 +9,7 @@ import { fmtTick, fmtValue, niceTicks } from "../format";
 import { saveFigure } from "../save";
 import HelpTip from "../components/HelpTip";
 import ComparePlants from "../components/ComparePlants";
-import { selectedSources } from "../plantSources";
+import { usePlantSelection } from "../plantSources";
 
 /** Name and unit of an MC output metric — the same wording and units as
     the library's matplotlib figures (helpers._default_metric_label). */
@@ -144,26 +144,17 @@ export default function MonteCarloPage({ setError, project }: Props) {
   const [batchSize, setBatchSize] = useState(1000);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MonteCarloMultiResult | null>(null);
-  const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set());
+  const selection = usePlantSelection(project);
   const [runCount, setRunCount] = useState(1);
-
-  const toggleExtra = (id: string) => {
-    setSelectedExtras((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
 
   const run = async () => {
     setLoading(true);
     setError(null);
     try {
-      const extra_plants = await selectedSources(project, selectedExtras);
-      setRunCount(1 + extra_plants.length);
+      setRunCount(selection.count());
       const r = await runMonteCarlo({
         num_samples: numSamples, batch_size: batchSize, additional_capex: false,
-        extra_plants,
+        ...(await selection.request()),
       });
       setResult(r);
     } catch (e: unknown) {
@@ -200,8 +191,8 @@ export default function MonteCarloPage({ setError, project }: Props) {
 
         <ComparePlants
           project={project}
-          selected={selectedExtras}
-          onToggle={toggleExtra}
+          isTicked={selection.isTicked}
+          onToggle={selection.toggle}
           note="Each ticked plant runs its own Monte Carlo simulation with the same number of samples."
         />
 

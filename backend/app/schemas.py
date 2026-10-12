@@ -238,6 +238,8 @@ class SensitivityIn(BaseModel):
     metric: str = "LCOP"
     additional_capex: bool = False
     extra_plants: list[PlantInput] = Field(default_factory=list, max_length=8)
+    # False runs the extra plants only (the open plant left out)
+    include_active: bool = True
 
 
 class TornadoIn(BaseModel):
@@ -245,6 +247,8 @@ class TornadoIn(BaseModel):
     metric: str = "LCOP"
     additional_capex: bool = False
     extra_plants: list[PlantInput] = Field(default_factory=list, max_length=8)
+    # False runs the extra plants only (the open plant left out)
+    include_active: bool = True
 
 
 class MonteCarloIn(BaseModel):
@@ -252,6 +256,8 @@ class MonteCarloIn(BaseModel):
     batch_size: int = Field(default=1000, ge=10, le=100_000)
     additional_capex: bool = False
     extra_plants: list[PlantInput] = Field(default_factory=list, max_length=8)
+    # False runs the extra plants only (the open plant left out)
+    include_active: bool = True
 
 
 class MCPlotIn(BaseModel):
