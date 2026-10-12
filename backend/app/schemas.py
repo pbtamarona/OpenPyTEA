@@ -257,6 +257,8 @@ class MonteCarloIn(BaseModel):
 class MCPlotIn(BaseModel):
     """Which metric of the cached Monte Carlo run to render as a figure."""
     metric: str = "LCOP"
+    # Overlay the fitted normal distribution (the library's show_fit)
+    show_fit: bool = True
 
 
 # ── Analysis results ──────────────────────────────────────────────

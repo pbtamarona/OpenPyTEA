@@ -157,9 +157,11 @@ def monte_carlo_plot(payload: MCPlotIn):
     with _mpl_lock:
         try:
             if len(raw) == 1:
-                fig, _ = plot_monte_carlo(raw[0], metric=payload.metric, show=False)
+                fig, _ = plot_monte_carlo(
+                    raw[0], metric=payload.metric, show_fit=payload.show_fit, show=False)
             else:
-                fig, _ = plot_multiple_monte_carlo(raw, metric=payload.metric, show=False)
+                fig, _ = plot_multiple_monte_carlo(
+                    raw, metric=payload.metric, show_fit=payload.show_fit, show=False)
         except HTTPException:
             raise
         except (ValueError, KeyError) as e:

@@ -74,7 +74,7 @@ function inputHistRows(hist: { bin_edges: number[]; counts: number[] }, n: numbe
   return rows;
 }
 
-function buildOverlayData(plants: MonteCarloResult[], metric: string, pdfPoints = 200): OverlayRow[] {
+function buildOverlayData(plants: MonteCarloResult[], metric: string, showFit: boolean, pdfPoints = 200): OverlayRow[] {
   const series = plants
     .map((p) => ({ name: p.name, num_samples: p.num_samples, stats: p.metrics[metric] }))
     .filter((s) => s.stats != null);
@@ -86,8 +86,10 @@ function buildOverlayData(plants: MonteCarloResult[], metric: string, pdfPoints 
     if (edges[0] < xMin) xMin = edges[0];
     if (edges[edges.length - 1] > xMax) xMax = edges[edges.length - 1];
     // Extend a bit beyond histogram so the fitted curve has tails.
-    xMin = Math.min(xMin, s.stats.mean - 4 * s.stats.std);
-    xMax = Math.max(xMax, s.stats.mean + 4 * s.stats.std);
+    if (showFit) {
+      xMin = Math.min(xMin, s.stats.mean - 4 * s.stats.std);
+      xMax = Math.max(xMax, s.stats.mean + 4 * s.stats.std);
+    }
   });
 
   // Collect x points: bin centers (per plant) + uniform PDF grid
@@ -120,7 +122,7 @@ function buildOverlayData(plants: MonteCarloResult[], metric: string, pdfPoints 
           break;
         }
       }
-      row[`${s.name}__pdf`] = normalPdf(x, s.stats.mean, s.stats.std);
+      if (showFit) row[`${s.name}__pdf`] = normalPdf(x, s.stats.mean, s.stats.std);
     });
     return row;
   });
@@ -128,6 +130,15 @@ function buildOverlayData(plants: MonteCarloResult[], metric: string, pdfPoints 
 
 export default function MonteCarloPage({ setError, comparedPlants }: Props) {
   const [numSamples, setNumSamples] = useState(50000);
+  // Fitted-normal overlay on the metric histograms (screen and downloads);
+  // remembered across sessions
+  const [showFit, setShowFit] = useState(() => {
+    try { return localStorage.getItem("openpytea-mc-fit") !== "off"; } catch { return true; }
+  });
+  const toggleFit = (on: boolean) => {
+    setShowFit(on);
+    try { localStorage.setItem("openpytea-mc-fit", on ? "on" : "off"); } catch { /* private mode */ }
+  };
   const [batchSize, setBatchSize] = useState(1000);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MonteCarloMultiResult | null>(null);
@@ -267,9 +278,14 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
             </div>
           </div>
 
+          <label className="mc-fit-toggle">
+            <input type="checkbox" checked={showFit} onChange={(e) => toggleFit(e.target.checked)} />
+            Show fitted normal distribution
+          </label>
+
           {/* Histograms for each metric — overlaid across plants */}
           {metricNames.map((metric) => {
-            const data = buildOverlayData(plants, metric);
+            const data = buildOverlayData(plants, metric, showFit);
             if (data.length === 0) return null;
             const seriesPlants = plants.filter((p) => p.metrics[metric] != null);
             // Overlaid plants share one axis: name the currency only if they agree
@@ -291,7 +307,7 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                     );
                   })}
                 </div>
-                <DownloadableChart filename={`mc_${metric}`} height={430} serverPlot={() => fetchPlotPng("/plots/monte-carlo", { metric })}>
+                <DownloadableChart filename={`mc_${metric}`} height={430} serverPlot={() => fetchPlotPng("/plots/monte-carlo", { metric, show_fit: showFit })}>
                   <ResponsiveContainer>
                     <ComposedChart data={data} margin={{ bottom: 46, left: 12, top: 10, right: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -329,7 +345,7 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                             isAnimationActive={false}
                             connectNulls={false}
                           />,
-                          <Line
+                          showFit && <Line
                             key={`${p.name}-pdf`}
                             type="monotone"
                             dataKey={`${p.name}__pdf`}

@@ -841,3 +841,15 @@ td input[type="number"] {
   color: rgba(255,255,255,.65);
 }
 .welcome .app-footer a { color: #8fb0ff; }
+
+/* Monte Carlo: fitted-normal overlay toggle */
+.mc-fit-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
