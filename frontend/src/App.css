@@ -853,3 +853,24 @@ td input[type="number"] {
   color: var(--text-secondary);
   cursor: pointer;
 }
+
+/* Plant checkboxes on Analysis and Monte Carlo */
+.compare-plants { margin-bottom: 16px; }
+.compare-plants-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+.compare-plants-list { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.compare-plants-list label { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.compare-plants-list label.is-disabled { color: var(--text-muted); cursor: not-allowed; }
+.compare-plants-tag {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--hover-bg);
+  color: var(--text-muted);
+}
+.compare-plants-note { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; }

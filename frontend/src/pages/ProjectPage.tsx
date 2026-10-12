@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   setProjectMeta, addPlant, activatePlant, duplicatePlant, renamePlant,
-  deletePlant, getPlantSnapshot,
+  deletePlant,
 } from "../api/client";
-import type { ProjectMeta, ProjectOverview, PlantSnapshot } from "../types";
+import type { ProjectMeta, ProjectOverview } from "../types";
 import HelpTip from "../components/HelpTip";
 
 interface Props {
@@ -11,7 +11,6 @@ interface Props {
   /** New overview after an action; `switched` = the open plant changed. */
   onProjectChange: (o: ProjectOverview, switched: boolean) => void;
   onOpenPlant: () => void;
-  onAddToComparison: (snap: PlantSnapshot) => void;
   setError: (e: string | null) => void;
   markDirty: () => void;
 }
@@ -45,7 +44,7 @@ async function askConfirm(message: string, title: string): Promise<boolean> {
 }
 
 export default function ProjectPage({
-  project, onProjectChange, onOpenPlant, onAddToComparison, setError, markDirty,
+  project, onProjectChange, onOpenPlant, setError, markDirty,
 }: Props) {
   const [meta, setMeta] = useState<ProjectMeta | null>(project?.meta ?? null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -104,21 +103,6 @@ export default function ProjectPage({
     if (o) onOpenPlant();
   };
 
-  const addToCompare = async (ids: string[]) => {
-    setError(null);
-    const failed: string[] = [];
-    for (const id of ids) {
-      try {
-        onAddToComparison(await getPlantSnapshot(id));
-      } catch {
-        failed.push(project.plants.find((p) => p.id === id)?.name ?? id);
-      }
-    }
-    if (failed.length) setError(`Not added to Compare (can't be calculated yet): ${failed.join(", ")}`);
-  };
-
-  const calculable = project.plants.filter((p) => p.metrics);
-
   return (
     <div className="project-page">
       <div className="card">
@@ -162,14 +146,6 @@ export default function ProjectPage({
         <div className="project-plants-header">
           <h2>Plants<HelpTip id="project.plants" /></h2>
           <div className="project-plants-actions">
-            <button
-              className="btn-secondary"
-              disabled={busy || calculable.length === 0}
-              onClick={() => addToCompare(calculable.map((p) => p.id))}
-              title="Add every calculated plant to the Compare tab"
-            >
-              Add all to Compare
-            </button>
             <button className="btn-primary" disabled={busy} onClick={() => run(() => addPlant(), { switched: true })}>
               + Add Plant
             </button>
@@ -234,14 +210,6 @@ export default function ProjectPage({
                         onClick={() => run(() => duplicatePlant(p.id), { switched: true })}
                       >
                         Duplicate
-                      </button>
-                      <button
-                        className="btn-secondary btn-small"
-                        disabled={busy || !p.metrics}
-                        title={p.metrics ? "Add to the Compare tab" : "Calculate this plant first"}
-                        onClick={() => addToCompare([p.id])}
-                      >
-                        Compare
                       </button>
                       <button
                         className="btn-danger"

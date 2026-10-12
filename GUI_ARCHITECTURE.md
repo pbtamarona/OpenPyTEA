@@ -123,8 +123,8 @@ results, so the Results tab follows a plant switch.
 
 ### ProjectPage
 - Project details: name, user name (defaults to the OS login), date created (read-only), description; saved on blur
-- Plants table: open-plant marker, name, currency, equipment count, LCOP, NPV, IRR, payback; Open / Rename / Duplicate / Compare / Delete per row; "+ Add Plant" and "Add all to Compare"
-- Header shows a plant switcher whenever the project has more than one plant (except on Plant Config, Equipment and Results, which have their own picker)
+- Plants table: open-plant marker, name, currency, equipment count, LCOP, NPV, IRR, payback; Open / Rename / Duplicate / Delete per row; "+ Add Plant"
+- Header shows a plant switcher whenever the project has more than one plant (except on Plant Config, Equipment, Results, Analysis and Monte Carlo, which have their own picker)
 
 ### EquipmentPage
 - Table with columns: #, Name, Category, Type, Material, Process, Param, Units, Purchased ($), Direct ($), actions
@@ -210,9 +210,10 @@ results, so the Results tab follows a plant switch.
 - **Tornado section**: +/- variation, metric selector. Horizontal bar chart with low (blue) / high (red) deviations from baseline.
 - Parameters list is fetched from `/sensitivity/parameters` (includes top-level + variable_opex + products)
 - Both charts downloadable as PNG
+- Plant checkboxes (`components/ComparePlants.tsx`, also on Monte Carlo), shown whenever the project has more than one plant: the open plant is always included; ticking another calculated plant adds it to the run as an `extra_plants` entry (inputs fetched from `/project/plants/{id}/snapshot` when the run starts). Uncalculated plants are listed but disabled.
 
 ### MonteCarloPage
-- Config: num_samples (default 50k), batch_size
+- Config: num_samples (default 50k), batch_size, plant checkboxes (as on Analysis)
 - Summary stats table per metric: mean, std, p5, p25, median, p75, p95, min, max
 - Histogram chart per metric with labeled axes (metric name + frequency), downloadable as PNG
 - Input distributions summary table

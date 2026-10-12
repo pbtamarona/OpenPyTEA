@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   getSensitivityParameters, runSensitivity, runTornado, fetchPlotPng,
 } from "../api/client";
-import type { SensitivityResult, TornadoResult, ComparedPlant } from "../types";
+import type { SensitivityResult, TornadoResult, ProjectOverview } from "../types";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, ReferenceLine, Cell, Legend,
@@ -10,6 +10,8 @@ import {
 import DownloadableChart from "../components/DownloadableChart";
 import { fmtTick, fmtValue } from "../format";
 import HelpTip from "../components/HelpTip";
+import ComparePlants from "../components/ComparePlants";
+import { selectedSources } from "../plantSources";
 
 const METRICS = ["LCOP", "NPV", "IRR", "ROI", "PBT"];
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
@@ -34,7 +36,7 @@ interface Panel {
 
 interface Props {
   setError: (e: string | null) => void;
-  comparedPlants: ComparedPlant[];
+  project: ProjectOverview | null;
   /** The page stays mounted (results kept) while hidden on other tabs;
       false while hidden. */
   active: boolean;
@@ -49,7 +51,7 @@ const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2): Pane
   loading: false,
 });
 
-export default function AnalysisPage({ setError, comparedPlants, active }: Props) {
+export default function AnalysisPage({ setError, project, active }: Props) {
   const [parameters, setParameters] = useState<string[]>([]);
   const [sensPoints, setSensPoints] = useState(21);
   const [panels, setPanels] = useState<Panel[]>([newPanel()]);
@@ -60,11 +62,6 @@ export default function AnalysisPage({ setError, comparedPlants, active }: Props
   const [tornResult, setTornResult] = useState<TornadoResult | null>(null);
   const [tornLoading, setTornLoading] = useState(false);
   const [selectedTornExtras, setSelectedTornExtras] = useState<Set<string>>(new Set());
-
-  const overlayCandidates = useMemo(
-    () => comparedPlants.filter((p) => p.source != null),
-    [comparedPlants],
-  );
 
   // Refetched every time the tab is shown: the configuration may have
   // gained or lost items while the user was on another tab
@@ -111,21 +108,18 @@ export default function AnalysisPage({ setError, comparedPlants, active }: Props
     });
   };
 
-  const collectTornExtras = () =>
-    overlayCandidates
-      .filter((p) => selectedTornExtras.has(p.id))
-      .map((p) => p.source!)
-      .filter(Boolean);
-
-  const collectExtras = () =>
-    overlayCandidates
-      .filter((p) => selectedExtras.has(p.id))
-      .map((p) => p.source!)
-      .filter(Boolean);
+  const collectTornExtras = () => selectedSources(project, selectedTornExtras);
+  const collectExtras = () => selectedSources(project, selectedExtras);
 
   const runAll = async () => {
     setError(null);
-    const extra_plants = collectExtras();
+    let extra_plants;
+    try {
+      extra_plants = await collectExtras();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Could not load the selected plants");
+      return;
+    }
     setPanels((prev) => prev.map((p) => ({ ...p, loading: true })));
 
     const tasks = panels.map(async (panel) => {
@@ -160,7 +154,7 @@ export default function AnalysisPage({ setError, comparedPlants, active }: Props
     setTornLoading(true);
     setError(null);
     try {
-      const extra_plants = collectTornExtras();
+      const extra_plants = await collectTornExtras();
       const r = await runTornado({
         plus_minus_value: tornPM,
         metric: tornMetric,
@@ -231,25 +225,7 @@ export default function AnalysisPage({ setError, comparedPlants, active }: Props
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Sensitivity Analysis</h2>
 
-        {overlayCandidates.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "var(--text-secondary)" }}>
-              Compare with (from Compare tab)
-            </label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-              {overlayCandidates.map((p) => (
-                <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedExtras.has(p.id)}
-                    onChange={() => toggleExtra(p.id)}
-                  />
-                  {p.name}
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
+        <ComparePlants project={project} selected={selectedExtras} onToggle={toggleExtra} />
 
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <button className="btn-primary" onClick={runAll} disabled={anyLoading}>
@@ -297,13 +273,13 @@ export default function AnalysisPage({ setError, comparedPlants, active }: Props
               showRemove={panels.length > 1}
               compact={isGrid}
               label={isGrid ? `(${String.fromCharCode(97 + idx)})` : undefined}
-              serverPlot={() => fetchPlotPng("/plots/sensitivity", {
+              serverPlot={async () => fetchPlotPng("/plots/sensitivity", {
                 parameter: panel.parameter,
                 plus_minus_value: panel.plus_minus_value,
                 n_points: sensPoints,
                 metric: panel.metric,
                 additional_capex: false,
-                extra_plants: collectExtras(),
+                extra_plants: await collectExtras(),
               })}
               onChange={(patch) => updatePanel(panel.id, patch)}
               onRemove={() => removePanel(panel.id)}
@@ -316,25 +292,7 @@ export default function AnalysisPage({ setError, comparedPlants, active }: Props
       <div className="card">
         <h2>Tornado Analysis</h2>
 
-        {overlayCandidates.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "var(--text-secondary)" }}>
-              Compare with (from Compare tab)
-            </label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-              {overlayCandidates.map((p) => (
-                <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedTornExtras.has(p.id)}
-                    onChange={() => toggleTornExtra(p.id)}
-                  />
-                  {p.name}
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
+        <ComparePlants project={project} selected={selectedTornExtras} onToggle={toggleTornExtra} />
 
         <div className="form-grid" style={{ marginBottom: 16 }}>
           <div className="form-group">
@@ -356,11 +314,11 @@ export default function AnalysisPage({ setError, comparedPlants, active }: Props
           <DownloadableChart
             filename="tornado"
             maxWidth={800}
-            serverPlot={() => fetchPlotPng("/plots/tornado", {
+            serverPlot={async () => fetchPlotPng("/plots/tornado", {
               plus_minus_value: tornPM,
               metric: tornMetric,
               additional_capex: false,
-              extra_plants: collectTornExtras(),
+              extra_plants: await collectTornExtras(),
             })}
             height={Math.max(
               300,

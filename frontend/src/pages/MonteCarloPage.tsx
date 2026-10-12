@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { runMonteCarlo, fetchPlotPng } from "../api/client";
-import type { MonteCarloMultiResult, MonteCarloResult, ComparedPlant } from "../types";
+import type { MonteCarloMultiResult, MonteCarloResult, ProjectOverview } from "../types";
 import {
   ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
@@ -8,6 +8,8 @@ import DownloadableChart from "../components/DownloadableChart";
 import { fmtTick, fmtValue, niceTicks } from "../format";
 import { saveFigure } from "../save";
 import HelpTip from "../components/HelpTip";
+import ComparePlants from "../components/ComparePlants";
+import { selectedSources } from "../plantSources";
 
 /** Name and unit of an MC output metric — the same wording and units as
     the library's matplotlib figures (helpers._default_metric_label). */
@@ -45,7 +47,7 @@ const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0"
 
 interface Props {
   setError: (e: string | null) => void;
-  comparedPlants: ComparedPlant[];
+  project: ProjectOverview | null;
 }
 
 const SQRT_2PI = Math.sqrt(2 * Math.PI);
@@ -128,7 +130,7 @@ function buildOverlayData(plants: MonteCarloResult[], metric: string, showFit: b
   });
 }
 
-export default function MonteCarloPage({ setError, comparedPlants }: Props) {
+export default function MonteCarloPage({ setError, project }: Props) {
   const [numSamples, setNumSamples] = useState(50000);
   // Fitted-normal overlay on the metric histograms (screen and downloads);
   // remembered across sessions
@@ -143,11 +145,7 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MonteCarloMultiResult | null>(null);
   const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set());
-
-  const overlayCandidates = useMemo(
-    () => comparedPlants.filter((p) => p.source != null),
-    [comparedPlants],
-  );
+  const [runCount, setRunCount] = useState(1);
 
   const toggleExtra = (id: string) => {
     setSelectedExtras((prev) => {
@@ -161,10 +159,8 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const extra_plants = overlayCandidates
-        .filter((p) => selectedExtras.has(p.id))
-        .map((p) => p.source!)
-        .filter(Boolean);
+      const extra_plants = await selectedSources(project, selectedExtras);
+      setRunCount(1 + extra_plants.length);
       const r = await runMonteCarlo({
         num_samples: numSamples, batch_size: batchSize, additional_capex: false,
         extra_plants,
@@ -202,28 +198,12 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
           </div>
         </div>
 
-        {overlayCandidates.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "var(--text-secondary)" }}>
-              Compare with (from Compare tab)
-            </label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-              {overlayCandidates.map((p) => (
-                <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedExtras.has(p.id)}
-                    onChange={() => toggleExtra(p.id)}
-                  />
-                  {p.name}
-                </label>
-              ))}
-            </div>
-            <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
-              Each selected plant runs an independent Monte Carlo simulation with the same sample count.
-            </p>
-          </div>
-        )}
+        <ComparePlants
+          project={project}
+          selected={selectedExtras}
+          onToggle={toggleExtra}
+          note="Each ticked plant runs its own Monte Carlo simulation with the same number of samples."
+        />
 
         <button className="btn-primary" onClick={run} disabled={loading}>
           {loading && <span className="spinner" />}
@@ -232,7 +212,7 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
         {loading && (
           <p style={{ color: "#868e96", fontSize: 13, marginTop: 8 }}>
             This may take a while with {numSamples.toLocaleString()} samples
-            {selectedExtras.size > 0 ? ` × ${1 + selectedExtras.size} plants` : ""}...
+            {runCount > 1 ? ` × ${runCount} plants` : ""}...
           </p>
         )}
       </div>

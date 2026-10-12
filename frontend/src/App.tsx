@@ -16,7 +16,7 @@ import ProjectPage from "./pages/ProjectPage";
 import { openDocs } from "./docs";
 import AppFooter from "./components/AppFooter";
 import type {
-  CalculationResults, ComparedPlant, PlantInput, PlantSnapshot, ProjectOverview,
+  CalculationResults, ComparedPlant, PlantInput, ProjectOverview,
 } from "./types";
 import "./App.css";
 
@@ -26,8 +26,9 @@ const PROJECT_EXT = "openpytea";
 // mounted (just hidden) after its first visit, so switching tabs or plants
 // doesn't discard a plant's results
 const KEEP_ALIVE = new Set<string>(["Analysis", "Monte Carlo"]);
-// Tabs that show a plant picker in the page, so the header one is hidden
-const PAGES_WITH_PICKER = new Set<string>(["Plant Config", "Equipment", "Results"]);
+// Tabs that show their own plant picker (Analysis and Monte Carlo: the
+// plant checkboxes), so the header one is hidden
+const PAGES_WITH_PICKER = new Set<string>(["Plant Config", "Equipment", "Results", "Analysis", "Monte Carlo"]);
 
 /** Detect Tauri at runtime. Cached on first call. */
 let _isTauriCache: boolean | null = null;
@@ -135,11 +136,6 @@ function App() {
     // the load-example/open prompts and would otherwise block the typical
     // "load A, add, load B, add, …" flow. comparisonDirty is only checked
     // on app close.
-  };
-
-  const addSnapshotToComparison = (snap: PlantSnapshot) => {
-    setComparedPlants((prev) => [...prev, { id: crypto.randomUUID(), ...snap }]);
-    setComparisonDirty(true);
   };
 
   /** Apply a project overview from the backend. When the open plant
@@ -822,7 +818,7 @@ function App() {
           ))}
         </nav>
         <div className="header-actions">
-          {/* Plant Config, Equipment and Results have their own picker */}
+          {/* Hidden on the tabs that have their own picker */}
           {project && project.plants.length > 1 && !PAGES_WITH_PICKER.has(tab) && (
             <label className="plant-switcher" title="Plant that Plant Config, Equipment, Results, Analysis and Monte Carlo work on">
               Plant
@@ -875,7 +871,6 @@ function App() {
             project={project}
             onProjectChange={applyProject}
             onOpenPlant={() => setTab("Plant Config")}
-            onAddToComparison={addSnapshotToComparison}
             setError={setError}
             markDirty={markDirty}
           />
@@ -912,12 +907,12 @@ function App() {
         )}
         {keptPlants("Analysis").map((id) => (
           <div key={id} hidden={!shown("Analysis", id)}>
-            <AnalysisPage setError={setError} comparedPlants={comparedPlants} active={shown("Analysis", id)} />
+            <AnalysisPage setError={setError} project={project} active={shown("Analysis", id)} />
           </div>
         ))}
         {keptPlants("Monte Carlo").map((id) => (
           <div key={id} hidden={!shown("Monte Carlo", id)}>
-            <MonteCarloPage setError={setError} comparedPlants={comparedPlants} />
+            <MonteCarloPage setError={setError} project={project} />
           </div>
         ))}
         {tab === "Compare" && (
