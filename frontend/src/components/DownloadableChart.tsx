@@ -1,4 +1,5 @@
 import { useRef, useCallback, useState, type ReactNode } from "react";
+import { saveFigure } from "../save";
 
 interface Props {
   filename?: string;
@@ -20,13 +21,6 @@ export default function DownloadableChart({
 }: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
-
-  const saveUrl = useCallback((url: string) => {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${filename}.png`;
-    a.click();
-  }, [filename]);
 
   const downloadScreenRender = useCallback(() => {
     if (!chartRef.current) return;
@@ -100,19 +94,17 @@ export default function DownloadableChart({
       ctx.scale(scale, scale);
       ctx.drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      saveUrl(canvas.toDataURL("image/png"));
+      canvas.toBlob((png) => { if (png) saveFigure(png, filename); }, "image/png");
     };
     img.src = url;
-  }, [saveUrl]);
+  }, [filename]);
 
   const download = useCallback(async () => {
     if (serverPlot) {
       setBusy(true);
       try {
         const blob = await serverPlot();
-        const url = URL.createObjectURL(blob);
-        saveUrl(url);
-        setTimeout(() => URL.revokeObjectURL(url), 10_000);
+        await saveFigure(blob, filename);
         return;
       } catch (e) {
         console.warn("Publication figure failed, falling back to screen render:", e);
@@ -121,7 +113,7 @@ export default function DownloadableChart({
       }
     }
     downloadScreenRender();
-  }, [serverPlot, saveUrl, downloadScreenRender]);
+  }, [serverPlot, filename, downloadScreenRender]);
 
   return (
     <div style={{

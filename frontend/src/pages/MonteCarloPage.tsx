@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
 import { fmtTick, fmtValue, niceTicks } from "../format";
+import { saveFigure } from "../save";
 import HelpTip from "../components/HelpTip";
 
 /** Name and unit of an MC output metric — the same wording and units as
@@ -360,12 +361,7 @@ export default function MonteCarloPage({ setError, comparedPlants }: Props) {
                       onClick={async () => {
                         try {
                           const blob = await fetchPlotPng(`/plots/monte-carlo/inputs?category=${cat}`);
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = `mc_inputs_${cat}.png`;
-                          a.click();
-                          setTimeout(() => URL.revokeObjectURL(url), 10_000);
+                          await saveFigure(blob, `mc_inputs_${cat}.png`);
                         } catch (e: unknown) {
                           setError(e instanceof Error ? e.message : "Figure download failed");
                         }

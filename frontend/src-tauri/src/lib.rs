@@ -334,6 +334,25 @@ async fn open_docs(app: AppHandle, path: Option<String>) -> Result<(), String> {
     open_docs_window(&app, path)
 }
 
+/// Figure downloads: the frontend asks for a path with the native Save
+/// dialog, then hands the image bytes here. Like the project commands this
+/// only writes image files, so the webview can't use it to overwrite
+/// arbitrary files.
+fn is_figure_file(path: &std::path::Path) -> bool {
+    path.extension().is_some_and(|e| {
+        ["png", "svg", "pdf", "jpg", "jpeg"].iter().any(|x| e.eq_ignore_ascii_case(x))
+    })
+}
+
+#[tauri::command]
+fn write_figure(path: String, bytes: Vec<u8>) -> Result<(), String> {
+    let p = std::path::PathBuf::from(&path);
+    if !is_figure_file(&p) {
+        return Err("not an image file".into());
+    }
+    std::fs::write(&p, bytes).map_err(|e| format!("could not write {}: {}", path, e))
+}
+
 /// Build the native macOS-style menu bar (App / File / Edit). The same
 /// structure is used on Windows/Linux, where it renders as a window menu
 /// bar.
@@ -435,6 +454,7 @@ pub fn run() {
             write_project_text,
             open_docs,
             open_external,
+            write_figure,
         ])
         .on_window_event(|window, event| {
             // Fired when the user clicks the red close button. Cancel the
