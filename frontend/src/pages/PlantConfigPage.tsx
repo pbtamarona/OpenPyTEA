@@ -409,6 +409,11 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
   const nodeRefs = allNodeRefs(config);
   const availableTargets = (current: string | null) =>
     nodeRefs.filter((r) => r === current || !rules.some((rl) => rl.target === r));
+  // Parameters a rule's parent row can pick: not the dependent, and not a
+  // parent on another row (depends_on is keyed by parent, so a repeat would
+  // merge the two rows)
+  const parentChoices = (rule: DepRule, row: number | null) =>
+    nodeRefs.filter((r) => r !== rule.target && !rule.parents.some((q, qi) => qi !== row && q.ref === r));
 
   return (
     <div>
@@ -685,7 +690,7 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
                         parents: rule.parents.map((q, qi) => (qi === pi ? { ...q, ref: e.target.value } : q)),
                       }))}
                     >
-                      {nodeRefs.filter((r) => r !== rule.target).map((r) => <option key={r} value={r}>{refLabel(r)}</option>)}
+                      {parentChoices(rule, pi).map((r) => <option key={r} value={r}>{refLabel(r)}</option>)}
                     </select>
                     {rule.parents.length > 1 && (
                       <button
@@ -707,10 +712,16 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <button
                 className="btn-secondary" style={{ padding: "3px 10px", fontSize: 12 }}
-                onClick={() => setConfig((prev) => writeDep(prev, rule.target, {
-                  ...rule,
-                  parents: [...rule.parents, { ref: nodeRefs.find((r) => r !== rule.target) ?? nodeRefs[0], weight: 1 }],
-                }))}
+                disabled={parentChoices(rule, null).length === 0}
+                title={parentChoices(rule, null).length === 0 ? "Every other parameter is already a parent" : undefined}
+                onClick={() => {
+                  const ref = parentChoices(rule, null)[0];
+                  if (!ref) return;
+                  setConfig((prev) => writeDep(prev, rule.target, {
+                    ...rule,
+                    parents: [...rule.parents, { ref, weight: 1 }],
+                  }));
+                }}
               >+ Parent</button>
               <label style={{ fontSize: 13 }}>Noise std (MC, optional)</label>
               <input

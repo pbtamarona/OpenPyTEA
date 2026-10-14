@@ -292,6 +292,14 @@
   font-size: 13px;
 }
 .btn-secondary:hover { background: rgba(255,255,255,.1); }
+/* Inside the page (white cards in light mode) the header's white text
+   would be invisible: use the normal text and border colours */
+.main .btn-secondary {
+  color: var(--text);
+  border: 1px solid var(--input-border);
+}
+.main .btn-secondary:hover:not(:disabled) { background: var(--hover-bg); }
+.main .btn-secondary:disabled { opacity: .45; cursor: not-allowed; }
 
 .btn-danger {
   padding: 4px 10px;
