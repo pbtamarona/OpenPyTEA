@@ -218,3 +218,33 @@ def test_composite_in_plant_and_direct_costs_data(psa):
     expanded = direct_costs_data(plant, expand_composites=True)["components"][0]
     assert set(expanded) == {"PSA / Vessel", "PSA / Adsorbent", "Pump"}
     assert sum(expanded.values()) == pytest.approx(sum(lumped.values()))
+
+
+def test_json_builds_nested_composite(psa):
+    from openpytea.io import _build_equipment_list
+
+    def part(name, cost, process_type, category, **kw):
+        return {"name": name, "purchased_cost": cost, "cost_year": 2024,
+                "process_type": process_type, "category": category, **kw}
+
+    entry = {
+        "name": "Train", "process_type": "Fluids", "num_units": 2,
+        "components": [
+            {"name": "PSA", "process_type": "Fluids",
+             "category": "Adsorption", "type": "PSA",
+             "components": [
+                 part("Vessel", 10_000, "Fluids", "Pressure vessels",
+                      num_units=4),
+                 part("Adsorbent", 5_000, "Solids",
+                      "Packings & adsorbents"),
+             ]},
+        ],
+    }
+    (train,) = _build_equipment_list({"equipment": [entry]})
+
+    assert isinstance(train, CompositeEquipment)
+    assert train.category == "Composite"
+    built_psa = train.components[0]
+    assert isinstance(built_psa, CompositeEquipment)
+    assert built_psa.direct_cost == pytest.approx(psa.direct_cost)
+    assert train.direct_cost == pytest.approx(2 * psa.direct_cost)

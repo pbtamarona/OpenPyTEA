@@ -1,4 +1,6 @@
 import json
+
+import pytest
 from openpytea import run_tea, run_openpytea
 
 
@@ -286,3 +288,48 @@ def test_run_tea_python_api_honors_config_directory(tmp_path):
     )
 
     assert (config_dir / "Test Plant_analysis_results.json").exists()
+
+
+def test_run_openpytea_passes_factors_capex_and_plot_args(tmp_path):
+    equipment = _equipment_data()
+    equipment["equipment"][1]["piping_factor"] = 0.0
+    plant = _plant_data()
+    plant["plant"]["additional_capex_years"] = [5]
+    plant["plant"]["additional_capex_cost"] = [50_000]
+    analysis = {
+        "analysis": {
+            "additional_capex": True,
+            "fixed_capital": {"run": True, "plot_args": {"figsize": [2, 2]}},
+            "monte_carlo": {
+                "run": True,
+                "args": {"num_samples": 100, "batch_size": 20},
+                "metric": ["LCOP"],
+                "plot_args": {"bins": 5},
+                "plot_inputs": {"category": "economic"},
+            },
+        },
+        "output": {"save_json": True, "save_plots": True},
+    }
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        json.dumps({**equipment, **plant, **analysis}), encoding="utf-8"
+    )
+    out = tmp_path / "results"
+    run_openpytea(config_path=config_path, output_dir=out)
+
+    eq = json.loads((out / "Test Plant_equipment_results.json").read_text())
+    pump = eq["equipment"][1]
+    reactor = eq["equipment"][0]
+    # Same purchased cost and process type, only the pump drops piping
+    assert pump["direct_cost"] / pump["purchased_cost"] < (
+        reactor["direct_cost"] / reactor["purchased_cost"]
+    )
+
+    from openpytea.io import _build_equipment_list, _build_plant
+    expected = _build_plant(plant, _build_equipment_list(equipment))
+    expected.calculate_all(additional_capex=True)
+    plant_res = json.loads((out / "Test Plant_plant_results.json").read_text())
+    assert plant_res["metrics"]["roi"] == pytest.approx(expected.roi)
+
+    assert (out / "Test Plant_monte_carlo_inputs_economic.png").exists()
+    assert not (out / "Test Plant_monte_carlo_inputs_process.png").exists()
