@@ -845,43 +845,27 @@ def _evaluate_metric(plant, metric, additional_capex=False):
         AttributeError: If the plant object lacks required attributes or
             methods to calculate the requested metric.
     """
-    # ponytail: calculate_levelized_cost() called in every branch; call once before the
-    #   if-chain
-    if metric == "LCOP":
-        # Always recompute, like every other metric branch: a cached
-        # levelized_cost is never invalidated, so trusting it here
-        # de-centers sensitivity/tornado baselines after any direct
-        # plant edit
-        plant.calculate_levelized_cost()
-        return plant.levelized_cost
-
-    elif metric == "ROI":
-        plant.calculate_levelized_cost()
-        plant.calculate_roi(additional_capex=additional_capex)
-        return plant.roi
-
-    elif metric == "NPV":
-        plant.calculate_levelized_cost()
-        return plant.calculate_npv()
-
-    elif metric in ("PBT", "PAYBACK", "PAYBACK_TIME"):
-        plant.calculate_levelized_cost()
-        return plant.calculate_payback_time()
-
-    elif metric in ("SIMPLE_PBT", "SIMPLE_PAYBACK",
-                    "SIMPLE_PAYBACK_TIME"):
-        plant.calculate_levelized_cost()
-        return plant.calculate_simple_payback_time(
-            additional_capex=additional_capex
-        )
-
-    elif metric == "IRR":
-        plant.calculate_levelized_cost()
-        plant.calculate_irr()
-        return plant.irr
-
-    else:
+    metrics = {
+        "LCOP": plant._levelized_cost,
+        "ROI": lambda: plant._roi(additional_capex),
+        "NPV": plant._npv,
+        "PBT": plant._payback_time,
+        "PAYBACK": plant._payback_time,
+        "PAYBACK_TIME": plant._payback_time,
+        "SIMPLE_PBT": lambda: plant._simple_payback_time(additional_capex),
+        "SIMPLE_PAYBACK": lambda: plant._simple_payback_time(additional_capex),
+        "SIMPLE_PAYBACK_TIME":
+            lambda: plant._simple_payback_time(additional_capex),
+        "IRR": plant._irr,
+    }
+    if metric not in metrics:
         raise ValueError(f"Unsupported metric '{metric}'")
+
+    # Always rebuild: a cached cash flow is never invalidated, so trusting
+    # it would de-center sensitivity/tornado baselines after any direct
+    # plant edit
+    plant.calculate_cash_flow()
+    return metrics[metric]()
 
 
 def _evaluate_baseline_metric(plant, metric, additional_capex=False):

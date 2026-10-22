@@ -1767,24 +1767,20 @@ def monte_carlo(plant,
             )
 
         # ---- Economic calculations ----
+        # The fc/fp calls set the sampled factors; one cash-flow build
+        # then serves every metric below
         plant_copy.calculate_fixed_capital(fc=fixed_capitals[start:end])
-        plant_copy.calculate_variable_opex()
         plant_copy.calculate_fixed_opex(fp=fixed_opexs[start:end])
         plant_copy.calculate_cash_flow()
-        plant_copy.calculate_levelized_cost()
 
         # ---- Store LCOP always ----
-        mc_metrics["LCOP"][start:end] = plant_copy.levelized_cost
+        mc_metrics["LCOP"][start:end] = plant_copy._levelized_cost()
 
         # ---- If revenue available, compute all other metrics ----
         if have_product_prices:
-            mc_metrics["NPV"][start:end] = plant_copy.calculate_npv()
-            mc_metrics["ROI"][start:end] = plant_copy.calculate_roi(
-                additional_capex=additional_capex
-            )
-            mc_metrics["PBT"][start:end] = (
-                plant_copy.calculate_payback_time()
-            )
+            mc_metrics["NPV"][start:end] = plant_copy._npv()
+            mc_metrics["ROI"][start:end] = plant_copy._roi(additional_capex)
+            mc_metrics["PBT"][start:end] = plant_copy._payback_time()
 
     mc_inputs = {
         "Fixed capital factor": fixed_capitals,

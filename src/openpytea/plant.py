@@ -21,6 +21,10 @@ class Plant:
                             (OS, DE, X).
         locFactors (dict): Geographic location factors for capital cost
                             adjustments.
+        config (dict): Copy of the configuration as given at creation. It is
+            a snapshot: update_configuration() and direct attribute edits do
+            not change it. For the current settings use
+            ``to_dict()["plant_configuration"]``.
         Configuration Parameters:
             name (str): Plant name identifier.
             process_type (str): Type of process
@@ -198,8 +202,9 @@ class Plant:
 
     def __init__(self, configuration: dict):
         """Initialize plant from a configuration dictionary."""
-        # keep a copy of the original config so code can read from it later
+        # Snapshot of the input as given; never updated afterwards
         self.config = deepcopy(configuration)
+        configuration = _own_copy(configuration)
 
         for key, (attr, default) in _SCALARS.items():
             setattr(self, attr, configuration.get(key, default))
@@ -236,7 +241,15 @@ class Plant:
         ----------
         configuration : dict
             Partial or full plant configuration. Only supplied keys are updated.
+
+        Notes
+        -----
+        ``plant.config`` keeps the configuration as given at creation and is
+        not changed here; ``to_dict()["plant_configuration"]`` gives the
+        current settings.
         """
+        configuration = _own_copy(configuration)
+
         for key, (attr, _) in _SCALARS.items():
             if key in configuration:
                 setattr(self, attr, configuration[key])
@@ -1059,6 +1072,11 @@ class Plant:
         simplification of that convention which slightly flatters NPV.
         Extend ``project_lifetime`` by one year if you need the last
         settlement inside the analysis horizon.
+
+        Only the fixed capital is depreciated. Additional CAPEX is charged
+        in the capital cost row in its year but never depreciated, so it
+        gets no tax deduction: tax paid is slightly overstated and NPV and
+        IRR slightly understated whenever additional CAPEX is configured.
         """
         # 0) Upstream calcs (fixed OPEX runs fixed capital and variable
         # OPEX itself)
@@ -1101,6 +1119,7 @@ class Plant:
         # --- Initialize result arrays ---
         shape = (n_samples, n_years)
         capex = np.zeros(shape)
+        additional_capex = np.zeros(shape)
         main_revenue = np.zeros(shape)
         side_revenue = np.zeros(shape)
         revenue = np.zeros(shape)
@@ -1211,9 +1230,11 @@ class Plant:
                 alive_mask = lifetime >= year
 
                 # Arrays are 0-indexed; NumPy will broadcast the scalar cost
-                capex[
+                additional_capex[
                     alive_mask, year - 1
                 ] += self.additional_capex_cost[i]
+        # Kept apart as well so simple payback time can leave it out
+        capex += additional_capex
 
         # --- Production ramp ---
         if (
@@ -1306,6 +1327,7 @@ class Plant:
 
         # --- Save arrays to instance ---
         self.capital_cost_array = capex
+        self.additional_capex_array = additional_capex
         self.side_revenue_array = side_revenue
         self.main_revenue_array = main_revenue
         self.revenue_array = revenue
@@ -1365,7 +1387,28 @@ class Plant:
             number of cash flow scenarios.
         """
         self.calculate_cash_flow()
+        npv = self._npv()
 
+        if print_results:
+            print(
+                f"Year | "
+                f"Present Value [{self.currency}] |"
+                f" Cumulative NPV [{self.currency}]"
+            )
+            print("-------------------------------------------")
+            for year, pv, cum_npv in zip(
+                range(1, self.pv_array.shape[1] + 1),
+                self.pv_array[0],
+                self.npv_array[0],
+            ):
+                print(
+                    f"{year:4d} | {float(pv):15,.2f} | {float(cum_npv):15,.2f}"
+                )
+
+        return npv
+
+    def _npv(self):
+        """NPV from the cash flow as last built; callers rebuild it first."""
         # Ensure 2D cash_flow: [n_scenarios, n_years]
         cf = np.asarray(self.cash_flow, dtype=float)
         if cf.ndim == 1:
@@ -1404,22 +1447,6 @@ class Plant:
         )
 
         final_npv = npv_array[:, -1]
-
-        if print_results:
-            print(
-                f"Year | "
-                f"Present Value [{self.currency}] |"
-                f" Cumulative NPV [{self.currency}]"
-            )
-            print("-------------------------------------------")
-            for year, pv, npv in zip(
-                range(1, n_years + 1),
-                pv_array[0],
-                npv_array[0],
-            ):
-                print(
-                    f"{year:4d} | {float(pv):15,.2f} | {float(npv):15,.2f}"
-                )
 
         if final_npv.size == 1:
             self.npv = float(final_npv[0])
@@ -1468,7 +1495,19 @@ class Plant:
             Levelized cost per unit of main product (scalar or array).
         """
         self.calculate_cash_flow()
+        self._levelized_cost()
 
+        if print_results:
+            print(
+                f"Levelized cost: {np.mean(self.levelized_cost):,.3f} "
+                f"{self.currency}/unit"
+            )
+        else:
+            return self.levelized_cost
+
+    def _levelized_cost(self):
+        """LCOP from the cash flow as last built; callers rebuild it
+        first."""
         disc_capex, disc_opex, disc_side_rev, disc_prod = (
             self._discounted_totals()
         )
@@ -1478,14 +1517,7 @@ class Plant:
 
         is_array = isinstance(self.project_lifetime, (list, np.ndarray))
         self.levelized_cost = lcop if is_array else lcop[0]
-
-        if print_results:
-            print(
-                f"Levelized cost: {np.mean(self.levelized_cost):,.3f} "
-                f"{self.currency}/unit"
-            )
-        else:
-            return self.levelized_cost
+        return self.levelized_cost
 
     def _extra_capex(self, additional_capex):
         """Additional CAPEX to add to the investment (0 unless requested
@@ -1508,6 +1540,8 @@ class Plant:
         ----------
         additional_capex : bool, optional
             Include additional CAPEX in the total investment. Default is False.
+            Either way the mean annual cash flow leaves additional CAPEX out,
+            so it is counted once at most.
         print_results : bool, optional
             Print the simple payback time. Default is False.
 
@@ -1517,9 +1551,24 @@ class Plant:
             Simple payback time in years (``nan`` if no revenue-generating
             years exist, or if the mean cash flow is not positive).
         """
+        self.calculate_cash_flow()
+        self._simple_payback_time(additional_capex)
+
+        if print_results:
+            self._print_payback("Simple payback time",
+                                self.simple_payback_time)
+        else:
+            return self.simple_payback_time
+
+    def _simple_payback_time(self, additional_capex=False):
+        """Simple payback time from the cash flow as last built; callers
+        rebuild it first."""
         # One row per sample (a single row when inputs are scalar)
         revenue = np.atleast_2d(np.asarray(self.revenue_array, dtype=float))
-        cash_flow = np.atleast_2d(np.asarray(self.cash_flow, dtype=float))
+        cash_flow = np.atleast_2d(
+            np.asarray(self.cash_flow, dtype=float)
+            + self.additional_capex_array
+        )
         total_fixed_capital = np.broadcast_to(
             np.asarray(self.fixed_capital, dtype=float)
             + self._extra_capex(additional_capex),
@@ -1537,12 +1586,7 @@ class Plant:
 
         is_array = isinstance(self.project_lifetime, (list, np.ndarray))
         self.simple_payback_time = pbt if is_array else pbt[0]
-
-        if print_results:
-            self._print_payback("Simple payback time",
-                                self.simple_payback_time)
-        else:
-            return self.simple_payback_time
+        return self.simple_payback_time
 
     def calculate_payback_time(self, print_results: bool = False):
         """
@@ -1566,6 +1610,17 @@ class Plant:
             Break-even year on an axis where 0 is project start (``nan`` if
             the project never goes into debt, or never recovers).
         """
+        self.calculate_cash_flow()
+        self._payback_time()
+
+        if print_results:
+            self._print_payback("Payback time", self.payback_time)
+        else:
+            return self.payback_time
+
+    def _payback_time(self):
+        """Payback time from the cash flow as last built; callers rebuild
+        it first."""
         cash_flow = np.atleast_2d(np.asarray(self.cash_flow, dtype=float))
 
         pbt = np.full(len(cash_flow), np.nan)
@@ -1584,11 +1639,7 @@ class Plant:
 
         is_array = isinstance(self.project_lifetime, (list, np.ndarray))
         self.payback_time = pbt if is_array else pbt[0]
-
-        if print_results:
-            self._print_payback("Payback time", self.payback_time)
-        else:
-            return self.payback_time
+        return self.payback_time
 
     @staticmethod
     def _print_payback(label, value):
@@ -1620,6 +1671,21 @@ class Plant:
         float or np.ndarray
             ROI as a percentage (scalar or array across scenarios).
         """
+        self.calculate_cash_flow()
+        self._roi(additional_capex)
+
+        if print_results:
+            if np.ndim(self.roi) == 0:
+                print(f"Return of investment: {self.roi:.2f}%")
+            else:
+                print(
+                    f"Return of investment: mean = {np.nanmean(self.roi):.2f}%"
+                )
+        else:
+            return self.roi
+
+    def _roi(self, additional_capex=False):
+        """ROI from the cash flow as last built; callers rebuild it first."""
         # One row per sample (a single row when inputs are scalar)
         net_profit = np.atleast_2d(
             np.asarray(self.gross_profit_array, dtype=float)
@@ -1638,16 +1704,7 @@ class Plant:
 
         is_array = isinstance(self.project_lifetime, (list, np.ndarray))
         self.roi = roi if is_array else roi[0]
-
-        if print_results:
-            if np.ndim(self.roi) == 0:
-                print(f"Return of investment: {self.roi:.2f}%")
-            else:
-                print(
-                    f"Return of investment: mean = {np.nanmean(self.roi):.2f}%"
-                )
-        else:
-            return self.roi
+        return self.roi
 
     def calculate_irr(self, print_results: bool = False):
         """
@@ -1666,6 +1723,31 @@ class Plant:
         float or np.ndarray
             IRR as a fraction (e.g. 0.15 = 15%), or ``nan`` if undefined.
         """
+        self.calculate_cash_flow()
+        self._irr()
+
+        if print_results:
+            if np.isscalar(self.irr):
+                if math.isfinite(self.irr):
+                    print(
+                        f"Internal Rate of Return: {self.irr * 100:.2f}%"
+                    )
+                else:
+                    print("Internal Rate of Return: undefined")
+            else:
+                finite_vals = self.irr[np.isfinite(self.irr)]
+                if len(finite_vals) > 0:
+                    print(
+                        f"Internal Rate of Return: mean = "
+                        f"{np.mean(finite_vals) * 100:.2f}%"
+                    )
+                else:
+                    print("Internal Rate of Return: undefined")
+        else:
+            return self.irr
+
+    def _irr(self):
+        """IRR from the cash flow as last built; callers rebuild it first."""
         # ponytail: grid scan + bracket + brentq; np.roots(cf[::-1]) like
         #   numpy_financial.irr, ndim==1 branch dead
         cf = np.asarray(self.cash_flow, dtype=float)
@@ -1756,26 +1838,7 @@ class Plant:
                 self.irr = float(irr_vals[0])
             else:
                 self.irr = irr_vals
-
-        if print_results:
-            if np.isscalar(self.irr):
-                if math.isfinite(self.irr):
-                    print(
-                        f"Internal Rate of Return: {self.irr * 100:.2f}%"
-                    )
-                else:
-                    print("Internal Rate of Return: undefined")
-            else:
-                finite_vals = self.irr[np.isfinite(self.irr)]
-                if len(finite_vals) > 0:
-                    print(
-                        f"Internal Rate of Return: mean = "
-                        f"{np.mean(finite_vals) * 100:.2f}%"
-                    )
-                else:
-                    print("Internal Rate of Return: undefined")
-        else:
-            return self.irr
+        return self.irr
 
     def calculate_all(self, additional_capex=False, print_results=False):
         """
@@ -2301,6 +2364,18 @@ def _validate_project_uncertainties(cfg: dict) -> None:
                     f"'project_uncertainties['{param}']['{bound}']' "
                     f"{rule}, got {sub[bound]}."
                 )
+
+
+def _own_copy(configuration):
+    """
+    Deep-copy a configuration so the plant never shares dicts or lists with
+    the caller (or another plant built or updated from the same dict).
+    Equipment is kept by reference: users edit those objects in place.
+    """
+    return {
+        key: value if key == "equipment" else deepcopy(value)
+        for key, value in configuration.items()
+    }
 
 
 def _as_ramp(value, name):
