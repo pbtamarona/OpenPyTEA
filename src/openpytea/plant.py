@@ -1975,8 +1975,48 @@ class Plant:
         else:
             eq_block = "    None"
 
+        # Results sections: only the values already calculated
+        def num(v, scale=1.0):
+            v = np.asarray(v, dtype=float) * scale
+            if v.ndim == 0:
+                return f"{float(v):,.3f}"
+            return f"mean = {np.nanmean(v):,.3f}"
+
+        cur = self.currency
+        sections = [
+            ("Estimated CAPEX", [
+                (f"ISBL [{cur}]", "isbl", 1.0),
+                (f"OSBL [{cur}]", "osbl", 1.0),
+                (f"Design & Engineering [{cur}]", "dne", 1.0),
+                (f"Contingency [{cur}]", "contigency", 1.0),
+                (f"Fixed Capital [{cur}]", "fixed_capital", 1.0),
+            ]),
+            ("Estimated OPEX", [
+                (f"Variable OPEX [{cur}/yr]",
+                 "variable_production_costs", 1.0),
+                (f"Fixed OPEX [{cur}/yr]", "fixed_production_costs", 1.0),
+            ]),
+            ("Metrics", [
+                (f"Levelized Cost [{cur}/unit]", "levelized_cost", 1.0),
+                (f"NPV [{cur}]", "npv", 1.0),
+                ("Simple Payback Time [yr]", "simple_payback_time", 1.0),
+                ("Payback Time [yr]", "payback_time", 1.0),
+                ("ROI [%]", "roi", 1.0),
+                ("IRR [%]", "irr", 100.0),
+            ]),
+        ]
+        results_block = ""
+        for title, rows in sections:
+            lines = [
+                f"  {label + ':':<32}{num(getattr(self, attr), scale)}"
+                for label, attr, scale in rows
+                if getattr(self, attr, None) is not None
+            ]
+            if lines:
+                results_block += f"\n{title}:\n" + "\n".join(lines) + "\n"
+
         return (
-            f"ProcessPlant Configuration\n"
+            f"Plant Configuration\n"
             f"{'-'*40}\n"
             f"Plant Name:                 {self.name}\n"
             f"Process Type:               {self.process_type}\n"
@@ -2010,6 +2050,7 @@ class Plant:
             f"Cost Multipliers:\n"
             f"  fc (installed cost factor): {self.fc}\n"
             f"  fp (fixed OPEX factor):     {self.fp}\n"
+            f"{results_block}"
         )
 
 

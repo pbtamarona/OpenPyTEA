@@ -752,8 +752,8 @@ class Equipment:
             f"Category={self.category}, Sub-type={self.type}, "
             f"Material={self.material}, Process Type={self.process_type}, "
             f"Parameter={self.param}, Number of units={self.num_units}, "
-            f"Purchased Cost={self.purchased_cost}, "
-            f"Direct Cost={self.direct_cost})"
+            f"Purchased Cost={self.purchased_cost:.3f}, "
+            f"Direct Cost={self.direct_cost:.3f})"
         )
 
 
@@ -1126,13 +1126,13 @@ class CompositeEquipment:
             f"Process Type={self.process_type}, "
             f"Installation={self.installation}, "
             f"Number of units={self.num_units}, "
-            f"Purchased Cost={self.purchased_cost}, "
-            f"Direct Cost={self.direct_cost})"
+            f"Purchased Cost={self.purchased_cost:.3f}, "
+            f"Direct Cost={self.direct_cost:.3f})"
         )
         body = "\n".join(
             f"    - {obj.name} (x{obj.num_units}): "
-            f"Purchased Cost={obj.purchased_cost}, "
-            f"Direct Cost={obj.direct_cost}"
+            f"Purchased Cost={obj.purchased_cost:.3f}, "
+            f"Direct Cost={obj.direct_cost:.3f}"
             for obj in self.components
         )
         return f"{head}\n{body}"
