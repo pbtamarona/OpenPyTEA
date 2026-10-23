@@ -68,6 +68,18 @@ def _format_scripts(s, underscore=None) -> str:
     return re.sub(r"\}\$\$(?=[_^]\{)", "}", s)
 
 
+def _legacy_label(s: str) -> str:
+    """
+    The 3.2.0 label of a name: underscores outside $...$ become spaces and
+    the first character is capitalised -- no subscripts or superscripts.
+    Keys of variable_opex_data components stay on it for 3.2.x
+    compatibility; plots show :func:`_make_label` instead.
+    """
+    parts = re.split(r"(\$.*?\$)", s)
+    s = "".join(p if p.startswith("$") else p.replace("_", " ") for p in parts)
+    return s[:1].upper() + s[1:]
+
+
 def _make_label(s: str) -> str:
     """
     Convert a string to a label format by replacing underscores with spaces
@@ -805,7 +817,8 @@ def _ensure_list(plants):
     return plants if isinstance(plants, (list, tuple)) else [plants]
 
 
-def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
+def _build_bar_data(components_list, xlabels, ylabel, currency, pct,
+                    display_labels=None):
     """
     Build structured data for bar chart visualization from component
     dictionaries. This function processes a list of component dictionaries
@@ -820,6 +833,8 @@ def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
         currency (str): Currency symbol or code to be used in chart display.
         pct (bool): If True, normalize all values to percentages (0-100).
             If False, keep original values.
+        display_labels (dict, optional): Component name -> label to show
+            in plots, for names that differ from how they are drawn.
     Returns:
         dict: A dictionary containing the following keys:
             - "components" (list): Original components_list.
@@ -830,6 +845,7 @@ def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
             - "ylabel" (str): The provided y-axis label.
             - "currency" (str): The provided currency.
             - "pct" (bool): The percentage flag.
+            - "display_labels" (dict): Present only when given.
     Example:
         >>> components = [{"A": 100, "B": 50}, {"A": 200, "C": 75}]
         >>> result = _build_bar_data(components, ["Q1", "Q2"],
@@ -851,7 +867,7 @@ def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
 
     labels = [all_labels for _ in components_list]
 
-    return {
+    data = {
         "components": components_list,
         "labels": labels,
         "values": values,
@@ -860,6 +876,9 @@ def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
         "currency": currency,
         "pct": pct,
     }
+    if display_labels:
+        data["display_labels"] = display_labels
+    return data
 
 
 def _evaluate_metric(plant, metric, additional_capex=False):

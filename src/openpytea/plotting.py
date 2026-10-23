@@ -112,6 +112,11 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     currency = data["currency"]
     pct = data["pct"]
     ylabel = data["ylabel"]
+    # Component name -> label to draw, where the two differ
+    display = data.get("display_labels", {})
+
+    def shown(lab):
+        return _format_scripts(display.get(lab, lab))
 
     side_key = "Side revenue"
 
@@ -171,13 +176,13 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     if pct:
         ax.set_ylabel(_format_scripts(ylabel) + f" / [{_tex_escape('%')}]")
         plot_labels = [
-            f"{_format_scripts(lab)} ({values_sorted[0][i]:.1f}{_tex_escape('%')})"
-            if n_bars == 1 else _format_scripts(lab)
+            f"{shown(lab)} ({values_sorted[0][i]:.1f}{_tex_escape('%')})"
+            if n_bars == 1 else shown(lab)
             for i, lab in enumerate(labels_sorted)
         ]
     else:
         ax.set_ylabel(_format_scripts(ylabel) + " / [" + currency + "]")
-        plot_labels = [_format_scripts(lab) for lab in labels_sorted]
+        plot_labels = [shown(lab) for lab in labels_sorted]
 
     # --- Remaining components stack starting from the side-revenue
     # baseline (so the final top reads as the correct net total), drawn
@@ -208,9 +213,9 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     # hatch pattern remains visible over the region it overlaps below zero
     if has_side_rev:
         side_label = (
-            f"{_format_scripts(side_key)} ({side_values[0]:.1f}{_tex_escape('%')})"
+            f"{shown(side_key)} ({side_values[0]:.1f}{_tex_escape('%')})"
             if pct and n_bars == 1
-            else _format_scripts(side_key)
+            else shown(side_key)
         )
         side_bars = ax.bar(
             x,
@@ -857,7 +862,8 @@ def _is_process_monte_carlo_input(label):
     return normalized.endswith("consumption") or normalized.endswith("production")
 
 
-def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title):
+def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title,
+                               display_labels=None):
     """
     Build one figure of histograms (one subplot per input, 3 columns) for
     the given ``{label: samples}`` dict, with a bold suptitle. Shared by the
@@ -922,7 +928,10 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title):
                 edgecolor="black",
                 alpha=0.7,
             )
-        ax.set_title(_format_scripts(label), fontsize=9)
+        ax.set_title(
+            _format_scripts((display_labels or {}).get(label, label)),
+            fontsize=9,
+        )
 
     for i in range(n_params, len(axes)):
         axes[i].axis("off")
@@ -1012,8 +1021,11 @@ def plot_monte_carlo_inputs(
 
     if isinstance(data, dict) and "inputs" in data:
         inputs = data["inputs"]
+        # Absent from results saved before 3.2.1: keys are then shown as is
+        display_labels = data.get("display_labels")
     else:
         inputs = data
+        display_labels = None
 
     process_inputs = {
         label: arr for label, arr in inputs.items()
@@ -1033,7 +1045,7 @@ def plot_monte_carlo_inputs(
             )
             return None, None
         return _plot_input_histogram_grid(
-            group_inputs, figsize, bins, hist_color, title
+            group_inputs, figsize, bins, hist_color, title, display_labels
         )
 
     groups = {

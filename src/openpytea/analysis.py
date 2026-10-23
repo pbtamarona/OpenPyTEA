@@ -6,6 +6,7 @@ import numpy as np
 
 from openpytea.plant import DEFAULT_OPERATOR_HOURLY_RATE
 from openpytea.helpers import (_make_label,
+                               _legacy_label,
                                _tex_escape,
                                _get_original_value,
                                _update_and_evaluate,
@@ -202,6 +203,7 @@ def variable_opex_data(plants, pct=False):
 
     components_list = []
     xlabels = []
+    display_labels = {}
 
     for plant in plants:
         components = {}
@@ -215,14 +217,18 @@ def variable_opex_data(plants, pct=False):
             else:
                 continue
 
-            label = _make_label(name)
-            components[label] = float(val)
+            # TODO(3.3.0): key by the name as typed and drop
+            #   display_labels (see monte_carlo). 3.2.0 keys until then.
+            key = _legacy_label(name)
+            components[key] = float(val)
+            display_labels[key] = _make_label(name)
 
         components_list.append(components)
         xlabels.append(plant.name)
 
     return _build_bar_data(components_list, xlabels,
-                           "Annual variable OPEX", currency, pct)
+                           "Annual variable OPEX", currency, pct,
+                           display_labels=display_labels)
 
 
 def fixed_opex_data(plants, pct=False):
@@ -1872,23 +1878,23 @@ def monte_carlo(plant,
            else {"Plant utilization": plant_utilizations}),
         **({} if tax_rates is None
            else {"Tax rate": tax_rates}),
-        **{
-            f"{_make_label(k)} price": v
-            for k, v in variable_opex_price_samples.items()
-        },
-        **{
-            f"{_make_label(k)} consumption": v
-            for k, v in variable_opex_consumption_samples.items()
-        },
-        **{
-            f"{_make_label(k)} product price": v
-            for k, v in product_price_samples.items()
-        },
-        **{
-            f"{_make_label(k)} production": v
-            for k, v in product_production_samples.items()
-        },
     }
+    # Fixed inputs are shown as named; item inputs under _make_label(name)
+    display_labels = {key: key for key in mc_inputs}
+    # TODO(3.3.0): key the items by their names as typed ("cooling_water
+    #   consumption") and drop display_labels; plots then label from the
+    #   key. Kept on the 3.2.0 title-case keys until then so 3.2.x stays
+    #   compatible.
+    for samples, suffix in (
+        (variable_opex_price_samples, "price"),
+        (variable_opex_consumption_samples, "consumption"),
+        (product_price_samples, "product price"),
+        (product_production_samples, "production"),
+    ):
+        for k, v in samples.items():
+            key = f"{k.replace('_', ' ').title()} {suffix}"
+            mc_inputs[key] = v
+            display_labels[key] = f"{_make_label(k)} {suffix}"
 
     # ---- Store on plant ----
     plant.monte_carlo_metrics = mc_metrics
@@ -1898,6 +1904,7 @@ def monte_carlo(plant,
         "name": plant.name,
         "metrics": mc_metrics,
         "inputs": mc_inputs,
+        "display_labels": display_labels,
         "num_samples": num_samples,
         "additional_capex": additional_capex,
         "currency": currency,

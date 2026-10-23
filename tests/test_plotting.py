@@ -252,3 +252,41 @@ def test_plot_sensitivity_x_axis(test_plant, test_plant_b):
         fig, ax = plot_sensitivity(data, show=False, x_axis="value")
     assert len(ax.lines) == 1
     plt.close(fig)
+
+
+def test_item_keys_stay_on_3_2_0_names_and_plots_use_display_labels(
+        test_plant):
+    from openpytea import monte_carlo, variable_opex_data, plot_monte_carlo_inputs
+
+    test_plant.variable_opex_inputs["cooling_water"] = {
+        "consumption": 5, "price": 0.1, "price_uncertainty": {"std": 0.01}}
+    test_plant.variable_opex_inputs["CO_2"] = {"consumption": 5, "price": 0.2}
+
+    # 3.2.0 keys unchanged: title case for Monte Carlo, spaces for OPEX
+    mc = monte_carlo(test_plant, num_samples=50, batch_size=50,
+                     random_seed=1)
+    assert "Cooling Water price" in mc["inputs"]
+    assert "Co 2 price" in mc["inputs"]
+    assert mc["display_labels"]["Cooling Water price"] == "Cooling water price"
+    assert mc["display_labels"]["Interest rate"] == "Interest rate"
+    vo = variable_opex_data(test_plant)
+    assert {"Cooling water", "CO 2"} <= set(vo["components"][0])
+
+    # Plots draw the display labels
+    figs = plot_monte_carlo_inputs(mc, category="economic", show=False)
+    fig = figs[0] if isinstance(figs, tuple) else figs
+    titles = {ax.get_title() for ax in fig.axes}
+    assert "Cooling water price" in titles
+    assert r"CO$_{\mathrm{2}}$ price" in titles
+    plt.close("all")
+    fig, ax = plot_stacked_bar(vo, show=False)
+    legend = {t.get_text() for t in ax.get_legend().get_texts()}
+    assert r"CO$_{\mathrm{2}}$" in legend and "Cooling water" in legend
+    plt.close(fig)
+
+    # Results without display_labels (saved before 3.2.1) show the keys
+    figs = plot_monte_carlo_inputs({"inputs": mc["inputs"]},
+                                   category="economic", show=False)
+    fig = figs[0] if isinstance(figs, tuple) else figs
+    assert "Cooling Water price" in {ax.get_title() for ax in fig.axes}
+    plt.close("all")

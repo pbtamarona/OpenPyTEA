@@ -1133,7 +1133,7 @@ natural gas on the weighted combination of *both* its parents:
 
    inputs = mc_dependency["inputs"]
    fig, ax = plt.subplots(figsize=(3.2, 2.2))
-   ax.scatter(inputs["Methanol production"], inputs["Cooling water consumption"],
+   ax.scatter(inputs["Methanol production"], inputs["Cooling Water consumption"],
               s=1, alpha=0.3)
    ax.set_xlabel("Methanol production / [units/day]")
    ax.set_ylabel("Cooling water consumption / [units/day]")

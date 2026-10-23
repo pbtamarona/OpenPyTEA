@@ -341,10 +341,10 @@ save(fig, "dependency_inputs_economic")
 # Scatter plots: each dependent against its driver(s)
 inputs = mc_dep["inputs"]
 pairs = [
-    ("Methanol production", "Cooling water consumption",
+    ("Methanol production", "Cooling Water consumption",
      "Methanol production / [units/day]", "Cooling water consumption / [units/day]",
      "dependency_scatter_cooling_water"),
-    ("Cooling water consumption", "Steam consumption",
+    ("Cooling Water consumption", "Steam consumption",
      "Cooling water consumption / [units/day]", "Steam consumption / [units/day]",
      "dependency_scatter_steam"),
     ("Methanol production", "Hydrogen production",
@@ -363,7 +363,7 @@ for xkey, ykey, xlabel, ylabel, name in pairs:
 
 ng_mean = 0.4667 * inputs["Methanol production"] + 0.6 * inputs["Hydrogen production"]
 fig, ax = plt.subplots(figsize=FIGSIZE)
-ax.scatter(ng_mean, inputs["Natural gas consumption"], s=1, alpha=0.3)
+ax.scatter(ng_mean, inputs["Natural Gas consumption"], s=1, alpha=0.3)
 ax.set_xlabel(r"$0.4667 \times$ methanol $+ 0.6 \times$ hydrogen")
 ax.set_ylabel("Natural gas consumption")
 save(fig, "dependency_scatter_natural_gas")
