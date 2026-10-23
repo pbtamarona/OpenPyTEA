@@ -987,8 +987,9 @@ def _collect_sensitivity_keys(plant, metric, category="economic"):
         Only the *dependency* structure narrows the result, and only for
         correctness: a parameter set by a dependency has no value of its
         own to vary, so it is never a factor. That drops dependent process
-        quantities from the process factors, and drops an economic scalar (e.g. "fixed_capital" when
-        ``fixed_capital_factor`` is a dependent) from the top-level keys.
+        quantities from the process factors, and drops an economic scalar
+        (e.g. "fixed_capital" when ``fixed_capital_factor`` is a dependent)
+        from the top-level keys.
     """
     top_level_keys = [
         "fixed_capital",
