@@ -28,6 +28,12 @@ maintainers = [
   { name = "Panji B. Tamarona", email = "P.B.Tamarona@tudelft.nl" }
 ]
 
+[project.urls]
+Homepage = "https://github.com/pbtamarona/OpenPyTEA"
+Documentation = "https://openpytea.readthedocs.io"
+Changelog = "https://github.com/pbtamarona/OpenPyTEA/releases"
+Issues = "https://github.com/pbtamarona/OpenPyTEA/issues"
+
 [project.scripts]
 openpytea = "openpytea.cli:main"
 
