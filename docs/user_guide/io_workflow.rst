@@ -270,8 +270,9 @@ in an analysis' own ``args`` still takes precedence.
 
 Each analysis block (and each sensitivity case) also accepts a
 ``"plot_args"`` dict passed to its plotting function, e.g.
-``"plot_args": {"figsize": [3, 2]}`` or, for ``monte_carlo``,
-``{"bins": 50, "show_fit": false}``. ``"plot_inputs"`` may likewise be a
+``"plot_args": {"figsize": [3, 2]}``, for a sensitivity case
+``{"x_axis": "value"}`` to plot against actual parameter values instead of
+%, or, for ``monte_carlo``, ``{"bins": 50, "show_fit": false}``. ``"plot_inputs"`` may likewise be a
 dict of :func:`~openpytea.plotting.plot_monte_carlo_inputs` arguments
 instead of ``true``, e.g. ``{"category": "economic", "bins": 30}`` to save
 only the economic grid.

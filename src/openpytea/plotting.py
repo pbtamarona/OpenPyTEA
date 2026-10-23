@@ -258,7 +258,8 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     return ax.figure, ax
 
 
-def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
+def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True,
+                     x_axis="percent"):
     """
     Plot sensitivity analysis curves.
     Parameters
@@ -284,18 +285,41 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
         Default is None.
     show : bool, optional
         Whether to display the plot. Default is True.
+    x_axis : {"percent", "value"}, optional
+        ``"percent"`` (default) plots the change from the baseline in %;
+        ``"value"`` plots the parameter's actual value (``curve["x_value"]``,
+        labelled with ``data["xlabel_value"]``). For ``fixed_capital`` /
+        ``fixed_opex`` that is the resulting fixed capital / annual fixed
+        OPEX; fractions such as ``interest_rate`` are shown as stored.
     Returns
     -------
     tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
         The figure and axes containing the plotted sensitivity curves.
         When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
+    Raises
+    ------
+    ValueError
+        If ``x_axis`` is not ``"percent"`` or ``"value"``, or ``"value"``
+        is asked of data without actual values.
     Notes
     -----
+    - With ``x_axis="value"``, a plant that lacks the parameter has no
+        values to plot; its curve is left out with a warning.
     - Multiple curves are plotted with colors from the Set2 colormap.
     - If a new figure is created, tight_layout() is applied before showing.
     - If an existing axes is provided, canvas is redrawn instead of calling
         plt.show().
     """
+    if x_axis not in ("percent", "value"):
+        raise ValueError(
+            f"x_axis must be 'percent' or 'value', got {x_axis!r}."
+        )
+    by_value = x_axis == "value"
+    if by_value and "xlabel_value" not in data:
+        raise ValueError(
+            "x_axis='value' needs data from sensitivity_data() with actual "
+            "parameter values; rerun sensitivity_data() to get them."
+        )
 
     created_fig = None
     if ax is None:
@@ -304,16 +328,27 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
     line_colors = cycle(plt.cm.Set2.colors)
 
     for curve in data["curves"]:
+        color = next(line_colors)  # same color per plant in either mode
+        if by_value and curve["x_value"] is None:
+            warnings.warn(
+                f"Plant '{curve['plant']}' lacks {data.get('parameter')!r}, "
+                "so it has no values to plot on the value axis; "
+                "leaving it out.",
+                stacklevel=2,
+            )
+            continue
         ax.plot(
-            curve["x"],
+            curve["x_value"] if by_value else curve["x"],
             curve["y"],
             linewidth=1.2,
-            color=next(line_colors),
+            color=color,
             label=_format_scripts(curve["plant"]),
             ls="-"
         )
 
-    ax.set_xlabel(_format_scripts(data["xlabel"]))
+    ax.set_xlabel(
+        _format_scripts(data["xlabel_value" if by_value else "xlabel"])
+    )
     ax.set_ylabel(_format_scripts(data["ylabel"]))
     ax.legend(loc="best")
 

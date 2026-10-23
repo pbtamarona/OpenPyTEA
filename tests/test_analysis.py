@@ -757,3 +757,44 @@ def test_sensitivity_operator_hourly_rate_dict(test_plant):
     )
     y = sens["curves"][0]["y"]
     assert y[0] < y[1] < y[2]
+
+
+def test_sensitivity_actual_values(test_plant, test_plant_b):
+    def x_value(parameter, plant=test_plant):
+        data = sensitivity_data(plant, parameter, 0.2, n_points=3, metric="NPV")
+        return data["curves"][0]["x_value"], data["xlabel_value"]
+
+    x, label = x_value("plant_products.hydrogen")
+    np.testing.assert_allclose(x, [4.0, 5.0, 6.0])
+    assert label.startswith("Hydrogen price / [USD")
+
+    x, label = x_value("variable_opex_inputs.electricity.consumption")
+    np.testing.assert_allclose(x, [80.0, 100.0, 120.0])
+    assert "day" in label
+
+    x, label = x_value("interest_rate")  # fraction, as stored
+    np.testing.assert_allclose(x, [0.064, 0.08, 0.096])
+    assert label == "Interest rate / [-]"
+
+    # fc/fp give the resulting cost, computed -- so component overrides hold
+    base_fc = deepcopy(test_plant).calculate_fixed_capital()
+    x, label = x_value("fixed_capital")
+    np.testing.assert_allclose(x, base_fc * np.array([0.8, 1.0, 1.2]))
+    assert label == "Fixed capital / [USD]"
+    fixed = deepcopy(test_plant)
+    fixed.update_configuration({"fixed_capital_components": {"osbl": 1e5}})
+    x, _ = x_value("fixed_capital", fixed)
+    expected = [deepcopy(fixed).calculate_fixed_capital(fc=f)
+                for f in (0.8, 1.0, 1.2)]
+    np.testing.assert_allclose(x, expected)
+    assert not np.allclose(x, x[1] * np.array([0.8, 1.0, 1.2]))
+
+    base_fp = deepcopy(test_plant).calculate_fixed_opex()
+    x, _ = x_value("fixed_opex")
+    np.testing.assert_allclose(x, base_fp * np.array([0.8, 1.0, 1.2]))
+
+    # A plant without the parameter has no values
+    test_plant_b.variable_opex_inputs["steam"] = {"consumption": 1, "price": 1}
+    data = sensitivity_data([test_plant, test_plant_b],
+                            "variable_opex_inputs.steam", 0.2, n_points=3)
+    assert data["curves"][0]["x_value"] is None

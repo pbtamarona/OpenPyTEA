@@ -226,3 +226,29 @@ def test_plot_names_with_scripts_render(test_plant):
         r"H$_{\mathrm{2}}$ plant$^{\mathrm{2}}$"
     )
     plt.close(fig)
+
+
+def test_plot_sensitivity_x_axis(test_plant, test_plant_b):
+    import pytest
+
+    data = sensitivity_data(test_plant, "plant_products.hydrogen", 0.2,
+                            n_points=3, metric="NPV")
+    fig, ax = plot_sensitivity(data, show=False, x_axis="value")
+    np.testing.assert_allclose(ax.lines[0].get_xdata(), [4.0, 5.0, 6.0])
+    assert ax.get_xlabel().startswith("Hydrogen price")
+    plt.close(fig)
+
+    fig, ax = plot_sensitivity(data, show=False)  # default stays percent
+    np.testing.assert_allclose(ax.lines[0].get_xdata(), [-20.0, 0.0, 20.0])
+    plt.close(fig)
+
+    with pytest.raises(ValueError, match="x_axis"):
+        plot_sensitivity(data, show=False, x_axis="values")
+
+    test_plant_b.variable_opex_inputs["steam"] = {"consumption": 1, "price": 1}
+    data = sensitivity_data([test_plant, test_plant_b],
+                            "variable_opex_inputs.steam", 0.2, n_points=3)
+    with pytest.warns(UserWarning, match="leaving it out"):
+        fig, ax = plot_sensitivity(data, show=False, x_axis="value")
+    assert len(ax.lines) == 1
+    plt.close(fig)

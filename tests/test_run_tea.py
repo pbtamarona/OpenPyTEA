@@ -109,6 +109,7 @@ def _analysis_data(output_dir=None):
                             "n_points": 5,
                             "metric": "NPV",
                         },
+                        "plot_args": {"x_axis": "value"},
                     }
                 ],
             },

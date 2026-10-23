@@ -327,6 +327,51 @@ Pass a custom ``figsize`` to resize the chart:
 
    fig, ax = plot_sensitivity(sens, figsize=(5, 3))
 
+X-axis in % or in actual values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default the x-axis shows the change from the baseline in %. Pass
+``x_axis="value"`` to plot against the parameter's actual value instead:
+
+.. code-block:: python
+
+   fig, ax = plot_sensitivity(sens, x_axis="value")   # electricity price in USD/unit
+
+The value axis uses each parameter's own units:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Parameter
+     - Value axis
+   * - Product or utility price
+     - the price, ``[USD·unit⁻¹]``
+   * - ``"{key}.consumption"``, ``"{key}.production"``
+     - the rate, ``[unit·day⁻¹]``
+   * - ``"fixed_capital"``
+     - the resulting fixed capital, ``[USD]``
+   * - ``"fixed_opex"``
+     - the resulting annual fixed OPEX, ``[USD·yr⁻¹]``
+   * - ``"project_lifetime"``
+     - years
+   * - ``"operator_hourly_rate"``
+     - the wage, ``[USD·h⁻¹]``
+   * - ``"interest_rate"``, ``"plant_utilization"``, ``"tax_rate"``
+     - the fraction as stored (0.08, not 8 %), ``[-]``
+
+``"fixed_capital"`` and ``"fixed_opex"`` vary the cost factors fc and fp;
+the value axis shows the cost they produce, calculated at each point, so
+overrides in ``fixed_capital_components`` are taken into account.
+
+When comparing several plants, each curve sits at its own values, so plants
+with different baselines appear side by side rather than stacked at 0 %. A
+plant that lacks the parameter has no values to plot: it is left out of the
+value axis with a warning (on the % axis it shows as a flat line).
+
+The values are stored in the data as well: ``curve["x_value"]`` for each
+curve and ``data["xlabel_value"]`` for the label.
+
 Comparing multiple plants
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

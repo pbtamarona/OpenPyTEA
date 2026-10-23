@@ -488,6 +488,20 @@ def _sensitivity_param_keys(plant, metric):
     return price_keys, quantity_keys
 
 
+def _sensitivity_x_value(plant, parameter, value):
+    """
+    A sensitivity point's parameter value in its own units: the resulting
+    fixed capital / fixed OPEX for the fc / fp multipliers (computed, so
+    fixed_capital_components overrides are honoured), the value as set
+    for everything else.
+    """
+    if parameter == "fixed_capital":
+        return float(deepcopy(plant).calculate_fixed_capital(fc=value))
+    if parameter == "fixed_opex":
+        return float(deepcopy(plant).calculate_fixed_opex(fp=value))
+    return float(value)
+
+
 def sensitivity_data(plants,
                      parameter,
                      plus_minus_value,
@@ -548,12 +562,20 @@ def sensitivity_data(plants,
                 Plant name or identifier
             - "x" : ndarray
                 Percentage changes along the variation range
+            - "x_value" : ndarray or None
+                The parameter's value at each point, in its own units
+                (for "fixed_capital" / "fixed_opex": the resulting fixed
+                capital / annual fixed OPEX); None if the plant lacks the
+                parameter
             - "y" : ndarray or list
                 Metric values corresponding to each point
             - "baseline" : float
                 Metric value at the baseline (0% variation)
         - "xlabel" : str
             Label for the x-axis (parameter name with % unit)
+        - "xlabel_value" : str
+            Label for the x-axis in the parameter's own units, used by
+            ``plot_sensitivity(..., x_axis="value")``
         - "ylabel" : str
             Label for the y-axis (metric name and unit)
         - "parameter" : str
@@ -687,6 +709,25 @@ def sensitivity_data(plants,
     else:
         x_label = label_clean + " price" + pm_unit
 
+    # --- X label in the parameter's own units (x_axis="value") ---
+    currency = plants[0].currency if plants else _tex_escape("$")
+    if parameter in top_level_keys:
+        value_unit = {
+            "fixed_capital": currency,
+            "fixed_opex": rf"{currency}$\cdot$yr$^{{-1}}$",
+            "project_lifetime": "years",
+            "operator_hourly_rate": rf"{currency}$\cdot$h$^{{-1}}$",
+        }.get(parameter, "-")  # fractions as stored
+        x_label_value = f"{label_clean} / [{value_unit}]"
+    elif parameter in quantity_keys_all:
+        x_label_value = (
+            f"{_make_label(item)} {field}" + r" / [unit$\cdot$day$^{-1}$]"
+        )
+    else:
+        x_label_value = (
+            f"{label_clean} price / [{currency}" + r"$\cdot$unit$^{-1}$]"
+        )
+
     # --- Core computation ---
     results = []
 
@@ -706,6 +747,7 @@ def sensitivity_data(plants,
             metric_values = np.full_like(
                 pct_axis, fill_value=base_value, dtype=float
             )
+            x_values = None
         else:
             # fixed_capital/fixed_opex perturb the plant's actual
             # configured multiplier, not an assumed 1.0
@@ -722,11 +764,16 @@ def sensitivity_data(plants,
                 )
                 for v in param_values
             ]
+            x_values = np.array([
+                _sensitivity_x_value(plant, parameter, v)
+                for v in param_values
+            ])
 
         results.append(
             {
                 "plant": getattr(plant, "name", f"Plant {i+1}"),
                 "x": pct_axis,
+                "x_value": x_values,
                 "y": metric_values,
                 "baseline": base_value,
             }
@@ -735,6 +782,7 @@ def sensitivity_data(plants,
     return {
         "curves": results,
         "xlabel": x_label,
+        "xlabel_value": x_label_value,
         "ylabel": label,
         "parameter": parameter,
         "metric": metric,
