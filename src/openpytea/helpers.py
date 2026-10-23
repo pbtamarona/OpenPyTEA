@@ -3,6 +3,8 @@ from pathlib import Path
 import json
 import re
 
+from openpytea.plant import _operator_rate
+
 
 # HELPER FUNCTIONS
 # For plottings
@@ -492,10 +494,8 @@ def _dependency_node_value(plant, key):
     if name == "fixed_opex_factor":
         return 1.0 if plant.fp is None else plant.fp
     if name == "operator_hourly_rate":
-        current = getattr(plant, "operator_hourly_rate", None)
-        if isinstance(current, dict):
-            return current.get("rate", 0.0)
-        return 0.0 if current is None else float(current)
+        # Same default as the plant's own labour cost calculation
+        return _operator_rate(getattr(plant, "operator_hourly_rate", None))
     return getattr(plant, name)
 
 

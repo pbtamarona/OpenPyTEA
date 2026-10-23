@@ -4,6 +4,7 @@ from tqdm.auto import tqdm
 from scipy import stats
 import numpy as np
 
+from openpytea.plant import DEFAULT_OPERATOR_HOURLY_RATE
 from openpytea.helpers import (_make_label,
                                _tex_escape,
                                _get_original_value,
@@ -1734,7 +1735,7 @@ def monte_carlo(plant,
         ("fixed_opex_factor", _resolve_dist_params(
             cfg("fixed_opex_factor"), **factor_window), False),
         ("operator_hourly_rate", _resolve_item_dist_params(
-            op_cfg, "rate", 38.11, 10), False),
+            op_cfg, "rate", DEFAULT_OPERATOR_HOURLY_RATE, 10), False),
         ("project_lifetime", _window_dist_params(
             cfg("project_lifetime"), plant.project_lifetime, 5, floor=5),
          False),

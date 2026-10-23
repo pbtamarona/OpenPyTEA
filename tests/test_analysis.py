@@ -11,7 +11,8 @@ from openpytea import (
     cash_flow_data,
     sensitivity_data,
     tornado_data,
-    monte_carlo
+    monte_carlo,
+    Plant,
 )
 from openpytea.helpers import _apply_dependencies
 
@@ -852,3 +853,37 @@ def test_tornado_lcop_ranks_by_product_price(test_plant):
     assert "plant_products.hydrogen" not in data["factors"]
     i = data["factors"].index("plant_products.oxygen")
     assert data["lows"][i] > data["base_value"] > data["highs"][i]
+
+
+@pytest.mark.parametrize("rate", ["missing", {}, None, 38.11])
+def test_unset_operator_rate_uses_plant_default(test_plant, rate):
+    # The plant falls back to DEFAULT_OPERATOR_HOURLY_RATE; the tools must
+    # vary that same rate, whichever way "no rate" (or a bare one) is given
+    from openpytea.plant import DEFAULT_OPERATOR_HOURLY_RATE
+
+    config = deepcopy(test_plant.config)
+    config["equipment"] = test_plant.equipment_list
+    config.pop("operator_hourly_rate")
+    reference = Plant({**config, "operator_hourly_rate":
+                       {"rate": DEFAULT_OPERATOR_HOURLY_RATE}})
+    if rate != "missing":
+        config["operator_hourly_rate"] = rate
+    plant = Plant(config)
+
+    def tornado_bar(p):
+        d = tornado_data(p, plus_minus_value=0.3)
+        i = d["factors"].index("operator_hourly_rate")
+        return d["base_value"], d["lows"][i], d["highs"][i]
+
+    base, low, high = tornado_bar(plant)
+    np.testing.assert_allclose((base, low, high), tornado_bar(reference))
+    assert low < base < high
+
+    curve = sensitivity_data(plant, "operator_hourly_rate", 0.3,
+                             n_points=3)["curves"][0]
+    assert curve["y"][1] == pytest.approx(curve["baseline"])
+
+    mc = monte_carlo(plant, num_samples=200, batch_size=200, random_seed=1)
+    assert np.mean(mc["inputs"]["Operator hourly rate"]) == pytest.approx(
+        DEFAULT_OPERATOR_HOURLY_RATE, rel=0.1
+    )

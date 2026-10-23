@@ -8,6 +8,9 @@ from types import SimpleNamespace
 from typing import List, Dict, Optional
 from scipy.optimize import root_scalar
 
+# Operator wage [currency/h] used when operator_hourly_rate sets no "rate"
+DEFAULT_OPERATOR_HOURLY_RATE = 38.11
+
 
 class Plant:
     """
@@ -831,15 +834,7 @@ class Plant:
             24 / self.operating_shifts_per_day
         )
 
-        rate_cfg = self.operator_hourly_rate
-        if isinstance(rate_cfg, dict):
-            rate = rate_cfg.get("rate", 38.11)
-        else:
-            rate = (
-                38.11
-                if rate_cfg is None
-                else float(rate_cfg)
-            )
+        rate = _operator_rate(self.operator_hourly_rate)
 
         self.operating_labor_costs = (
             operators_hired * working_hours_per_year * rate
@@ -2371,11 +2366,38 @@ def _own_copy(configuration):
     Deep-copy a configuration so the plant never shares dicts or lists with
     the caller (or another plant built or updated from the same dict).
     Equipment is kept by reference: users edit those objects in place.
+
+    ``operator_hourly_rate`` is stored as a dict, as documented: ``None``
+    becomes ``{}`` (the default rate) and a bare number ``r`` becomes
+    ``{"rate": r}``, so merging updates into it and sampling its "rate"
+    work whichever form was given.
     """
-    return {
+    own = {
         key: value if key == "equipment" else deepcopy(value)
         for key, value in configuration.items()
     }
+    if "operator_hourly_rate" in own:
+        rate_cfg = own["operator_hourly_rate"]
+        if rate_cfg is None:
+            own["operator_hourly_rate"] = {}
+        elif not isinstance(rate_cfg, dict):
+            own["operator_hourly_rate"] = {"rate": rate_cfg}
+    return own
+
+
+def _operator_rate(rate_cfg):
+    """
+    The operator wage an ``operator_hourly_rate`` setting stands for:
+    its "rate", or DEFAULT_OPERATOR_HOURLY_RATE when none is set. Accepts
+    the dict form and, for attributes set directly, ``None`` or a number.
+    The plant and the sensitivity tools both read the rate through this,
+    so they always vary the rate the plant actually uses.
+    """
+    if isinstance(rate_cfg, dict):
+        return rate_cfg.get("rate", DEFAULT_OPERATOR_HOURLY_RATE)
+    if rate_cfg is None:
+        return DEFAULT_OPERATOR_HOURLY_RATE
+    return rate_cfg if isinstance(rate_cfg, np.ndarray) else float(rate_cfg)
 
 
 def _as_ramp(value, name):
