@@ -1,3 +1,4 @@
+import warnings
 from copy import deepcopy
 from tqdm.auto import tqdm
 from scipy import stats
@@ -794,7 +795,8 @@ def tornado_data(plant,
                  metric="LCOP",
                  label=None,
                  additional_capex: bool = False,
-                 include_process_params: bool = False):
+                 category: str | None = None,
+                 include_process_params: bool | None = None):
     """
     Generate tornado plot data for sensitivity analysis (no plotting).
     This function performs a sensitivity analysis on a plant model by varying
@@ -818,19 +820,23 @@ def tornado_data(plant,
     additional_capex : bool, optional
         Whether to include additional capital expenditure in calculations.
         Default is False.
-    include_process_params : bool, optional
-        Whether to also rank the plant's *process* parameters -- every
-        ``variable_opex_inputs`` item's consumption and every
-        ``plant_products`` entry's production -- alongside the prices and
-        economic scalars. Default is False, which keeps the factor list to
-        prices and economic scalars.
+    category : {"economic", "process", "both"}, optional
+        Which parameters to rank. ``"economic"`` (default): prices and
+        economic scalars (fixed capital/OPEX, project lifetime, interest
+        rate, operator hourly rate). ``"process"``: the plant's process
+        quantities -- every ``variable_opex_inputs`` item's consumption and
+        every ``plant_products`` entry's production. ``"both"``: all of
+        them.
 
         This is independent of the dependency graph: process quantities are
         ordinary economic drivers (a plant's production rate moves LCOP
         whether or not anything is tied to it), so configuring a dependency
-        does not switch them on, and switching them on does not require
-        one. A quantity that is *set by* a dependency is excluded even when
-        this is True -- see Notes.
+        does not switch them on, and ranking them does not require one. A
+        parameter that is *set by* a dependency is excluded in every
+        category -- see Notes.
+    include_process_params : bool, optional
+        Deprecated: use ``category``. ``True`` is ``category="both"``,
+        ``False`` is ``category="economic"``.
     dict
         Dictionary containing tornado plot data with keys:
         - factors : list[str]
@@ -864,11 +870,10 @@ def tornado_data(plant,
     - A parameter that is itself set by a dependency is never a factor --
       it has no value of its own to vary. This drops it from the top-level
       keys (e.g. ``"fixed_capital"`` when ``fixed_capital_factor`` is a
-      dependent) and from whatever ``include_process_params`` would
-      otherwise add.
+      dependent) and from the process quantities.
 
     Dependencies do not, however, change *which kinds* of parameter are
-    ranked: that is ``include_process_params`` alone. See
+    ranked: that is ``category`` alone. See
     :func:`~openpytea.helpers._collect_sensitivity_keys`.
     Examples
     --------
@@ -877,13 +882,37 @@ def tornado_data(plant,
     >>> lows = tornado_data["lows"]
     >>> highs = tornado_data["highs"]
     """
+    if include_process_params is not None:
+        if category is not None:
+            raise ValueError(
+                "Pass either category or the deprecated "
+                "include_process_params, not both."
+            )
+        warnings.warn(
+            "include_process_params is deprecated; use "
+            "category='both' (for True) or category='economic' (for False).",
+            FutureWarning,
+            stacklevel=2,
+        )
+        category = "both" if include_process_params else "economic"
+    if category is None:
+        category = "economic"
+    if category not in ("economic", "process", "both"):
+        raise ValueError(
+            f"Invalid category {category!r}; must be 'economic', "
+            "'process', or 'both'."
+        )
+
     metric = metric.upper()
     if label is None:
         label = _default_metric_label(plant.currency, metric)
 
-    keys = _collect_sensitivity_keys(
-        plant, metric, include_process_params=include_process_params
-    )
+    keys = _collect_sensitivity_keys(plant, metric, category=category)
+    if not keys:
+        raise ValueError(
+            f"Plant '{plant.name}' has no {category} parameters to rank "
+            "(parameters set by a dependency cannot be varied)."
+        )
 
     base_value = _evaluate_baseline_metric(plant, metric, additional_capex)
 

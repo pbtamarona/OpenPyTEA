@@ -933,7 +933,7 @@ def _evaluate_baseline_metric(plant, metric, additional_capex=False):
     return _evaluate_metric(plant_copy, metric, additional_capex)
 
 
-def _collect_sensitivity_keys(plant, metric, include_process_params=False):
+def _collect_sensitivity_keys(plant, metric, category="economic"):
     """
     Collect sensitivity analysis keys for a given plant and metric.
     This function identifies which parameters should be included in sensitivity
@@ -943,32 +943,31 @@ def _collect_sensitivity_keys(plant, metric, include_process_params=False):
                 plant_products attributes with their respective keys.
         metric (str): The metric type for sensitivity analysis.
                     Either "LCOP" or another metric type.
-        include_process_params (bool): Whether to also return a factor for
-                    each process quantity -- every item's consumption and
-                    every product's production. Default False, which keeps
-                    the factor set to prices and economic scalars.
+        category (str): Which factors to return: "economic" (default) --
+                    prices and economic scalars; "process" -- process
+                    quantities, every item's consumption and every
+                    product's production; "both" -- all of them.
     Returns:
-        list: All sensitivity keys: the top-level keys, then the price keys
-            (for "LCOP" only variable_opex_inputs keys; for other metrics
-            both variable_opex_inputs and plant_products keys), then any
-            quantity keys.
+        list: The sensitivity keys of that category: the top-level keys,
+            then the price keys (for "LCOP" only variable_opex_inputs keys;
+            for other metrics both variable_opex_inputs and plant_products
+            keys), then the quantity keys.
     Notes:
         Top-level keys always included: fixed_capital, fixed_opex,
         project_lifetime, interest_rate, operator_hourly_rate.
 
-        ``include_process_params=True`` additionally returns
+        The process quantities are
         "variable_opex_inputs.<item>.consumption" and
         "plant_products.<product>.production" for every item and product.
         These are ordinary economic drivers -- a plant's production rate
-        moves LCOP whether or not anything is tied to it -- so the flag is
-        independent of the dependency graph: it neither requires
+        moves LCOP whether or not anything is tied to it -- so ``category``
+        is independent of the dependency graph: it neither requires
         dependencies nor is implied by them.
 
         Only the *dependency* structure narrows the result, and only for
         correctness: a parameter set by a dependency has no value of its
         own to vary, so it is never a factor. That drops dependent process
-        quantities from what ``include_process_params`` would otherwise
-        add, and drops an economic scalar (e.g. "fixed_capital" when
+        quantities from the process factors, and drops an economic scalar (e.g. "fixed_capital" when
         ``fixed_capital_factor`` is a dependent) from the top-level keys.
     """
     top_level_keys = [
@@ -986,16 +985,13 @@ def _collect_sensitivity_keys(plant, metric, include_process_params=False):
     nested = var_keys if metric == "LCOP" else (var_keys + prod_keys)
 
     dependents = _collect_dependency_specs(plant)
-    if not dependents and not include_process_params:
-        return top_level_keys + nested
-
-    top_level_keys = [
+    economic_keys = [
         k for k in top_level_keys
         if _sensitivity_key_node(k) not in dependents
-    ]
+    ] + nested
 
     quantity_keys = []
-    if include_process_params:
+    if category in ("process", "both"):
         quantity_keys = [
             _node_sensitivity_key(("consumption", item))
             for item in plant.variable_opex_inputs
@@ -1006,7 +1002,11 @@ def _collect_sensitivity_keys(plant, metric, include_process_params=False):
             if ("production", prod) not in dependents
         ]
 
-    return top_level_keys + nested + quantity_keys
+    if category == "process":
+        return quantity_keys
+    if category == "both":
+        return economic_keys + quantity_keys
+    return economic_keys
 
 
 def _run_tornado_sensitivity(plant, keys, pm, metric,

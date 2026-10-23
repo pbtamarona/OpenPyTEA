@@ -70,7 +70,7 @@ def test_plot_tornado_height_grows_with_factor_count(test_plant):
     """A longer factor list gets a taller figure, not thinner bars."""
     short = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP")
     tall = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP",
-                        include_process_params=True)
+                        category="both")
     assert len(tall["factors"]) > len(short["factors"])
 
     fig_short, _ = plot_tornado(short, show=False)
@@ -86,7 +86,7 @@ def test_plot_tornado_height_grows_with_factor_count(test_plant):
 
 def test_plot_tornado_explicit_figsize_still_wins(test_plant):
     data = tornado_data(test_plant, plus_minus_value=0.1,
-                        include_process_params=True)
+                        category="both")
     fig, _ = plot_tornado(data, figsize=(5.0, 5.0), show=False)
 
     assert tuple(fig.get_size_inches()) == (5.0, 5.0)

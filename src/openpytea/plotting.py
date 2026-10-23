@@ -367,7 +367,7 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True,
 # ``_TORNADO_BASE_HEIGHT + _TORNADO_HEIGHT_PER_BAR * n``, floored at
 # ``_TORNADO_MIN_HEIGHT``. Calibrated so a nine-factor plot comes out at
 # ~2.4 in, the fixed default this replaced, while a long factor list (a
-# plant with many utilities, or ``include_process_params=True``) grows
+# plant with many utilities, or ``category="both"``) grows
 # instead of squeezing its bars together.
 _TORNADO_BASE_HEIGHT = 0.7
 _TORNADO_HEIGHT_PER_BAR = 0.19

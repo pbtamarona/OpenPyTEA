@@ -439,17 +439,18 @@ computes the ranking and :func:`~openpytea.plotting.plot_tornado` draws it.
      - .. image:: ../_static/plotting/tornado_roi.png
           :width: 100%
 
-By default the factor list covers prices and economic scalars. Pass
-``include_process_params=True`` to rank the plant's **process** parameters
-alongside them — every ``variable_opex_inputs`` item's consumption and every
-``plant_products`` entry's production:
+By default (``category="economic"``) the factor list covers prices and
+economic scalars. Pass ``category="both"`` to rank the plant's **process**
+parameters alongside them — every ``variable_opex_inputs`` item's consumption
+and every ``plant_products`` entry's production — or ``category="process"``
+to rank only those:
 
 .. code-block:: python
 
    td_process = tornado_data(
        plant=plant,
        plus_minus_value=0.5,
-       include_process_params=True,
+       category="both",
    )
    fig, ax = plot_tornado(td_process, figsize=(3.2, 3.4))
 
@@ -466,7 +467,7 @@ single price, is what this plant's levelized cost hinges on. The
 and bites harder here, since every process parameter is swept in isolation.
 
 The figure height is chosen from the number of factors, so a long factor
-list — a plant with many utilities, or ``include_process_params=True`` —
+list — a plant with many utilities, or ``category="both"`` —
 produces a taller figure rather than a more crowded one. Pass an explicit
 ``figsize`` to override, as above. Consumption and production factors are
 labelled ``"<item> cons."`` and ``"<product> prod."`` to keep the y-axis
@@ -1182,8 +1183,8 @@ that names the parents to vary instead:
 
 *Which parameters are ranked is a separate question.* Dependencies do not
 add factors to the tornado. To see a process quantity ranked — including
-one that drives a dependency — pass ``include_process_params=True`` to
-:func:`~openpytea.analysis.tornado_data`; ``sensitivity_data`` reaches any
+one that drives a dependency — pass ``category="both"`` (or
+``"process"``) to :func:`~openpytea.analysis.tornado_data`; ``sensitivity_data`` reaches any
 of them by name regardless. So a plant with no dependencies configured
 keeps exactly the factor list it had before, and so does one with
 dependencies until you ask for process parameters.
@@ -1204,9 +1205,9 @@ remove one — pop the keys directly), then run the same tornado call on each:
    independent_plant.project_uncertainties["fixed_capital_factor"].pop("dependency", None)
 
    td_indep = tornado_data(plant=independent_plant, plus_minus_value=0.5,
-                           metric="ROI", include_process_params=True)
+                           metric="ROI", category="both")
    td_dep = tornado_data(plant=plant, plus_minus_value=0.5,
-                         metric="ROI", include_process_params=True)
+                         metric="ROI", category="both")
    fig, ax = plot_tornado(td_indep)
    fig, ax = plot_tornado(td_dep)
 
@@ -1232,7 +1233,7 @@ shape — it got *wider*, because hydrogen production, three utility
 consumptions and ``fixed_capital_factor`` now move with it.
 
 The one-way sweep tells the same story with more resolution. Both plants
-can be swept in a single call, and no ``include_process_params`` is needed
+can be swept in a single call, and no ``category`` is needed
 since the parameter is named explicitly:
 
 .. code-block:: python

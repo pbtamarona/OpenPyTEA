@@ -624,12 +624,12 @@ def test_tornado_factors_default_to_prices_and_scalars(test_plant):
     assert factors == baseline
 
 
-def test_tornado_include_process_params_without_dependencies(test_plant):
+def test_tornado_category_both_without_dependencies(test_plant):
     # No dependency anywhere -- process parameters are still available,
     # because they are ordinary economic drivers in their own right
     factors = set(tornado_data(test_plant, plus_minus_value=0.1,
                                metric="LCOP",
-                               include_process_params=True)["factors"])
+                               category="both")["factors"])
 
     assert "variable_opex_inputs.electricity.consumption" in factors
     assert "variable_opex_inputs.water.consumption" in factors
@@ -639,7 +639,7 @@ def test_tornado_include_process_params_without_dependencies(test_plant):
     assert "fixed_capital" in factors
 
 
-def test_tornado_include_process_params_excludes_dependents(test_plant):
+def test_tornado_category_both_excludes_dependents(test_plant):
     # water's consumption is set by hydrogen production, and
     # fixed_capital_factor by it too -- neither can be varied on its own
     test_plant.update_configuration({
@@ -654,7 +654,7 @@ def test_tornado_include_process_params_excludes_dependents(test_plant):
     })
 
     result = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP",
-                          include_process_params=True)
+                          category="both")
     factors = set(result["factors"])
 
     # Independent process parameters are ranked
@@ -681,12 +681,12 @@ def test_tornado_dependency_widens_the_driver_bar(test_plant):
     dependent = _tie_water_to_hydrogen(test_plant)
 
     dep = tornado_data(dependent, plus_minus_value=0.5, metric="LCOP",
-                       include_process_params=True)
+                       category="both")
     dep_i = dep["factors"].index("plant_products.hydrogen.production")
     dep_span = abs(dep["highs"][dep_i] - dep["lows"][dep_i])
 
     ind = tornado_data(independent, plus_minus_value=0.5, metric="LCOP",
-                       include_process_params=True)
+                       category="both")
     ind_i = ind["factors"].index("plant_products.hydrogen.production")
     ind_span = abs(ind["highs"][ind_i] - ind["lows"][ind_i])
 
@@ -709,7 +709,7 @@ def test_tornado_never_ranks_opt_in_economic_scalars(test_plant):
     })
 
     factors = tornado_data(test_plant, plus_minus_value=0.1,
-                           include_process_params=True)["factors"]
+                           category="both")["factors"]
     assert "plant_utilization" not in factors
     assert "tax_rate" not in factors
     # Vary them by name through sensitivity_data instead
@@ -798,3 +798,44 @@ def test_sensitivity_actual_values(test_plant, test_plant_b):
     data = sensitivity_data([test_plant, test_plant_b],
                             "variable_opex_inputs.steam", 0.2, n_points=3)
     assert data["curves"][0]["x_value"] is None
+
+
+def test_tornado_category(test_plant):
+    def factors(**kwargs):
+        return tornado_data(deepcopy(test_plant), plus_minus_value=0.1,
+                            **kwargs)["factors"]
+
+    process = {"variable_opex_inputs.electricity.consumption",
+               "variable_opex_inputs.water.consumption",
+               "plant_products.hydrogen.production"}
+    economic = set(factors())  # default: unchanged factor list
+    assert economic == set(factors(category="economic"))
+    assert "fixed_capital" in economic and not economic & process
+    assert set(factors(category="process")) == process
+    assert set(factors(category="both")) == economic | process
+
+    # The old flag still works, with a warning
+    with pytest.warns(FutureWarning, match="category"):
+        assert set(factors(include_process_params=True)) == economic | process
+    with pytest.warns(FutureWarning):
+        assert set(factors(include_process_params=False)) == economic
+
+    with pytest.raises(ValueError, match="not both"):
+        factors(category="both", include_process_params=True)
+    with pytest.raises(ValueError, match="Invalid category"):
+        factors(category="processes")
+
+
+def test_tornado_process_category_with_nothing_to_rank(test_plant):
+    # Every process quantity set by a dependency: nothing left to vary
+    test_plant.update_configuration({
+        "variable_opex_inputs": {
+            name: {"consumption_dependency": {
+                "depends_on": {"production:hydrogen": 0.1}}}
+            for name in test_plant.variable_opex_inputs
+        },
+        "plant_products": {"hydrogen": {"production_dependency": {
+            "depends_on": {"fixed_capital_factor": 50}}}},
+    })
+    with pytest.raises(ValueError, match="no process parameters"):
+        tornado_data(test_plant, plus_minus_value=0.1, category="process")

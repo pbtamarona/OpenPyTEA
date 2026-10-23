@@ -194,7 +194,7 @@ The ``analysis`` block contains one sub-object per analysis type. Each must
 have ``"run": true`` to be executed, plus an ``"args"`` dict that is passed
 directly to the corresponding Python function. Anything the function accepts
 is therefore reachable from JSON — including
-``"include_process_params": true`` on ``tornado``, and a process quantity
+``"category": "both"`` on ``tornado``, and a process quantity
 such as ``"parameter": "electricity.consumption"`` on a sensitivity case.
 The ``output`` block controls whether results and plots are saved, and in
 what format.
@@ -226,7 +226,7 @@ what format.
 
        "tornado": {
          "run": true,
-         "args": { "plus_minus_value": 0.5, "metric": "NPV", "include_process_params": true }
+         "args": { "plus_minus_value": 0.5, "metric": "NPV", "category": "both" }
        },
 
        "monte_carlo": {
