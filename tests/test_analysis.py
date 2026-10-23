@@ -839,3 +839,16 @@ def test_tornado_process_category_with_nothing_to_rank(test_plant):
     })
     with pytest.raises(ValueError, match="no process parameters"):
         tornado_data(test_plant, plus_minus_value=0.1, category="process")
+
+
+def test_tornado_lcop_ranks_by_product_price(test_plant):
+    # By-product revenue is subtracted in LCOP, so its price moves LCOP;
+    # the main product's price is what LCOP solves for, so it cannot
+    test_plant.update_configuration(
+        {"plant_products": {"oxygen": {"production": 400, "price": 0.5}}}
+    )
+    data = tornado_data(test_plant, plus_minus_value=0.2, metric="LCOP")
+    assert "plant_products.oxygen" in data["factors"]
+    assert "plant_products.hydrogen" not in data["factors"]
+    i = data["factors"].index("plant_products.oxygen")
+    assert data["lows"][i] > data["base_value"] > data["highs"][i]

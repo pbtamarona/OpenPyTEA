@@ -1106,8 +1106,8 @@ production too.
 
 The process figure confirms every quantity was sampled — the independently
 sampled ones (``Methanol production``, ``Electricity consumption``), the
-dependent that carries its own noise (``Cooling Water consumption``), and
-the noise-free dependents (``Steam consumption``, ``Natural Gas
+dependent that carries its own noise (``Cooling water consumption``), and
+the noise-free dependents (``Steam consumption``, ``Natural gas
 consumption``, ``Hydrogen production``):
 
 .. image:: ../_static/plotting/dependency_inputs_process.png
@@ -1133,7 +1133,7 @@ natural gas on the weighted combination of *both* its parents:
 
    inputs = mc_dependency["inputs"]
    fig, ax = plt.subplots(figsize=(3.2, 2.2))
-   ax.scatter(inputs["Methanol production"], inputs["Cooling Water consumption"],
+   ax.scatter(inputs["Methanol production"], inputs["Cooling water consumption"],
               s=1, alpha=0.3)
    ax.set_xlabel("Methanol production / [units/day]")
    ax.set_ylabel("Cooling water consumption / [units/day]")

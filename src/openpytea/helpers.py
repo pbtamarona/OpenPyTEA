@@ -949,9 +949,10 @@ def _collect_sensitivity_keys(plant, metric, category="economic"):
                     product's production; "both" -- all of them.
     Returns:
         list: The sensitivity keys of that category: the top-level keys,
-            then the price keys (for "LCOP" only variable_opex_inputs keys;
-            for other metrics both variable_opex_inputs and plant_products
-            keys), then the quantity keys.
+            then the price keys (every variable_opex_inputs item and every
+            plant_products entry, except the main product's price for
+            "LCOP": that is what LCOP solves for, so it cannot move it;
+            by-product prices do), then the quantity keys.
     Notes:
         Top-level keys always included: fixed_capital, fixed_opex,
         project_lifetime, interest_rate, operator_hourly_rate.
@@ -980,9 +981,11 @@ def _collect_sensitivity_keys(plant, metric, category="economic"):
 
     var_keys = [f"variable_opex_inputs.{k}"
                 for k in plant.variable_opex_inputs]
-    prod_keys = [f"plant_products.{k}" for k in plant.plant_products]
-
-    nested = var_keys if metric == "LCOP" else (var_keys + prod_keys)
+    # Same rule as sensitivity_data: for LCOP drop only the main (first)
+    # product's price -- by-product revenue is subtracted in LCOP
+    products = list(plant.plant_products)
+    priced = products[1:] if metric == "LCOP" else products
+    nested = var_keys + [f"plant_products.{k}" for k in priced]
 
     dependents = _collect_dependency_specs(plant)
     economic_keys = [
