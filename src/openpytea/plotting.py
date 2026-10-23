@@ -5,7 +5,8 @@ from scipy.stats import norm
 import matplotlib.pyplot as plt
 import numpy as np
 
-from openpytea.helpers import _default_metric_label, _tex_escape
+from openpytea.helpers import (_default_metric_label, _format_scripts,
+                                _tex_escape)
 
 
 def _latex_available():
@@ -168,15 +169,15 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
         color_map[side_key] = colors[0] if colors else cmap(0.15)
 
     if pct:
-        ax.set_ylabel(ylabel + f" / [{_tex_escape('%')}]")
+        ax.set_ylabel(_format_scripts(ylabel) + f" / [{_tex_escape('%')}]")
         plot_labels = [
-            f"{lab} ({values_sorted[0][i]:.1f}{_tex_escape('%')})"
-            if n_bars == 1 else lab
+            f"{_format_scripts(lab)} ({values_sorted[0][i]:.1f}{_tex_escape('%')})"
+            if n_bars == 1 else _format_scripts(lab)
             for i, lab in enumerate(labels_sorted)
         ]
     else:
-        ax.set_ylabel(ylabel + " / [" + currency + "]")
-        plot_labels = labels_sorted
+        ax.set_ylabel(_format_scripts(ylabel) + " / [" + currency + "]")
+        plot_labels = [_format_scripts(lab) for lab in labels_sorted]
 
     # --- Remaining components stack starting from the side-revenue
     # baseline (so the final top reads as the correct net total), drawn
@@ -207,9 +208,9 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     # hatch pattern remains visible over the region it overlaps below zero
     if has_side_rev:
         side_label = (
-            f"{side_key} ({side_values[0]:.1f}{_tex_escape('%')})"
+            f"{_format_scripts(side_key)} ({side_values[0]:.1f}{_tex_escape('%')})"
             if pct and n_bars == 1
-            else side_key
+            else _format_scripts(side_key)
         )
         side_bars = ax.bar(
             x,
@@ -239,7 +240,7 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
         ax.set_ylim(0, top * 1.1)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(xlabels)
+    ax.set_xticklabels([_format_scripts(lab) for lab in xlabels])
     left = x[0] - bar_width / 2
     right = x[-1] + bar_width / 2
     ax.set_xlim(left - 0.2, right + 0.2)
@@ -308,12 +309,12 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
             curve["y"],
             linewidth=1.2,
             color=next(line_colors),
-            label=curve["plant"],
+            label=_format_scripts(curve["plant"]),
             ls="-"
         )
 
-    ax.set_xlabel(data["xlabel"])
-    ax.set_ylabel(data["ylabel"])
+    ax.set_xlabel(_format_scripts(data["xlabel"]))
+    ax.set_ylabel(_format_scripts(data["ylabel"]))
     ax.legend(loc="best")
 
     if created_fig is not None:
@@ -443,10 +444,10 @@ def plot_tornado(
 
     ax.axvline(base_value, color="black", linestyle="--", linewidth=0.5)
     ax.set_yticks(y_pos)
-    ax.set_yticklabels(labels_sorted)
+    ax.set_yticklabels([_format_scripts(lab) for lab in labels_sorted])
 
     if xlabel is not None:
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(_format_scripts(xlabel))
 
     ax.legend(loc="best")
 
@@ -545,7 +546,7 @@ def plot_cash_flow(data, figsize=(3.6, 2.6), ax=None, show=True):
             cumulative,
             linewidth=1.2,
             color=color,
-            label=curve["plant"],
+            label=_format_scripts(curve["plant"]),
             zorder=3,
             linestyle="-"
         )
@@ -572,8 +573,8 @@ def plot_cash_flow(data, figsize=(3.6, 2.6), ax=None, show=True):
 
     ax.axhline(0, color="black", linewidth=0.6, zorder=2)
     ax.set_xlim(left=0)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    ax.set_xlabel(_format_scripts(xlabel))
+    ax.set_ylabel(_format_scripts(ylabel))
 
     ymin = float(np.min(np.concatenate(all_cumulative)))
     ymax = float(np.max(np.concatenate(all_cumulative)))
@@ -747,7 +748,7 @@ def plot_monte_carlo(
     if show_fit:
         _plot_normal_fit(ax, values, line_color)
 
-    ax.set_xlabel(label)
+    ax.set_xlabel(_format_scripts(label))
     ax.set_ylabel("Density")
 
     if show_fit:
@@ -886,12 +887,12 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title):
                 edgecolor="black",
                 alpha=0.7,
             )
-        ax.set_title(label, fontsize=9)
+        ax.set_title(_format_scripts(label), fontsize=9)
 
     for i in range(n_params, len(axes)):
         axes[i].axis("off")
 
-    fig.suptitle(title, fontsize=14, fontweight="bold")
+    fig.suptitle(_format_scripts(title), fontsize=14, fontweight="bold")
     # Reserve a top margin sized to fit the suptitle in absolute
     # inches rather than a fixed fraction of figure height -- a flat
     # fraction leaves a disproportionately large gap on tall,
@@ -1119,7 +1120,7 @@ def plot_multiple_monte_carlo(
             linewidth=0.5,
             color=color,
             zorder=1,
-            label=name,
+            label=_format_scripts(name),
         )
 
         if show_fit:
@@ -1128,7 +1129,7 @@ def plot_multiple_monte_carlo(
     if label is None:
         label = _default_metric_label(currency, metric)
 
-    ax.set_xlabel(label)
+    ax.set_xlabel(_format_scripts(label))
     ax.set_ylabel("Probability density")
 
     handles, labels_list = ax.get_legend_handles_labels()

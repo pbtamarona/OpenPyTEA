@@ -4,6 +4,7 @@ from scipy import stats
 import numpy as np
 
 from openpytea.helpers import (_make_label,
+                               _tex_escape,
                                _get_original_value,
                                _update_and_evaluate,
                                _default_metric_label,
@@ -673,17 +674,18 @@ def sensitivity_data(plants,
 
     # --- X label ---
     label_clean = _make_label(parameter.split(".")[-1])
+    pm_unit = rf" / [$\pm$ {_tex_escape('%')}]"
     if parameter in top_level_keys:
-        x_label = label_clean + r" / [$\pm$ \%]"
+        x_label = label_clean + pm_unit
     elif parameter in quantity_keys_all:
         # "variable_opex_inputs.steam.consumption" ->
         # "Steam consumption / [+- %]"
         item, field = parameter.split(".")[1:]
         x_label = (
-            f"{_make_label(item)} {field}" + r" / [$\pm$ \%]"
+            f"{_make_label(item)} {field}" + pm_unit
         )
     else:
-        x_label = label_clean + r" price / [$\pm$ \%]"
+        x_label = label_clean + " price" + pm_unit
 
     # --- Core computation ---
     results = []
@@ -1793,19 +1795,19 @@ def monte_carlo(plant,
         **({} if tax_rates is None
            else {"Tax rate": tax_rates}),
         **{
-            f"{k.replace('_', ' ').title()} price": v
+            f"{_make_label(k)} price": v
             for k, v in variable_opex_price_samples.items()
         },
         **{
-            f"{k.replace('_', ' ').title()} consumption": v
+            f"{_make_label(k)} consumption": v
             for k, v in variable_opex_consumption_samples.items()
         },
         **{
-            f"{k.replace('_', ' ').title()} product price": v
+            f"{_make_label(k)} product price": v
             for k, v in product_price_samples.items()
         },
         **{
-            f"{k.replace('_', ' ').title()} production": v
+            f"{_make_label(k)} production": v
             for k, v in product_production_samples.items()
         },
     }

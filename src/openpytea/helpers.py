@@ -22,13 +22,58 @@ def _tex_escape(symbol: str) -> str:
     return symbol
 
 
+# _digits or _{...} -> subscript; ^digits, ^sign or ^{...} -> superscript;
+# any other unescaped underscore is matched last, as a plain underscore
+_SCRIPT_RE = re.compile(
+    r"(?<!\\)(?:_(\{[^{}]*\}|\d+)|\^(\{[^{}]*\}|[+-]?\d+|[+-])|(_))"
+)
+
+
+def _format_scripts(s, underscore=None) -> str:
+    """
+    Render ``_`` and ``^`` in a display name as subscript and superscript.
+
+    ``_`` followed by digits or ``{...}`` becomes a subscript (``H_2``,
+    ``T_{in}``); ``^`` followed by digits, a sign or ``{...}`` becomes a
+    superscript (``m^3``, ``s^-1``, ``Fe^{3+}``). Any other underscore is
+    replaced by ``underscore``: by default an underscore, escaped for LaTeX
+    only when ``text.usetex`` is active (see :func:`_tex_escape`). Math
+    segments (``$...$``) are left as they are, so applying this twice
+    changes nothing.
+
+    Examples
+    --------
+    >>> _format_scripts("CO_2 capture")
+    'CO$_{\\mathrm{2}}$ capture'
+    >>> _format_scripts("m^3, x_{in}^2")
+    'm$^{\\mathrm{3}}$, x$_{\\mathrm{in}}^{\\mathrm{2}}$'
+    """
+    if underscore is None:
+        underscore = _tex_escape("_")
+
+    def script(m):
+        if m[3]:
+            return underscore
+        body = (m[1] or m[2]).strip("{}")
+        return f"${'_' if m[1] else '^'}{{\\mathrm{{{body}}}}}$"
+
+    # Keep math segments; an escaped \$ (a currency sign) delimits nothing
+    parts = re.split(r"((?<!\\)\$.*?(?<!\\)\$)", str(s))
+    s = "".join(
+        p if i % 2 else _SCRIPT_RE.sub(script, p) for i, p in enumerate(parts)
+    )
+    # Join neighbouring scripts (x_1^2) into one math segment
+    return re.sub(r"\}\$\$(?=[_^]\{)", "}", s)
+
+
 def _make_label(s: str) -> str:
     """
     Convert a string to a label format by replacing underscores with spaces
     and capitalizing the first character.
 
-    Preserves LaTeX math segments (text enclosed in $...$) without
-    modification, while replacing underscores with spaces in non-math segments.
+    ``_`` and ``^`` that mark a subscript or superscript are rendered as
+    such first (see :func:`_format_scripts`). LaTeX math segments (text
+    enclosed in $...$) are preserved without modification.
 
     Parameters
     ----------
@@ -47,13 +92,10 @@ def _make_label(s: str) -> str:
     'My variable $x^2$'
     >>> _make_label("cost_per_unit")
     'Cost per unit'
+    >>> _make_label("H_2_price")
+    'H$_{\\mathrm{2}}$ price'
     """
-    parts = re.split(r"(\$.*?\$)", s)  # keep math segments
-    parts = [
-        p.replace("_", " ") if not p.startswith("$") else p
-        for p in parts
-    ]
-    s = "".join(parts)
+    s = _format_scripts(s, underscore=" ")
     return s[:1].upper() + s[1:]
 
 
@@ -96,7 +138,7 @@ def _default_metric_label(currency: str, metric: str) -> str:
     """
     metric = metric.upper()
     if metric == "LCOP":
-        return rf"Levelized cost / [{currency}$\cdot$unit$^{-1}$]"
+        return rf"Levelized cost / [{currency}$\cdot$unit$^{{-1}}$]"
     elif metric == "ROI":
         return f"Return on investment / [{_tex_escape('%')}]"
     elif metric == "NPV":

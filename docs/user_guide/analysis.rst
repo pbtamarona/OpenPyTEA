@@ -1216,6 +1216,58 @@ shortfall** and overstates the gain from a scale-up. That gap is exactly
 what the dependency graph exists to capture — and it is the same graph,
 with the same numbers, that shaped the Monte Carlo distributions above.
 
+.. _label-scripts:
+
+Subscripts and superscripts in labels
+-------------------------------------
+
+Names shown in plots — plant names, equipment and cost components, products,
+utilities and parameters — render ``_`` and ``^`` as subscript and
+superscript, so you can name things the way you would write them:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 30 40
+
+   * - Written
+     - Shown
+     - Rule
+   * - ``H_2``, ``CO_2``
+     - H\ :sub:`2`, CO\ :sub:`2`
+     - ``_`` followed by digits
+   * - ``T_{in}``, ``CO_{2,eq}``
+     - T\ :sub:`in`, CO\ :sub:`2,eq`
+     - ``_{...}``, any content
+   * - ``m^3``, ``s^-1``, ``Na^+``
+     - m\ :sup:`3`, s\ :sup:`-1`, Na\ :sup:`+`
+     - ``^`` followed by digits or a sign
+   * - ``Fe^{3+}``
+     - Fe\ :sup:`3+`
+     - ``^{...}``, any content
+   * - ``interest_rate``
+     - Interest rate
+     - any other ``_``
+
+Any other underscore is a word separator: in parameter, product and utility
+names it becomes a space (``natural_gas`` → "Natural gas price"), while plant
+and equipment names keep it as written. Text already inside ``$...$`` is left
+as it is, so you can still write your own matplotlib math.
+
+.. code-block:: python
+
+   plant.update_configuration({"plant_name": "H_2 plant"})
+   # Product "H_2" appears as "H₂ price" / "H₂ prod." in tornado plots
+
+.. note::
+
+   ``_`` followed by digits always becomes a subscript, so a name such as
+   ``case_1`` is shown as case\ :sub:`1`. Write ``case 1`` or ``case-1`` to
+   avoid it.
+
+Labels render the same with and without a LaTeX installation: characters
+such as ``%`` and ``_`` are escaped only when matplotlib's ``text.usetex`` is
+active.
+
 .. _saving-figures:
 
 Saving figures

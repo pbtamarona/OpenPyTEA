@@ -122,6 +122,15 @@ def test_tex_escape_follows_usetex():
         plt.rcParams["text.usetex"] = old
 
 
+def test_sensitivity_xlabel_has_no_literal_backslash(test_plant):
+    r"""With usetex off, the x label must read [$\pm$ %], not [$\pm$ \%]."""
+    for parameter in ("interest_rate",
+                      "variable_opex_inputs.electricity",
+                      "variable_opex_inputs.electricity.consumption"):
+        data = sensitivity_data(test_plant, parameter, 0.2, n_points=3)
+        assert data["xlabel"].endswith(r"[$\pm$ %]")
+
+
 def test_tornado_legend_has_no_literal_backslash(test_plant):
     r"""With usetex off, legend labels must read -10%, not -10\%."""
     data = tornado_data(test_plant, plus_minus_value=0.1)
@@ -186,4 +195,34 @@ def test_plot_monte_carlo_sigma_label_uses_times():
     fig, ax = plot_monte_carlo(values, metric="LCOP", show=False)
     labels = [t.get_text() for t in ax.get_legend().get_texts()]
     assert r"$\times 10^{1}$" in labels[1]
+    plt.close(fig)
+
+
+def test_format_scripts():
+    from openpytea.helpers import _format_scripts, _make_label
+
+    assert _format_scripts("CO_2") == r"CO$_{\mathrm{2}}$"
+    assert _format_scripts("T_{in}") == r"T$_{\mathrm{in}}$"
+    assert _format_scripts("Fe^{3+}") == r"Fe$^{\mathrm{3+}}$"
+    assert _format_scripts("x_1^2") == r"x$_{\mathrm{1}}^{\mathrm{2}}$"
+    assert _format_scripts("my_plant") == "my_plant"  # usetex off here
+    # Math and escaped currency signs are left alone; repeat is a no-op
+    label = r"Cost / [\$$\cdot$unit$^{-1}$]"
+    assert _format_scripts(label) == label
+    assert _format_scripts(_format_scripts("H_2")) == _format_scripts("H_2")
+    assert _make_label("H_2_price") == r"H$_{\mathrm{2}}$ price"
+    assert _make_label("interest_rate") == "Interest rate"
+
+
+def test_plot_names_with_scripts_render(test_plant):
+    test_plant.name = "H_2 plant^{2}"
+    test_plant.plant_products["H_2"] = test_plant.plant_products.pop(
+        "hydrogen"
+    )
+    data = direct_costs_data(test_plant)
+    fig, ax = plot_stacked_bar(data, show=False)
+    fig.canvas.draw()
+    assert ax.get_xticklabels()[0].get_text() == (
+        r"H$_{\mathrm{2}}$ plant$^{\mathrm{2}}$"
+    )
     plt.close(fig)
