@@ -5,7 +5,7 @@ import {
   ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
-import { fmtTick, fmtValue, niceTicks } from "../format";
+import { fmtTick, fmtValue, niceTicks, texToText } from "../format";
 import { saveFigure } from "../save";
 import HelpTip from "../components/HelpTip";
 import ComparePlants from "../components/ComparePlants";
@@ -388,7 +388,7 @@ export default function MonteCarloPage({ setError, project }: Props) {
                 <tbody>
                   {Object.entries(plants[0].inputs).map(([name, stats]) => (
                     <tr key={name}>
-                      <td>{name}</td>
+                      <td>{texToText(stats.label ?? name)}</td>
                       <td>{inputUnit(name, plants[0].currency) ?? ""}</td>
                       <td className="number">{fmt(stats.mean)}</td>
                       <td className="number">{fmt(stats.std)}</td>
@@ -413,7 +413,7 @@ export default function MonteCarloPage({ setError, project }: Props) {
                     const unit = inputUnit(name, plants[0].currency);
                     return (
                       <div key={name}>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: "var(--text-secondary)" }}>{name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: "var(--text-secondary)" }}>{texToText(stats.label ?? name)}</div>
                         <DownloadableChart filename={`mc_input_${name.replace(/\W+/g, "_")}`} height={unit ? 196 : 180}>
                           <ResponsiveContainer>
                             <ComposedChart data={rows} margin={{ bottom: unit ? 22 : 8, left: 4, top: 4, right: 8 }}>

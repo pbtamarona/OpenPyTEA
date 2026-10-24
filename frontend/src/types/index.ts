@@ -154,8 +154,11 @@ export interface CalculationResults {
 }
 
 export interface SensitivityResult {
-  curves: { plant: string; x: number[]; y: number[]; baseline: number }[];
+  /** x: % change; x_value: the parameter's value (null if the plant lacks it) */
+  curves: { plant: string; x: number[]; x_value: number[] | null; y: number[]; baseline: number }[];
   xlabel: string;
+  /** x label in the parameter's own units */
+  xlabel_value: string;
   ylabel: string;
   parameter: string;
   metric: string;
@@ -216,7 +219,8 @@ export interface MonteCarloResult {
   num_samples: number;
   currency: string;
   metrics: Record<string, MCMetricStats>;
-  inputs: Record<string, { mean: number; std: number; min: number; max: number; histogram: MCHistogram }>;
+  /** label: the name to show (library mathtext), when it differs from the key */
+  inputs: Record<string, { label: string | null; mean: number; std: number; min: number; max: number; histogram: MCHistogram }>;
 }
 
 export interface MonteCarloMultiResult {

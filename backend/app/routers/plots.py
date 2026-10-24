@@ -36,7 +36,7 @@ from openpytea.plotting import (  # noqa: E402
 from app import state  # noqa: E402
 from app.plant_factory import require_active_plant  # noqa: E402
 from app.routers.analysis import _plants_for  # noqa: E402
-from app.schemas import SensitivityIn, TornadoIn, MCPlotIn  # noqa: E402
+from app.schemas import SensitivityPlotIn, TornadoIn, MCPlotIn  # noqa: E402
 
 router = APIRouter()
 
@@ -84,7 +84,7 @@ def stacked_plot(kind: str):
 
 
 @router.post("/sensitivity")
-def sensitivity_plot(payload: SensitivityIn):
+def sensitivity_plot(payload: SensitivityPlotIn):
     """plot_sensitivity() over the same inputs the analysis endpoint uses."""
     plants = _plants_for(payload)
     with _mpl_lock:
@@ -97,7 +97,7 @@ def sensitivity_plot(payload: SensitivityIn):
                 metric=payload.metric,
                 additional_capex=payload.additional_capex,
             )
-            fig, _ = plot_sensitivity(data, show=False)
+            fig, _ = plot_sensitivity(data, x_axis=payload.x_axis, show=False)
         except HTTPException:
             raise
         except (ValueError, KeyError) as e:

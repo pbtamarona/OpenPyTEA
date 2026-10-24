@@ -58,6 +58,10 @@ const GUI: Record<string, HelpEntry> = {
     text: "Number of evaluation points across the sweep range (n_points).",
     doc: `${ANALYSIS}#one-way-sensitivity-analysis`,
   },
+  "analysis.x_axis": {
+    text: "Plot against the change from the base value in %, or against the parameter's actual value in its own units (for fixed capital / fixed OPEX: the resulting fixed capital / annual fixed OPEX). Switching does not rerun the analysis.",
+    doc: `${ANALYSIS}#one-way-sensitivity-analysis`,
+  },
   "analysis.tornado_plus_minus": {
     text: "Each factor is moved up and down by this fraction of its base value (0.2 = ±20 %); bars show the resulting change in the metric.",
     doc: `${ANALYSIS}#tornado-diagram`,

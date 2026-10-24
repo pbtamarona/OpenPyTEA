@@ -242,6 +242,11 @@ class SensitivityIn(BaseModel):
     include_active: bool = True
 
 
+class SensitivityPlotIn(SensitivityIn):
+    # x axis of the figure: % change, or the parameter's actual value
+    x_axis: Literal["percent", "value"] = "percent"
+
+
 class TornadoIn(BaseModel):
     plus_minus_value: float = Field(default=0.2, gt=0, le=10)
     metric: str = "LCOP"
@@ -278,6 +283,8 @@ class MCPlotIn(BaseModel):
 class SensitivityCurve(BaseModel):
     plant: str
     x: list[float]
+    # The parameter's value at each point; None if the plant lacks it
+    x_value: list[float] | None = None
     y: list[float | None]
     baseline: float
 
@@ -285,6 +292,8 @@ class SensitivityCurve(BaseModel):
 class SensitivityResult(BaseModel):
     curves: list[SensitivityCurve]
     xlabel: str
+    # x label in the parameter's own units
+    xlabel_value: str = ""
     ylabel: str
     parameter: str
     metric: str
@@ -325,6 +334,8 @@ class MCMetricStats(BaseModel):
 
 
 class MCInputStats(BaseModel):
+    # Name to show (subscripts as mathtext); the key stays the library's
+    label: str | None = None
     mean: float
     std: float
     min: float

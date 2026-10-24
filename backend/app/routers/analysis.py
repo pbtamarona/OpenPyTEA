@@ -182,6 +182,7 @@ def _summarize_mc(result: dict) -> dict:
             continue
         counts, bin_edges = np.histogram(arr, bins=50)
         summary["inputs"][input_name] = {
+            "label": result.get("display_labels", {}).get(input_name),
             "mean": float(np.mean(arr)),
             "std": float(np.std(arr)),
             "min": float(np.min(arr)),

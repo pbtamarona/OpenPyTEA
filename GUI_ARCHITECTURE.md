@@ -206,7 +206,8 @@ results, so the Results tab follows a plant switch.
 - All charts include a download button (arrow icon, top-right) to export as standalone PNG with full axis labels
 
 ### AnalysisPage
-- **Sensitivity section**: parameter dropdown, +/- variation, points, metric selector. Line chart showing metric vs % change.
+- **Sensitivity section**: parameter dropdown, +/- variation, points, metric selector. Line chart showing metric vs % change or, with the per-panel X axis selector, vs the parameter's actual value (`x_value` / `xlabel_value` from `sensitivity_data`; display-only, the figure download passes `x_axis`). Plants without the parameter are left out on the value axis.
+- **Chart labels**: names typed with `_2` / `^3` show as subscripts/superscripts (CO₂, m³) like the library's plots: `format.ts` `texToText` turns library mathtext labels into Unicode text, `nameLabel` formats raw item names; MC inputs carry the library's `display_labels` as `label`.
 - **Tornado section**: +/- variation, metric selector, parameters selector (economic / process / both — the library's `category`). Horizontal bar chart with low (blue) / high (red) deviations from baseline.
 - Parameters list is fetched from `/sensitivity/parameters` (includes top-level + variable_opex + products)
 - Both charts downloadable as PNG

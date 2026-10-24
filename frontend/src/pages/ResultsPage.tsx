@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
 import PlantPicker from "../components/PlantPicker";
+import { nameLabel } from "../format";
 
 interface Props {
   results: CalculationResults | null;
@@ -96,12 +97,12 @@ export default function ResultsPage({ results, setResults, setError, project, on
   // Variable OPEX breakdown
   const varOpexData = Object.entries(results.variable_opex.breakdown)
     .filter(([, v]) => typeof v === "number" && (v as number) > 0)
-    .map(([k, v]) => ({ name: k, value: v as number }))
+    .map(([k, v]) => ({ name: nameLabel(k), value: v as number }))
     .sort(byDesc);
 
   // Revenue breakdown
   const revenueData = Object.entries(results.revenue.breakdown)
-    .map(([k, v]) => ({ name: k, value: v as number }))
+    .map(([k, v]) => ({ name: nameLabel(k), value: v as number }))
     .sort(byDesc);
 
   const currency = plantConfig?.currency || "USD";

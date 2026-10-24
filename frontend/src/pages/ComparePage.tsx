@@ -4,6 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Cell,
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
+import { nameLabel } from "../format";
 
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
 
@@ -113,7 +114,7 @@ export default function ComparePage({
     });
     return Array.from(allKeys)
       .map((key) => {
-        const row: Record<string, string | number> = { category: key.replace(/_/g, " ") };
+        const row: Record<string, string | number> = { category: nameLabel(key) };
         let total = 0;
         plants.forEach((p) => {
           const val = extractor(p.results)[key] ?? 0;

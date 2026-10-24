@@ -8,7 +8,7 @@ import {
   BarChart, Bar, ReferenceLine, Cell, Legend,
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
-import { fmtTick, fmtValue } from "../format";
+import { fmtTick, fmtValue, nameLabel, niceTicks, texToText } from "../format";
 import HelpTip from "../components/HelpTip";
 import ComparePlants from "../components/ComparePlants";
 import { usePlantSelection, type PlantsRequest } from "../plantSources";
@@ -16,14 +16,13 @@ import { usePlantSelection, type PlantsRequest } from "../plantSources";
 const METRICS = ["LCOP", "NPV", "IRR", "ROI", "PBT"];
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
 
-const cleanLatex = (s: string) =>
-  s.replace(/\$\\cdot\$/g, "·").replace(/\$\^-1\$/g, "⁻¹").replace(/\\%/g, "%").replace(/\$.*?\$/g, "").replace(/\\/g, "");
-
+/** Dropdown text of a sensitivity key, named as the library's plots name it */
 const formatParam = (p: string) => {
-  const last = p.split(".").pop() ?? p;
-  const label = last.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
-  return p.includes(".") ? `${label} price` : label;
+  const [first, item, field] = p.split(".");
+  return item === undefined ? nameLabel(first) : `${nameLabel(item)} ${field ?? "price"}`;
 };
+
+type XAxisMode = "percent" | "value";
 
 /** Inputs a sensitivity result was computed with */
 interface SensRun {
@@ -43,6 +42,8 @@ interface Panel {
   ids: string[];
   ran: SensRun | null;
   loading: boolean;
+  /** x axis: % change, or the parameter's actual value (display only) */
+  x_axis: XAxisMode;
 }
 
 const NoneTicked = () => (
@@ -57,7 +58,7 @@ interface Props {
   active: boolean;
 }
 
-const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2): Panel => ({
+const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2, x_axis: XAxisMode = "percent"): Panel => ({
   id: crypto.randomUUID(),
   parameter,
   metric,
@@ -66,6 +67,7 @@ const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2): Pane
   ids: [],
   ran: null,
   loading: false,
+  x_axis,
 });
 
 export default function AnalysisPage({ setError, project, active }: Props) {
@@ -111,7 +113,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
     const last = panels[panels.length - 1];
     setPanels((prev) => [
       ...prev,
-      newPanel(last?.parameter || parameters[0] || "", last?.metric || "LCOP", last?.plus_minus_value ?? 0.2),
+      newPanel(last?.parameter || parameters[0] || "", last?.metric || "LCOP", last?.plus_minus_value ?? 0.2, last?.x_axis),
     ]);
   };
 
@@ -260,7 +262,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
     const rows = new Map<string, TornRow>();
     tornPlants.forEach((p, pi) => {
       for (let i = 0; i < p.labels.length; i++) {
-        const label = p.labels[i];
+        const label = texToText(p.labels[i]);
         let row = rows.get(label);
         if (!row) {
           row = { label, range: 0 };
@@ -280,7 +282,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
 
   const tornXLabel = tornResult
     ? (() => {
-        const cleaned = cleanLatex(tornResult.xlabel);
+        const cleaned = texToText(tornResult.xlabel);
         const scaled = tornScale === 1e6 ? cleaned.replace("/ [", "/ [million ") : cleaned;
         return isMultiTorn ? `Δ ${scaled}` : scaled;
       })()
@@ -346,7 +348,9 @@ export default function AnalysisPage({ setError, project, active }: Props) {
               serverPlot={async () => {
                 // The figure of the result on screen: its run, ticked plants only
                 const req = await sensPlants.requestFor(panel.ids.filter(sensPlants.isTicked));
-                return fetchPlotPng("/plots/sensitivity", { ...panel.ran!, additional_capex: false, ...req.body });
+                return fetchPlotPng("/plots/sensitivity", {
+                  ...panel.ran!, additional_capex: false, x_axis: panel.x_axis, ...req.body,
+                });
               }}
               onChange={(patch) => updatePanel(panel.id, patch)}
               onRemove={() => removePanel(panel.id)}
@@ -496,16 +500,32 @@ interface PanelProps {
 function SensitivityPanel({ panel, parameters, showRemove, compact, label, isTicked, colorIndex, showLegend, serverPlot, onChange, onRemove }: PanelProps) {
   const result = panel.result;
   // Only the ticked plants of the run are shown
-  const curves = (result?.curves ?? [])
+  const ticked = (result?.curves ?? [])
     .map((c, i) => ({ ...c, pid: panel.ids[i] }))
     .filter((c) => isTicked(c.pid));
+  // A plant without the parameter has no values to put on the value axis
+  const byValue = panel.x_axis === "value";
+  const curves = byValue ? ticked.filter((c) => c.x_value) : ticked;
+  const leftOut = ticked.filter((c) => !c.x_value).map((c) => c.plant);
 
   const allY = curves.flatMap((c) => c.y).filter((v): v is number => typeof v === "number");
   const maxAbs = allY.length ? Math.max(...allY.map(Math.abs)) : 0;
   const scale = maxAbs >= 1e6 ? 1e6 : 1;
+  const allX = curves.flatMap((c) => c.x_value ?? []);
+  const xScale = byValue && allX.length && Math.max(...allX.map(Math.abs)) >= 1e6 ? 1e6 : 1;
 
   const chartData = (() => {
     if (curves.length === 0) return [];
+    if (byValue) {
+      // Each plant varies around its own base value: one row per point,
+      // sorted along the axis (connectNulls joins each plant's points)
+      const rows: Record<string, number>[] = [];
+      curves.forEach((c) => c.x_value!.forEach((xv, i) => {
+        const y = c.y[i];
+        if (typeof y === "number") rows.push({ x: xv / xScale, [c.pid]: y / scale });
+      }));
+      return rows.sort((a, b) => a.x - b.x);
+    }
     return curves[0].x.map((x, i) => {
       const row: Record<string, number> = { x };
       curves.forEach((c) => {
@@ -524,10 +544,10 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, isTic
     return Math.max(60, longest * 7 + 16);
   })();
 
-  const yLabel = result
-    ? (scale === 1e6 ? cleanLatex(result.ylabel).replace("/ [", "/ [million ") : cleanLatex(result.ylabel))
-    : "";
-  const xLabel = result ? cleanLatex(result.xlabel) : "";
+  const inMillions = (label: string, s: number) => (s === 1e6 ? label.replace("/ [", "/ [million ") : label);
+  const yLabel = result ? inMillions(texToText(result.ylabel), scale) : "";
+  const xLabel = result ? inMillions(texToText(byValue ? result.xlabel_value : result.xlabel), xScale) : "";
+  const xUnit = xLabel.match(/\[(.+)\]/)?.[1] ?? "";
   const chartHeight = compact ? 280 : 380;
 
   return (
@@ -555,12 +575,24 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, isTic
             onChange={(e) => onChange({ plus_minus_value: +e.target.value })}
           />
         </div>
+        <div className="form-group" style={{ width: 110, marginBottom: 0 }}>
+          <label style={{ fontSize: 12 }}>X axis<HelpTip id="analysis.x_axis" /></label>
+          <select value={panel.x_axis} onChange={(e) => onChange({ x_axis: e.target.value as XAxisMode })}>
+            <option value="percent">% change</option>
+            <option value="value">Value</option>
+          </select>
+        </div>
         {showRemove && (
           <button className="btn-danger" onClick={onRemove} style={{ marginBottom: 0 }}>Remove</button>
         )}
       </div>
 
-      {result && curves.length === 0 && <NoneTicked />}
+      {result && ticked.length === 0 && <NoneTicked />}
+      {result && byValue && ticked.length > 0 && leftOut.length > 0 && (
+        <p className="compare-plants-empty">
+          {leftOut.join(", ")} {leftOut.length > 1 ? "have" : "has"} no {formatParam(panel.ran?.parameter ?? panel.parameter)}, so {leftOut.length > 1 ? "they are" : "it is"} left out on the value axis.
+        </p>
+      )}
       {result && chartData.length > 0 && (
         <DownloadableChart filename={`sensitivity_${panel.parameter}_${panel.metric}`} height={chartHeight} serverPlot={serverPlot} style={{ marginTop: 4 }}>
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 50, width: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -570,10 +602,21 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, isTic
             <ResponsiveContainer>
               <LineChart data={chartData} margin={{ left: 10, bottom: 52, top: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="x" tickFormatter={fmtTick} label={{ value: xLabel, position: "insideBottom", offset: -34, style: { fontWeight: "bold", fontSize: compact ? 13 : 14, fill: "#666" } }} />
+                <XAxis
+                  dataKey="x"
+                  tickFormatter={fmtTick}
+                  {...(byValue && chartData.length ? {
+                    type: "number" as const,
+                    domain: ["dataMin", "dataMax"],
+                    ticks: niceTicks(chartData[0].x, chartData[chartData.length - 1].x),
+                  } : {})}
+                  label={{ value: xLabel, position: "insideBottom", offset: -34, style: { fontWeight: "bold", fontSize: compact ? 13 : 14, fill: "#666" } }} />
                 <YAxis width={yAxisWidth} tickFormatter={fmtTick} />
                 <Tooltip
-                  labelFormatter={(v) => `x: ${typeof v === "number" ? v.toFixed(2) : parseFloat(String(v)).toFixed(2)} %`}
+                  labelFormatter={(v) => {
+                    const x = typeof v === "number" ? v : parseFloat(String(v));
+                    return byValue ? `x: ${fmtTick(x)}${xUnit ? ` ${xUnit}` : ""}` : `x: ${x.toFixed(2)} %`;
+                  }}
                   formatter={(v, name) => {
                     const unit = yLabel.match(/\[(.+)\]/)?.[1] ?? "";
                     const val = typeof v === "number" ? fmtValue(v, panel.metric === "IRR" ? 3 : 2) : v;
