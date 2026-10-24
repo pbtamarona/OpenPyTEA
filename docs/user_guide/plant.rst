@@ -99,6 +99,20 @@ merged recursively, so unspecified sub-keys are preserved:
    })
    plant.calculate_all()
 
+``plant.config`` is a snapshot of the configuration as given at creation:
+``update_configuration()`` does not change it. For the current settings use
+:meth:`~openpytea.plant.Plant.to_dict`:
+
+.. code-block:: python
+
+   plant.config["interest_rate"]                          # value at creation
+   plant.to_dict()["plant_configuration"]["interest_rate"]  # current value
+
+Each plant keeps its own copy of the settings, so building several plants from
+one ``config`` dict and updating one of them leaves the others, and the dict
+itself, unchanged. Equipment objects are the exception: they are shared, so
+editing one affects every plant that uses it.
+
 Configuration reference
 ------------------------
 
@@ -765,6 +779,14 @@ Three methods are supported:
        }
    })
 
+.. note::
+
+   Only the fixed capital investment is depreciated, spread over the
+   ``capex_ramp`` years. Additional CAPEX (``additional_capex_cost``) is
+   charged in the cash flow in its year but is never depreciated, so it gets
+   no tax deduction. With additional CAPEX configured, tax paid is therefore
+   slightly overstated and NPV and IRR slightly understated.
+
 Financial metrics
 ------------------
 
@@ -829,7 +851,9 @@ timing of every cash flow, additional CAPEX included, and is ``nan`` if the
 project never recovers.
 
 ``simple_payback_time`` is total fixed capital divided by the mean annual cash
-flow across revenue-generating years. It ignores timing entirely:
+flow across revenue-generating years. It ignores timing entirely. The mean
+cash flow leaves additional CAPEX out, so with ``additional_capex=True`` it is
+added to :math:`FCI` once, and with ``False`` it is left out entirely:
 
 .. math::
 

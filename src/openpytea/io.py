@@ -5,7 +5,7 @@ from importlib.metadata import version
 
 import matplotlib.pyplot as plt
 
-from openpytea.equipment import Equipment
+from openpytea.equipment import Equipment, CompositeEquipment
 from openpytea.plant import Plant
 from openpytea.analysis import (
     direct_costs_data,
@@ -76,6 +76,11 @@ def load_equipment_config(filepath):
           material (falls back to 'Carbon steel'), target_year=2024
         - Optional keys: 'type', 'material', 'num_units', 'purchased_cost',
           'cost_year', 'cost_func', 'target_year'
+        - An entry with a 'components' list (of equipment entries, nesting
+          allowed) builds a CompositeEquipment; it requires 'name' and
+          'process_type' and accepts 'category' (default 'Composite'),
+          'type', 'installation', 'purchased_cost', 'cost_year',
+          'target_year' and 'num_units' (default 1)
     """
     data = _read_json(filepath)
     return _build_equipment_list(data)
@@ -99,45 +104,87 @@ def _build_equipment_list(data):
             "'equipment' must be a list of equipment entries."
         )
 
-    equipment_list = []
+    return [
+        _build_equipment(entry, f"#{i}")
+        for i, entry in enumerate(data["equipment"], start=1)
+    ]
 
-    for i, entry in enumerate(data["equipment"], start=1):
-        if not isinstance(entry, dict):
-            raise ValueError(
-                f"Equipment entry #{i} must be a dictionary."
-            )
 
-        required = ["name", "process_type", "category"]
-        missing = [k for k in required if k not in entry]
+# Installation-factor overrides accepted by Equipment and CompositeEquipment
+_FACTOR_KEYS = (
+    "erection_factor", "piping_factor", "instrumentation_factor",
+    "electrical_factor", "civil_factor", "structural_factor",
+    "lagging_factor", "material_factor",
+)
+
+
+def _build_equipment(entry, label, target_year=2024):
+    """
+    Build one Equipment, or a CompositeEquipment when the entry has a
+    'components' list (built recursively; components without their own
+    'target_year' inherit the composite's).
+    """
+    if not isinstance(entry, dict):
+        raise ValueError(f"Equipment entry {label} must be a dictionary.")
+
+    target_year = entry.get("target_year", target_year)
+    factors = {k: entry[k] for k in _FACTOR_KEYS if k in entry}
+
+    if "components" in entry:
+        missing = [k for k in ("name", "process_type") if k not in entry]
         if missing:
             raise ValueError(
-                f"Equipment entry #{i} is missing required keys: {missing}"
+                f"Equipment entry {label} is missing required keys: {missing}"
             )
-
-        if "purchased_cost" not in entry and "param" not in entry:
+        if not isinstance(entry["components"], list):
             raise ValueError(
-                f"Equipment entry #{i} must define either 'param' "
-                f"or 'purchased_cost'."
+                f"'components' of equipment entry {label} must be a list."
             )
-
-        # ponytail: copies keys by hand; Equipment(**{'param': 0.0, **entry})
-        eq = Equipment(
+        return CompositeEquipment(
             name=entry["name"],
-            param=entry.get("param", 0.0),
             process_type=entry["process_type"],
-            category=entry["category"],
+            components=[
+                _build_equipment(sub, f"{label}.{j}", target_year)
+                for j, sub in enumerate(entry["components"], start=1)
+            ],
+            category=entry.get("category", "Composite"),
             type=entry.get("type"),
-            material=entry.get("material"),
-            num_units=entry.get("num_units"),
+            installation=entry.get("installation", "component"),
             purchased_cost=entry.get("purchased_cost"),
             cost_year=entry.get("cost_year"),
-            cost_func=entry.get("cost_func"),
-            target_year=entry.get("target_year", 2024),
+            target_year=target_year,
+            num_units=entry.get("num_units", 1),
+            **factors,
         )
 
-        equipment_list.append(eq)
+    required = ["name", "process_type", "category"]
+    missing = [k for k in required if k not in entry]
+    if missing:
+        raise ValueError(
+            f"Equipment entry {label} is missing required keys: {missing}"
+        )
 
-    return equipment_list
+    if "purchased_cost" not in entry and "param" not in entry:
+        raise ValueError(
+            f"Equipment entry {label} must define either 'param' "
+            f"or 'purchased_cost'."
+        )
+
+    # ponytail: copies keys by hand; Equipment(**{'param': 0.0, **entry})
+    return Equipment(
+        name=entry["name"],
+        param=entry.get("param", 0.0),
+        process_type=entry["process_type"],
+        category=entry["category"],
+        type=entry.get("type"),
+        material=entry.get("material"),
+        num_units=entry.get("num_units"),
+        purchased_cost=entry.get("purchased_cost"),
+        cost_year=entry.get("cost_year"),
+        cost_func=entry.get("cost_func"),
+        target_year=target_year,
+        **factors,
+    )
 
 
 def load_plant_config(filepath, equipment_list):
@@ -555,6 +602,10 @@ def run_openpytea(config_path, output_dir=None):
     return _run_analyses(equipment_list, plant, config, output_dir)
 
 
+# Analyses whose function takes an ``additional_capex`` argument
+_ADDITIONAL_CAPEX_ANALYSES = {"fixed_capital", "tornado", "monte_carlo"}
+
+
 def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
     """
     Run the configured analyses for a loaded plant/equipment pair and
@@ -602,7 +653,10 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
     if save_json or save_plots:
         output_dir.mkdir(parents=True, exist_ok=True)
 
-    plant.calculate_all()
+    # One switch so the exported plant results and the analyses agree on
+    # whether additional capex counts; an analysis' own args still win
+    additional_capex = analysis_block.get("additional_capex", False)
+    plant.calculate_all(additional_capex=additional_capex)
 
     results = {}
 
@@ -621,15 +675,20 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
         cfg = analysis_block.get(key, {})
         if cfg.get("run"):
             args = cfg.get("args", {})
+            if key in _ADDITIONAL_CAPEX_ANALYSES:
+                args = {"additional_capex": additional_capex, **args}
             results[key] = func(plant, **args)
 
     sens_cfg = analysis_block.get("sensitivity", {})
+    sens_plot_args = {}
     if sens_cfg.get("run", False):
         results["sensitivity"] = {}
         for i, case in enumerate(sens_cfg.get("cases", []), start=1):
             name = case.get("name", f"case_{i}")
-            args = case.get("args", {})
+            args = {"additional_capex": additional_capex,
+                    **case.get("args", {})}
             results["sensitivity"][name] = sensitivity_data(plant, **args)
+            sens_plot_args[name] = case.get("plot_args", {})
 
     if save_json:
         export_equipment_results(
@@ -667,13 +726,18 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
             ("cash_flow", plot_cash_flow),
         ):
             if key in results:
-                _save(plot_fn(results[key], show=False)[0], key)
+                plot_args = analysis_block[key].get("plot_args", {})
+                _save(plot_fn(results[key], show=False, **plot_args)[0], key)
 
         for name, data in results.get("sensitivity", {}).items():
-            _save(plot_sensitivity(data, show=False)[0], f"sensitivity_{name}")
+            plot_args = sens_plot_args.get(name, {})
+            _save(plot_sensitivity(data, show=False, **plot_args)[0],
+                  f"sensitivity_{name}")
 
         if "tornado" in results:
-            _save(plot_tornado(results["tornado"], show=False)[0], "tornado")
+            plot_args = analysis_block["tornado"].get("plot_args", {})
+            _save(plot_tornado(results["tornado"], show=False, **plot_args)[0],
+                  "tornado")
 
         if "monte_carlo" in results:
             mc_results = results["monte_carlo"]
@@ -704,17 +768,24 @@ def _run_analyses(equipment_list, plant, analysis_cfg, output_dir):
                     mc_results,
                     metric=metric_name,
                     show=False,
+                    **mc_cfg.get("plot_args", {}),
                 )
                 _save(fig, f"monte_carlo_{metric_name.lower()}")
 
-            if mc_cfg.get("plot_inputs", False):
-                fig_process, _, fig_economic, _ = plot_monte_carlo_inputs(
-                    mc_results, show=False
+            inputs_cfg = mc_cfg.get("plot_inputs", False)
+            if inputs_cfg:
+                # true, or a dict of plot_monte_carlo_inputs kwargs
+                plot_args = inputs_cfg if isinstance(inputs_cfg, dict) else {}
+                out = plot_monte_carlo_inputs(
+                    mc_results, show=False, **plot_args
                 )
-                for group_name, fig in (
-                    ("process", fig_process),
-                    ("economic", fig_economic),
-                ):
+                category = plot_args.get("category", "both")
+                groups = (
+                    ("process", "economic") if category == "both"
+                    else (category,)
+                )
+                # out is (fig, axes) per group, flattened
+                for group_name, fig in zip(groups, out[::2]):
                     if fig is None:
                         continue  # no inputs sampled for this group
                     _save(fig, f"monte_carlo_inputs_{group_name}")

@@ -1,9 +1,13 @@
+import warnings
 from copy import deepcopy
 from tqdm.auto import tqdm
 from scipy import stats
 import numpy as np
 
+from openpytea.plant import DEFAULT_OPERATOR_HOURLY_RATE
 from openpytea.helpers import (_make_label,
+                               _legacy_label,
+                               _tex_escape,
                                _get_original_value,
                                _update_and_evaluate,
                                _default_metric_label,
@@ -199,6 +203,7 @@ def variable_opex_data(plants, pct=False):
 
     components_list = []
     xlabels = []
+    display_labels = {}
 
     for plant in plants:
         components = {}
@@ -212,14 +217,18 @@ def variable_opex_data(plants, pct=False):
             else:
                 continue
 
-            label = _make_label(name)
-            components[label] = float(val)
+            # TODO(3.3.0): key by the name as typed and drop
+            #   display_labels (see monte_carlo). 3.2.0 keys until then.
+            key = _legacy_label(name)
+            components[key] = float(val)
+            display_labels[key] = _make_label(name)
 
         components_list.append(components)
         xlabels.append(plant.name)
 
     return _build_bar_data(components_list, xlabels,
-                           "Annual variable OPEX", currency, pct)
+                           "Annual variable OPEX", currency, pct,
+                           display_labels=display_labels)
 
 
 def fixed_opex_data(plants, pct=False):
@@ -487,6 +496,20 @@ def _sensitivity_param_keys(plant, metric):
     return price_keys, quantity_keys
 
 
+def _sensitivity_x_value(plant, parameter, value):
+    """
+    A sensitivity point's parameter value in its own units: the resulting
+    fixed capital / fixed OPEX for the fc / fp multipliers (computed, so
+    fixed_capital_components overrides are honoured), the value as set
+    for everything else.
+    """
+    if parameter == "fixed_capital":
+        return float(deepcopy(plant).calculate_fixed_capital(fc=value))
+    if parameter == "fixed_opex":
+        return float(deepcopy(plant).calculate_fixed_opex(fp=value))
+    return float(value)
+
+
 def sensitivity_data(plants,
                      parameter,
                      plus_minus_value,
@@ -547,12 +570,20 @@ def sensitivity_data(plants,
                 Plant name or identifier
             - "x" : ndarray
                 Percentage changes along the variation range
+            - "x_value" : ndarray or None
+                The parameter's value at each point, in its own units
+                (for "fixed_capital" / "fixed_opex": the resulting fixed
+                capital / annual fixed OPEX); None if the plant lacks the
+                parameter
             - "y" : ndarray or list
                 Metric values corresponding to each point
             - "baseline" : float
                 Metric value at the baseline (0% variation)
         - "xlabel" : str
             Label for the x-axis (parameter name with % unit)
+        - "xlabel_value" : str
+            Label for the x-axis in the parameter's own units, used by
+            ``plot_sensitivity(..., x_axis="value")``
         - "ylabel" : str
             Label for the y-axis (metric name and unit)
         - "parameter" : str
@@ -673,17 +704,37 @@ def sensitivity_data(plants,
 
     # --- X label ---
     label_clean = _make_label(parameter.split(".")[-1])
+    pm_unit = rf" / [$\pm$ {_tex_escape('%')}]"
     if parameter in top_level_keys:
-        x_label = label_clean + r" / [$\pm$ \%]"
+        x_label = label_clean + pm_unit
     elif parameter in quantity_keys_all:
         # "variable_opex_inputs.steam.consumption" ->
         # "Steam consumption / [+- %]"
         item, field = parameter.split(".")[1:]
         x_label = (
-            f"{_make_label(item)} {field}" + r" / [$\pm$ \%]"
+            f"{_make_label(item)} {field}" + pm_unit
         )
     else:
-        x_label = label_clean + r" price / [$\pm$ \%]"
+        x_label = label_clean + " price" + pm_unit
+
+    # --- X label in the parameter's own units (x_axis="value") ---
+    currency = plants[0].currency if plants else _tex_escape("$")
+    if parameter in top_level_keys:
+        value_unit = {
+            "fixed_capital": currency,
+            "fixed_opex": rf"{currency}$\cdot$yr$^{{-1}}$",
+            "project_lifetime": "years",
+            "operator_hourly_rate": rf"{currency}$\cdot$h$^{{-1}}$",
+        }.get(parameter, "-")  # fractions as stored
+        x_label_value = f"{label_clean} / [{value_unit}]"
+    elif parameter in quantity_keys_all:
+        x_label_value = (
+            f"{_make_label(item)} {field}" + r" / [unit$\cdot$day$^{-1}$]"
+        )
+    else:
+        x_label_value = (
+            f"{label_clean} price / [{currency}" + r"$\cdot$unit$^{-1}$]"
+        )
 
     # --- Core computation ---
     results = []
@@ -704,6 +755,7 @@ def sensitivity_data(plants,
             metric_values = np.full_like(
                 pct_axis, fill_value=base_value, dtype=float
             )
+            x_values = None
         else:
             # fixed_capital/fixed_opex perturb the plant's actual
             # configured multiplier, not an assumed 1.0
@@ -720,11 +772,16 @@ def sensitivity_data(plants,
                 )
                 for v in param_values
             ]
+            x_values = np.array([
+                _sensitivity_x_value(plant, parameter, v)
+                for v in param_values
+            ])
 
         results.append(
             {
                 "plant": getattr(plant, "name", f"Plant {i+1}"),
                 "x": pct_axis,
+                "x_value": x_values,
                 "y": metric_values,
                 "baseline": base_value,
             }
@@ -733,6 +790,7 @@ def sensitivity_data(plants,
     return {
         "curves": results,
         "xlabel": x_label,
+        "xlabel_value": x_label_value,
         "ylabel": label,
         "parameter": parameter,
         "metric": metric,
@@ -744,7 +802,8 @@ def tornado_data(plant,
                  metric="LCOP",
                  label=None,
                  additional_capex: bool = False,
-                 include_process_params: bool = False):
+                 category: str | None = None,
+                 include_process_params: bool | None = None):
     """
     Generate tornado plot data for sensitivity analysis (no plotting).
     This function performs a sensitivity analysis on a plant model by varying
@@ -768,19 +827,23 @@ def tornado_data(plant,
     additional_capex : bool, optional
         Whether to include additional capital expenditure in calculations.
         Default is False.
-    include_process_params : bool, optional
-        Whether to also rank the plant's *process* parameters -- every
-        ``variable_opex_inputs`` item's consumption and every
-        ``plant_products`` entry's production -- alongside the prices and
-        economic scalars. Default is False, which keeps the factor list to
-        prices and economic scalars.
+    category : {"economic", "process", "both"}, optional
+        Which parameters to rank. ``"economic"`` (default): prices and
+        economic scalars (fixed capital/OPEX, project lifetime, interest
+        rate, operator hourly rate). ``"process"``: the plant's process
+        quantities -- every ``variable_opex_inputs`` item's consumption and
+        every ``plant_products`` entry's production. ``"both"``: all of
+        them.
 
         This is independent of the dependency graph: process quantities are
         ordinary economic drivers (a plant's production rate moves LCOP
         whether or not anything is tied to it), so configuring a dependency
-        does not switch them on, and switching them on does not require
-        one. A quantity that is *set by* a dependency is excluded even when
-        this is True -- see Notes.
+        does not switch them on, and ranking them does not require one. A
+        parameter that is *set by* a dependency is excluded in every
+        category -- see Notes.
+    include_process_params : bool, optional
+        Deprecated: use ``category``. ``True`` is ``category="both"``,
+        ``False`` is ``category="economic"``.
     dict
         Dictionary containing tornado plot data with keys:
         - factors : list[str]
@@ -814,11 +877,10 @@ def tornado_data(plant,
     - A parameter that is itself set by a dependency is never a factor --
       it has no value of its own to vary. This drops it from the top-level
       keys (e.g. ``"fixed_capital"`` when ``fixed_capital_factor`` is a
-      dependent) and from whatever ``include_process_params`` would
-      otherwise add.
+      dependent) and from the process quantities.
 
     Dependencies do not, however, change *which kinds* of parameter are
-    ranked: that is ``include_process_params`` alone. See
+    ranked: that is ``category`` alone. See
     :func:`~openpytea.helpers._collect_sensitivity_keys`.
     Examples
     --------
@@ -827,13 +889,37 @@ def tornado_data(plant,
     >>> lows = tornado_data["lows"]
     >>> highs = tornado_data["highs"]
     """
+    if include_process_params is not None:
+        if category is not None:
+            raise ValueError(
+                "Pass either category or the deprecated "
+                "include_process_params, not both."
+            )
+        warnings.warn(
+            "include_process_params is deprecated; use "
+            "category='both' (for True) or category='economic' (for False).",
+            FutureWarning,
+            stacklevel=2,
+        )
+        category = "both" if include_process_params else "economic"
+    if category is None:
+        category = "economic"
+    if category not in ("economic", "process", "both"):
+        raise ValueError(
+            f"Invalid category {category!r}; must be 'economic', "
+            "'process', or 'both'."
+        )
+
     metric = metric.upper()
     if label is None:
         label = _default_metric_label(plant.currency, metric)
 
-    keys = _collect_sensitivity_keys(
-        plant, metric, include_process_params=include_process_params
-    )
+    keys = _collect_sensitivity_keys(plant, metric, category=category)
+    if not keys:
+        raise ValueError(
+            f"Plant '{plant.name}' has no {category} parameters to rank "
+            "(parameters set by a dependency cannot be varied)."
+        )
 
     base_value = _evaluate_baseline_metric(plant, metric, additional_capex)
 
@@ -1655,7 +1741,7 @@ def monte_carlo(plant,
         ("fixed_opex_factor", _resolve_dist_params(
             cfg("fixed_opex_factor"), **factor_window), False),
         ("operator_hourly_rate", _resolve_item_dist_params(
-            op_cfg, "rate", 38.11, 10), False),
+            op_cfg, "rate", DEFAULT_OPERATOR_HOURLY_RATE, 10), False),
         ("project_lifetime", _window_dist_params(
             cfg("project_lifetime"), plant.project_lifetime, 5, floor=5),
          False),
@@ -1767,24 +1853,20 @@ def monte_carlo(plant,
             )
 
         # ---- Economic calculations ----
+        # The fc/fp calls set the sampled factors; one cash-flow build
+        # then serves every metric below
         plant_copy.calculate_fixed_capital(fc=fixed_capitals[start:end])
-        plant_copy.calculate_variable_opex()
         plant_copy.calculate_fixed_opex(fp=fixed_opexs[start:end])
         plant_copy.calculate_cash_flow()
-        plant_copy.calculate_levelized_cost()
 
         # ---- Store LCOP always ----
-        mc_metrics["LCOP"][start:end] = plant_copy.levelized_cost
+        mc_metrics["LCOP"][start:end] = plant_copy._levelized_cost()
 
         # ---- If revenue available, compute all other metrics ----
         if have_product_prices:
-            mc_metrics["NPV"][start:end] = plant_copy.calculate_npv()
-            mc_metrics["ROI"][start:end] = plant_copy.calculate_roi(
-                additional_capex=additional_capex
-            )
-            mc_metrics["PBT"][start:end] = (
-                plant_copy.calculate_payback_time()
-            )
+            mc_metrics["NPV"][start:end] = plant_copy._npv()
+            mc_metrics["ROI"][start:end] = plant_copy._roi(additional_capex)
+            mc_metrics["PBT"][start:end] = plant_copy._payback_time()
 
     mc_inputs = {
         "Fixed capital factor": fixed_capitals,
@@ -1796,23 +1878,23 @@ def monte_carlo(plant,
            else {"Plant utilization": plant_utilizations}),
         **({} if tax_rates is None
            else {"Tax rate": tax_rates}),
-        **{
-            f"{k.replace('_', ' ').title()} price": v
-            for k, v in variable_opex_price_samples.items()
-        },
-        **{
-            f"{k.replace('_', ' ').title()} consumption": v
-            for k, v in variable_opex_consumption_samples.items()
-        },
-        **{
-            f"{k.replace('_', ' ').title()} product price": v
-            for k, v in product_price_samples.items()
-        },
-        **{
-            f"{k.replace('_', ' ').title()} production": v
-            for k, v in product_production_samples.items()
-        },
     }
+    # Fixed inputs are shown as named; item inputs under _make_label(name)
+    display_labels = {key: key for key in mc_inputs}
+    # TODO(3.3.0): key the items by their names as typed ("cooling_water
+    #   consumption") and drop display_labels; plots then label from the
+    #   key. Kept on the 3.2.0 title-case keys until then so 3.2.x stays
+    #   compatible.
+    for samples, suffix in (
+        (variable_opex_price_samples, "price"),
+        (variable_opex_consumption_samples, "consumption"),
+        (product_price_samples, "product price"),
+        (product_production_samples, "production"),
+    ):
+        for k, v in samples.items():
+            key = f"{k.replace('_', ' ').title()} {suffix}"
+            mc_inputs[key] = v
+            display_labels[key] = f"{_make_label(k)} {suffix}"
 
     # ---- Store on plant ----
     plant.monte_carlo_metrics = mc_metrics
@@ -1822,6 +1904,7 @@ def monte_carlo(plant,
         "name": plant.name,
         "metrics": mc_metrics,
         "inputs": mc_inputs,
+        "display_labels": display_labels,
         "num_samples": num_samples,
         "additional_capex": additional_capex,
         "currency": currency,

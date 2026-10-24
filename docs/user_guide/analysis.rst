@@ -327,6 +327,51 @@ Pass a custom ``figsize`` to resize the chart:
 
    fig, ax = plot_sensitivity(sens, figsize=(5, 3))
 
+X-axis in % or in actual values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default the x-axis shows the change from the baseline in %. Pass
+``x_axis="value"`` to plot against the parameter's actual value instead:
+
+.. code-block:: python
+
+   fig, ax = plot_sensitivity(sens, x_axis="value")   # electricity price in USD/unit
+
+The value axis uses each parameter's own units:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Parameter
+     - Value axis
+   * - Product or utility price
+     - the price, ``[USD·unit⁻¹]``
+   * - ``"{key}.consumption"``, ``"{key}.production"``
+     - the rate, ``[unit·day⁻¹]``
+   * - ``"fixed_capital"``
+     - the resulting fixed capital, ``[USD]``
+   * - ``"fixed_opex"``
+     - the resulting annual fixed OPEX, ``[USD·yr⁻¹]``
+   * - ``"project_lifetime"``
+     - years
+   * - ``"operator_hourly_rate"``
+     - the wage, ``[USD·h⁻¹]``
+   * - ``"interest_rate"``, ``"plant_utilization"``, ``"tax_rate"``
+     - the fraction as stored (0.08, not 8 %), ``[-]``
+
+``"fixed_capital"`` and ``"fixed_opex"`` vary the cost factors fc and fp;
+the value axis shows the cost they produce, calculated at each point, so
+overrides in ``fixed_capital_components`` are taken into account.
+
+When comparing several plants, each curve sits at its own values, so plants
+with different baselines appear side by side rather than stacked at 0 %. A
+plant that lacks the parameter has no values to plot: it is left out of the
+value axis with a warning (on the % axis it shows as a flat line).
+
+The values are stored in the data as well: ``curve["x_value"]`` for each
+curve and ``data["xlabel_value"]`` for the label.
+
 Comparing multiple plants
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -394,17 +439,18 @@ computes the ranking and :func:`~openpytea.plotting.plot_tornado` draws it.
      - .. image:: ../_static/plotting/tornado_roi.png
           :width: 100%
 
-By default the factor list covers prices and economic scalars. Pass
-``include_process_params=True`` to rank the plant's **process** parameters
-alongside them — every ``variable_opex_inputs`` item's consumption and every
-``plant_products`` entry's production:
+By default (``category="economic"``) the factor list covers prices and
+economic scalars. Pass ``category="both"`` to rank the plant's **process**
+parameters alongside them — every ``variable_opex_inputs`` item's consumption
+and every ``plant_products`` entry's production — or ``category="process"``
+to rank only those:
 
 .. code-block:: python
 
    td_process = tornado_data(
        plant=plant,
        plus_minus_value=0.5,
-       include_process_params=True,
+       category="both",
    )
    fig, ax = plot_tornado(td_process, figsize=(3.2, 3.4))
 
@@ -421,7 +467,7 @@ single price, is what this plant's levelized cost hinges on. The
 and bites harder here, since every process parameter is swept in isolation.
 
 The figure height is chosen from the number of factors, so a long factor
-list — a plant with many utilities, or ``include_process_params=True`` —
+list — a plant with many utilities, or ``category="both"`` —
 produces a taller figure rather than a more crowded one. Pass an explicit
 ``figsize`` to override, as above. Consumption and production factors are
 labelled ``"<item> cons."`` and ``"<product> prod."`` to keep the y-axis
@@ -1060,8 +1106,8 @@ production too.
 
 The process figure confirms every quantity was sampled — the independently
 sampled ones (``Methanol production``, ``Electricity consumption``), the
-dependent that carries its own noise (``Cooling Water consumption``), and
-the noise-free dependents (``Steam consumption``, ``Natural Gas
+dependent that carries its own noise (``Cooling water consumption``), and
+the noise-free dependents (``Steam consumption``, ``Natural gas
 consumption``, ``Hydrogen production``):
 
 .. image:: ../_static/plotting/dependency_inputs_process.png
@@ -1137,8 +1183,8 @@ that names the parents to vary instead:
 
 *Which parameters are ranked is a separate question.* Dependencies do not
 add factors to the tornado. To see a process quantity ranked — including
-one that drives a dependency — pass ``include_process_params=True`` to
-:func:`~openpytea.analysis.tornado_data`; ``sensitivity_data`` reaches any
+one that drives a dependency — pass ``category="both"`` (or
+``"process"``) to :func:`~openpytea.analysis.tornado_data`; ``sensitivity_data`` reaches any
 of them by name regardless. So a plant with no dependencies configured
 keeps exactly the factor list it had before, and so does one with
 dependencies until you ask for process parameters.
@@ -1159,9 +1205,9 @@ remove one — pop the keys directly), then run the same tornado call on each:
    independent_plant.project_uncertainties["fixed_capital_factor"].pop("dependency", None)
 
    td_indep = tornado_data(plant=independent_plant, plus_minus_value=0.5,
-                           metric="ROI", include_process_params=True)
+                           metric="ROI", category="both")
    td_dep = tornado_data(plant=plant, plus_minus_value=0.5,
-                         metric="ROI", include_process_params=True)
+                         metric="ROI", category="both")
    fig, ax = plot_tornado(td_indep)
    fig, ax = plot_tornado(td_dep)
 
@@ -1187,7 +1233,7 @@ shape — it got *wider*, because hydrogen production, three utility
 consumptions and ``fixed_capital_factor`` now move with it.
 
 The one-way sweep tells the same story with more resolution. Both plants
-can be swept in a single call, and no ``include_process_params`` is needed
+can be swept in a single call, and no ``category`` is needed
 since the parameter is named explicitly:
 
 .. code-block:: python
@@ -1215,6 +1261,58 @@ independent therefore **understates the exposure to a production
 shortfall** and overstates the gain from a scale-up. That gap is exactly
 what the dependency graph exists to capture — and it is the same graph,
 with the same numbers, that shaped the Monte Carlo distributions above.
+
+.. _label-scripts:
+
+Subscripts and superscripts in labels
+-------------------------------------
+
+Names shown in plots — plant names, equipment and cost components, products,
+utilities and parameters — render ``_`` and ``^`` as subscript and
+superscript, so you can name things the way you would write them:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 30 40
+
+   * - Written
+     - Shown
+     - Rule
+   * - ``H_2``, ``CO_2``
+     - H\ :sub:`2`, CO\ :sub:`2`
+     - ``_`` followed by digits
+   * - ``T_{in}``, ``CO_{2,eq}``
+     - T\ :sub:`in`, CO\ :sub:`2,eq`
+     - ``_{...}``, any content
+   * - ``m^3``, ``s^-1``, ``Na^+``
+     - m\ :sup:`3`, s\ :sup:`-1`, Na\ :sup:`+`
+     - ``^`` followed by digits or a sign
+   * - ``Fe^{3+}``
+     - Fe\ :sup:`3+`
+     - ``^{...}``, any content
+   * - ``interest_rate``
+     - Interest rate
+     - any other ``_``
+
+Any other underscore is a word separator: in parameter, product and utility
+names it becomes a space (``natural_gas`` → "Natural gas price"), while plant
+and equipment names keep it as written. Text already inside ``$...$`` is left
+as it is, so you can still write your own matplotlib math.
+
+.. code-block:: python
+
+   plant.update_configuration({"plant_name": "H_2 plant"})
+   # Product "H_2" appears as "H₂ price" / "H₂ prod." in tornado plots
+
+.. note::
+
+   ``_`` followed by digits always becomes a subscript, so a name such as
+   ``case_1`` is shown as case\ :sub:`1`. Write ``case 1`` or ``case-1`` to
+   avoid it.
+
+Labels render the same with and without a LaTeX installation: characters
+such as ``%`` and ``_`` are escaped only when matplotlib's ``text.usetex`` is
+active.
 
 .. _saving-figures:
 

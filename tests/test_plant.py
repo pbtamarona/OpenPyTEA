@@ -33,6 +33,71 @@ def test_plant_financial_metrics(test_plant):
     assert isinstance(roi, (int, float))
 
 
+def test_metrics_follow_current_configuration(test_plant):
+    def metrics(plant):
+        return np.array([
+            plant.calculate_simple_payback_time(),
+            plant.calculate_payback_time(),
+            plant.calculate_roi(),
+            plant.calculate_irr(),
+        ])
+
+    # No cash flow yet: each metric must build it rather than crash
+    test_plant.update_configuration(
+        {"plant_products": {"hydrogen": {"price": 500.0}}}
+    )
+    before = metrics(test_plant)
+    assert np.all(np.isfinite(before))
+
+    # After a change the metrics must match a fresh plant given that change
+    change = {"plant_products": {"hydrogen": {"price": 700.0}}}
+    fresh = Plant(test_plant.config)
+    fresh.update_configuration(deepcopy(change))
+    test_plant.update_configuration(change)
+    after = metrics(test_plant)
+    assert np.all(after != before)
+    np.testing.assert_allclose(after, metrics(fresh))
+
+
+def test_simple_payback_counts_additional_capex_once(test_plant):
+    test_plant.update_configuration(
+        {"plant_products": {"hydrogen": {"price": 500.0}}}
+    )
+    base = test_plant.calculate_simple_payback_time()
+
+    # Operating-year spend: out of the mean cash flow, in the numerator only
+    test_plant.additional_capex_years = [10]
+    test_plant.additional_capex_cost = [200_000.0]
+    assert test_plant.calculate_simple_payback_time() == pytest.approx(base)
+    assert test_plant.calculate_simple_payback_time(
+        additional_capex=True
+    ) == pytest.approx(
+        base * (test_plant.fixed_capital + 200_000.0)
+        / test_plant.fixed_capital
+    )
+
+
+def test_plants_do_not_share_configuration(test_plant):
+    base = deepcopy(test_plant.config)
+    base["equipment"] = test_plant.equipment_list
+    a, b = Plant(base), Plant(base)
+
+    a.update_configuration({"plant_products": {"hydrogen": {"price": 9.0}}})
+    assert b.plant_products["hydrogen"]["price"] == 5.0
+    assert base["plant_products"]["hydrogen"]["price"] == 5.0
+
+    # One update dict applied to two plants must not tie them together
+    change = {"plant_products": {"oxygen": {"production": 1, "price": 1.0}}}
+    a.update_configuration(change)
+    b.update_configuration(change)
+    a.update_configuration({"plant_products": {"oxygen": {"price": 2.0}}})
+    assert b.plant_products["oxygen"]["price"] == 1.0
+    assert change["plant_products"]["oxygen"]["price"] == 1.0
+
+    # Equipment objects stay shared, so later edits to them still apply
+    assert a.equipment_list[0] is base["equipment"][0]
+
+
 def test_plant_calculate_all(test_plant):
     test_plant.calculate_all()
 

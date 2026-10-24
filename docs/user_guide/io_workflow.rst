@@ -82,6 +82,34 @@ of assuming carbon steel (see :ref:`materials`).
 ``HX-1`` omits ``material`` entirely, so it resolves to the matched
 correlation's own default material with a material factor of 1.0.
 
+Any entry may also override its installation factors with
+``erection_factor``, ``piping_factor``, ``instrumentation_factor``,
+``electrical_factor``, ``civil_factor``, ``structural_factor``,
+``lagging_factor`` or ``material_factor``, exactly as the
+:class:`~openpytea.equipment.Equipment` keyword arguments.
+
+An entry with a ``components`` list is built as a
+:class:`~openpytea.equipment.CompositeEquipment`. Each component is itself
+an equipment entry (or another composite), and components without their own
+``target_year`` inherit the composite's. A composite entry needs ``name``
+and ``process_type`` and accepts ``category`` (default ``"Composite"``),
+``type``, ``installation``, ``purchased_cost``, ``cost_year``,
+``target_year``, ``num_units`` (default 1) and the factor overrides above.
+
+.. code-block:: json
+
+   {
+     "name": "PSA",
+     "process_type": "Fluids",
+     "category": "Adsorption",
+     "components": [
+       { "name": "Vessel", "param": 12.0, "process_type": "Fluids",
+         "category": "Pressure vessels", "type": "Vertical", "num_units": 4 },
+       { "name": "Zeolite 5A", "param": 1000, "process_type": "Solids",
+         "category": "Packings & adsorbents", "type": "Molecular sieves" }
+     ]
+   }
+
 ``plant.json``
 --------------
 
@@ -166,7 +194,7 @@ The ``analysis`` block contains one sub-object per analysis type. Each must
 have ``"run": true`` to be executed, plus an ``"args"`` dict that is passed
 directly to the corresponding Python function. Anything the function accepts
 is therefore reachable from JSON — including
-``"include_process_params": true`` on ``tornado``, and a process quantity
+``"category": "both"`` on ``tornado``, and a process quantity
 such as ``"parameter": "electricity.consumption"`` on a sensitivity case.
 The ``output`` block controls whether results and plots are saved, and in
 what format.
@@ -198,7 +226,7 @@ what format.
 
        "tornado": {
          "run": true,
-         "args": { "plus_minus_value": 0.5, "metric": "NPV", "include_process_params": true }
+         "args": { "plus_minus_value": 0.5, "metric": "NPV", "category": "both" }
        },
 
        "monte_carlo": {
@@ -233,6 +261,21 @@ priced ``variable_opex_inputs``, ``plant_products``, and
 group is only skipped if the plant genuinely has nothing in it (e.g. no
 ``variable_opex_inputs`` or ``plant_products`` at all). The ``args`` dict
 maps directly to :func:`~openpytea.analysis.monte_carlo` keyword arguments.
+
+Setting ``"additional_capex": true`` directly in the ``analysis`` block
+includes the plant's ``additional_capex_cost`` both in the exported plant
+results and in every analysis that supports it (``fixed_capital``,
+``tornado``, ``sensitivity`` and ``monte_carlo``); an ``additional_capex``
+in an analysis' own ``args`` still takes precedence.
+
+Each analysis block (and each sensitivity case) also accepts a
+``"plot_args"`` dict passed to its plotting function, e.g.
+``"plot_args": {"figsize": [3, 2]}``, for a sensitivity case
+``{"x_axis": "value"}`` to plot against actual parameter values instead of
+%, or, for ``monte_carlo``, ``{"bins": 50, "show_fit": false}``. ``"plot_inputs"`` may likewise be a
+dict of :func:`~openpytea.plotting.plot_monte_carlo_inputs` arguments
+instead of ``true``, e.g. ``{"category": "economic", "bins": 30}`` to save
+only the economic grid.
 
 Running a study
 ---------------
