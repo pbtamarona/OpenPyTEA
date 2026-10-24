@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   getSensitivityParameters, runSensitivity, runTornado, fetchPlotPng,
 } from "../api/client";
-import type { SensitivityResult, TornadoResult, ProjectOverview } from "../types";
+import type { SensitivityResult, TornadoCategory, TornadoResult, ProjectOverview } from "../types";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, ReferenceLine, Cell, Legend,
@@ -76,10 +76,13 @@ export default function AnalysisPage({ setError, project, active }: Props) {
 
   const [tornPM, setTornPM] = useState(0.2);
   const [tornMetric, setTornMetric] = useState("LCOP");
+  const [tornCategory, setTornCategory] = useState<TornadoCategory>("economic");
   const [tornResult, setTornResult] = useState<TornadoResult | null>(null);
   // Plant id of each tornado result, and the inputs of the run
   const [tornIds, setTornIds] = useState<string[]>([]);
-  const [tornRan, setTornRan] = useState<{ plus_minus_value: number; metric: string } | null>(null);
+  const [tornRan, setTornRan] = useState<
+    { plus_minus_value: number; metric: string; category: TornadoCategory } | null
+  >(null);
   const [tornLoading, setTornLoading] = useState(false);
   const tornSelection = usePlantSelection(project);
 
@@ -191,7 +194,7 @@ export default function AnalysisPage({ setError, project, active }: Props) {
     setTornLoading(true);
     setError(null);
     try {
-      const ran = { plus_minus_value: tornPM, metric: tornMetric };
+      const ran = { plus_minus_value: tornPM, metric: tornMetric, category: tornCategory };
       const req = await tornSelection.request();
       const r = await runTornado({ ...ran, additional_capex: false, ...req.body });
       setTornResult(r);
@@ -367,6 +370,14 @@ export default function AnalysisPage({ setError, project, active }: Props) {
             <label>Metric<HelpTip id="metric" /></label>
             <select value={tornMetric} onChange={(e) => setTornMetric(e.target.value)}>
               {METRICS.map((m) => <option key={m}>{m}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Parameters<HelpTip id="analysis.tornado_category" /></label>
+            <select value={tornCategory} onChange={(e) => setTornCategory(e.target.value as TornadoCategory)}>
+              <option value="economic">Economic</option>
+              <option value="process">Process</option>
+              <option value="both">Both</option>
             </select>
           </div>
         </div>

@@ -207,7 +207,7 @@ results, so the Results tab follows a plant switch.
 
 ### AnalysisPage
 - **Sensitivity section**: parameter dropdown, +/- variation, points, metric selector. Line chart showing metric vs % change.
-- **Tornado section**: +/- variation, metric selector. Horizontal bar chart with low (blue) / high (red) deviations from baseline.
+- **Tornado section**: +/- variation, metric selector, parameters selector (economic / process / both — the library's `category`). Horizontal bar chart with low (blue) / high (red) deviations from baseline.
 - Parameters list is fetched from `/sensitivity/parameters` (includes top-level + variable_opex + products)
 - Both charts downloadable as PNG
 - Plant checkboxes (`components/ComparePlants.tsx` + `usePlantSelection` in `plantSources.ts`, also on Monte Carlo), shown whenever the project has more than one plant. The open plant starts ticked; any plant can be ticked or unticked. The open plant is sent as `include_active`, the others as `extra_plants` entries (inputs fetched from `/project/plants/{id}/snapshot` when the run starts). Uncalculated plants are listed but disabled. Only runs that include the open plant are recorded for its Save as JSON analysis file.

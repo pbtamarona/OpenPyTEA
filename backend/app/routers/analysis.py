@@ -111,6 +111,7 @@ def run_tornado(data: TornadoIn):
                 plus_minus_value=data.plus_minus_value,
                 metric=data.metric,
                 additional_capex=data.additional_capex,
+                category=data.category,
             )
         except (ValueError, KeyError) as e:
             raise HTTPException(
@@ -132,6 +133,7 @@ def run_tornado(data: TornadoIn):
             "plus_minus_value": data.plus_minus_value,
             "metric": data.metric,
             "additional_capex": data.additional_capex,
+            "category": data.category,
         }
     return to_jsonable({
         "plants": per_plant,

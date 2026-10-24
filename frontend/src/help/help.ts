@@ -62,6 +62,10 @@ const GUI: Record<string, HelpEntry> = {
     text: "Each factor is moved up and down by this fraction of its base value (0.2 = ±20 %); bars show the resulting change in the metric.",
     doc: `${ANALYSIS}#tornado-diagram`,
   },
+  "analysis.tornado_category": {
+    text: "Which parameters to rank. Economic: prices, fixed capital/OPEX, project lifetime, interest rate and operator hourly rate. Process: every consumption and production quantity. Both: all of them. Parameters set by a dependency are always left out.",
+    doc: `${ANALYSIS}#tornado-diagram`,
+  },
   "mc.num_samples": {
     text: "Number of Monte Carlo draws. Increase for accuracy, decrease for speed.",
     doc: `${ANALYSIS}#running-the-simulation`,

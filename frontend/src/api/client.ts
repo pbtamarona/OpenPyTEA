@@ -1,6 +1,6 @@
 import type {
   EquipmentItem, EquipmentInput, CostDBEntry, PlantConfig,
-  CalculationResults, SensitivityResult, TornadoResult,
+  CalculationResults, SensitivityResult, TornadoCategory, TornadoResult,
   MonteCarloMultiResult, PlantInput, ProjectMeta, ProjectOverview, PlantSnapshot,
 } from "../types";
 
@@ -98,7 +98,7 @@ export const runSensitivity = (params: {
 }) =>
   request<SensitivityResult>("/analysis/sensitivity", { method: "POST", body: JSON.stringify(params) });
 export const runTornado = (params: {
-  plus_minus_value: number; metric: string; additional_capex: boolean;
+  plus_minus_value: number; metric: string; additional_capex: boolean; category: TornadoCategory;
   extra_plants?: PlantInput[]; include_active?: boolean;
 }) =>
   request<TornadoResult>("/analysis/tornado", { method: "POST", body: JSON.stringify(params) });

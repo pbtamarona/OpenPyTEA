@@ -1,7 +1,7 @@
 """Pydantic models for request/response bodies."""
 
 from pydantic import BaseModel, Field, field_validator
-from typing import Any
+from typing import Any, Literal
 
 
 # ── Generic responses ──────────────────────────────────────────────
@@ -246,6 +246,9 @@ class TornadoIn(BaseModel):
     plus_minus_value: float = Field(default=0.2, gt=0, le=10)
     metric: str = "LCOP"
     additional_capex: bool = False
+    # Parameters to rank: prices/economic scalars, process quantities
+    # (consumptions and productions) or both
+    category: Literal["economic", "process", "both"] = "economic"
     extra_plants: list[PlantInput] = Field(default_factory=list, max_length=8)
     # False runs the extra plants only (the open plant left out)
     include_active: bool = True

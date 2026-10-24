@@ -161,6 +161,8 @@ export interface SensitivityResult {
   metric: string;
 }
 
+export type TornadoCategory = "economic" | "process" | "both";
+
 export interface TornadoPlantResult {
   name: string;
   factors: string[];

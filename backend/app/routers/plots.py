@@ -117,6 +117,7 @@ def tornado_plot(payload: TornadoIn):
                     plus_minus_value=payload.plus_minus_value,
                     metric=payload.metric,
                     additional_capex=payload.additional_capex,
+                    category=payload.category,
                 )
                 for p in plants
             ]
