@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import {
   getEquipment, addEquipment, updateEquipment, deleteEquipment,
   getCostDBCategories, getProcessTypes, getMaterials,
+  importEquipment, exportEquipmentInput, exportJsonResults,
 } from "../api/client";
 import type { EquipmentItem, EquipmentInput, CostDBEntry, ProjectOverview } from "../types";
 import PlantPicker from "../components/PlantPicker";
 import HelpTip from "../components/HelpTip";
+import { openJsonFile, saveJsonFile, saveResultsFile } from "../jsonFiles";
 
 const defaultInput: EquipmentInput = {
   name: "", param: null, process_type: "Fluids", category: "",
@@ -79,15 +81,25 @@ interface CompositeForm {
   useQuote: boolean;
   purchased_cost: number | null;
   cost_year: number | null;
+  /** Installation-factor overrides from an imported file, kept as they are */
+  factors: Record<string, number>;
 }
 
 const emptyComposite = (): CompositeForm => ({
   name: "", category: "Composite", type: "", process_type: "Fluids",
   installation: "component", num_units: null, target_year: 2024,
-  useQuote: false, purchased_cost: null, cost_year: null,
+  useQuote: false, purchased_cost: null, cost_year: null, factors: {},
 });
 
 const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+
+/** Installation-factor overrides of a spec ({ erection_factor: 0.6 }) */
+const factorsOf = (spec: object): Record<string, number> =>
+  Object.fromEntries(Object.entries(spec).filter(([k, v]) => k.endsWith("_factor") && typeof v === "number"));
+
+/** "erection 0.6, piping 1.2" */
+const factorText = (f: Record<string, number>) =>
+  Object.entries(f).map(([k, v]) => `${k.replace(/_factor$/, "")} ${v}`).join(", ");
 
 const paramLabel = (p: number | number[] | null | undefined): string =>
   p == null ? "-" : Array.isArray(p) ? p.map(fmt).join(" × ") : fmt(p);
@@ -228,12 +240,13 @@ function EquipmentFields({ draft, setDraft, categories, processTypes, materials,
 
 interface Props {
   setError: (e: string | null) => void;
+  setNotice: (m: string | null) => void;
   markDirty: () => void;
   project: ProjectOverview | null;
   onSwitchPlant: (id: string) => void;
 }
 
-export default function EquipmentPage({ setError, markDirty, project, onSwitchPlant }: Props) {
+export default function EquipmentPage({ setError, setNotice, markDirty, project, onSwitchPlant }: Props) {
   const [items, setItems] = useState<EquipmentItem[]>([]);
   const [categories, setCategories] = useState<Record<string, CostDBEntry[]>>({});
   const [processTypes, setProcessTypes] = useState<string[]>([]);
@@ -285,6 +298,7 @@ export default function EquipmentPage({ setError, markDirty, project, onSwitchPl
         useQuote: item.quoted_purchased_cost != null,
         purchased_cost: item.quoted_purchased_cost,
         cost_year: item.quoted_cost_year,
+        factors: item.factors,
       });
       setComponents((item.components ?? []).map((c) => c.spec));
       setIsComposite(true);
@@ -297,6 +311,7 @@ export default function EquipmentPage({ setError, markDirty, project, onSwitchPl
         target_year: item.target_year,
         purchased_cost: item.param === null ? item.purchased_cost : null,
         cost_year: item.cost_year,
+        ...item.factors,
       }));
       setComposite(emptyComposite());
       setComponents([]);
@@ -326,6 +341,7 @@ export default function EquipmentPage({ setError, markDirty, project, onSwitchPl
           cost_year: composite.useQuote ? composite.cost_year : null,
           // Components must share the composite's target year (library rule)
           components: components.map((c) => ({ ...c, target_year: composite.target_year })),
+          ...composite.factors,
         };
       } else {
         payload = specFromDraft(draft, categories);
@@ -340,6 +356,57 @@ export default function EquipmentPage({ setError, markDirty, project, onSwitchPl
       refresh();
     } catch (e: unknown) {
       setModalError(e instanceof Error ? e.message : "Failed");
+    }
+  };
+
+  // An equipment file waiting for Replace / Add (the plant has equipment)
+  const [pendingImport, setPendingImport] = useState<{ name: string; data: unknown; count: number } | null>(null);
+
+  const startImport = async () => {
+    setError(null);
+    try {
+      const file = await openJsonFile("Import equipment input JSON");
+      if (!file) return;
+      const list = (file.data as { equipment?: unknown })?.equipment;
+      const count = Array.isArray(list) ? list.length : 0;
+      if (items.length > 0) setPendingImport({ ...file, count });
+      else await doImport(file.name, file.data, "replace");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Import failed");
+    }
+  };
+
+  const doImport = async (name: string, data: unknown, mode: "replace" | "add") => {
+    setPendingImport(null);
+    try {
+      const r = await importEquipment(data, mode);
+      markDirty();
+      await refresh();
+      const what = `${r.count} equipment item${r.count === 1 ? "" : "s"} from ${name}`;
+      setNotice([mode === "add" ? `Added ${what}.` : `Imported ${what}.`, ...r.notes].join(" "));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Import failed");
+    }
+  };
+
+  const exportInput = async () => {
+    setError(null);
+    try {
+      const f = await exportEquipmentInput();
+      const where = await saveJsonFile(f.name, f.content, "Save equipment input JSON");
+      if (where) setNotice(`Saved ${where}`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Save failed");
+    }
+  };
+
+  const exportResults = async () => {
+    setError(null);
+    try {
+      const where = await saveResultsFile(() => exportJsonResults("equipment"));
+      if (where) setNotice(`Saved ${where}`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Save failed");
     }
   };
 
@@ -375,7 +442,12 @@ export default function EquipmentPage({ setError, markDirty, project, onSwitchPl
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h2>Equipment List</h2>
-          <button className="btn-primary" onClick={openAdd}>+ Add Equipment</button>
+          <div className="json-actions">
+            <button className="btn-secondary" onClick={startImport} title="Read an equipment input file (the format openpytea.io.load_equipment_config reads)">Import JSON…</button>
+            <button className="btn-secondary" onClick={exportInput} disabled={items.length === 0} title="Write this equipment list as a file load_equipment_config reads back">Save input JSON…</button>
+            <button className="btn-secondary" onClick={exportResults} disabled={items.length === 0} title="Write <plant>_equipment_results.json, as run_tea does">Save results JSON…</button>
+            <button className="btn-primary" onClick={openAdd}>+ Add Equipment</button>
+          </div>
         </div>
         {items.length === 0 ? (
           <p style={{ color: "#868e96" }}>No equipment added yet. Click "Add Equipment" to begin.</p>
@@ -423,6 +495,23 @@ export default function EquipmentPage({ setError, markDirty, project, onSwitchPl
           </table>
         )}
       </div>
+
+      {pendingImport && (
+        <div className="modal-overlay" onClick={() => setPendingImport(null)}>
+          <div className="modal" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+            <h2>Import equipment</h2>
+            <p style={{ fontSize: 14, margin: "8px 0 0" }}>
+              This plant already has {items.length} equipment item{items.length === 1 ? "" : "s"}.
+              Replace them with the {pendingImport.count} in <strong>{pendingImport.name}</strong>, or add those after them?
+            </p>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={() => setPendingImport(null)}>Cancel</button>
+              <button className="btn-secondary" onClick={() => doImport(pendingImport.name, pendingImport.data, "add")}>Add</button>
+              <button className="btn-primary" onClick={() => doImport(pendingImport.name, pendingImport.data, "replace")}>Replace</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
@@ -561,6 +650,14 @@ export default function EquipmentPage({ setError, markDirty, project, onSwitchPl
                   </>
                 )}
 
+                {(() => {
+                  const f = isComposite ? composite.factors : factorsOf(draft.form);
+                  return Object.keys(f).length > 0 && (
+                    <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "12px 0 0" }}>
+                      Installation factors from the imported file are kept: {factorText(f)}.
+                    </p>
+                  );
+                })()}
                 <div className="modal-actions">
                   <button className="btn-secondary" style={{ color: "#495057", borderColor: "#dee2e6" }} onClick={() => setShowModal(false)}>Cancel</button>
                   <button className="btn-primary" onClick={handleSubmit} disabled={isComposite && components.length === 0}>

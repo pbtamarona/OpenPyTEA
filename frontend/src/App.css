@@ -497,6 +497,9 @@ tbody tr:hover { background: var(--hover-bg); }
 .modal h2 { margin: 0 0 20px; font-size: 18px; }
 .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
 
+/* Import / save buttons for the library's JSON files, in a card header */
+.json-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+
 /* .btn-secondary is styled for the dark header (white text on
    transparent). Inside a modal that has a light background, white-on-
    white renders invisibly. Override so non-primary modal buttons use

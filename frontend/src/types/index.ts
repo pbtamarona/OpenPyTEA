@@ -19,6 +19,8 @@ export interface EquipmentItem {
   quoted_purchased_cost: number | null;
   quoted_cost_year: number | null;
   components: { spec: EquipmentInput; purchased_cost: number; direct_cost: number }[] | null;
+  /** Installation-factor overrides of the input ({ erection_factor: 1.2 }) */
+  factors: Record<string, number>;
 }
 
 export interface EquipmentInput {
@@ -35,6 +37,8 @@ export interface EquipmentInput {
   target_year: number;
   components?: EquipmentInput[] | null;
   installation?: string | null;
+  /** Installation-factor overrides (erection_factor, ...), kept from an imported file */
+  [factor: `${string}_factor`]: number | undefined;
 }
 
 export interface CostDBEntry {
@@ -255,4 +259,29 @@ export interface PlantSnapshot {
   currency: string;
   results: CalculationResults;
   source: PlantInput;
+}
+
+// ── Library JSON files ──
+
+export interface ExportedFile {
+  name: string;
+  content: string;
+}
+
+export interface ImportResult {
+  ok: boolean;
+  count: number;
+  /** What the GUI changed or left out while importing */
+  notes: string[];
+}
+
+/** An analysis input file's settings in GUI terms (nothing is run) */
+export interface AnalysisImport {
+  sensitivity: {
+    name: string; parameter: string; plus_minus_value: number; n_points: number;
+    metric: string; x_axis: "percent" | "value";
+  }[] | null;
+  tornado: { plus_minus_value: number; metric: string; category: TornadoCategory } | null;
+  monte_carlo: { num_samples: number; batch_size: number } | null;
+  notes: string[];
 }

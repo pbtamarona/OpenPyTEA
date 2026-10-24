@@ -3,6 +3,7 @@
 from fastapi import HTTPException
 
 from openpytea.equipment import Equipment, CompositeEquipment
+from openpytea.io import _FACTOR_KEYS
 from openpytea.plant import Plant
 
 
@@ -11,18 +12,24 @@ MAX_COMPONENTS = 100
 
 # Input keys worth preserving for a save/load round trip. Everything else
 # on an entry (computed costs, UI leftovers) is dropped.
+# Installation-factor overrides (erection_factor, ...) are kept on both, as
+# in the library's equipment JSON files.
 _EQUIPMENT_SPEC_KEYS = (
     "name", "param", "process_type", "category", "type", "material",
     "num_units", "purchased_cost", "cost_year", "cost_func", "target_year",
-)
+) + _FACTOR_KEYS
 _COMPOSITE_SPEC_KEYS = (
     "name", "process_type", "category", "type", "installation",
     "num_units", "purchased_cost", "cost_year", "target_year",
-)
+) + _FACTOR_KEYS
 
 
 def _clean_spec(entry: dict, keys: tuple) -> dict:
     return {k: entry[k] for k in keys if entry.get(k) is not None}
+
+
+def _factors(entry: dict) -> dict:
+    return {k: entry[k] for k in _FACTOR_KEYS if entry.get(k) is not None}
 
 
 def equipment_from_entry(entry: dict, _depth: int = 0):
@@ -66,6 +73,7 @@ def equipment_from_entry(entry: dict, _depth: int = 0):
             cost_year=entry.get("cost_year"),
             target_year=target_year,
             num_units=entry.get("num_units") or 1,
+            **_factors(entry),
         )
         eq._requested_num_units = entry.get("num_units")
         eq._input_spec = {
@@ -90,6 +98,7 @@ def equipment_from_entry(entry: dict, _depth: int = 0):
         cost_year=entry.get("cost_year"),
         cost_func=entry.get("cost_func"),
         target_year=entry.get("target_year", 2024),
+        **_factors(entry),
     )
     eq._requested_num_units = requested_num_units
     eq._input_spec = _clean_spec(entry, _EQUIPMENT_SPEC_KEYS)
@@ -104,10 +113,10 @@ def build_equipment_list(payload: list[dict]) -> list[Equipment]:
     for entry in payload:
         try:
             equipment_list.append(equipment_from_entry(entry))
-        except Exception:
+        except Exception as e:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid equipment entry '{entry.get('name', '?')}'",
+                detail=f"Invalid equipment entry '{entry.get('name', '?')}': {e}",
             )
     return equipment_list
 

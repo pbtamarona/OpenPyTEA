@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import PlantPicker from "../components/PlantPicker";
-import { getPlantConfig, setPlantConfig, getLocations } from "../api/client";
+import { getPlantConfig, setPlantConfig, getLocations, importPlant, exportPlantInput } from "../api/client";
 import type { PlantConfig, DependencyBlock, UncertaintyBlock, ProjectOverview } from "../types";
 import UncertaintyEditor, { DISTRIBUTIONS, paramSummary } from "../components/UncertaintyEditor";
 import HelpTip from "../components/HelpTip";
+import { openJsonFile, saveJsonFile } from "../jsonFiles";
 
 // ── Parameter dependencies (3.0 dependency DAG) ────────────────────
 // A dependency ties one parameter to others: dependent = Σ weight·parent
@@ -142,6 +143,7 @@ const defaultConfig: PlantConfig = {
 
 interface Props {
   setError: (e: string | null) => void;
+  setNotice: (m: string | null) => void;
   markDirty: () => void;
   /** Plants of the project, for the plant picker (null while loading). */
   project: ProjectOverview | null;
@@ -149,7 +151,7 @@ interface Props {
   onAddPlant: () => Promise<void>;
 }
 
-export default function PlantConfigPage({ setError, markDirty, project, onSwitchPlant, onAddPlant }: Props) {
+export default function PlantConfigPage({ setError, setNotice, markDirty, project, onSwitchPlant, onAddPlant }: Props) {
   const [config, setConfig] = useState<PlantConfig>({ ...defaultConfig });
   // Config as last loaded from / saved to the backend — the form has
   // unsaved edits whenever it differs.
@@ -214,6 +216,51 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
       setError(`Couldn't save this plant before switching: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setSwitching(false);
+    }
+  };
+
+  // A plant file waiting for the user to confirm replacing this plant's settings
+  const [pendingImport, setPendingImport] = useState<{ name: string; data: unknown } | null>(null);
+
+  const startImport = async () => {
+    setError(null);
+    try {
+      const file = await openJsonFile("Import plant input JSON");
+      if (file) setPendingImport(file);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Import failed");
+    }
+  };
+
+  const doImport = async () => {
+    if (!pendingImport) return;
+    const { name, data } = pendingImport;
+    setPendingImport(null);
+    try {
+      const r = await importPlant(data);
+      setConfig(r.config);
+      savedJson.current = JSON.stringify(r.config);
+      markDirty();
+      setNotice([`Imported the plant settings from ${name}.`, ...r.notes].join(" "));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Import failed");
+    }
+  };
+
+  const exportInput = async () => {
+    setError(null);
+    try {
+      // The file is written from the saved configuration: save edits first
+      if (JSON.stringify(config) !== savedJson.current) {
+        await setPlantConfig(config);
+        savedJson.current = JSON.stringify(config);
+        markDirty();
+      }
+      const f = await exportPlantInput();
+      const where = await saveJsonFile(f.name, f.content, "Save plant input JSON");
+      if (where) setNotice(`Saved ${where}`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Save failed");
     }
   };
 
@@ -429,7 +476,13 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
 
       {/* General */}
       <div className="card">
-        <h2>General</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+          <h2 style={{ margin: 0 }}>General</h2>
+          <div className="json-actions">
+            <button className="btn-secondary" onClick={startImport} title="Read a plant input file (the format openpytea.io.load_plant_config reads)">Import JSON…</button>
+            <button className="btn-secondary" onClick={exportInput} title="Write this plant's settings as a file load_plant_config reads back">Save input JSON…</button>
+          </div>
+        </div>
         <div className="form-grid">
           <div className="form-group">
             <label>Plant Name<HelpTip id="plant.plant_name" /></label>
@@ -757,6 +810,22 @@ export default function PlantConfigPage({ setError, markDirty, project, onSwitch
           {saved ? "Saved!" : "Save Configuration"}
         </button>
       </div>
+
+      {pendingImport && (
+        <div className="modal-overlay" onClick={() => setPendingImport(null)}>
+          <div className="modal" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+            <h2>Import plant settings</h2>
+            <p style={{ fontSize: 14, margin: "8px 0 0" }}>
+              Replace this plant's settings with those in <strong>{pendingImport.name}</strong>?
+              Unsaved changes on this page are discarded. The equipment list is not changed.
+            </p>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={() => setPendingImport(null)}>Cancel</button>
+              <button className="btn-primary" onClick={doImport}>Replace</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {uEdit && (
         <UncertaintyEditor

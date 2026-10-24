@@ -64,7 +64,7 @@ frontend/
 
 6. **Save/Load** serializes/restores equipment list + plant config. On load, equipment is re-instantiated from saved params and plant is reset (must recalculate).
 
-## API Endpoints (22 total)
+## API Endpoints (27 total)
 
 ### Equipment (`/api/equipment`)
 | Method | Path | Purpose |
@@ -73,6 +73,8 @@ frontend/
 | POST | `/` | Add equipment from params or direct cost |
 | PUT | `/{index}` | Update equipment at index |
 | DELETE | `/{index}` | Remove equipment at index |
+| POST | `/import` | Equipment input file (`load_equipment_config` format, validated by the library loader) → replace or add (`mode`) |
+| GET | `/export-input` | `<plant>_equipment_input.json` that `load_equipment_config` reads back (composites, factor overrides included) |
 | GET | `/cost-db/categories` | Cost correlation DB grouped by category (for dropdowns) |
 | GET | `/process-types` | List: Solids, Fluids, Mixed, Electrical |
 | GET | `/materials` | List: Carbon steel, 304 SS, etc. |
@@ -83,6 +85,8 @@ frontend/
 | GET | `/config` | Current plant config dict |
 | PUT | `/config` | Set/update plant config |
 | POST | `/calculate` | Run calculate_all(), return full results |
+| POST | `/import` | Plant input file (`load_plant_config` format) → the open plant's config; keys without a form are kept |
+| GET | `/export-input` | `<plant>_plant_input.json` that `load_plant_config` reads back |
 | GET | `/locations` | Plant.locFactors (country/region -> factor) |
 | GET | `/process-types` | Plant.processTypes (Solids/Fluids/Mixed -> OS/DE/X factors) |
 
@@ -93,12 +97,13 @@ frontend/
 | POST | `/sensitivity` | Run sensitivity_data(), return curves |
 | POST | `/tornado` | Run tornado_data(), return sorted bars |
 | POST | `/monte-carlo` | Run monte_carlo(), return summarized stats + histograms |
+| POST | `/import-config` | Analysis input file (`load_analysis_config` format) → sensitivity cases / tornado / MC settings in GUI terms (nothing run) |
 
 ### Project I/O (`/api/project`)
 | Method | Path | Purpose |
 |--------|------|---------|
 | POST | `/save` | Return full project state as JSON |
-| POST | `/export-json` | The three `run_tea` result files (`<plant>_equipment/plant/analysis_results.json`) as name + text — File ▸ Save as JSON Files… |
+| POST | `/export-json` | The three `run_tea` result files (`<plant>_equipment/plant/analysis_results.json`) as name + text — File ▸ Save as JSON Files…; `?only=equipment\|plant\|analysis` returns one (the tabs' Save results JSON… buttons) |
 | POST | `/load` | Upload JSON file, restore the project (v2 multi-plant, or a v1 single plant) |
 | GET | `/examples` | List available example presets (id, title, description) |
 | POST | `/examples/{id}` | Add an example preset to the project as a new plant (takes over an untouched blank plant) |
@@ -317,3 +322,17 @@ Open http://localhost:5173
 ## Bug Fix Applied
 
 `src/openpytea/__init__.py` had `from io import ...` (stdlib) instead of `from .io import ...` (relative). Fixed to allow the package to import correctly.
+
+## Library JSON files per tab
+
+The library's file workflow (`run_tea`: equipment / plant / analysis input files in, three result files out) is available tab by tab:
+
+| Tab | Import | Save |
+|-----|--------|------|
+| Equipment | equipment input (asks Replace / Add when the plant has equipment) | equipment input, `<plant>_equipment_results.json` |
+| Plant Config | plant input (replaces the open plant's settings after a confirm; equipment untouched) | plant input |
+| Results | — | `<plant>_plant_results.json` |
+| Analysis | analysis input → sensitivity panels + tornado form | `<plant>_analysis_results.json` |
+| Monte Carlo | analysis input → samples / batch size | `<plant>_analysis_results.json` |
+
+Imports only fill settings; nothing is run. Only `"run": true` blocks are read, as `run_tea` does; shorthand sensitivity parameters are resolved against the open plant. What the GUI can't follow (additional_capex, random_seed, out-of-range values, parameters not in the plant) comes back as notes shown in the notice bar. Equipment installation-factor overrides (`erection_factor`, ...) and plant keys without a form (`capex_ramp`, `loc_factor`, ...) are kept through edits, save/load and export. Files are read/written with `src/jsonFiles.ts` (desktop: native dialogs + the `.json`-restricted Rust commands; browser: file input / save picker / download).

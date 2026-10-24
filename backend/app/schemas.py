@@ -1,6 +1,6 @@
 """Pydantic models for request/response bodies."""
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Any, Literal
 
 
@@ -52,6 +52,16 @@ class EquipmentIn(BaseModel):
     # possibly itself composite) and the installation rule.
     components: list["EquipmentIn"] | None = Field(default=None, max_length=100)
     installation: str | None = None
+    # Installation-factor overrides, e.g. from an imported equipment file;
+    # not editable in the GUI but kept through edits
+    erection_factor: float | None = Field(default=None, ge=0, le=1000)
+    piping_factor: float | None = Field(default=None, ge=0, le=1000)
+    instrumentation_factor: float | None = Field(default=None, ge=0, le=1000)
+    electrical_factor: float | None = Field(default=None, ge=0, le=1000)
+    civil_factor: float | None = Field(default=None, ge=0, le=1000)
+    structural_factor: float | None = Field(default=None, ge=0, le=1000)
+    lagging_factor: float | None = Field(default=None, ge=0, le=1000)
+    material_factor: float | None = Field(default=None, ge=0, le=1000)
 
     @field_validator("param")
     @classmethod
@@ -97,6 +107,22 @@ class EquipmentOut(BaseModel):
     quoted_cost_year: int | None = None
     # One dict per component: {"spec": <input spec>, "purchased_cost": .., "direct_cost": ..}
     components: list[dict] | None = None
+    # Installation-factor overrides of the input ({"erection_factor": 1.2})
+    factors: dict[str, float] = Field(default_factory=dict)
+
+
+class EquipmentImportIn(BaseModel):
+    """An equipment input file (load_equipment_config format)."""
+    data: dict
+    # replace the plant's equipment, or add the file's after it
+    mode: Literal["replace", "add"] = "replace"
+
+
+class ImportResult(BaseModel):
+    ok: bool = True
+    count: int
+    # What the GUI changed or left out while importing
+    notes: list[str] = Field(default_factory=list)
 
 
 class CostDBEntry(BaseModel):
@@ -120,6 +146,10 @@ class ExamplePreset(BaseModel):
 
 
 class PlantConfigIn(BaseModel):
+    # Library keys without a form here (capex_ramp, loc_factor, ...) are
+    # kept as they are, so an imported plant file computes the same
+    model_config = ConfigDict(extra="allow")
+
     plant_name: str = "My Plant"
     process_type: str = "Fluids"
     country: str = "United States"
@@ -149,6 +179,16 @@ class PlantConfigIn(BaseModel):
     fp: float | None = None
     additional_capex_years: list[int] | None = None
     additional_capex_cost: list[float] | None = None
+
+
+class PlantImportIn(BaseModel):
+    """A plant input file (load_plant_config format)."""
+    data: dict
+
+
+class PlantImportOut(BaseModel):
+    config: dict
+    notes: list[str] = Field(default_factory=list)
 
 
 # ── Calculation results ───────────────────────────────────────────
@@ -278,6 +318,39 @@ class MCPlotIn(BaseModel):
 
 
 # ── Analysis results ──────────────────────────────────────────────
+
+
+class AnalysisImportIn(BaseModel):
+    """An analysis input file (load_analysis_config format)."""
+    data: dict
+
+
+class SensitivityCaseOut(BaseModel):
+    name: str
+    parameter: str
+    plus_minus_value: float
+    n_points: int
+    metric: str
+    x_axis: Literal["percent", "value"] = "percent"
+
+
+class TornadoSettings(BaseModel):
+    plus_minus_value: float
+    metric: str
+    category: Literal["economic", "process", "both"]
+
+
+class MonteCarloSettings(BaseModel):
+    num_samples: int
+    batch_size: int
+
+
+class AnalysisImportOut(BaseModel):
+    """The file's settings in GUI terms; nothing is run."""
+    sensitivity: list[SensitivityCaseOut] | None = None
+    tornado: TornadoSettings | None = None
+    monte_carlo: MonteCarloSettings | None = None
+    notes: list[str] = Field(default_factory=list)
 
 
 class SensitivityCurve(BaseModel):

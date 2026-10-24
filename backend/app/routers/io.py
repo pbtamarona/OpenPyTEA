@@ -4,6 +4,7 @@ import json
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal
 from fastapi import APIRouter, HTTPException, UploadFile, File
 
 from openpytea.analysis import (
@@ -55,8 +56,9 @@ def save_project():
 
 
 @router.post("/export-json", response_model=ExportJsonResponse)
-def export_json():
-    """Return the three result files run_tea writes for this plant.
+def export_json(only: Literal["equipment", "plant", "analysis"] | None = None):
+    """Return the three result files run_tea writes for this plant, or
+    just the `only` one.
 
     <plant>_equipment_results.json, <plant>_plant_results.json and
     <plant>_analysis_results.json are produced by the library's own
@@ -65,7 +67,23 @@ def export_json():
     sensitivity and Monte Carlo are included when they were run in the GUI
     (MC only if the configuration hasn't changed since that run).
     """
+    if only == "equipment":
+        # Equipment costs don't need a calculated plant
+        if not state.equipment_list:
+            raise HTTPException(status_code=400, detail="No equipment defined")
+        fname = _safe_filename(state.plant_config.get("plant_name") or "plant")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / f"{fname}_equipment_results.json"
+            export_equipment_results(state.equipment_list, path)
+            return {"files": [{"name": path.name, "content": path.read_text(encoding="utf-8")}]}
+
     plant = require_active_plant()
+    if only == "plant":
+        fname = _safe_filename(plant.name)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / f"{fname}_plant_results.json"
+            export_plant_results(plant, path)
+            return {"files": [{"name": path.name, "content": path.read_text(encoding="utf-8")}]}
 
     results = {
         "direct_costs": direct_costs_data(plant),
@@ -99,9 +117,10 @@ def export_json():
     fname = _safe_filename(plant.name)
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp)
-        export_equipment_results(
-            state.equipment_list, out / f"{fname}_equipment_results.json")
-        export_plant_results(plant, out / f"{fname}_plant_results.json")
+        if only is None:
+            export_equipment_results(
+                state.equipment_list, out / f"{fname}_equipment_results.json")
+            export_plant_results(plant, out / f"{fname}_plant_results.json")
         _write_json(out / f"{fname}_analysis_results.json",
                     {"results": results})
         files = [

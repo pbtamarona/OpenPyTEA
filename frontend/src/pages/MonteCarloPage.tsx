@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { runMonteCarlo, fetchPlotPng } from "../api/client";
-import type { MonteCarloMultiResult, MonteCarloResult, ProjectOverview } from "../types";
+import type { AnalysisImport, MonteCarloMultiResult, MonteCarloResult, ProjectOverview } from "../types";
 import {
   ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
@@ -9,6 +9,7 @@ import { fmtTick, fmtValue, niceTicks, texToText } from "../format";
 import { saveFigure } from "../save";
 import HelpTip from "../components/HelpTip";
 import ComparePlants from "../components/ComparePlants";
+import AnalysisFileBar from "../components/AnalysisFileBar";
 import { usePlantSelection } from "../plantSources";
 
 /** Name and unit of an MC output metric — the same wording and units as
@@ -47,6 +48,7 @@ const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0"
 
 interface Props {
   setError: (e: string | null) => void;
+  setNotice: (m: string | null) => void;
   project: ProjectOverview | null;
 }
 
@@ -133,7 +135,7 @@ function buildOverlayData(plants: ShownPlant[], metric: string, showFit: boolean
   });
 }
 
-export default function MonteCarloPage({ setError, project }: Props) {
+export default function MonteCarloPage({ setError, setNotice, project }: Props) {
   const [numSamples, setNumSamples] = useState(50000);
   // Fitted-normal overlay on the metric histograms (screen and downloads);
   // remembered across sessions
@@ -186,8 +188,23 @@ export default function MonteCarloPage({ setError, project }: Props) {
   // Collect all metric names that appeared on at least one plant
   const metricNames = Array.from(new Set(plants.flatMap((p) => Object.keys(p.metrics))));
 
+  /** An analysis input file's Monte Carlo settings fill the form; nothing is run. */
+  const applyImport = (r: AnalysisImport, fileName: string): string => {
+    const notes = [...r.notes];
+    if (r.sensitivity?.length || r.tornado) notes.push("Its sensitivity and tornado settings are imported on the Analysis tab.");
+    if (!r.monte_carlo) return [`${fileName} has no Monte Carlo analysis to import.`, ...notes].join(" ");
+    setNumSamples(r.monte_carlo.num_samples);
+    setBatchSize(r.monte_carlo.batch_size);
+    return [
+      `Imported the Monte Carlo settings from ${fileName} (${r.monte_carlo.num_samples.toLocaleString("en-US")} samples); run it with the button below.`,
+      ...notes,
+    ].join(" ");
+  };
+
   return (
     <div>
+      <AnalysisFileBar setError={setError} setNotice={setNotice} onImported={applyImport} />
+
       <div className="card">
         <h2>Monte Carlo Uncertainty Analysis</h2>
         <div className="form-grid" style={{ marginBottom: 16 }}>

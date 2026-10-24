@@ -1,11 +1,19 @@
 """Plant configuration + calculation endpoints."""
 
-from fastapi import APIRouter, HTTPException
-from openpytea.plant import Plant
+import copy
+import json
 
-from app import state
+from fastapi import APIRouter, HTTPException
+from pydantic import ValidationError
+from openpytea.io import _safe_filename
+from openpytea.plant import DEFAULT_OPERATOR_HOURLY_RATE, Plant
+
+from app import project_store, state
 from app.plant_factory import mark_plant_fresh
-from app.schemas import PlantConfigIn, CalculationResults, OkResponse
+from app.schemas import (
+    PlantConfigIn, CalculationResults, OkResponse,
+    ExportedFile, PlantImportIn, PlantImportOut,
+)
 from app.util import to_jsonable
 
 router = APIRouter()
@@ -23,6 +31,65 @@ def set_plant_config(data: PlantConfigIn):
         config.pop("project_uncertainties", None)
     state.plant_config = config
     return {"ok": True}
+
+
+def _unused_name(name: str) -> str:
+    """`name`, numbered if another plant of the project already has it."""
+    others = {s["name"] for s in state.plants if s["id"] != state.active_plant_id}
+    base, i = name, 2
+    while name in others:
+        name, i = f"{base} {i}", i + 1
+    return name
+
+
+@router.post("/import", response_model=PlantImportOut)
+def import_plant(data: PlantImportIn):
+    """Replace the open plant's configuration with a plant input file."""
+    raw = data.data.get("plant")
+    if not isinstance(raw, dict):
+        raise HTTPException(status_code=400, detail="Not a valid plant file: it must contain a top-level 'plant' key.")
+    raw = copy.deepcopy(raw)
+    raw.pop("equipment", None)  # equipment comes from the Equipment tab
+    # The library takes a bare rate, and no rate means its default with no
+    # uncertainty (the form's default adds some)
+    rate = raw.get("operator_hourly_rate")
+    if rate is None:
+        raw["operator_hourly_rate"] = {"rate": DEFAULT_OPERATOR_HOURLY_RATE}
+    elif not isinstance(rate, dict):
+        raw["operator_hourly_rate"] = {"rate": rate}
+    try:
+        config = PlantConfigIn(**raw).model_dump()
+    except ValidationError as e:
+        err = e.errors()[0]
+        where = ".".join(str(p) for p in err["loc"])
+        raise HTTPException(status_code=400, detail=f"Not a valid plant file: {where}: {err['msg']}")
+    if config.get("project_uncertainties") is None:
+        config.pop("project_uncertainties", None)
+    try:
+        Plant({**copy.deepcopy(config), "equipment": state.equipment_list})
+    except (KeyError, ValueError, TypeError) as e:
+        raise HTTPException(status_code=400, detail=f"Not a valid plant file: {e}")
+
+    notes = []
+    project_store.ensure_project()
+    name = _unused_name(config.get("plant_name") or project_store.active_slot()["name"])
+    if name != config.get("plant_name"):
+        notes.append(f"Named '{name}': another plant of the project is called '{config.get('plant_name')}'.")
+    config["plant_name"] = name
+    project_store.active_slot()["name"] = name
+    extra = sorted(set(config) - set(PlantConfigIn.model_fields))
+    if extra:
+        notes.append(f"Kept as in the file (no form for them here): {', '.join(extra)}.")
+    state.plant_config = config
+    return {"config": to_jsonable(config), "notes": notes}
+
+
+@router.get("/export-input", response_model=ExportedFile)
+def export_plant_input():
+    """The open plant's configuration as a file load_plant_config reads."""
+    config = {k: v for k, v in state.plant_config.items() if v is not None}
+    name = _safe_filename(config.get("plant_name") or "plant")
+    return {"name": f"{name}_plant_input.json", "content": json.dumps({"plant": to_jsonable(config)}, indent=2)}
 
 
 @router.get("/locations")

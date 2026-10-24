@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   getSensitivityParameters, runSensitivity, runTornado, fetchPlotPng,
 } from "../api/client";
-import type { SensitivityResult, TornadoCategory, TornadoResult, ProjectOverview } from "../types";
+import type { AnalysisImport, SensitivityResult, TornadoCategory, TornadoResult, ProjectOverview } from "../types";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, ReferenceLine, Cell, Legend,
@@ -11,6 +11,7 @@ import DownloadableChart from "../components/DownloadableChart";
 import { fmtTick, fmtValue, nameLabel, niceTicks, texToText } from "../format";
 import HelpTip from "../components/HelpTip";
 import ComparePlants from "../components/ComparePlants";
+import AnalysisFileBar from "../components/AnalysisFileBar";
 import { usePlantSelection, type PlantsRequest } from "../plantSources";
 
 const METRICS = ["LCOP", "NPV", "IRR", "ROI", "PBT"];
@@ -52,6 +53,7 @@ const NoneTicked = () => (
 
 interface Props {
   setError: (e: string | null) => void;
+  setNotice: (m: string | null) => void;
   project: ProjectOverview | null;
   /** The page stays mounted (results kept) while hidden on other tabs;
       false while hidden. */
@@ -70,7 +72,7 @@ const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2, x_axi
   x_axis,
 });
 
-export default function AnalysisPage({ setError, project, active }: Props) {
+export default function AnalysisPage({ setError, setNotice, project, active }: Props) {
   const [parameters, setParameters] = useState<string[]>([]);
   const [sensPoints, setSensPoints] = useState(21);
   const [panels, setPanels] = useState<Panel[]>([newPanel()]);
@@ -231,6 +233,40 @@ export default function AnalysisPage({ setError, project, active }: Props) {
     if (adding) addTornPlant(plantId);
   };
 
+  /** An analysis input file's sensitivity cases become the panels and its
+      tornado settings fill the tornado form; nothing is run. */
+  const applyImport = (r: AnalysisImport, fileName: string): string => {
+    const notes = [...r.notes];
+    const parts: string[] = [];
+    if (r.sensitivity) {
+      // A parameter set by a dependency can't be varied (not offered here)
+      const usable = r.sensitivity.filter((c) => {
+        if (parameters.includes(c.parameter)) return true;
+        notes.push(`Sensitivity '${c.name}' left out: ${formatParam(c.parameter)} is set by a dependency.`);
+        return false;
+      });
+      if (usable.length > 0) {
+        setPanels(usable.map((c) => newPanel(c.parameter, c.metric, c.plus_minus_value, c.x_axis)));
+        setSensPoints(usable[0].n_points);
+        if (usable.some((c) => c.n_points !== usable[0].n_points)) {
+          notes.push(`Every panel uses ${usable[0].n_points} points (one setting here).`);
+        }
+        parts.push(`${usable.length} sensitivity case${usable.length === 1 ? "" : "s"}`);
+      }
+    }
+    if (r.tornado) {
+      setTornPM(r.tornado.plus_minus_value);
+      setTornMetric(r.tornado.metric);
+      setTornCategory(r.tornado.category);
+      parts.push("the tornado settings");
+    }
+    if (r.monte_carlo) notes.push("Its Monte Carlo settings are imported on the Monte Carlo tab.");
+    const head = parts.length > 0
+      ? `Imported ${parts.join(" and ")} from ${fileName}; run them with the buttons below.`
+      : `${fileName} has no sensitivity or tornado analysis to import.`;
+    return [head, ...notes].join(" ");
+  };
+
   const anyLoading = panels.some((p) => p.loading);
   const isGrid = panels.length > 1;
 
@@ -290,6 +326,8 @@ export default function AnalysisPage({ setError, project, active }: Props) {
 
   return (
     <div>
+      <AnalysisFileBar setError={setError} setNotice={setNotice} onImported={applyImport} />
+
       {/* Sensitivity */}
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Sensitivity Analysis</h2>

@@ -894,6 +894,7 @@ function App() {
           <EquipmentPage
             key={refreshKey}
             setError={setError}
+            setNotice={setNotice}
             markDirty={markDirty}
             project={project}
             onSwitchPlant={handleSwitchPlant}
@@ -903,6 +904,7 @@ function App() {
           <PlantConfigPage
             key={refreshKey}
             setError={setError}
+            setNotice={setNotice}
             markDirty={markDirty}
             project={project}
             onSwitchPlant={handleSwitchPlant}
@@ -915,18 +917,19 @@ function App() {
             results={results}
             setResults={setResults}
             setError={setError}
+            setNotice={setNotice}
             project={project}
             onSwitchPlant={handleSwitchPlant}
           />
         )}
         {keptPlants("Analysis").map((id) => (
           <div key={id} hidden={!shown("Analysis", id)}>
-            <AnalysisPage setError={setError} project={project} active={shown("Analysis", id)} />
+            <AnalysisPage setError={setError} setNotice={setNotice} project={project} active={shown("Analysis", id)} />
           </div>
         ))}
         {keptPlants("Monte Carlo").map((id) => (
           <div key={id} hidden={!shown("Monte Carlo", id)}>
-            <MonteCarloPage setError={setError} project={project} />
+            <MonteCarloPage setError={setError} setNotice={setNotice} project={project} />
           </div>
         ))}
         {tab === "Compare" && (

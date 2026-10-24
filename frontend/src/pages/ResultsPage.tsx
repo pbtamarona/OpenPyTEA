@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { runCalculations, getPlantConfig, fetchPlotPng } from "../api/client";
+import { runCalculations, getPlantConfig, fetchPlotPng, exportJsonResults } from "../api/client";
 import type { CalculationResults, PlantConfig, ProjectOverview } from "../types";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -7,16 +7,18 @@ import {
 import DownloadableChart from "../components/DownloadableChart";
 import PlantPicker from "../components/PlantPicker";
 import { nameLabel } from "../format";
+import { saveResultsFile } from "../jsonFiles";
 
 interface Props {
   results: CalculationResults | null;
   setResults: (r: CalculationResults | null) => void;
   setError: (e: string | null) => void;
+  setNotice: (m: string | null) => void;
   project: ProjectOverview | null;
   onSwitchPlant: (id: string) => void;
 }
 
-export default function ResultsPage({ results, setResults, setError, project, onSwitchPlant }: Props) {
+export default function ResultsPage({ results, setResults, setError, setNotice, project, onSwitchPlant }: Props) {
   const [loading, setLoading] = useState(false);
   const [plantConfig, setPlantConfig] = useState<PlantConfig | null>(null);
 
@@ -119,6 +121,19 @@ export default function ResultsPage({ results, setResults, setError, project, on
     <div>
       {picker}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 16 }}>
+        <button
+          className="btn-secondary"
+          title="Write <plant>_plant_results.json, as run_tea does"
+          onClick={async () => {
+            setError(null);
+            try {
+              const where = await saveResultsFile(() => exportJsonResults("plant"));
+              if (where) setNotice(`Saved ${where}`);
+            } catch (e: unknown) {
+              setError(e instanceof Error ? e.message : "Save failed");
+            }
+          }}
+        >Save results JSON…</button>
         <button className="btn-primary" onClick={calculate} disabled={loading}>
           {loading && <span className="spinner" />}Recalculate
         </button>

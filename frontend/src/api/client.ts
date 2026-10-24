@@ -2,6 +2,7 @@ import type {
   EquipmentItem, EquipmentInput, CostDBEntry, PlantConfig,
   CalculationResults, SensitivityResult, TornadoCategory, TornadoResult,
   MonteCarloMultiResult, PlantInput, ProjectMeta, ProjectOverview, PlantSnapshot,
+  ExportedFile, ImportResult, AnalysisImport,
 } from "../types";
 
 // Resolve the API base URL once per page load.
@@ -133,8 +134,19 @@ export const saveProject = () => request<unknown>("/project/save", { method: "PO
 
 /** The three run_tea result files (<plant>_equipment/plant/analysis_results.json)
  *  for the active plant, as file name + JSON text. */
-export const exportJsonResults = () =>
-  request<{ files: { name: string; content: string }[] }>("/project/export-json", { method: "POST" });
+/** run_tea's result files; `only` returns just that one */
+export const exportJsonResults = (only?: "equipment" | "plant" | "analysis") =>
+  request<{ files: ExportedFile[] }>(`/project/export-json${only ? `?only=${only}` : ""}`, { method: "POST" });
+
+// ── Library JSON input files (load_*_config formats) ──
+export const importEquipment = (data: unknown, mode: "replace" | "add") =>
+  request<ImportResult>("/equipment/import", { method: "POST", body: JSON.stringify({ data, mode }) });
+export const exportEquipmentInput = () => request<ExportedFile>("/equipment/export-input");
+export const importPlant = (data: unknown) =>
+  request<{ config: PlantConfig; notes: string[] }>("/plant/import", { method: "POST", body: JSON.stringify({ data }) });
+export const exportPlantInput = () => request<ExportedFile>("/plant/export-input");
+export const importAnalysisConfig = (data: unknown) =>
+  request<AnalysisImport>("/analysis/import-config", { method: "POST", body: JSON.stringify({ data }) });
 
 export const loadProject = async (file: File) => {
   const base = await getBase();

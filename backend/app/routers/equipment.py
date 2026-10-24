@@ -1,11 +1,20 @@
 """Equipment CRUD + cost database lookup endpoints."""
 
+import copy
+import json
+
 from fastapi import APIRouter, HTTPException
 from openpytea.equipment import Equipment, CompositeEquipment, CostCorrelationDB
+from openpytea.io import _FACTOR_KEYS, _build_equipment_list, _safe_filename
 
 from app import state
-from app.plant_factory import equipment_from_entry
-from app.schemas import EquipmentIn, EquipmentOut, OkResponse, CostDBEntry
+from app.plant_factory import MAX_EQUIPMENT, build_equipment_list, equipment_from_entry
+from app.project_store import equipment_specs
+from app.schemas import (
+    EquipmentIn, EquipmentOut, OkResponse, CostDBEntry,
+    EquipmentImportIn, ExportedFile, ImportResult,
+)
+from app.util import to_jsonable
 
 router = APIRouter()
 
@@ -55,6 +64,7 @@ def _eq_to_out(i: int, eq) -> dict:
             if is_composite
             else None
         ),
+        factors={k: v for k, v in getattr(eq, "_input_spec", {}).items() if k in _FACTOR_KEYS},
     ).model_dump()
 
 
@@ -95,6 +105,47 @@ def delete_equipment(index: int):
         raise HTTPException(status_code=404, detail="Equipment not found")
     state.equipment_list.pop(index)
     return {"ok": True}
+
+
+def _import_notes(entries: list[dict]) -> list[str]:
+    """What the GUI builds differently from load_equipment_config."""
+    notes = []
+    for entry in entries:
+        year = entry.get("target_year", 2024)
+        for comp in entry.get("components") or []:
+            if comp.get("target_year", year) != year:
+                notes.append(
+                    f"Components of '{entry['name']}' use its target year {year}, "
+                    f"not their own ({comp.get('name', '?')}: {comp['target_year']})."
+                )
+                break
+    return notes
+
+
+@router.post("/import", response_model=ImportResult)
+def import_equipment(data: EquipmentImportIn):
+    """Read an equipment input file: replace the list or add to it."""
+    # The library's loader decides what a valid file is (and gives its
+    # error messages); the GUI then builds its own objects from the entries
+    try:
+        _build_equipment_list(copy.deepcopy(data.data))
+    except (KeyError, ValueError, TypeError) as e:
+        raise HTTPException(status_code=400, detail=f"Not a valid equipment file: {e}")
+    entries = data.data["equipment"]
+    keep = state.equipment_list if data.mode == "add" else []
+    if len(keep) + len(entries) > MAX_EQUIPMENT:
+        raise HTTPException(status_code=400, detail=f"Too many equipment items (max {MAX_EQUIPMENT})")
+    built = build_equipment_list(entries)
+    state.equipment_list = [*keep, *built]
+    return {"count": len(built), "notes": _import_notes(entries)}
+
+
+@router.get("/export-input", response_model=ExportedFile)
+def export_equipment_input():
+    """The open plant's equipment as a file load_equipment_config reads."""
+    name = _safe_filename(state.plant_config.get("plant_name") or "plant")
+    payload = {"equipment": to_jsonable(equipment_specs(state.equipment_list))}
+    return {"name": f"{name}_equipment_input.json", "content": json.dumps(payload, indent=2)}
 
 
 @router.get("/cost-db/categories", response_model=dict[str, list[CostDBEntry]])
