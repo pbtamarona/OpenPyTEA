@@ -308,8 +308,9 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True,
         is asked of data without actual values.
     Notes
     -----
-    - With ``x_axis="value"``, a plant that lacks the parameter has no
-        values to plot; its curve is left out with a warning.
+    - With ``x_axis="value"``, a plant that lacks the parameter shows as a
+        flat line at its baseline across the other plants' values, as it
+        does on the % axis.
     - Multiple curves are plotted with colors from the Set2 colormap.
     - If a new figure is created, tight_layout() is applied before showing.
     - If an existing axes is provided, canvas is redrawn instead of calling
@@ -332,19 +333,23 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True,
 
     line_colors = cycle(plt.cm.Set2.colors)
 
+    # A plant lacking the parameter has no values of its own; on the value
+    # axis it spans the other plants' values at its baseline, as on the % axis
+    # (sensitivity_data rejects a parameter no plant has, so spans is never
+    # empty)
+    spans = [c["x_value"] for c in data["curves"] if c["x_value"] is not None]
+    if by_value:
+        x_span = [min(np.min(s) for s in spans),
+                  max(np.max(s) for s in spans)]
+
     for curve in data["curves"]:
         color = next(line_colors)  # same color per plant in either mode
-        if by_value and curve["x_value"] is None:
-            warnings.warn(
-                f"Plant '{curve['plant']}' lacks {data.get('parameter')!r}, "
-                "so it has no values to plot on the value axis; "
-                "leaving it out.",
-                stacklevel=2,
-            )
-            continue
+        x, y = (curve["x_value"] if by_value else curve["x"]), curve["y"]
+        if by_value and x is None:
+            x, y = x_span, [curve["baseline"]] * 2
         ax.plot(
-            curve["x_value"] if by_value else curve["x"],
-            curve["y"],
+            x,
+            y,
             linewidth=1.2,
             color=color,
             label=_format_scripts(curve["plant"]),

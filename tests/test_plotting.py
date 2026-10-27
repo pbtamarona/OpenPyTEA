@@ -248,9 +248,12 @@ def test_plot_sensitivity_x_axis(test_plant, test_plant_b):
     test_plant_b.variable_opex_inputs["steam"] = {"consumption": 1, "price": 1}
     data = sensitivity_data([test_plant, test_plant_b],
                             "variable_opex_inputs.steam", 0.2, n_points=3)
-    with pytest.warns(UserWarning, match="leaving it out"):
-        fig, ax = plot_sensitivity(data, show=False, x_axis="value")
-    assert len(ax.lines) == 1
+    fig, ax = plot_sensitivity(data, show=False, x_axis="value")
+    assert len(ax.lines) == 2  # plant lacking steam: flat at its baseline
+    lacking = data["curves"][0]
+    np.testing.assert_allclose(ax.lines[0].get_xdata(), [0.8, 1.2])
+    np.testing.assert_allclose(ax.lines[0].get_ydata(),
+                               [lacking["baseline"]] * 2)
     plt.close(fig)
 
 
