@@ -791,7 +791,7 @@ function App() {
       <>
         {loadingBanner}
         {closeConfirmModal}
-        <WelcomePage onContinue={() => setShowWelcome(false)} />
+        <WelcomePage onContinue={() => setShowWelcome(false)} loading={loadingMsg !== null} />
       </>
     );
   }

@@ -170,6 +170,53 @@
   display: block;
 }
 
+/* ===== Animated logo (welcome screen while loading) ===== */
+.animated-logo {
+  position: relative;
+  aspect-ratio: 1 / 1;
+}
+
+.animated-logo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.animated-logo-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* Steam wavers (SVG turbulence) and sways from its base in the cup. */
+.animated-logo-steam {
+  filter: url(#steam-waver);
+  transform-origin: 51% 54%;
+  animation: steam-sway 3.2s ease-in-out infinite;
+}
+
+@keyframes steam-sway {
+  0%, 100% { transform: translateY(0) scaleY(1) skewX(0deg); opacity: .85; }
+  25%      { transform: translateY(-1%) scaleY(1.03) skewX(-3deg); opacity: 1; }
+  75%      { transform: translateY(-1.5%) scaleY(1.04) skewX(3deg); opacity: .95; }
+}
+
+/* Icons drift up and down out of phase, tilting around their own centre. */
+.animated-logo-icon { animation: icon-float 3.6s ease-in-out infinite; }
+.animated-logo-dollar   { transform-origin: 42% 22%; --tilt: -6deg; }
+.animated-logo-molecule { transform-origin: 65% 26%; --tilt: 8deg;  animation-duration: 4.2s; animation-delay: -1.4s; }
+.animated-logo-flask    { transform-origin: 34% 43%; --tilt: -5deg; animation-duration: 3.9s; animation-delay: -2.6s; }
+
+@keyframes icon-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-3.5%) rotate(var(--tilt)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-logo img { animation: none; filter: none; }
+}
+
 .welcome-title {
   font-size: 32px;
   margin: 0 0 8px;
