@@ -126,6 +126,7 @@ Contents
    :caption: User Guide
 
    user_guide/equipment
+   user_guide/cost_correlations
    user_guide/plant
    user_guide/analysis
    user_guide/io_workflow

@@ -930,13 +930,13 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title,
             )
         ax.set_title(
             _format_scripts((display_labels or {}).get(label, label)),
-            fontsize=9,
+            fontsize=14,
         )
 
     for i in range(n_params, len(axes)):
         axes[i].axis("off")
 
-    fig.suptitle(_format_scripts(title), fontsize=14, fontweight="bold")
+    fig.suptitle(_format_scripts(title), fontsize=16, fontweight="bold")
     # Reserve a top margin sized to fit the suptitle in absolute
     # inches rather than a fixed fraction of figure height -- a flat
     # fraction leaves a disproportionately large gap on tall,

@@ -23,6 +23,7 @@ examples in action.
    :maxdepth: 1
 
    equipment
+   cost_correlations
    plant
    analysis
    io_workflow
