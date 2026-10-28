@@ -642,6 +642,7 @@ The table below lists the valid ``material`` strings and their factors
 :math:`f_m`. Costs are relative to carbon steel (= 1.0).
 
 *Source: Towler & Sinnott (2022)*
+*EDF rows (316 welded/machined, glass-reinforced plastic, exotic material): Aromada, Eldrup & Øi (2021), Table 4.*
 
 .. list-table::
    :header-rows: 1
@@ -663,6 +664,10 @@ The table below lists the valid ``material`` strings and their factors
      - 1.30
    * - ``"316 stainless steel"``
      - 1.30
+   * - ``"316 stainless steel (machined)"``
+     - 1.30
+   * - ``"Glass-reinforced plastic"``
+     - 1.40
    * - ``"321 stainless steel"``
      - 1.50
    * - ``"Hastelloy C"``
@@ -673,6 +678,12 @@ The table below lists the valid ``material`` strings and their factors
      - 1.70
    * - ``"Inconel"``
      - 1.70
+   * - ``"316 stainless steel (welded)"``
+     - 1.75
+   * - ``"Exotic material (machined)"``
+     - 1.75
+   * - ``"Exotic material (welded)"``
+     - 2.50
 
 ``"Stainless steel"`` (no grade specified) is not part of the original
 Towler & Sinnott table — it's added here, set equal to
