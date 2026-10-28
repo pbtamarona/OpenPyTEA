@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -15,6 +17,25 @@ with as_file(
     data_dir / "cost_correlations.csv"
 ) as COST_DB_PATH:
     COST_DB_DF = pd.read_csv(COST_DB_PATH)
+
+# Renamed categories: old name (lowercase, as lookups ignore case) -> current
+_CATEGORY_ALIASES = {
+    "compressors & blowers": "Compressors, fans, & blowers",
+}
+
+
+def _current_category(category):
+    """Map a renamed category to its current name, with a warning."""
+    new = _CATEGORY_ALIASES.get(str(category).lower())
+    if new is not None:
+        warnings.warn(
+            f"Category '{category}' has been renamed to '{new}'; "
+            "the old name will be removed in a future release.",
+            FutureWarning,
+            stacklevel=3,
+        )
+        return new
+    return category
 
 
 def inflation_adjustment(equipment_cost, cost_year, target_year=2024):
@@ -524,7 +545,7 @@ class Equipment:
         self.param = (
             None if purchased_cost is not None else param
         )
-        self.category = category
+        self.category = _current_category(category)
         self.type = type
         self.num_units = num_units
         self.cost_year = cost_year
@@ -752,8 +773,8 @@ class Equipment:
             f"Category={self.category}, Sub-type={self.type}, "
             f"Material={self.material}, Process Type={self.process_type}, "
             f"Parameter={self.param}, Number of units={self.num_units}, "
-            f"Purchased Cost={self.purchased_cost}, "
-            f"Direct Cost={self.direct_cost})"
+            f"Purchased Cost={self.purchased_cost:.3f}, "
+            f"Direct Cost={self.direct_cost:.3f}"
         )
 
 
@@ -923,7 +944,7 @@ class CompositeEquipment:
 
         self.name = name
         self.process_type = process_type
-        self.category = category
+        self.category = _current_category(category)
         self.type = type
         self.installation = installation
         self.target_year = target_year
@@ -1126,13 +1147,13 @@ class CompositeEquipment:
             f"Process Type={self.process_type}, "
             f"Installation={self.installation}, "
             f"Number of units={self.num_units}, "
-            f"Purchased Cost={self.purchased_cost}, "
-            f"Direct Cost={self.direct_cost})"
+            f"Purchased Cost={self.purchased_cost:.3f}, "
+            f"Direct Cost={self.direct_cost:.3f}"
         )
         body = "\n".join(
             f"    - {obj.name} (x{obj.num_units}): "
-            f"Purchased Cost={obj.purchased_cost}, "
-            f"Direct Cost={obj.direct_cost}"
+            f"Purchased Cost={obj.purchased_cost:.3f}, "
+            f"Direct Cost={obj.direct_cost:.3f}"
             for obj in self.components
         )
         return f"{head}\n{body}"

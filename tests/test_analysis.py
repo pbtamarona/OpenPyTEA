@@ -11,7 +11,8 @@ from openpytea import (
     cash_flow_data,
     sensitivity_data,
     tornado_data,
-    monte_carlo
+    monte_carlo,
+    Plant,
 )
 from openpytea.helpers import _apply_dependencies
 
@@ -624,12 +625,12 @@ def test_tornado_factors_default_to_prices_and_scalars(test_plant):
     assert factors == baseline
 
 
-def test_tornado_include_process_params_without_dependencies(test_plant):
+def test_tornado_category_both_without_dependencies(test_plant):
     # No dependency anywhere -- process parameters are still available,
     # because they are ordinary economic drivers in their own right
     factors = set(tornado_data(test_plant, plus_minus_value=0.1,
                                metric="LCOP",
-                               include_process_params=True)["factors"])
+                               category="both")["factors"])
 
     assert "variable_opex_inputs.electricity.consumption" in factors
     assert "variable_opex_inputs.water.consumption" in factors
@@ -639,7 +640,7 @@ def test_tornado_include_process_params_without_dependencies(test_plant):
     assert "fixed_capital" in factors
 
 
-def test_tornado_include_process_params_excludes_dependents(test_plant):
+def test_tornado_category_both_excludes_dependents(test_plant):
     # water's consumption is set by hydrogen production, and
     # fixed_capital_factor by it too -- neither can be varied on its own
     test_plant.update_configuration({
@@ -654,7 +655,7 @@ def test_tornado_include_process_params_excludes_dependents(test_plant):
     })
 
     result = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP",
-                          include_process_params=True)
+                          category="both")
     factors = set(result["factors"])
 
     # Independent process parameters are ranked
@@ -681,12 +682,12 @@ def test_tornado_dependency_widens_the_driver_bar(test_plant):
     dependent = _tie_water_to_hydrogen(test_plant)
 
     dep = tornado_data(dependent, plus_minus_value=0.5, metric="LCOP",
-                       include_process_params=True)
+                       category="both")
     dep_i = dep["factors"].index("plant_products.hydrogen.production")
     dep_span = abs(dep["highs"][dep_i] - dep["lows"][dep_i])
 
     ind = tornado_data(independent, plus_minus_value=0.5, metric="LCOP",
-                       include_process_params=True)
+                       category="both")
     ind_i = ind["factors"].index("plant_products.hydrogen.production")
     ind_span = abs(ind["highs"][ind_i] - ind["lows"][ind_i])
 
@@ -709,7 +710,7 @@ def test_tornado_never_ranks_opt_in_economic_scalars(test_plant):
     })
 
     factors = tornado_data(test_plant, plus_minus_value=0.1,
-                           include_process_params=True)["factors"]
+                           category="both")["factors"]
     assert "plant_utilization" not in factors
     assert "tax_rate" not in factors
     # Vary them by name through sensitivity_data instead
@@ -757,3 +758,132 @@ def test_sensitivity_operator_hourly_rate_dict(test_plant):
     )
     y = sens["curves"][0]["y"]
     assert y[0] < y[1] < y[2]
+
+
+def test_sensitivity_actual_values(test_plant, test_plant_b):
+    def x_value(parameter, plant=test_plant):
+        data = sensitivity_data(plant, parameter, 0.2, n_points=3, metric="NPV")
+        return data["curves"][0]["x_value"], data["xlabel_value"]
+
+    x, label = x_value("plant_products.hydrogen")
+    np.testing.assert_allclose(x, [4.0, 5.0, 6.0])
+    assert label.startswith("Hydrogen price / [USD")
+
+    x, label = x_value("variable_opex_inputs.electricity.consumption")
+    np.testing.assert_allclose(x, [80.0, 100.0, 120.0])
+    assert "day" in label
+
+    x, label = x_value("interest_rate")  # fraction, as stored
+    np.testing.assert_allclose(x, [0.064, 0.08, 0.096])
+    assert label == "Interest rate / [-]"
+
+    # fc/fp give the resulting cost, computed -- so component overrides hold
+    base_fc = deepcopy(test_plant).calculate_fixed_capital()
+    x, label = x_value("fixed_capital")
+    np.testing.assert_allclose(x, base_fc * np.array([0.8, 1.0, 1.2]))
+    assert label == "Fixed capital / [USD]"
+    fixed = deepcopy(test_plant)
+    fixed.update_configuration({"fixed_capital_components": {"osbl": 1e5}})
+    x, _ = x_value("fixed_capital", fixed)
+    expected = [deepcopy(fixed).calculate_fixed_capital(fc=f)
+                for f in (0.8, 1.0, 1.2)]
+    np.testing.assert_allclose(x, expected)
+    assert not np.allclose(x, x[1] * np.array([0.8, 1.0, 1.2]))
+
+    base_fp = deepcopy(test_plant).calculate_fixed_opex()
+    x, _ = x_value("fixed_opex")
+    np.testing.assert_allclose(x, base_fp * np.array([0.8, 1.0, 1.2]))
+
+    # A plant without the parameter has no values
+    test_plant_b.variable_opex_inputs["steam"] = {"consumption": 1, "price": 1}
+    data = sensitivity_data([test_plant, test_plant_b],
+                            "variable_opex_inputs.steam", 0.2, n_points=3)
+    assert data["curves"][0]["x_value"] is None
+
+
+def test_tornado_category(test_plant):
+    def factors(**kwargs):
+        return tornado_data(deepcopy(test_plant), plus_minus_value=0.1,
+                            **kwargs)["factors"]
+
+    process = {"variable_opex_inputs.electricity.consumption",
+               "variable_opex_inputs.water.consumption",
+               "plant_products.hydrogen.production"}
+    economic = set(factors())  # default: unchanged factor list
+    assert economic == set(factors(category="economic"))
+    assert "fixed_capital" in economic and not economic & process
+    assert set(factors(category="process")) == process
+    assert set(factors(category="both")) == economic | process
+
+    # The old flag still works, with a warning
+    with pytest.warns(FutureWarning, match="category"):
+        assert set(factors(include_process_params=True)) == economic | process
+    with pytest.warns(FutureWarning):
+        assert set(factors(include_process_params=False)) == economic
+
+    with pytest.raises(ValueError, match="not both"):
+        factors(category="both", include_process_params=True)
+    with pytest.raises(ValueError, match="Invalid category"):
+        factors(category="processes")
+
+
+def test_tornado_process_category_with_nothing_to_rank(test_plant):
+    # Every process quantity set by a dependency: nothing left to vary
+    test_plant.update_configuration({
+        "variable_opex_inputs": {
+            name: {"consumption_dependency": {
+                "depends_on": {"production:hydrogen": 0.1}}}
+            for name in test_plant.variable_opex_inputs
+        },
+        "plant_products": {"hydrogen": {"production_dependency": {
+            "depends_on": {"fixed_capital_factor": 50}}}},
+    })
+    with pytest.raises(ValueError, match="no process parameters"):
+        tornado_data(test_plant, plus_minus_value=0.1, category="process")
+
+
+def test_tornado_lcop_ranks_by_product_price(test_plant):
+    # By-product revenue is subtracted in LCOP, so its price moves LCOP;
+    # the main product's price is what LCOP solves for, so it cannot
+    test_plant.update_configuration(
+        {"plant_products": {"oxygen": {"production": 400, "price": 0.5}}}
+    )
+    data = tornado_data(test_plant, plus_minus_value=0.2, metric="LCOP")
+    assert "plant_products.oxygen" in data["factors"]
+    assert "plant_products.hydrogen" not in data["factors"]
+    i = data["factors"].index("plant_products.oxygen")
+    assert data["lows"][i] > data["base_value"] > data["highs"][i]
+
+
+@pytest.mark.parametrize("rate", ["missing", {}, None, 38.11])
+def test_unset_operator_rate_uses_plant_default(test_plant, rate):
+    # The plant falls back to DEFAULT_OPERATOR_HOURLY_RATE; the tools must
+    # vary that same rate, whichever way "no rate" (or a bare one) is given
+    from openpytea.plant import DEFAULT_OPERATOR_HOURLY_RATE
+
+    config = deepcopy(test_plant.config)
+    config["equipment"] = test_plant.equipment_list
+    config.pop("operator_hourly_rate")
+    reference = Plant({**config, "operator_hourly_rate":
+                       {"rate": DEFAULT_OPERATOR_HOURLY_RATE}})
+    if rate != "missing":
+        config["operator_hourly_rate"] = rate
+    plant = Plant(config)
+
+    def tornado_bar(p):
+        d = tornado_data(p, plus_minus_value=0.3)
+        i = d["factors"].index("operator_hourly_rate")
+        return d["base_value"], d["lows"][i], d["highs"][i]
+
+    base, low, high = tornado_bar(plant)
+    np.testing.assert_allclose((base, low, high), tornado_bar(reference))
+    assert low < base < high
+
+    curve = sensitivity_data(plant, "operator_hourly_rate", 0.3,
+                             n_points=3)["curves"][0]
+    assert curve["y"][1] == pytest.approx(curve["baseline"])
+
+    mc = monte_carlo(plant, num_samples=200, batch_size=200, random_seed=1)
+    assert np.mean(mc["inputs"]["Operator hourly rate"]) == pytest.approx(
+        DEFAULT_OPERATOR_HOURLY_RATE, rel=0.1
+    )

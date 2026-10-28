@@ -98,3 +98,43 @@ dt.sig {
     color: #d32f2f;
     font-weight: 700;
 }
+
+/* Cost correlations page (the only page with a datatable): pin the
+   left sidebar to a fixed width instead of Furo's centring calc() so the
+   text no longer shifts on resize, give the remaining width to the
+   content (prose and table alike). */
+@media (min-width: 63em) {
+    body:has(table.sphinx-datatable) .sidebar-drawer {
+        width: 15em;
+        flex: none;
+    }
+}
+body:has(table.sphinx-datatable) .main {
+    min-width: 0;
+}
+body:has(table.sphinx-datatable) .content {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+}
+
+/* Table: small font. Short columns (sizes, form, year, key) stay on one
+   line; text columns wrap at a fixed minimum width so the pinned
+   Category/Type columns stay narrow and the table scrolls horizontally. */
+.dt-container table {
+    font-size: 0.75em;
+}
+.dt-container :is(th, td) {
+    white-space: nowrap;
+}
+.dt-container td:is(:nth-child(1), :nth-child(2), :nth-child(3), :nth-child(8)) {
+    white-space: normal;
+    min-width: 11em;
+}
+.dt-container td:nth-child(1) {
+    min-width: 14em;
+}
+.dt-container td:is(:nth-child(9), :nth-child(10)) {
+    white-space: normal;
+    min-width: 22em;
+}

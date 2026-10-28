@@ -99,3 +99,13 @@ def test_auto_parallel_units_unchanged_without_num_units():
         type="Compressor, centrifugal",
     )
     assert comp.purchased_cost == pytest.approx(2 * half.purchased_cost)
+
+
+def test_renamed_category_still_accepted():
+    kwargs = dict(name="C", param=500, process_type="Fluids",
+                  type="Centrifugal compressor, electric motor drive")
+    new = Equipment(category="Compressors, fans, & blowers", **kwargs)
+    with pytest.warns(FutureWarning, match="renamed"):
+        old = Equipment(category="compressors & blowers", **kwargs)
+    assert old.category == new.category
+    assert old.purchased_cost == new.purchased_cost

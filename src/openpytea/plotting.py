@@ -5,7 +5,8 @@ from scipy.stats import norm
 import matplotlib.pyplot as plt
 import numpy as np
 
-from openpytea.helpers import _default_metric_label, _tex_escape
+from openpytea.helpers import (_default_metric_label, _format_scripts,
+                                _tex_escape)
 
 
 def _latex_available():
@@ -111,6 +112,11 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     currency = data["currency"]
     pct = data["pct"]
     ylabel = data["ylabel"]
+    # Component name -> label to draw, where the two differ
+    display = data.get("display_labels", {})
+
+    def shown(lab):
+        return _format_scripts(display.get(lab, lab))
 
     side_key = "Side revenue"
 
@@ -168,15 +174,15 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
         color_map[side_key] = colors[0] if colors else cmap(0.15)
 
     if pct:
-        ax.set_ylabel(ylabel + f" / [{_tex_escape('%')}]")
+        ax.set_ylabel(_format_scripts(ylabel) + f" / [{_tex_escape('%')}]")
         plot_labels = [
-            f"{lab} ({values_sorted[0][i]:.1f}{_tex_escape('%')})"
-            if n_bars == 1 else lab
+            f"{shown(lab)} ({values_sorted[0][i]:.1f}{_tex_escape('%')})"
+            if n_bars == 1 else shown(lab)
             for i, lab in enumerate(labels_sorted)
         ]
     else:
-        ax.set_ylabel(ylabel + " / [" + currency + "]")
-        plot_labels = labels_sorted
+        ax.set_ylabel(_format_scripts(ylabel) + " / [" + currency + "]")
+        plot_labels = [shown(lab) for lab in labels_sorted]
 
     # --- Remaining components stack starting from the side-revenue
     # baseline (so the final top reads as the correct net total), drawn
@@ -207,9 +213,9 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     # hatch pattern remains visible over the region it overlaps below zero
     if has_side_rev:
         side_label = (
-            f"{side_key} ({side_values[0]:.1f}{_tex_escape('%')})"
+            f"{shown(side_key)} ({side_values[0]:.1f}{_tex_escape('%')})"
             if pct and n_bars == 1
-            else side_key
+            else shown(side_key)
         )
         side_bars = ax.bar(
             x,
@@ -239,7 +245,7 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
         ax.set_ylim(0, top * 1.1)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(xlabels)
+    ax.set_xticklabels([_format_scripts(lab) for lab in xlabels])
     left = x[0] - bar_width / 2
     right = x[-1] + bar_width / 2
     ax.set_xlim(left - 0.2, right + 0.2)
@@ -257,7 +263,8 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
     return ax.figure, ax
 
 
-def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
+def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True,
+                     x_axis="percent"):
     """
     Plot sensitivity analysis curves.
     Parameters
@@ -283,18 +290,42 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
         Default is None.
     show : bool, optional
         Whether to display the plot. Default is True.
+    x_axis : {"percent", "value"}, optional
+        ``"percent"`` (default) plots the change from the baseline in %;
+        ``"value"`` plots the parameter's actual value (``curve["x_value"]``,
+        labelled with ``data["xlabel_value"]``). For ``fixed_capital`` /
+        ``fixed_opex`` that is the resulting fixed capital / annual fixed
+        OPEX; fractions such as ``interest_rate`` are shown as stored.
     Returns
     -------
     tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
         The figure and axes containing the plotted sensitivity curves.
         When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
+    Raises
+    ------
+    ValueError
+        If ``x_axis`` is not ``"percent"`` or ``"value"``, or ``"value"``
+        is asked of data without actual values.
     Notes
     -----
+    - With ``x_axis="value"``, a plant that lacks the parameter shows as a
+        flat line at its baseline across the other plants' values, as it
+        does on the % axis.
     - Multiple curves are plotted with colors from the Set2 colormap.
     - If a new figure is created, tight_layout() is applied before showing.
     - If an existing axes is provided, canvas is redrawn instead of calling
         plt.show().
     """
+    if x_axis not in ("percent", "value"):
+        raise ValueError(
+            f"x_axis must be 'percent' or 'value', got {x_axis!r}."
+        )
+    by_value = x_axis == "value"
+    if by_value and "xlabel_value" not in data:
+        raise ValueError(
+            "x_axis='value' needs data from sensitivity_data() with actual "
+            "parameter values; rerun sensitivity_data() to get them."
+        )
 
     created_fig = None
     if ax is None:
@@ -302,18 +333,33 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
 
     line_colors = cycle(plt.cm.Set2.colors)
 
+    # A plant lacking the parameter has no values of its own; on the value
+    # axis it spans the other plants' values at its baseline, as on the % axis
+    # (sensitivity_data rejects a parameter no plant has, so spans is never
+    # empty)
+    spans = [c["x_value"] for c in data["curves"] if c["x_value"] is not None]
+    if by_value:
+        x_span = [min(np.min(s) for s in spans),
+                  max(np.max(s) for s in spans)]
+
     for curve in data["curves"]:
+        color = next(line_colors)  # same color per plant in either mode
+        x, y = (curve["x_value"] if by_value else curve["x"]), curve["y"]
+        if by_value and x is None:
+            x, y = x_span, [curve["baseline"]] * 2
         ax.plot(
-            curve["x"],
-            curve["y"],
+            x,
+            y,
             linewidth=1.2,
-            color=next(line_colors),
-            label=curve["plant"],
+            color=color,
+            label=_format_scripts(curve["plant"]),
             ls="-"
         )
 
-    ax.set_xlabel(data["xlabel"])
-    ax.set_ylabel(data["ylabel"])
+    ax.set_xlabel(
+        _format_scripts(data["xlabel_value" if by_value else "xlabel"])
+    )
+    ax.set_ylabel(_format_scripts(data["ylabel"]))
     ax.legend(loc="best")
 
     if created_fig is not None:
@@ -331,7 +377,7 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True):
 # ``_TORNADO_BASE_HEIGHT + _TORNADO_HEIGHT_PER_BAR * n``, floored at
 # ``_TORNADO_MIN_HEIGHT``. Calibrated so a nine-factor plot comes out at
 # ~2.4 in, the fixed default this replaced, while a long factor list (a
-# plant with many utilities, or ``include_process_params=True``) grows
+# plant with many utilities, or ``category="both"``) grows
 # instead of squeezing its bars together.
 _TORNADO_BASE_HEIGHT = 0.7
 _TORNADO_HEIGHT_PER_BAR = 0.19
@@ -443,10 +489,10 @@ def plot_tornado(
 
     ax.axvline(base_value, color="black", linestyle="--", linewidth=0.5)
     ax.set_yticks(y_pos)
-    ax.set_yticklabels(labels_sorted)
+    ax.set_yticklabels([_format_scripts(lab) for lab in labels_sorted])
 
     if xlabel is not None:
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(_format_scripts(xlabel))
 
     ax.legend(loc="best")
 
@@ -545,7 +591,7 @@ def plot_cash_flow(data, figsize=(3.6, 2.6), ax=None, show=True):
             cumulative,
             linewidth=1.2,
             color=color,
-            label=curve["plant"],
+            label=_format_scripts(curve["plant"]),
             zorder=3,
             linestyle="-"
         )
@@ -572,8 +618,8 @@ def plot_cash_flow(data, figsize=(3.6, 2.6), ax=None, show=True):
 
     ax.axhline(0, color="black", linewidth=0.6, zorder=2)
     ax.set_xlim(left=0)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    ax.set_xlabel(_format_scripts(xlabel))
+    ax.set_ylabel(_format_scripts(ylabel))
 
     ymin = float(np.min(np.concatenate(all_cumulative)))
     ymax = float(np.max(np.concatenate(all_cumulative)))
@@ -747,7 +793,7 @@ def plot_monte_carlo(
     if show_fit:
         _plot_normal_fit(ax, values, line_color)
 
-    ax.set_xlabel(label)
+    ax.set_xlabel(_format_scripts(label))
     ax.set_ylabel("Density")
 
     if show_fit:
@@ -821,7 +867,8 @@ def _is_process_monte_carlo_input(label):
     return normalized.endswith("consumption") or normalized.endswith("production")
 
 
-def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title):
+def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title,
+                               display_labels=None):
     """
     Build one figure of histograms (one subplot per input, 3 columns) for
     the given ``{label: samples}`` dict, with a bold suptitle. Shared by the
@@ -886,12 +933,15 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title):
                 edgecolor="black",
                 alpha=0.7,
             )
-        ax.set_title(label, fontsize=9)
+        ax.set_title(
+            _format_scripts((display_labels or {}).get(label, label)),
+            fontsize=14,
+        )
 
     for i in range(n_params, len(axes)):
         axes[i].axis("off")
 
-    fig.suptitle(title, fontsize=14, fontweight="bold")
+    fig.suptitle(_format_scripts(title), fontsize=16, fontweight="bold")
     # Reserve a top margin sized to fit the suptitle in absolute
     # inches rather than a fixed fraction of figure height -- a flat
     # fraction leaves a disproportionately large gap on tall,
@@ -976,8 +1026,11 @@ def plot_monte_carlo_inputs(
 
     if isinstance(data, dict) and "inputs" in data:
         inputs = data["inputs"]
+        # Absent from results saved before 3.2.1: keys are then shown as is
+        display_labels = data.get("display_labels")
     else:
         inputs = data
+        display_labels = None
 
     process_inputs = {
         label: arr for label, arr in inputs.items()
@@ -997,7 +1050,7 @@ def plot_monte_carlo_inputs(
             )
             return None, None
         return _plot_input_histogram_grid(
-            group_inputs, figsize, bins, hist_color, title
+            group_inputs, figsize, bins, hist_color, title, display_labels
         )
 
     groups = {
@@ -1119,7 +1172,7 @@ def plot_multiple_monte_carlo(
             linewidth=0.5,
             color=color,
             zorder=1,
-            label=name,
+            label=_format_scripts(name),
         )
 
         if show_fit:
@@ -1128,7 +1181,7 @@ def plot_multiple_monte_carlo(
     if label is None:
         label = _default_metric_label(currency, metric)
 
-    ax.set_xlabel(label)
+    ax.set_xlabel(_format_scripts(label))
     ax.set_ylabel("Probability density")
 
     handles, labels_list = ax.get_legend_handles_labels()

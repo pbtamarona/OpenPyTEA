@@ -3,6 +3,8 @@ from pathlib import Path
 import json
 import re
 
+from openpytea.plant import _operator_rate
+
 
 # HELPER FUNCTIONS
 # For plottings
@@ -22,13 +24,70 @@ def _tex_escape(symbol: str) -> str:
     return symbol
 
 
+# _digits or _{...} -> subscript; ^digits, ^sign or ^{...} -> superscript;
+# any other unescaped underscore is matched last, as a plain underscore
+_SCRIPT_RE = re.compile(
+    r"(?<!\\)(?:_(\{[^{}]*\}|\d+)|\^(\{[^{}]*\}|[+-]?\d+|[+-])|(_))"
+)
+
+
+def _format_scripts(s, underscore=None) -> str:
+    """
+    Render ``_`` and ``^`` in a display name as subscript and superscript.
+
+    ``_`` followed by digits or ``{...}`` becomes a subscript (``H_2``,
+    ``T_{in}``); ``^`` followed by digits, a sign or ``{...}`` becomes a
+    superscript (``m^3``, ``s^-1``, ``Fe^{3+}``). Any other underscore is
+    replaced by ``underscore``: by default an underscore, escaped for LaTeX
+    only when ``text.usetex`` is active (see :func:`_tex_escape`). Math
+    segments (``$...$``) are left as they are, so applying this twice
+    changes nothing.
+
+    Examples
+    --------
+    >>> _format_scripts("CO_2 capture")
+    'CO$_{\\mathrm{2}}$ capture'
+    >>> _format_scripts("m^3, x_{in}^2")
+    'm$^{\\mathrm{3}}$, x$_{\\mathrm{in}}^{\\mathrm{2}}$'
+    """
+    if underscore is None:
+        underscore = _tex_escape("_")
+
+    def script(m):
+        if m[3]:
+            return underscore
+        body = (m[1] or m[2]).strip("{}")
+        return f"${'_' if m[1] else '^'}{{\\mathrm{{{body}}}}}$"
+
+    # Keep math segments; an escaped \$ (a currency sign) delimits nothing
+    parts = re.split(r"((?<!\\)\$.*?(?<!\\)\$)", str(s))
+    s = "".join(
+        p if i % 2 else _SCRIPT_RE.sub(script, p) for i, p in enumerate(parts)
+    )
+    # Join neighbouring scripts (x_1^2) into one math segment
+    return re.sub(r"\}\$\$(?=[_^]\{)", "}", s)
+
+
+def _legacy_label(s: str) -> str:
+    """
+    The 3.2.0 label of a name: underscores outside $...$ become spaces and
+    the first character is capitalised -- no subscripts or superscripts.
+    Keys of variable_opex_data components stay on it for 3.2.x
+    compatibility; plots show :func:`_make_label` instead.
+    """
+    parts = re.split(r"(\$.*?\$)", s)
+    s = "".join(p if p.startswith("$") else p.replace("_", " ") for p in parts)
+    return s[:1].upper() + s[1:]
+
+
 def _make_label(s: str) -> str:
     """
     Convert a string to a label format by replacing underscores with spaces
     and capitalizing the first character.
 
-    Preserves LaTeX math segments (text enclosed in $...$) without
-    modification, while replacing underscores with spaces in non-math segments.
+    ``_`` and ``^`` that mark a subscript or superscript are rendered as
+    such first (see :func:`_format_scripts`). LaTeX math segments (text
+    enclosed in $...$) are preserved without modification.
 
     Parameters
     ----------
@@ -47,13 +106,10 @@ def _make_label(s: str) -> str:
     'My variable $x^2$'
     >>> _make_label("cost_per_unit")
     'Cost per unit'
+    >>> _make_label("H_2_price")
+    'H$_{\\mathrm{2}}$ price'
     """
-    parts = re.split(r"(\$.*?\$)", s)  # keep math segments
-    parts = [
-        p.replace("_", " ") if not p.startswith("$") else p
-        for p in parts
-    ]
-    s = "".join(parts)
+    s = _format_scripts(s, underscore=" ")
     return s[:1].upper() + s[1:]
 
 
@@ -96,7 +152,7 @@ def _default_metric_label(currency: str, metric: str) -> str:
     """
     metric = metric.upper()
     if metric == "LCOP":
-        return rf"Levelized cost / [{currency}$\cdot$unit$^{-1}$]"
+        return rf"Levelized cost / [{currency}$\cdot$unit$^{{-1}}$]"
     elif metric == "ROI":
         return f"Return on investment / [{_tex_escape('%')}]"
     elif metric == "NPV":
@@ -450,10 +506,8 @@ def _dependency_node_value(plant, key):
     if name == "fixed_opex_factor":
         return 1.0 if plant.fp is None else plant.fp
     if name == "operator_hourly_rate":
-        current = getattr(plant, "operator_hourly_rate", None)
-        if isinstance(current, dict):
-            return current.get("rate", 0.0)
-        return 0.0 if current is None else float(current)
+        # Same default as the plant's own labour cost calculation
+        return _operator_rate(getattr(plant, "operator_hourly_rate", None))
     return getattr(plant, name)
 
 
@@ -763,7 +817,8 @@ def _ensure_list(plants):
     return plants if isinstance(plants, (list, tuple)) else [plants]
 
 
-def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
+def _build_bar_data(components_list, xlabels, ylabel, currency, pct,
+                    display_labels=None):
     """
     Build structured data for bar chart visualization from component
     dictionaries. This function processes a list of component dictionaries
@@ -778,6 +833,8 @@ def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
         currency (str): Currency symbol or code to be used in chart display.
         pct (bool): If True, normalize all values to percentages (0-100).
             If False, keep original values.
+        display_labels (dict, optional): Component name -> label to show
+            in plots, for names that differ from how they are drawn.
     Returns:
         dict: A dictionary containing the following keys:
             - "components" (list): Original components_list.
@@ -788,6 +845,7 @@ def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
             - "ylabel" (str): The provided y-axis label.
             - "currency" (str): The provided currency.
             - "pct" (bool): The percentage flag.
+            - "display_labels" (dict): Present only when given.
     Example:
         >>> components = [{"A": 100, "B": 50}, {"A": 200, "C": 75}]
         >>> result = _build_bar_data(components, ["Q1", "Q2"],
@@ -809,7 +867,7 @@ def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
 
     labels = [all_labels for _ in components_list]
 
-    return {
+    data = {
         "components": components_list,
         "labels": labels,
         "values": values,
@@ -818,6 +876,9 @@ def _build_bar_data(components_list, xlabels, ylabel, currency, pct):
         "currency": currency,
         "pct": pct,
     }
+    if display_labels:
+        data["display_labels"] = display_labels
+    return data
 
 
 def _evaluate_metric(plant, metric, additional_capex=False):
@@ -845,43 +906,27 @@ def _evaluate_metric(plant, metric, additional_capex=False):
         AttributeError: If the plant object lacks required attributes or
             methods to calculate the requested metric.
     """
-    # ponytail: calculate_levelized_cost() called in every branch; call once before the
-    #   if-chain
-    if metric == "LCOP":
-        # Always recompute, like every other metric branch: a cached
-        # levelized_cost is never invalidated, so trusting it here
-        # de-centers sensitivity/tornado baselines after any direct
-        # plant edit
-        plant.calculate_levelized_cost()
-        return plant.levelized_cost
-
-    elif metric == "ROI":
-        plant.calculate_levelized_cost()
-        plant.calculate_roi(additional_capex=additional_capex)
-        return plant.roi
-
-    elif metric == "NPV":
-        plant.calculate_levelized_cost()
-        return plant.calculate_npv()
-
-    elif metric in ("PBT", "PAYBACK", "PAYBACK_TIME"):
-        plant.calculate_levelized_cost()
-        return plant.calculate_payback_time()
-
-    elif metric in ("SIMPLE_PBT", "SIMPLE_PAYBACK",
-                    "SIMPLE_PAYBACK_TIME"):
-        plant.calculate_levelized_cost()
-        return plant.calculate_simple_payback_time(
-            additional_capex=additional_capex
-        )
-
-    elif metric == "IRR":
-        plant.calculate_levelized_cost()
-        plant.calculate_irr()
-        return plant.irr
-
-    else:
+    metrics = {
+        "LCOP": plant._levelized_cost,
+        "ROI": lambda: plant._roi(additional_capex),
+        "NPV": plant._npv,
+        "PBT": plant._payback_time,
+        "PAYBACK": plant._payback_time,
+        "PAYBACK_TIME": plant._payback_time,
+        "SIMPLE_PBT": lambda: plant._simple_payback_time(additional_capex),
+        "SIMPLE_PAYBACK": lambda: plant._simple_payback_time(additional_capex),
+        "SIMPLE_PAYBACK_TIME":
+            lambda: plant._simple_payback_time(additional_capex),
+        "IRR": plant._irr,
+    }
+    if metric not in metrics:
         raise ValueError(f"Unsupported metric '{metric}'")
+
+    # Always rebuild: a cached cash flow is never invalidated, so trusting
+    # it would de-center sensitivity/tornado baselines after any direct
+    # plant edit
+    plant.calculate_cash_flow()
+    return metrics[metric]()
 
 
 def _evaluate_baseline_metric(plant, metric, additional_capex=False):
@@ -907,7 +952,7 @@ def _evaluate_baseline_metric(plant, metric, additional_capex=False):
     return _evaluate_metric(plant_copy, metric, additional_capex)
 
 
-def _collect_sensitivity_keys(plant, metric, include_process_params=False):
+def _collect_sensitivity_keys(plant, metric, category="economic"):
     """
     Collect sensitivity analysis keys for a given plant and metric.
     This function identifies which parameters should be included in sensitivity
@@ -917,33 +962,34 @@ def _collect_sensitivity_keys(plant, metric, include_process_params=False):
                 plant_products attributes with their respective keys.
         metric (str): The metric type for sensitivity analysis.
                     Either "LCOP" or another metric type.
-        include_process_params (bool): Whether to also return a factor for
-                    each process quantity -- every item's consumption and
-                    every product's production. Default False, which keeps
-                    the factor set to prices and economic scalars.
+        category (str): Which factors to return: "economic" (default) --
+                    prices and economic scalars; "process" -- process
+                    quantities, every item's consumption and every
+                    product's production; "both" -- all of them.
     Returns:
-        list: All sensitivity keys: the top-level keys, then the price keys
-            (for "LCOP" only variable_opex_inputs keys; for other metrics
-            both variable_opex_inputs and plant_products keys), then any
-            quantity keys.
+        list: The sensitivity keys of that category: the top-level keys,
+            then the price keys (every variable_opex_inputs item and every
+            plant_products entry, except the main product's price for
+            "LCOP": that is what LCOP solves for, so it cannot move it;
+            by-product prices do), then the quantity keys.
     Notes:
         Top-level keys always included: fixed_capital, fixed_opex,
         project_lifetime, interest_rate, operator_hourly_rate.
 
-        ``include_process_params=True`` additionally returns
+        The process quantities are
         "variable_opex_inputs.<item>.consumption" and
         "plant_products.<product>.production" for every item and product.
         These are ordinary economic drivers -- a plant's production rate
-        moves LCOP whether or not anything is tied to it -- so the flag is
-        independent of the dependency graph: it neither requires
+        moves LCOP whether or not anything is tied to it -- so ``category``
+        is independent of the dependency graph: it neither requires
         dependencies nor is implied by them.
 
         Only the *dependency* structure narrows the result, and only for
         correctness: a parameter set by a dependency has no value of its
         own to vary, so it is never a factor. That drops dependent process
-        quantities from what ``include_process_params`` would otherwise
-        add, and drops an economic scalar (e.g. "fixed_capital" when
-        ``fixed_capital_factor`` is a dependent) from the top-level keys.
+        quantities from the process factors, and drops an economic scalar
+        (e.g. "fixed_capital" when ``fixed_capital_factor`` is a dependent)
+        from the top-level keys.
     """
     top_level_keys = [
         "fixed_capital",
@@ -955,21 +1001,20 @@ def _collect_sensitivity_keys(plant, metric, include_process_params=False):
 
     var_keys = [f"variable_opex_inputs.{k}"
                 for k in plant.variable_opex_inputs]
-    prod_keys = [f"plant_products.{k}" for k in plant.plant_products]
-
-    nested = var_keys if metric == "LCOP" else (var_keys + prod_keys)
+    # Same rule as sensitivity_data: for LCOP drop only the main (first)
+    # product's price -- by-product revenue is subtracted in LCOP
+    products = list(plant.plant_products)
+    priced = products[1:] if metric == "LCOP" else products
+    nested = var_keys + [f"plant_products.{k}" for k in priced]
 
     dependents = _collect_dependency_specs(plant)
-    if not dependents and not include_process_params:
-        return top_level_keys + nested
-
-    top_level_keys = [
+    economic_keys = [
         k for k in top_level_keys
         if _sensitivity_key_node(k) not in dependents
-    ]
+    ] + nested
 
     quantity_keys = []
-    if include_process_params:
+    if category in ("process", "both"):
         quantity_keys = [
             _node_sensitivity_key(("consumption", item))
             for item in plant.variable_opex_inputs
@@ -980,7 +1025,11 @@ def _collect_sensitivity_keys(plant, metric, include_process_params=False):
             if ("production", prod) not in dependents
         ]
 
-    return top_level_keys + nested + quantity_keys
+    if category == "process":
+        return quantity_keys
+    if category == "both":
+        return economic_keys + quantity_keys
+    return economic_keys
 
 
 def _run_tornado_sensitivity(plant, keys, pm, metric,

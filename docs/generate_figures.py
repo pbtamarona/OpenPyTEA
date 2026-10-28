@@ -204,7 +204,7 @@ save(fig, "tornado_lcop")
 fig, _ = plot_tornado(tornado_data(plant=demo_plant, plus_minus_value=0.5, metric="ROI"), figsize=FIGSIZE, show=False)
 save(fig, "tornado_roi")
 fig, _ = plot_tornado(
-    tornado_data(plant=demo_plant, plus_minus_value=0.5, include_process_params=True),
+    tornado_data(plant=demo_plant, plus_minus_value=0.5, category="both"),
     figsize=(FIGSIZE[0], 3.4), show=False,
 )
 save(fig, "tornado_process")
@@ -379,12 +379,12 @@ independent_plant.project_uncertainties["fixed_capital_factor"].pop("dependency"
 
 TORNADO_TALL = (FIGSIZE[0], 3.4)
 fig, _ = plot_tornado(
-    tornado_data(plant=independent_plant, plus_minus_value=0.5, metric="ROI", include_process_params=True),
+    tornado_data(plant=independent_plant, plus_minus_value=0.5, metric="ROI", category="both"),
     figsize=TORNADO_TALL, show=False,
 )
 save(fig, "dependency_tornado_independent")
 fig, _ = plot_tornado(
-    tornado_data(plant=demo_plant, plus_minus_value=0.5, metric="ROI", include_process_params=True),
+    tornado_data(plant=demo_plant, plus_minus_value=0.5, metric="ROI", category="both"),
     figsize=TORNADO_TALL, show=False,
 )
 save(fig, "dependency_tornado_dependent")

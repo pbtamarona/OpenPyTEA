@@ -70,7 +70,7 @@ def test_plot_tornado_height_grows_with_factor_count(test_plant):
     """A longer factor list gets a taller figure, not thinner bars."""
     short = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP")
     tall = tornado_data(test_plant, plus_minus_value=0.1, metric="LCOP",
-                        include_process_params=True)
+                        category="both")
     assert len(tall["factors"]) > len(short["factors"])
 
     fig_short, _ = plot_tornado(short, show=False)
@@ -86,7 +86,7 @@ def test_plot_tornado_height_grows_with_factor_count(test_plant):
 
 def test_plot_tornado_explicit_figsize_still_wins(test_plant):
     data = tornado_data(test_plant, plus_minus_value=0.1,
-                        include_process_params=True)
+                        category="both")
     fig, _ = plot_tornado(data, figsize=(5.0, 5.0), show=False)
 
     assert tuple(fig.get_size_inches()) == (5.0, 5.0)
@@ -120,6 +120,15 @@ def test_tex_escape_follows_usetex():
         assert r"[\%]" in _default_metric_label("USD", "roi")
     finally:
         plt.rcParams["text.usetex"] = old
+
+
+def test_sensitivity_xlabel_has_no_literal_backslash(test_plant):
+    r"""With usetex off, the x label must read [$\pm$ %], not [$\pm$ \%]."""
+    for parameter in ("interest_rate",
+                      "variable_opex_inputs.electricity",
+                      "variable_opex_inputs.electricity.consumption"):
+        data = sensitivity_data(test_plant, parameter, 0.2, n_points=3)
+        assert data["xlabel"].endswith(r"[$\pm$ %]")
 
 
 def test_tornado_legend_has_no_literal_backslash(test_plant):
@@ -187,3 +196,100 @@ def test_plot_monte_carlo_sigma_label_uses_times():
     labels = [t.get_text() for t in ax.get_legend().get_texts()]
     assert r"$\times 10^{1}$" in labels[1]
     plt.close(fig)
+
+
+def test_format_scripts():
+    from openpytea.helpers import _format_scripts, _make_label
+
+    assert _format_scripts("CO_2") == r"CO$_{\mathrm{2}}$"
+    assert _format_scripts("T_{in}") == r"T$_{\mathrm{in}}$"
+    assert _format_scripts("Fe^{3+}") == r"Fe$^{\mathrm{3+}}$"
+    assert _format_scripts("x_1^2") == r"x$_{\mathrm{1}}^{\mathrm{2}}$"
+    assert _format_scripts("my_plant") == "my_plant"  # usetex off here
+    # Math and escaped currency signs are left alone; repeat is a no-op
+    label = r"Cost / [\$$\cdot$unit$^{-1}$]"
+    assert _format_scripts(label) == label
+    assert _format_scripts(_format_scripts("H_2")) == _format_scripts("H_2")
+    assert _make_label("H_2_price") == r"H$_{\mathrm{2}}$ price"
+    assert _make_label("interest_rate") == "Interest rate"
+
+
+def test_plot_names_with_scripts_render(test_plant):
+    test_plant.name = "H_2 plant^{2}"
+    test_plant.plant_products["H_2"] = test_plant.plant_products.pop(
+        "hydrogen"
+    )
+    data = direct_costs_data(test_plant)
+    fig, ax = plot_stacked_bar(data, show=False)
+    fig.canvas.draw()
+    assert ax.get_xticklabels()[0].get_text() == (
+        r"H$_{\mathrm{2}}$ plant$^{\mathrm{2}}$"
+    )
+    plt.close(fig)
+
+
+def test_plot_sensitivity_x_axis(test_plant, test_plant_b):
+    import pytest
+
+    data = sensitivity_data(test_plant, "plant_products.hydrogen", 0.2,
+                            n_points=3, metric="NPV")
+    fig, ax = plot_sensitivity(data, show=False, x_axis="value")
+    np.testing.assert_allclose(ax.lines[0].get_xdata(), [4.0, 5.0, 6.0])
+    assert ax.get_xlabel().startswith("Hydrogen price")
+    plt.close(fig)
+
+    fig, ax = plot_sensitivity(data, show=False)  # default stays percent
+    np.testing.assert_allclose(ax.lines[0].get_xdata(), [-20.0, 0.0, 20.0])
+    plt.close(fig)
+
+    with pytest.raises(ValueError, match="x_axis"):
+        plot_sensitivity(data, show=False, x_axis="values")
+
+    test_plant_b.variable_opex_inputs["steam"] = {"consumption": 1, "price": 1}
+    data = sensitivity_data([test_plant, test_plant_b],
+                            "variable_opex_inputs.steam", 0.2, n_points=3)
+    fig, ax = plot_sensitivity(data, show=False, x_axis="value")
+    assert len(ax.lines) == 2  # plant lacking steam: flat at its baseline
+    lacking = data["curves"][0]
+    np.testing.assert_allclose(ax.lines[0].get_xdata(), [0.8, 1.2])
+    np.testing.assert_allclose(ax.lines[0].get_ydata(),
+                               [lacking["baseline"]] * 2)
+    plt.close(fig)
+
+
+def test_item_keys_stay_on_3_2_0_names_and_plots_use_display_labels(
+        test_plant):
+    from openpytea import monte_carlo, variable_opex_data, plot_monte_carlo_inputs
+
+    test_plant.variable_opex_inputs["cooling_water"] = {
+        "consumption": 5, "price": 0.1, "price_uncertainty": {"std": 0.01}}
+    test_plant.variable_opex_inputs["CO_2"] = {"consumption": 5, "price": 0.2}
+
+    # 3.2.0 keys unchanged: title case for Monte Carlo, spaces for OPEX
+    mc = monte_carlo(test_plant, num_samples=50, batch_size=50,
+                     random_seed=1)
+    assert "Cooling Water price" in mc["inputs"]
+    assert "Co 2 price" in mc["inputs"]
+    assert mc["display_labels"]["Cooling Water price"] == "Cooling water price"
+    assert mc["display_labels"]["Interest rate"] == "Interest rate"
+    vo = variable_opex_data(test_plant)
+    assert {"Cooling water", "CO 2"} <= set(vo["components"][0])
+
+    # Plots draw the display labels
+    figs = plot_monte_carlo_inputs(mc, category="economic", show=False)
+    fig = figs[0] if isinstance(figs, tuple) else figs
+    titles = {ax.get_title() for ax in fig.axes}
+    assert "Cooling water price" in titles
+    assert r"CO$_{\mathrm{2}}$ price" in titles
+    plt.close("all")
+    fig, ax = plot_stacked_bar(vo, show=False)
+    legend = {t.get_text() for t in ax.get_legend().get_texts()}
+    assert r"CO$_{\mathrm{2}}$" in legend and "Cooling water" in legend
+    plt.close(fig)
+
+    # Results without display_labels (saved before 3.2.1) show the keys
+    figs = plot_monte_carlo_inputs({"inputs": mc["inputs"]},
+                                   category="economic", show=False)
+    fig = figs[0] if isinstance(figs, tuple) else figs
+    assert "Cooling Water price" in {ax.get_title() for ax in fig.axes}
+    plt.close("all")
