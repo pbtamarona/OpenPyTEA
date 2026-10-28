@@ -93,7 +93,11 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
   const fixedOpex = results.fixed_opex;
   const fixedOpexData = Object.entries(fixedOpex)
     .filter(([k, v]) => k !== "total" && typeof v === "number" && v > 0)
-    .map(([k, v]) => ({ name: k.replace(/_/g, " "), value: v as number }))
+    .map(([k, v]) => ({
+      name: ({ rent_of_land: "Rent of Land", rnd: "R&D" } as Record<string, string>)[k]
+        ?? k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      value: v as number,
+    }))
     .sort(byDesc);
 
   // Variable OPEX breakdown
@@ -198,7 +202,7 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
           <table style={{ flexShrink: 0, width: "50%", fontSize: 13 }}>
             <tbody>
               {fixedOpexData.map((d) => (
-                <tr key={d.name}><td style={{ textTransform: "capitalize", paddingRight: 12, whiteSpace: "nowrap" }}>{d.name}</td><td className="number" style={{ whiteSpace: "nowrap" }}>{fmt(d.value)}</td></tr>
+                <tr key={d.name}><td style={{ paddingRight: 12, whiteSpace: "nowrap" }}>{d.name}</td><td className="number" style={{ whiteSpace: "nowrap" }}>{fmt(d.value)}</td></tr>
               ))}
               <tr style={{ fontWeight: 700 }}><td style={{ paddingRight: 12 }}>Total</td><td className="number">{fmt(fixedOpex.total)}</td></tr>
             </tbody>
@@ -208,7 +212,7 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={fixedOpexData} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
                   <XAxis type="number" tickFormatter={(v: number) => (v / 1e3).toFixed(0) + "k"} tick={{ fontSize: 12 }} domain={[0, Math.max(...fixedOpexData.map(d => d.value)) * 1.1]} label={{ value: `Cost (${currency})`, position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
-                  <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 11, textTransform: "capitalize" } as object} />
+                  <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={(v) => fmt(Number(v))} />
                   <Bar dataKey="value" fill="#f72585" radius={[0, 4, 4, 0]} barSize={14} />
                 </BarChart>

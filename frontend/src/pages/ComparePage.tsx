@@ -4,9 +4,25 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Cell,
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
+import { fetchPlotPng } from "../api/client";
 import { nameLabel } from "../format";
 
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
+
+/** Native warning in Tauri (window.alert is suppressed in its webview). */
+async function warn(text: string, title: string) {
+  try {
+    const { isTauri } = await import("@tauri-apps/api/core");
+    if (isTauri()) {
+      const { message } = await import("@tauri-apps/plugin-dialog");
+      await message(text, { title, kind: "warning" });
+      return;
+    }
+  } catch {
+    // fall through to the browser dialog
+  }
+  window.alert(text);
+}
 
 interface Props {
   /** The project's calculated plants, always compared */
@@ -148,6 +164,24 @@ export default function ComparePage({
     }));
   }
 
+  // Library-rendered figure of the ticked plants; only when every one has
+  // its inputs to rebuild from (results-only imports get the screen render)
+  const libraryPlot = (kind: string) =>
+    plants.every((p) => p.source)
+      ? async () => {
+          if (currencies.size > 1) {
+            await warn(
+              `These plants use mixed currencies (${[...currencies].join(", ")}). ` +
+              `The figure's axis label uses the first plant's currency (${plants[0].currency}).`,
+              "Mixed currencies",
+            );
+          }
+          return fetchPlotPng(`/plots/compare/${kind}`, {
+            extra_plants: plants.map((p) => ({ ...p.source!, name: dn(p) })),
+          });
+        }
+      : undefined;
+
   const lcopBars = buildMetricBars((r) => r.metrics.levelized_cost);
   const npvBars = buildMetricBars((r) => r.metrics.npv);
   const irrBars = buildMetricBars((r) => r.metrics.irr);
@@ -256,7 +290,7 @@ export default function ComparePage({
       {capexData.length > 0 && (
         <div className="card">
           <h2>Capital Cost Breakdown ({currencyLabel})</h2>
-          <DownloadableChart filename="compare_capex" height={350}>
+          <DownloadableChart filename="compare_capex" height={350} serverPlot={libraryPlot("capital")}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={capexData} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -277,7 +311,7 @@ export default function ComparePage({
       {varOpexData.length > 0 && (
         <div className="card">
           <h2>Variable OPEX Breakdown ({currencyLabel})</h2>
-          <DownloadableChart filename="compare_variable_opex" height={350}>
+          <DownloadableChart filename="compare_variable_opex" height={350} serverPlot={libraryPlot("variable_opex")}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={varOpexData} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -299,7 +333,7 @@ export default function ComparePage({
         {/* Levelized Cost */}
         <div className="card">
           <h2>Levelized Cost</h2>
-          <DownloadableChart filename="compare_lcop" height={250}>
+          <DownloadableChart filename="compare_lcop" height={250} serverPlot={libraryPlot("levelized_cost")}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={lcopBars} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />

@@ -21,6 +21,7 @@ from openpytea.analysis import (  # noqa: E402
     fixed_capital_data,
     fixed_opex_data,
     variable_opex_data,
+    levelized_cost_data,
     sensitivity_data,
     tornado_data,
 )
@@ -36,7 +37,7 @@ from openpytea.plotting import (  # noqa: E402
 from app import state  # noqa: E402
 from app.plant_factory import require_active_plant  # noqa: E402
 from app.routers.analysis import _plants_for  # noqa: E402
-from app.schemas import SensitivityPlotIn, TornadoIn, MCPlotIn  # noqa: E402
+from app.schemas import ComparePlotIn, SensitivityPlotIn, TornadoIn, MCPlotIn  # noqa: E402
 
 router = APIRouter()
 
@@ -78,6 +79,28 @@ def stacked_plot(kind: str):
             fig, _ = plot_stacked_bar(data, show=False)
         except HTTPException:
             raise
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Plot failed: {e}")
+        return _png(fig)
+
+
+_COMPARE_DATA_FUNCS = {
+    "capital": fixed_capital_data,
+    "variable_opex": variable_opex_data,
+    "levelized_cost": levelized_cost_data,
+}
+
+
+@router.post("/compare/{kind}")
+def compare_plot(kind: str, payload: ComparePlotIn):
+    """Stacked breakdown of several plants side by side (Compare tab)."""
+    data_func = _COMPARE_DATA_FUNCS.get(kind)
+    if data_func is None:
+        raise HTTPException(status_code=404, detail=f"Unknown compare plot '{kind}'")
+    plants = _plants_for(payload)
+    with _mpl_lock:
+        try:
+            fig, _ = plot_stacked_bar(data_func(plants), show=False)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Plot failed: {e}")
         return _png(fig)

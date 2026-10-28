@@ -53,6 +53,13 @@
   --chart-grid: #2d3042;
 }
 
+/* Recharts hard-codes a white tooltip; follow the theme instead */
+.recharts-default-tooltip {
+  background: var(--card-bg) !important;
+  border-color: var(--border) !important;
+  color: var(--text);
+}
+
 /* ===== Base ===== */
 .app {
   min-height: 100vh;

@@ -458,7 +458,7 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
                     const val = typeof actual === "number" ? fmtValue(actual, shownMetric === "IRR" ? 3 : 2) : actual;
                     return (unit && tornMetric !== "IRR") ? `${val} ${unit}` : val;
                   }}
-                  labelStyle={{ fontWeight: "bold", color: "#000" }}
+                  labelStyle={{ fontWeight: "bold", color: "var(--text)" }}
                 />
                 <Legend
                   verticalAlign="bottom"
@@ -494,7 +494,7 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
                 {tornPlants.map((p, pi) => {
                   const color = isMultiTorn ? tornColor(p.pid, pi) : "#4361ee";
                   return (
-                    <Bar key={`p${pi}_low`} dataKey={`p${pi}_low`}
+                    <Bar key={`p${pi}_low`} dataKey={`p${pi}_low`} fill={color}
                          name={isMultiTorn ? `${p.name} −${shownPM * 100}%` : `−${shownPM * 100}%`}>
                       {tornChartData.map((_, i) => (
                         <Cell key={i} fill={color} fillOpacity={isMultiTorn ? 0.55 : 1} />
@@ -505,7 +505,7 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
                 {tornPlants.map((p, pi) => {
                   const color = isMultiTorn ? tornColor(p.pid, pi) : "#e63946";
                   return (
-                    <Bar key={`p${pi}_high`} dataKey={`p${pi}_high`}
+                    <Bar key={`p${pi}_high`} dataKey={`p${pi}_high`} fill={color}
                          name={isMultiTorn ? `${p.name} +${shownPM * 100}%` : `+${shownPM * 100}%`}>
                       {tornChartData.map((_, i) => <Cell key={i} fill={color} />)}
                     </Bar>
@@ -643,13 +643,13 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, isTic
                 <XAxis
                   dataKey="x"
                   tickFormatter={fmtTick}
-                  {...(byValue && chartData.length ? {
+                  {...(chartData.length ? {
                     type: "number" as const,
                     domain: ["dataMin", "dataMax"],
                     ticks: niceTicks(chartData[0].x, chartData[chartData.length - 1].x),
                   } : {})}
                   label={{ value: xLabel, position: "insideBottom", offset: -34, style: { fontWeight: "bold", fontSize: compact ? 13 : 14, fill: "#666" } }} />
-                <YAxis width={yAxisWidth} tickFormatter={fmtTick} />
+                <YAxis width={yAxisWidth} tickFormatter={fmtTick} domain={["auto", "auto"]} />
                 <Tooltip
                   labelFormatter={(v) => {
                     const x = typeof v === "number" ? v : parseFloat(String(v));
@@ -660,7 +660,7 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, isTic
                     const val = typeof v === "number" ? fmtValue(v, panel.metric === "IRR" ? 3 : 2) : v;
                     return [`${val}${unit ? ` ${unit}` : ""}`, name];
                   }}
-                  labelStyle={{ color: "#000" }}
+                  labelStyle={{ color: "var(--text)" }}
                 />
                 {(curves.length > 1 || showLegend) && <Legend verticalAlign="top" height={28} />}
                 {curves.map((c, i) => (

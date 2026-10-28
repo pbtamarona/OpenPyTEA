@@ -358,7 +358,7 @@ fn write_figure(path: String, bytes: Vec<u8>) -> Result<(), String> {
 /// bar.
 fn build_app_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let new_proj = MenuItem::with_id(app, "menu:new", "New Project", true, Some("CmdOrCtrl+N"))?;
-    let open = MenuItem::with_id(app, "menu:open", "Open…", true, Some("CmdOrCtrl+O"))?;
+    let open = MenuItem::with_id(app, "menu:open", "Open Project…", true, Some("CmdOrCtrl+O"))?;
     let save = MenuItem::with_id(app, "menu:save", "Save", true, Some("CmdOrCtrl+S"))?;
     let save_as = MenuItem::with_id(app, "menu:save-as", "Save As…", true, Some("CmdOrCtrl+Shift+S"))?;
     let export_json = MenuItem::with_id(app, "menu:export-json", "Save as JSON Files…", true, Some("CmdOrCtrl+Shift+E"))?;

@@ -271,6 +271,12 @@ class PlantInput(BaseModel):
     plant: dict
 
 
+class ComparePlotIn(BaseModel):
+    """The Compare tab's ticked plants, for a library-rendered figure."""
+    extra_plants: list[PlantInput] = Field(min_length=1, max_length=8)
+    include_active: bool = False
+
+
 class SensitivityIn(BaseModel):
     parameter: str
     plus_minus_value: float = Field(default=0.2, gt=0, le=10)
