@@ -366,8 +366,9 @@ overrides in ``fixed_capital_components`` are taken into account.
 
 When comparing several plants, each curve sits at its own values, so plants
 with different baselines appear side by side rather than stacked at 0 %. A
-plant that lacks the parameter has no values to plot: it is left out of the
-value axis with a warning (on the % axis it shows as a flat line).
+plant that lacks the parameter shows as a flat line at its baseline across
+the range the other plants cover, just as on the % axis, so it can still be
+compared against them.
 
 The values are stored in the data as well: ``curve["x_value"]`` for each
 curve and ``data["xlabel_value"]`` for the label.
