@@ -4,7 +4,8 @@
 Used by CI when a v* tag triggers a release build, so the tag is the single
 source of truth: `git tag v3.2.2` produces installers that are actually
 versioned 3.2.2 (the library's version) instead of whatever tauri.conf.json
-last said.
+last said. Release candidates become semver pre-releases (3.2.2rc1 ->
+3.2.2-rc.1).
 
     python scripts/set_version.py 3.2.2
 
@@ -58,6 +59,8 @@ def main() -> int:
     if len(sys.argv) != 2:
         raise SystemExit(f"usage: {sys.argv[0]} <version>  (e.g. 0.2.0)")
     version = sys.argv[1].lstrip("v")
+    # The library's release candidates (PEP 440, 3.2.2rc1) in semver form
+    version = re.sub(r"^(\d+\.\d+\.\d+)rc(\d+)$", r"\1-rc.\2", version)
     if not SEMVER.match(version):
         raise SystemExit(f"not a semver version: {version!r} (expected e.g. 0.2.0)")
 

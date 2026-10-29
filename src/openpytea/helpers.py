@@ -39,7 +39,8 @@ def _format_scripts(s, underscore=None) -> str:
     ``T_{in}``); ``^`` followed by digits, a sign or ``{...}`` becomes a
     superscript (``m^3``, ``s^-1``, ``Fe^{3+}``). Any other underscore is
     replaced by ``underscore``: by default an underscore, escaped for LaTeX
-    only when ``text.usetex`` is active (see :func:`_tex_escape`). Math
+    only when ``text.usetex`` is active (see :func:`_tex_escape`), and so is
+    an ampersand (``&`` or ``\\&``). Math
     segments (``$...$``) are left as they are, so applying this twice
     changes nothing.
 
@@ -59,10 +60,15 @@ def _format_scripts(s, underscore=None) -> str:
         body = (m[1] or m[2]).strip("{}")
         return f"${'_' if m[1] else '^'}{{\\mathrm{{{body}}}}}$"
 
+    # An ampersand, bare (user names, categories) or escaped (built-in
+    # labels), is escaped only for a real LaTeX run
+    amp = _tex_escape("&")
+
     # Keep math segments; an escaped \$ (a currency sign) delimits nothing
     parts = re.split(r"((?<!\\)\$.*?(?<!\\)\$)", str(s))
     s = "".join(
-        p if i % 2 else _SCRIPT_RE.sub(script, p) for i, p in enumerate(parts)
+        p if i % 2 else re.sub(r"\\?&", lambda _: amp, _SCRIPT_RE.sub(script, p))
+        for i, p in enumerate(parts)
     )
     # Join neighbouring scripts (x_1^2) into one math segment
     return re.sub(r"\}\$\$(?=[_^]\{)", "}", s)

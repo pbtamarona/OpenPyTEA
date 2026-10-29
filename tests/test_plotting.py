@@ -140,6 +140,28 @@ def test_tornado_legend_has_no_literal_backslash(test_plant):
     plt.close(fig)
 
 
+def test_ampersand_labels_follow_usetex(test_plant):
+    r"""Bare & (names, categories) and built-in \& labels: \& for LaTeX, & otherwise."""
+    from openpytea import fixed_opex_data
+    from openpytea.helpers import _format_scripts
+
+    old = plt.rcParams["text.usetex"]
+    try:
+        plt.rcParams["text.usetex"] = True
+        assert _format_scripts("Packings & adsorbents") == r"Packings \& adsorbents"
+        assert _format_scripts(r"R\&D") == r"R\&D"
+        plt.rcParams["text.usetex"] = False
+        assert _format_scripts(r"R\&D") == "R&D"
+    finally:
+        plt.rcParams["text.usetex"] = old
+
+    fig, ax = plot_stacked_bar(fixed_opex_data(test_plant), show=False)
+    labels = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert "Taxes & insurance" in labels
+    assert not any("\\" in lab for lab in labels)
+    plt.close(fig)
+
+
 def test_plot_cash_flow_accepts_round_tripped_results(test_plant):
     """Results reloaded from JSON arrive as lists, not arrays."""
     import json

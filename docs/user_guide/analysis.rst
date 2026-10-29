@@ -56,7 +56,8 @@ The five data-preparation functions and their outputs:
      - Equipment-level direct costs. A
        :class:`~openpytea.equipment.CompositeEquipment` is one segment by
        default; ``expand_composites=True`` splits it into its components
-       (labelled ``"composite / component"``).
+       (labelled ``"composite / component"``); ``by_category=True`` sums
+       the costs per equipment category.
    * - ``fixed_capital_data(plants)``
      - ISBL, OSBL, D&E, contingency (and optional additional CAPEX).
    * - ``fixed_opex_data(plants)``
@@ -77,6 +78,9 @@ draws a stacked bar chart of the breakdown. Basic usage (single plant):
 
    # Same, with composite equipment split into its components
    direct_costs_split = direct_costs_data(plants=plant, expand_composites=True)
+
+   # Grouped by equipment category (all compressors in one segment, ...)
+   direct_costs_by_category = direct_costs_data(plants=plant, by_category=True)
 
    # Fixed capital breakdown (ISBL, OSBL, D&E, Contingency;
    # include additional CAPEX events)

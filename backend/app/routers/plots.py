@@ -69,15 +69,17 @@ _STACKED_DATA_FUNCS = {
 
 
 @router.get("/stacked/{kind}")
-def stacked_plot(kind: str, pct: bool = False):
+def stacked_plot(kind: str, pct: bool = False, by_category: bool = False):
     """Stacked cost bar (direct costs / capital / fixed opex / variable opex), library-rendered."""
     data_func = _STACKED_DATA_FUNCS.get(kind)
     if data_func is None:
         raise HTTPException(status_code=404, detail=f"Unknown stacked plot '{kind}'")
     plant = _require_plant()
+    # Only direct costs can be grouped by equipment category
+    extra = {"by_category": True} if by_category and kind == "direct_costs" else {}
     with _mpl_lock:
         try:
-            data = data_func(plant, pct=pct)
+            data = data_func(plant, pct=pct, **extra)
             fig, _ = plot_stacked_bar(data, show=False)
         except HTTPException:
             raise

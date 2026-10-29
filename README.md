@@ -130,73 +130,20 @@ Software architecture and data flow of **OpenPyTEA**, illustrating the progressi
 ---
 ## 🖥️ Graphical User Interface
 
-> **Note:** The GUI is still in development and may not yet offer all the features of the Python package.
+An optional desktop app provides the full TEA workflow — equipment costing, plant configuration, results, sensitivity/tornado analysis, Monte Carlo, and multi-plant comparison — without writing Python code. No Python or Node.js required.
 
-An optional graphical interface provides the full TEA workflow — equipment costing, plant configuration, results, sensitivity/tornado analysis, Monte Carlo, and multi-plant comparison — without writing Python code. It can be installed as a standalone desktop app — installers for **Windows** (`.exe`/`.msi`) and **macOS** (`.dmg`) are available on the [Releases page](https://github.com/pbtamarona/OpenPyTEA/releases), with no Python or Node.js required — or run from source as a FastAPI + React application.
+**Download** the installer for your platform from the **[OpenPyTEA 3.2.2 release](https://github.com/pbtamarona/OpenPyTEA/releases/tag/v3.2.2)**:
 
-- **Equipment** — add, edit, and remove equipment with cost database lookup
-- **Plant Config** — configure location, financial parameters, labor, products, and variable OPEX
-- **Results** — run calculations and view metric cards, cost breakdown charts, and cash flow tables
-- **Analysis** — sensitivity plots and tornado diagrams. Sensitivity supports a **multi-panel grid** (different parameter and metric per panel, e.g. NPV vs. interest rate, ROI vs. electricity price, all in one figure) and **multi-plant overlay** (curves for every plant added on the Compare tab share the same axes for direct comparison)
-- **Monte Carlo** — uncertainty analysis with histogram distributions, fitted normal curves, and summary statistics. **Multi-plant overlay** shows distributions for several plants on the same axes, mirroring `plot_multiple_monte_carlo` from the library
-- **Compare** — side-by-side comparison of saved plants (CAPEX/OPEX breakdown bars, key metric bars). Plants imported here are also reused as the overlay set on the Analysis and Monte Carlo tabs
-- **Downloadable charts** — all plots include a download button to export as standalone PNG images with full axis labels
-- **Examples** — built-in presets from the case study notebooks for quick demonstration
-
-### Download the desktop app
-
-The easiest way to use the GUI is the **standalone desktop app** — no Python, Node, or any other tooling required. Grab the installer for your platform from the **[latest release](https://github.com/pbtamarona/OpenPyTEA/releases/latest)**:
-
-| Platform | File to download |
+| Platform | File |
 |---|---|
-| **Windows** (x64) | `OpenPyTEA_*_x64-setup.exe` (or the `.msi`) |
-| **macOS** (Apple Silicon) | `OpenPyTEA_*_aarch64.dmg` |
+| **Windows** (x64) | `OpenPyTEA_3.2.2_x64-setup.exe` (or the `.msi`) |
+| **macOS** (Apple Silicon) | `OpenPyTEA_3.2.2_aarch64.dmg` |
 
-> A Linux (`.AppImage` / `.deb`) build is planned — it works locally and in CI; we've just held it back from releases for now.
+**Install:**
+- **Windows:** run the `.exe` and follow the setup wizard. If SmartScreen shows *"Windows protected your PC"* (the app isn't code-signed), click **More info** → **Run anyway**.
+- **macOS:** open the `.dmg` and drag OpenPyTEA into **Applications**. Before the first launch, run `xattr -dr com.apple.quarantine /Applications/OpenPyTEA.app` once in Terminal (the app isn't code-signed).
 
-Each OpenPyTEA release (`v3.2.2`, …) comes with installers of the same version. For the newest build between releases, see the **[`desktop-latest`](https://github.com/pbtamarona/OpenPyTEA/releases/tag/desktop-latest)** pre-release, rebuilt on every change.
-
-> **First launch (unsigned app).** The app isn't code-signed, so the OS will warn on first run.
-> - **Windows:** SmartScreen shows *"Windows protected your PC"* → **More info** → **Run anyway**.
-> - **macOS:** clear the quarantine flag once in Terminal — `xattr -dr com.apple.quarantine /Applications/OpenPyTEA.app` — then open normally. See **[`PACKAGING.md`](PACKAGING.md)** for details and the `.openpytea` file-association steps.
-
-### Running the GUI
-
-**Two options:**
-
-1. **Standalone desktop app** — download a prebuilt installer above, or build one yourself following **[`PACKAGING.md`](PACKAGING.md)**.
-
-2. **From source, for development** (requires Python 3.10+ and Node.js):
-
-   ```bash
-   ./start.sh
-   ```
-
-   On first run the script creates a local `.venv`, installs the backend dependencies, runs `npm install`, then launches both servers and opens your browser at http://localhost:5173. Subsequent runs just start the servers. Press `Ctrl+C` to stop both. `start.sh` needs a bash shell (macOS, Linux, or Git Bash on Windows); otherwise use the manual steps below.
-
-   <details>
-   <summary><strong>Manual steps</strong> (if you'd rather run backend and frontend yourself)</summary>
-
-   ```bash
-   # Backend
-   pip install -e .
-   cd backend
-   pip install -r requirements.txt
-   PYTHONPATH=../src python3 -m uvicorn app.main:app --reload --port 8000
-
-   # Frontend (separate terminal)
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-   Then open http://localhost:5173.
-
-   </details>
-
-Click **Examples** in the header to load a case study preset and explore.
-
-For detailed architecture documentation, see `GUI_ARCHITECTURE.md`.
+Then click **Examples** in the app to load a case study and explore. To run the GUI from source, see [`GUI_ARCHITECTURE.md`](https://github.com/pbtamarona/OpenPyTEA/blob/main/GUI_ARCHITECTURE.md#how-to-run); to build the installers yourself, see [`PACKAGING.md`](https://github.com/pbtamarona/OpenPyTEA/blob/main/PACKAGING.md).
 
 ---
 ## 🧠 Core Concepts

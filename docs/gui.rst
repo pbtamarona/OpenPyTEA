@@ -1,11 +1,6 @@
 Graphical User Interface
 ========================
 
-.. note::
-
-   The GUI is still in development and may not yet offer all the
-   features of the Python package.
-
 OpenPyTEA includes a graphical user interface (GUI) that lets you perform
 a complete techno-economic assessment — equipment costing, plant
 configuration, results, sensitivity/tornado analysis, Monte Carlo, and

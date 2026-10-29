@@ -254,6 +254,7 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
   const [items, setItems] = useState<EquipmentItem[]>([]);
   // Direct cost chart as % of the total
   const [pctOn, setPctOn] = useState<Record<string, boolean>>({});
+  const [byCategory, setByCategory] = useState(false);
   const pctSet = (k: string) => (on: boolean) => setPctOn((prev) => ({ ...prev, [k]: on }));
   const [categories, setCategories] = useState<Record<string, CostDBEntry[]>>({});
   const [processTypes, setProcessTypes] = useState<string[]>([]);
@@ -443,12 +444,20 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
     setComponentEdit(null);
   };
 
-  // Direct cost breakdown chart: the table's direct costs, largest first
-  const directData = items
-    .filter((i) => i.direct_cost > 0)
-    .map((i) => ({ name: i.name, value: i.direct_cost }))
+  // Direct cost breakdown chart: the table's direct costs per equipment or
+  // summed per category (as direct_costs_data(by_category=True)), largest first
+  const directTotals = new Map<string, number>();
+  items.filter((i) => i.direct_cost > 0).forEach((i) => {
+    const key = byCategory ? i.category : i.name;
+    directTotals.set(key, (directTotals.get(key) ?? 0) + i.direct_cost);
+  });
+  const directData = [...directTotals].map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
   const directChart = pctOn.direct_costs ? asShare(directData) : directData;
+  const directQuery = new URLSearchParams({
+    ...(pctOn.direct_costs ? { pct: "true" } : {}),
+    ...(byCategory ? { by_category: "true" } : {}),
+  }).toString();
 
   return (
     <div>
@@ -515,9 +524,15 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
         <div className="card">
           <div className="card-head">
             <h2>Direct Cost Breakdown ($)</h2>
-            <PctToggle pct={!!pctOn.direct_costs} onChange={pctSet("direct_costs")} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <div className="seg-toggle" role="group" aria-label="Show each equipment or each category">
+                <button className={byCategory ? "" : "active"} onClick={() => setByCategory(false)}>Equipment</button>
+                <button className={byCategory ? "active" : ""} onClick={() => setByCategory(true)}>Category</button>
+              </div>
+              <PctToggle pct={!!pctOn.direct_costs} onChange={pctSet("direct_costs")} />
+            </div>
           </div>
-          <DownloadableChart filename="direct_costs" serverPlot={() => fetchPlotPng(`/plots/stacked/direct_costs${pctOn.direct_costs ? "?pct=true" : ""}`)} height={directData.length * 30 + 60}>
+          <DownloadableChart filename={byCategory ? "direct_costs_by_category" : "direct_costs"} serverPlot={() => fetchPlotPng(`/plots/stacked/direct_costs${directQuery ? `?${directQuery}` : ""}`)} height={directData.length * 30 + 60}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={directChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
                 <XAxis type="number" tickFormatter={pctOn.direct_costs ? fmtPct : (v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...directChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.direct_costs ? "Share of total (%)" : "Direct cost ($)", position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />

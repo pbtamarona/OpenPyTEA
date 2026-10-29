@@ -3,9 +3,9 @@ name: Build desktop apps
 # Builds the standalone OpenPyTEA desktop app for every platform on each
 # push to main that touches the app, and publishes the installers to a
 # GitHub Release. Pushes update a rolling "desktop-latest" pre-release.
-# The app shares the library's version: a final release tag (v3.2.2, not
-# v3.2.2rc1, which neither the version stamp nor the .msi accepts) attaches
-# the installers to that tag's release, the one that publishes to PyPI.
+# The app shares the library's version: a release tag (v3.2.2, or v3.2.2rc1
+# for a pre-release) attaches the installers to that tag's release, the one
+# that publishes to PyPI.
 #
 # The rolling tag is deliberately not named "latest" — Read the Docs
 # reserves that name for its own default version, and a repo-level git tag
@@ -17,7 +17,7 @@ on:
     branches: [main, standalone-package]
     # Path filters only apply to branch pushes; tags always build
     paths: [frontend/**, backend/**, src/**, scripts/**, docs/**, .github/workflows/build-desktop.yml]
-    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+    tags: ["v[0-9]+.[0-9]+.[0-9]+", "v[0-9]+.[0-9]+.[0-9]+rc[0-9]+"]
   workflow_dispatch:
 
 # Needed so the release job can create/update releases and move tags.
@@ -36,10 +36,12 @@ jobs:
             os: macos-14
             artifact: macos-arm64
             bundles: app,dmg
+            rc_bundles: app,dmg
           - label: Windows (x64)
             os: windows-latest
             artifact: windows-x64
             bundles: nsis,msi
+            rc_bundles: nsis
 
     # Linux (.deb/.AppImage) builds fine too — re-add an ubuntu leg plus the
     # apt step for webkit2gtk/appindicator when we want to ship it.
@@ -102,7 +104,9 @@ jobs:
 
       - name: Build Tauri app
         working-directory: frontend
-        run: npm run tauri build -- --bundles ${{ matrix.bundles }}
+        # The .msi only takes numeric pre-release versions, so rc tags build
+        # just the .exe installer on Windows
+        run: npm run tauri build -- --bundles ${{ (startsWith(github.ref, 'refs/tags/') && contains(github.ref_name, 'rc') && matrix.rc_bundles) || matrix.bundles }}
 
       - name: Patch macOS bundle (custom UTI + re-sign + rebuild dmg)
         if: runner.os == 'macOS'
@@ -145,7 +149,11 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
             echo "title=OpenPyTEA ${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            if [[ "${GITHUB_REF_NAME}" == *rc* ]]; then
+              echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "tag=desktop-latest" >> "$GITHUB_OUTPUT"
             echo "title=OpenPyTEA (latest build)" >> "$GITHUB_OUTPUT"
@@ -175,6 +183,8 @@ jobs:
           flags=()
           if [[ "${{ steps.meta.outputs.prerelease }}" == "true" ]]; then
             flags+=(--prerelease)
+          fi
+          if [[ "$tag" == desktop-latest ]]; then
             notes="$notes  Rolling pre-release — updated on every push to main."
           else
             # Tag pushed before its release: leave a draft, so publishing it

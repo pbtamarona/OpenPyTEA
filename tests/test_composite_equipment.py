@@ -219,6 +219,19 @@ def test_composite_in_plant_and_direct_costs_data(psa):
     assert set(expanded) == {"PSA / Vessel", "PSA / Adsorbent", "Pump"}
     assert sum(expanded.values()) == pytest.approx(sum(lumped.values()))
 
+    # By category: the composite under its own category, or split over its
+    # components' categories
+    by_cat = direct_costs_data(plant, by_category=True)["components"][0]
+    assert by_cat == pytest.approx({"Adsorption": lumped["PSA"],
+                                    "Pumps": lumped["Pump"]})
+    split = direct_costs_data(plant, expand_composites=True,
+                              by_category=True)["components"][0]
+    assert split == pytest.approx({
+        "Pressure vessels": expanded["PSA / Vessel"],
+        "Packings & adsorbents": expanded["PSA / Adsorbent"],
+        "Pumps": expanded["Pump"],
+    })
+
 
 def test_json_builds_nested_composite(psa):
     from openpytea.io import _build_equipment_list

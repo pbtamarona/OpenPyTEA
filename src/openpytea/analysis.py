@@ -30,7 +30,8 @@ from openpytea.helpers import (_make_label,
 # DATA PREPARATION (MAIN API)
 # ======================================================
 
-def direct_costs_data(plants, pct=False, expand_composites=False):
+def direct_costs_data(plants, pct=False, expand_composites=False,
+                      by_category=False):
     """
     Extract and organize direct cost data from one or more plants.
     This function aggregates direct cost information from equipment lists
@@ -49,6 +50,12 @@ def direct_costs_data(plants, pct=False, expand_composites=False):
         into its leaf components (labelled ``"Composite / component"``) using
         :meth:`~openpytea.equipment.CompositeEquipment.direct_cost_breakdown`
         instead of appearing as a single bar segment. Default is False.
+    by_category : bool, optional
+        If True, sum the direct costs per equipment ``category`` (one bar
+        segment per category) instead of listing each equipment by name.
+        A composite counts under its own category, or with
+        ``expand_composites=True`` each of its components under the
+        component's category. Default is False.
     Returns
     -------
     dict
@@ -69,6 +76,7 @@ def direct_costs_data(plants, pct=False, expand_composites=False):
     >>> plant1 = Plant(name="Plant A", currency="$")
     >>> data = direct_costs_data(plant1)
     >>> data = direct_costs_data([plant1, plant2], pct=True)
+    >>> data = direct_costs_data(plant1, by_category=True)
     """
     # ponytail: all five *_data functions repeat this wrapper; one _bar_data(plants,
     #   per_plant_fn, ylabel, pct)
@@ -84,10 +92,16 @@ def direct_costs_data(plants, pct=False, expand_composites=False):
         components = {}
         for eq in plant.equipment_list:
             if expand_composites and hasattr(eq, "direct_cost_breakdown"):
-                for label, cost in eq.direct_cost_breakdown().items():
-                    components[label] = float(cost * scale)
+                # leaves() yields the components in direct_cost_breakdown's order
+                items = [(label if not by_category else leaf.category, cost)
+                         for (_, leaf, _), (label, cost) in zip(
+                             eq.leaves(), eq.direct_cost_breakdown().items())]
             else:
-                components[eq.name] = float(eq.direct_cost * scale)
+                items = [(eq.category if by_category else eq.name,
+                          eq.direct_cost)]
+            for key, cost in items:
+                prev = components.get(key, 0.0) if by_category else 0.0
+                components[key] = prev + float(cost * scale)
         components_list.append(components)
         xlabels.append(plant.name)
 
