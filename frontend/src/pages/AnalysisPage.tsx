@@ -542,9 +542,12 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, isTic
   const ticked = (result?.curves ?? [])
     .map((c, i) => ({ ...c, pid: panel.ids[i] }))
     .filter((c) => isTicked(c.pid));
-  // A plant without the parameter has no values to put on the value axis
+  // A plant without the parameter has no values of its own; on the value
+  // axis it spans the other plants' values at its baseline, as plot_sensitivity does
   const byValue = panel.x_axis === "value";
-  const curves = byValue ? ticked.filter((c) => c.x_value) : ticked;
+  const spans = ticked.flatMap((c) => c.x_value ?? []);
+  const curves = !byValue ? ticked : ticked.flatMap((c) => c.x_value ? [c]
+    : spans.length ? [{ ...c, x_value: [Math.min(...spans), Math.max(...spans)], y: [c.baseline, c.baseline] }] : []);
   const leftOut = ticked.filter((c) => !c.x_value).map((c) => c.plant);
 
   const allY = curves.flatMap((c) => c.y).filter((v): v is number => typeof v === "number");
@@ -629,7 +632,7 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, isTic
       {result && ticked.length === 0 && <NoneTicked />}
       {result && byValue && ticked.length > 0 && leftOut.length > 0 && (
         <p className="compare-plants-empty">
-          {leftOut.join(", ")} {leftOut.length > 1 ? "have" : "has"} no {formatParam(panel.ran?.parameter ?? panel.parameter)}, so {leftOut.length > 1 ? "they are" : "it is"} left out on the value axis.
+          {leftOut.join(", ")} {leftOut.length > 1 ? "have" : "has"} no {formatParam(panel.ran?.parameter ?? panel.parameter)}, so {leftOut.length > 1 ? "they show" : "it shows"} as a flat line at {leftOut.length > 1 ? "their" : "its"} baseline on the value axis.
         </p>
       )}
       {result && chartData.length > 0 && (

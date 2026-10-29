@@ -2,10 +2,11 @@
 """Stamp a version number into every file that declares one.
 
 Used by CI when a v* tag triggers a release build, so the tag is the single
-source of truth: `git tag v0.2.0` produces installers that are actually
-versioned 0.2.0 instead of whatever tauri.conf.json last said.
+source of truth: `git tag v3.2.2` produces installers that are actually
+versioned 3.2.2 (the library's version) instead of whatever tauri.conf.json
+last said.
 
-    python scripts/set_version.py 0.2.0
+    python scripts/set_version.py 3.2.2
 
 Updates:
   - frontend/src-tauri/tauri.conf.json  (drives bundle names + app version)

@@ -1,10 +1,11 @@
 name: Build desktop apps
 
 # Builds the standalone OpenPyTEA desktop app for every platform on each
-# push to the standalone-package branch, and publishes the installers to a
-# GitHub Release. Pushes to the branch update a rolling "desktop-latest"
-# pre-release; pushing a version tag (e.g. v0.1.0) cuts a permanent
-# versioned release.
+# push to main that touches the app, and publishes the installers to a
+# GitHub Release. Pushes update a rolling "desktop-latest" pre-release.
+# The app shares the library's version: a final release tag (v3.2.2, not
+# v3.2.2rc1, which neither the version stamp nor the .msi accepts) attaches
+# the installers to that tag's release, the one that publishes to PyPI.
 #
 # The rolling tag is deliberately not named "latest" — Read the Docs
 # reserves that name for its own default version, and a repo-level git tag
@@ -13,8 +14,10 @@ name: Build desktop apps
 
 on:
   push:
-    branches: [standalone-package]
-    tags: ["v*"]
+    branches: [main, standalone-package]
+    # Path filters only apply to branch pushes; tags always build
+    paths: [frontend/**, backend/**, src/**, scripts/**, docs/**, .github/workflows/build-desktop.yml]
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
   workflow_dispatch:
 
 # Needed so the release job can create/update releases and move tags.
@@ -50,8 +53,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Tag is the single source of truth for release versions: v0.2.0
-      # stamps 0.2.0 into tauri.conf.json (bundle names, app version) before
+      # Tag is the single source of truth for release versions: v3.2.2
+      # stamps 3.2.2 into tauri.conf.json (bundle names, app version) before
       # anything builds. Branch builds keep whatever version is checked in.
       - name: Stamp version from tag
         if: startsWith(github.ref, 'refs/tags/v')
@@ -161,13 +164,25 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
+          tag="${{ steps.meta.outputs.tag }}"
+          # A library release usually exists already (created on GitHub,
+          # which publishes to PyPI): add the installers to it
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" artifacts/* --clobber
+            exit 0
+          fi
           notes="Automated build from commit ${GITHUB_SHA:0:7}."
           flags=()
           if [[ "${{ steps.meta.outputs.prerelease }}" == "true" ]]; then
             flags+=(--prerelease)
-            notes="$notes  Rolling pre-release — updated on every push to standalone-package."
+            notes="$notes  Rolling pre-release — updated on every push to main."
+          else
+            # Tag pushed before its release: leave a draft, so publishing it
+            # yourself still triggers the PyPI upload (a release made by this
+            # workflow's token would not)
+            flags+=(--draft)
           fi
-          gh release create "${{ steps.meta.outputs.tag }}" artifacts/* \
+          gh release create "$tag" artifacts/* \
             --target "${GITHUB_SHA}" \
             --title "${{ steps.meta.outputs.title }}" \
             --notes "$notes" \

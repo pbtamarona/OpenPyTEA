@@ -22,10 +22,10 @@ The desktop app is fully self-contained: no Python or Node.js required.
 Source and documentation
 ------------------------
 
-Everything about the GUI — its source code, run-from-source instructions,
-installer build process, and architecture documentation — lives on the
-`standalone-package branch
-<https://github.com/pbtamarona/OpenPyTEA/tree/standalone-package>`_ of the
-repository. The ``main`` branch does not include the GUI source files, and
-this page is intentionally only a pointer: refer to that branch for
-current, authoritative GUI information.
+The GUI's source code lives in the repository next to the library
+(``frontend/`` and ``backend/``). Run-from-source instructions are in the
+`README <https://github.com/pbtamarona/OpenPyTEA#readme>`_, the installer
+build process in
+`PACKAGING.md <https://github.com/pbtamarona/OpenPyTEA/blob/main/PACKAGING.md>`_,
+and the architecture in
+`GUI_ARCHITECTURE.md <https://github.com/pbtamarona/OpenPyTEA/blob/main/GUI_ARCHITECTURE.md>`_.

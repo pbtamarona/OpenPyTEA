@@ -154,7 +154,7 @@ The easiest way to use the GUI is the **standalone desktop app** — no Python, 
 
 > A Linux (`.AppImage` / `.deb`) build is planned — it works locally and in CI; we've just held it back from releases for now.
 
-Installers are rebuilt automatically on every change and attached to the **`latest`** pre-release; tagged versions (`v0.1.0`, …) get their own permanent release.
+Each OpenPyTEA release (`v3.2.2`, …) comes with installers of the same version. For the newest build between releases, see the **[`desktop-latest`](https://github.com/pbtamarona/OpenPyTEA/releases/tag/desktop-latest)** pre-release, rebuilt on every change.
 
 > **First launch (unsigned app).** The app isn't code-signed, so the OS will warn on first run.
 > - **Windows:** SmartScreen shows *"Windows protected your PC"* → **More info** → **Run anyway**.
@@ -172,7 +172,7 @@ Installers are rebuilt automatically on every change and attached to the **`late
    ./start.sh
    ```
 
-   On first run the script creates a local `.venv`, installs the backend dependencies, runs `npm install`, then launches both servers and opens your browser at http://localhost:5173. Subsequent runs just start the servers. Press `Ctrl+C` to stop both.
+   On first run the script creates a local `.venv`, installs the backend dependencies, runs `npm install`, then launches both servers and opens your browser at http://localhost:5173. Subsequent runs just start the servers. Press `Ctrl+C` to stop both. `start.sh` needs a bash shell (macOS, Linux, or Git Bash on Windows); otherwise use the manual steps below.
 
    <details>
    <summary><strong>Manual steps</strong> (if you'd rather run backend and frontend yourself)</summary>
