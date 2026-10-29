@@ -202,7 +202,7 @@
   display: block;
 }
 
-/* ===== Animated logo (welcome screen while loading) ===== */
+/* ===== Animated logo (welcome screen) ===== */
 .animated-logo {
   position: relative;
   aspect-ratio: 1 / 1;

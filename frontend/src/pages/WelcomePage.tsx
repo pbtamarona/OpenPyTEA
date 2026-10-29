@@ -3,15 +3,14 @@ import AppFooter from "../components/AppFooter";
 
 interface Props {
   onContinue: () => void;
-  /** True while the app is busy (e.g. backend still starting) — animates the logo. */
-  loading: boolean;
 }
 
-export default function WelcomePage({ onContinue, loading }: Props) {
+export default function WelcomePage({ onContinue }: Props) {
   return (
     <div className="welcome">
       <div className="welcome-card">
-        <AnimatedLogo animating={loading} className="welcome-logo" />
+        {/* animates until Get Started is clicked */}
+        <AnimatedLogo animating className="welcome-logo" />
         <h1 className="welcome-title">OpenPyTEA</h1>
         <p className="welcome-subtitle">
           Open-source toolkit for techno-economic assessment of chemical and energy systems
