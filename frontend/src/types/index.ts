@@ -130,6 +130,19 @@ export interface PlantConfig {
   fp: number | null;
   additional_capex_years: number[] | null;
   additional_capex_cost: number[] | null;
+  /** Fraction of fixed capital spent per construction year (sums to 1);
+      absent = the library default */
+  capex_ramp?: number[] | null;
+  /** Capacity fraction per project year (0–1); absent = the library default */
+  production_ramp?: number[] | null;
+  /** Overrides of the OSBL / D&E / contingency factors ("osbl", "de", "contingency") */
+  fixed_capital_factors?: Record<string, number | null> | null;
+  /** Component costs set directly ("osbl", "dne", "contingency") */
+  fixed_capital_components?: Record<string, number | null> | null;
+  /** Overrides of the fixed OPEX factors, incl. "working_capital" */
+  fixed_opex_factors?: Record<string, number | null> | null;
+  /** Fixed OPEX item costs set directly ("maintenance_costs", ...) */
+  fixed_opex_components?: Record<string, number | null> | null;
 }
 
 export interface CalculationResults {

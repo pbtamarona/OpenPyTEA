@@ -437,18 +437,18 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
               return fetchPlotPng("/plots/tornado", { ...tornRan!, additional_capex: false, ...req.body });
             }}
             height={Math.max(
-              300,
-              tornChartData.length * (isMultiTorn ? Math.max(40, tornPlants.length * 18) : 30) + 120,
+              220,
+              tornChartData.length * (isMultiTorn ? Math.max(40, tornPlants.length * 18) : 30) + 95,
             )}
             style={{ marginTop: 20 }}
           >
             <ResponsiveContainer>
-              <BarChart data={tornChartData} layout="vertical" margin={{ left: 160, bottom: 52 }}>
+              <BarChart data={tornChartData} layout="vertical" margin={{ top: 8, left: 0, right: 16, bottom: 42 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   type="number"
                   tickFormatter={(v: number) => fmtTick(v + tornBase)}
-                  label={{ value: tornXLabel, position: "insideBottom", offset: -34, style: { fontWeight: "bold", fontSize: 14, fill: "#666" } }}
+                  label={{ value: tornXLabel, position: "insideBottom", offset: -28, style: { fontWeight: "bold", fontSize: 14, fill: "#666" } }}
                 />
                 <YAxis type="category" dataKey="label" width={150} tick={{ fontSize: 12, fontWeight: "bold" }} />
                 <Tooltip
@@ -461,10 +461,11 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
                   labelStyle={{ fontWeight: "bold", color: "var(--text)" }}
                 />
                 <Legend
-                  verticalAlign="bottom"
+                  verticalAlign="top"
                   align="right"
                   content={() => (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "flex-end", fontSize: 12, color: "var(--text-secondary)" }}>
+                    // Top right, clear of the grid / download buttons in the corner
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "flex-end", fontSize: 12, color: "var(--text-secondary)", paddingRight: 56, paddingBottom: 8 }}>
                       {isMultiTorn
                         ? tornPlants.map((p, pi) => (
                             <span key={p.pid} style={{ display: "flex", alignItems: "center", gap: 4 }}>

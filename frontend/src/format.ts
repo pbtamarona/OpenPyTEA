@@ -88,3 +88,25 @@ export function nameLabel(name: string): string {
   const text = texToText(s);
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+/** A cost factor to up to 4 significant digits, without float noise
+    (0.30000000000000004 -> 0.3) */
+export const fmtFactor = (v: number) => String(Number(v.toPrecision(4)));
+
+/** Display name of a fixed OPEX item key ("rent_of_land" -> "Rent of Land") */
+export function fixedOpexLabel(k: string): string {
+  return ({
+    rent_of_land: "Rent of Land", rnd: "R&D", taxes_insurance: "Taxes & Insurance",
+    patents_royalties: "Patents & Royalties", distribution_selling: "Distribution & Selling",
+    interest_working_capital: "Interest on Working Capital",
+  } as Record<string, string>)[k] ?? k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Chart rows as a percentage of their total (the library's pct=True) */
+export function asShare<T extends { value: number }>(rows: T[]): T[] {
+  const total = rows.reduce((s, r) => s + r.value, 0);
+  return rows.map((r) => ({ ...r, value: total ? (r.value / total) * 100 : 0 }));
+}
+
+/** A percentage for an axis tick or tooltip: 12.5% */
+export const fmtPct = (v: number) => `${Number(v.toFixed(1))}%`;

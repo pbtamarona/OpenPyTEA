@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, type ReactNode } from "react";
+import { useRef, useCallback, useEffect, useState, type ReactNode } from "react";
 import { saveFigure } from "../save";
 
 interface Props {
@@ -21,6 +21,19 @@ export default function DownloadableChart({
 }: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
+  // Grid toggle, offered only when the chart draws a grid. Recharts adds
+  // it after measuring its container, so watch for it rather than check once.
+  const [hasGrid, setHasGrid] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
+  useEffect(() => {
+    const el = chartRef.current;
+    if (!el) return;
+    const check = () => setHasGrid(!!el.querySelector(".recharts-cartesian-grid"));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(el, { childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, []);
 
   const downloadScreenRender = useCallback(() => {
     if (!chartRef.current) return;
@@ -73,6 +86,9 @@ export default function DownloadableChart({
       }
     });
 
+    // A hidden grid stays hidden in the PNG (its display:none isn't inlined)
+    if (!showGrid) clone.querySelectorAll(".recharts-cartesian-grid").forEach((g) => g.remove());
+
     // White background
     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     rect.setAttribute("width", "100%");
@@ -97,7 +113,7 @@ export default function DownloadableChart({
       canvas.toBlob((png) => { if (png) saveFigure(png, filename); }, "image/png");
     };
     img.src = url;
-  }, [filename]);
+  }, [filename, showGrid]);
 
   const download = useCallback(async () => {
     if (serverPlot) {
@@ -116,28 +132,35 @@ export default function DownloadableChart({
   }, [serverPlot, filename, downloadScreenRender]);
 
   return (
-    <div style={{
+    <div className="chart-panel" style={{
       position: "relative", height,
       ...(maxWidth != null ? { maxWidth, marginLeft: "auto", marginRight: "auto" } : {}),
       ...style,
     }}>
+      {hasGrid && (
+        <button
+          className={`chart-tool${showGrid ? "" : " off"}`}
+          style={{ right: 34 }}
+          onClick={() => setShowGrid((v) => !v)}
+          title={showGrid ? "Hide grid lines" : "Show grid lines"}
+          aria-pressed={showGrid}
+        >
+          #
+        </button>
+      )}
       <button
+        className="chart-tool"
+        style={{ right: 6, fontSize: 17, cursor: busy ? "wait" : "pointer", opacity: busy ? 1 : undefined }}
         onClick={download}
         disabled={busy}
         title={serverPlot
           ? "Download publication figure (rendered by the OpenPyTEA library, as in Jupyter)"
           : "Download as PNG"}
-        style={{
-          position: "absolute", top: 4, right: 4, zIndex: 10,
-          background: "none", border: "none", cursor: busy ? "wait" : "pointer",
-          opacity: busy ? 1 : 0.4, padding: 4, lineHeight: 1, fontSize: 18,
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
-        onMouseLeave={(e) => { if (!busy) e.currentTarget.style.opacity = "0.4"; }}
       >
         {busy ? "⏳" : "⬇"}
       </button>
-      <div ref={chartRef} style={{ width: "100%", height: "100%" }}>
+      {/* position: relative so absolutely placed overlays stay inside the padding */}
+      <div ref={chartRef} className={showGrid ? undefined : "no-grid"} style={{ position: "relative", width: "100%", height: "100%" }}>
         {children}
       </div>
     </div>

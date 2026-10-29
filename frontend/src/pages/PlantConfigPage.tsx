@@ -267,6 +267,26 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
   const u = (field: keyof PlantConfig, value: unknown) =>
     setConfig((prev) => ({ ...prev, [field]: value }));
 
+  // Additional CAPEX is two matching lists in the library: set (or, with a
+  // null cost, remove) entry i of both; none left = no additional CAPEX
+  const setAdditionalCapex = (i: number, cost: number | null, year: number | null) =>
+    setConfig((prev) => {
+      const costs = [...(prev.additional_capex_cost ?? [])];
+      const years = [...(prev.additional_capex_years ?? [])];
+      if (cost === null || year === null) {
+        costs.splice(i, 1);
+        years.splice(i, 1);
+      } else {
+        costs[i] = cost;
+        years[i] = year;
+      }
+      return {
+        ...prev,
+        additional_capex_cost: costs.length ? costs : null,
+        additional_capex_years: costs.length ? years : null,
+      };
+    });
+
   // Variable OPEX helpers
   const addVarOpex = () => {
     const name = prompt("Variable OPEX item name (e.g., electricity):");
@@ -287,7 +307,8 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
 
   const renameVarOpex = (oldKey: string, newKey: string) => {
     const trimmed = newKey.trim();
-    if (!trimmed || trimmed === oldKey) { setEditingVarOpexKey(null); return; }
+    // A name already in use would overwrite that item: keep the old name
+    if (!trimmed || trimmed === oldKey || trimmed in config.variable_opex_inputs) { setEditingVarOpexKey(null); return; }
     setConfig((prev) => {
       const renamed = Object.fromEntries(
         Object.entries(prev.variable_opex_inputs).map(([k, v]) => (k === oldKey ? [trimmed, v] : [k, v]))
@@ -327,7 +348,7 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
 
   const renameProduct = (oldKey: string, newKey: string) => {
     const trimmed = newKey.trim();
-    if (!trimmed || trimmed === oldKey) { setEditingProductKey(null); return; }
+    if (!trimmed || trimmed === oldKey || trimmed in config.plant_products) { setEditingProductKey(null); return; }
     setConfig((prev) => {
       const renamed = Object.fromEntries(
         Object.entries(prev.plant_products).map(([k, v]) => (k === oldKey ? [trimmed, v] : [k, v]))
@@ -582,6 +603,41 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
         </div>
       </div>
 
+      {/* Additional CAPEX */}
+      <div className="card">
+        <h2>Additional Capital Cost<HelpTip id="plant.additional_capex" /></h2>
+        {(config.additional_capex_cost ?? []).length === 0 ? (
+          <p style={{ color: "#868e96", fontSize: 13 }}>No additional capital costs. Add one-off investments during the project, such as an equipment replacement.</p>
+        ) : (
+          <table style={{ width: "auto" }}>
+            <thead>
+              <tr><th>Cost ({config.currency})</th><th>Year</th><th></th></tr>
+            </thead>
+            <tbody>
+              {(config.additional_capex_cost ?? []).map((cost, i) => {
+                const year = config.additional_capex_years?.[i] ?? 1;
+                const outside = year < 1 || year > config.project_lifetime;
+                return (
+                  <tr key={i}>
+                    <td><input type="number" min={0} value={cost} onChange={(e) => setAdditionalCapex(i, +e.target.value, year)} style={{ width: 140 }} /></td>
+                    <td>
+                      <input
+                        type="number" min={1} max={config.project_lifetime} step={1} value={year}
+                        onChange={(e) => setAdditionalCapex(i, cost, Math.round(+e.target.value))}
+                        title={outside ? `Outside the project lifetime (1–${config.project_lifetime}), so it is ignored` : undefined}
+                        style={{ width: 70, borderColor: outside ? "var(--error-text)" : undefined }}
+                      />
+                    </td>
+                    <td><button className="btn-danger" onClick={() => setAdditionalCapex(i, null, null)}>Remove</button></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+        <button className="btn-primary" style={{ marginTop: 12 }} onClick={() => setAdditionalCapex((config.additional_capex_cost ?? []).length, 0, config.project_lifetime)}>+ Add Cost</button>
+      </div>
+
       {/* Products */}
       <div className="card">
         <h2>Plant Products<HelpTip id="plant.plant_products" /></h2>
@@ -603,15 +659,16 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
                       <input
                         value={editingProductName}
                         onChange={(e) => setEditingProductName(e.target.value)}
+                        onBlur={() => renameProduct(key, editingProductName)}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") renameProduct(key, editingProductName);
+                          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                           if (e.key === "Escape") setEditingProductKey(null);
                         }}
                         autoFocus
                         style={{ width: 130 }}
                       />
                     ) : (
-                      <strong>{key}</strong>
+                      <button className="value-edit" style={{ fontWeight: 700 }} title="Click to rename" onClick={() => { setEditingProductKey(key); setEditingProductName(key); }}>{key}</button>
                     )}
                   </td>
                   <td><input type="number" value={val.production ?? 0} onChange={(e) => updateProduct(key, "production", +e.target.value)} style={{ width: 100 }} /></td>
@@ -626,12 +683,7 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
                       uncertaintyPicker({ kind: "quantity", root: "plant_products", key }, val.production_uncertainty ?? null)
                     )}
                   </td>
-                  <td style={{ display: "flex", gap: 6 }}>
-                    {editingProductKey === key ? (
-                      <button className="btn-primary" onClick={() => renameProduct(key, editingProductName)}>Done</button>
-                    ) : (
-                      <button className="btn-primary" onClick={() => { setEditingProductKey(key); setEditingProductName(key); }}>Edit</button>
-                    )}
+                  <td>
                     <button className="btn-danger" onClick={() => removeProduct(key)}>Remove</button>
                   </td>
                 </tr>
@@ -663,15 +715,16 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
                       <input
                         value={editingVarOpexName}
                         onChange={(e) => setEditingVarOpexName(e.target.value)}
+                        onBlur={() => renameVarOpex(key, editingVarOpexName)}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") renameVarOpex(key, editingVarOpexName);
+                          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                           if (e.key === "Escape") setEditingVarOpexKey(null);
                         }}
                         autoFocus
                         style={{ width: 130 }}
                       />
                     ) : (
-                      <strong>{key}</strong>
+                      <button className="value-edit" style={{ fontWeight: 700 }} title="Click to rename" onClick={() => { setEditingVarOpexKey(key); setEditingVarOpexName(key); }}>{key}</button>
                     )}
                   </td>
                   <td><input type="number" value={val.consumption ?? 0} onChange={(e) => updateVarOpex(key, "consumption", +e.target.value)} style={{ width: 100 }} /></td>
@@ -686,12 +739,7 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
                       uncertaintyPicker({ kind: "quantity", root: "variable_opex_inputs", key }, val.consumption_uncertainty ?? null)
                     )}
                   </td>
-                  <td style={{ display: "flex", gap: 6 }}>
-                    {editingVarOpexKey === key ? (
-                      <button className="btn-primary" onClick={() => renameVarOpex(key, editingVarOpexName)}>Done</button>
-                    ) : (
-                      <button className="btn-primary" onClick={() => { setEditingVarOpexKey(key); setEditingVarOpexName(key); }}>Edit</button>
-                    )}
+                  <td>
                     <button className="btn-danger" onClick={() => removeVarOpex(key)}>Remove</button>
                   </td>
                 </tr>

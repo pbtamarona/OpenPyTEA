@@ -2,8 +2,12 @@ import { useEffect, useState } from "react";
 import {
   getEquipment, addEquipment, updateEquipment, deleteEquipment,
   getCostDBCategories, getProcessTypes, getMaterials,
-  importEquipment, exportEquipmentInput, exportJsonResults,
+  importEquipment, exportEquipmentInput, exportJsonResults, fetchPlotPng,
 } from "../api/client";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import DownloadableChart from "../components/DownloadableChart";
+import PctToggle from "../components/PctToggle";
+import { asShare, fmtPct } from "../format";
 import type { EquipmentItem, EquipmentInput, CostDBEntry, ProjectOverview } from "../types";
 import PlantPicker from "../components/PlantPicker";
 import HelpTip from "../components/HelpTip";
@@ -248,6 +252,9 @@ interface Props {
 
 export default function EquipmentPage({ setError, setNotice, markDirty, project, onSwitchPlant }: Props) {
   const [items, setItems] = useState<EquipmentItem[]>([]);
+  // Direct cost chart as % of the total
+  const [pctOn, setPctOn] = useState<Record<string, boolean>>({});
+  const pctSet = (k: string) => (on: boolean) => setPctOn((prev) => ({ ...prev, [k]: on }));
   const [categories, setCategories] = useState<Record<string, CostDBEntry[]>>({});
   const [processTypes, setProcessTypes] = useState<string[]>([]);
   const [materials, setMaterials] = useState<string[]>([]);
@@ -436,6 +443,13 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
     setComponentEdit(null);
   };
 
+  // Direct cost breakdown chart: the table's direct costs, largest first
+  const directData = items
+    .filter((i) => i.direct_cost > 0)
+    .map((i) => ({ name: i.name, value: i.direct_cost }))
+    .sort((a, b) => b.value - a.value);
+  const directChart = pctOn.direct_costs ? asShare(directData) : directData;
+
   return (
     <div>
       <PlantPicker project={project} onSwitch={onSwitchPlant} hint="the equipment list below belongs to the selected plant" />
@@ -495,6 +509,26 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
           </table>
         )}
       </div>
+
+      {/* Direct cost breakdown */}
+      {directData.length > 0 && (
+        <div className="card">
+          <div className="card-head">
+            <h2>Direct Cost Breakdown ($)</h2>
+            <PctToggle pct={!!pctOn.direct_costs} onChange={pctSet("direct_costs")} />
+          </div>
+          <DownloadableChart filename="direct_costs" serverPlot={() => fetchPlotPng(`/plots/stacked/direct_costs${pctOn.direct_costs ? "?pct=true" : ""}`)} height={directData.length * 30 + 60}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={directChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
+                <XAxis type="number" tickFormatter={pctOn.direct_costs ? fmtPct : (v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...directChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.direct_costs ? "Share of total (%)" : "Direct cost ($)", position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
+                <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 12 }} />
+                <Tooltip formatter={(v) => (pctOn.direct_costs ? fmtPct(Number(v)) : fmt(Number(v)))} />
+                <Bar dataKey="value" fill="#f77f00" radius={[0, 4, 4, 0]} barSize={14} />
+              </BarChart>
+            </ResponsiveContainer>
+          </DownloadableChart>
+        </div>
+      )}
 
       {pendingImport && (
         <div className="modal-overlay" onClick={() => setPendingImport(null)}>

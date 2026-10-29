@@ -23,7 +23,9 @@
   --overlay-bg: rgba(0,0,0,.4);
   --accent: #4361ee;
   --accent-hover: #3a56d4;
-  --chart-grid: #e9ecef;
+  --chart-grid: #dde3ee;
+  --chart-panel-bg: linear-gradient(160deg, #f8faff 0%, #eef2fb 100%);
+  --chart-panel-border: #e3e8f3;
 }
 
 [data-theme="dark"] {
@@ -50,8 +52,31 @@
   --overlay-bg: rgba(0,0,0,.6);
   --accent: #5b7cfa;
   --accent-hover: #4a6aef;
-  --chart-grid: #2d3042;
+  --chart-grid: #39406a;
+  --chart-panel-bg: linear-gradient(160deg, #232a47 0%, #1a1f36 100%);
+  --chart-panel-border: #2c3354;
 }
+
+/* Panel behind every chart (DownloadableChart) */
+.chart-panel {
+  /* padding added around the chart's given height, not taken out of it
+     (small charts, e.g. a single revenue bar, have no room to spare) */
+  box-sizing: content-box;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--chart-panel-bg);
+  border: 1px solid var(--chart-panel-border);
+}
+.chart-panel .recharts-cartesian-grid line { stroke: var(--chart-grid); }
+.chart-panel .no-grid .recharts-cartesian-grid { display: none; }
+.chart-tool {
+  position: absolute; top: 6px; z-index: 10;
+  padding: 2px 5px; border: none; border-radius: 4px; background: none;
+  color: var(--text-muted); font-size: 15px; line-height: 1;
+  cursor: pointer; opacity: 0.6;
+}
+.chart-tool:hover:not(:disabled) { opacity: 1; color: var(--accent); }
+.chart-tool.off { text-decoration: line-through; }
 
 /* Recharts hard-codes a white tooltip; follow the theme instead */
 .recharts-default-tooltip {
@@ -856,6 +881,50 @@ td input[type="number"] {
   pointer-events: none;
 }
 .help-bubble.above { transform: translate(-50%, -100%); }
+
+/* Card title with a control on the right (e.g. the Value / % toggle) */
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+.card-head h2 { margin: 0; }
+.seg-toggle { display: inline-flex; border: 1px solid var(--input-border); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+.seg-toggle button {
+  padding: 3px 12px;
+  border: none;
+  background: var(--input-bg);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+.seg-toggle button + button { border-left: 1px solid var(--input-border); }
+.seg-toggle button.active { background: var(--accent); color: #fff; }
+
+/* Click-to-edit cost factor (Results ▸ Capital Costs) */
+.factor-chip {
+  min-width: 44px;
+  padding: 1px 8px;
+  border: 1px dashed var(--input-border);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.factor-chip:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.factor-chip.custom { border-style: solid; border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.factor-chip.locked { display: inline-block; border-style: solid; cursor: default; color: var(--text-muted); }
+.factor-chip-input { width: 72px; padding: 1px 6px; font-size: 12px; }
+/* A cost amount that can be set directly: reads as a number, edits on click */
+.value-edit {
+  padding: 0;
+  border: none;
+  border-bottom: 1px dashed transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.value-edit:hover:not(:disabled) { border-bottom-color: var(--accent); color: var(--accent); }
+.value-edit.custom { color: var(--accent); border-bottom: 1px solid var(--accent); }
 .help-bubble-more {
   margin-top: 6px;
   font-size: 11px;

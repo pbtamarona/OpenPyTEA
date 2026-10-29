@@ -34,6 +34,10 @@ const GUI: Record<string, HelpEntry> = {
     text: "Monte Carlo distribution of the daily production / consumption (production_uncertainty / consumption_uncertainty).",
     doc: MC_KEYS,
   },
+  "plant.additional_capex": {
+    text: "One-off capital costs during the project (e.g. a replacement or a catalyst change): additional_capex_cost with the project year it is paid in (additional_capex_years, from 1). Charged in the cash flow in that year but never depreciated; years outside the project lifetime are ignored.",
+    doc: "user_guide/plant.html#configuration-reference",
+  },
   "plant.dependencies": {
     text: "Tie a parameter to others: dependent = Σ weight × parent + offset. A dependent is never sampled or varied on its own; Monte Carlo, sensitivity and tornado propagate its parents through the graph.",
     doc: `${ANALYSIS}#dependencies`,

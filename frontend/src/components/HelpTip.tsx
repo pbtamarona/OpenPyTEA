@@ -5,14 +5,18 @@ import { openDocs } from "../docs";
 
 interface Props {
   /** Key into the help map (help/help.ts), e.g. "plant.interest_rate". */
-  id: string;
+  id?: string;
+  /** Text to show instead of a help-map entry (line breaks kept) */
+  text?: string;
+  /** Icon character; "?" by default */
+  icon?: string;
 }
 
 /** A small (?) that shows the input's documentation on hover/focus and
     opens the matching docs section on click. Renders nothing when the
     key has no help text. */
-export default function HelpTip({ id }: Props) {
-  const help = getHelp(id);
+export default function HelpTip({ id, text, icon = "?" }: Props) {
+  const help = text ? { text, doc: undefined } : id ? getHelp(id) : undefined;
   const ref = useRef<HTMLSpanElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number; above: boolean } | null>(null);
   if (!help) return null;
@@ -52,13 +56,13 @@ export default function HelpTip({ id }: Props) {
           }
         }}
       >
-        ?
+        {icon}
       </span>
       {pos &&
         createPortal(
           <div
             className={`help-bubble ${pos.above ? "above" : "below"}`}
-            style={{ left: pos.left, top: pos.top }}
+            style={{ left: pos.left, top: pos.top, ...(text && { whiteSpace: "pre-line", maxWidth: 440 }) }}
             role="tooltip"
           >
             {help.text}

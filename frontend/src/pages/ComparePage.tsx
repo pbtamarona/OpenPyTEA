@@ -1,11 +1,14 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { ComparedPlant, CalculationResults } from "../types";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Cell,
+  type TooltipContentProps,
 } from "recharts";
+import type { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
 import DownloadableChart from "../components/DownloadableChart";
 import { fetchPlotPng } from "../api/client";
-import { nameLabel } from "../format";
+import { fixedOpexLabel, fmtPct, nameLabel } from "../format";
+import PctToggle from "../components/PctToggle";
 
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
 
@@ -45,6 +48,9 @@ export default function ComparePage({
   projectPlants, notCalculated, plants: imported, hidden, onToggle, colorIndex, onRemove, onImport, setError,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  // Breakdown charts shown as % of each plant's total, by chart
+  const [pctOn, setPctOn] = useState<Record<string, boolean>>({});
+  const pctSet = (k: string) => (on: boolean) => setPctOn((prev) => ({ ...prev, [k]: on }));
   const all = [...projectPlants, ...imported];
   // Only the ticked plants are compared
   const plants = all.filter((p) => !hidden.has(p.id));
@@ -123,6 +129,7 @@ export default function ComparePage({
   // Build grouped chart data
   function buildGrouped(
     extractor: (r: CalculationResults) => Record<string, number>,
+    label: (key: string) => string = nameLabel,
   ): { category: string; [k: string]: string | number }[] {
     const allKeys = new Set<string>();
     plants.forEach((p) => {
@@ -130,7 +137,7 @@ export default function ComparePage({
     });
     return Array.from(allKeys)
       .map((key) => {
-        const row: Record<string, string | number> = { category: nameLabel(key) };
+        const row: Record<string, string | number> = { category: label(key) };
         let total = 0;
         plants.forEach((p) => {
           const val = extractor(p.results)[key] ?? 0;
@@ -152,6 +159,20 @@ export default function ComparePage({
   }));
 
   const varOpexData = buildGrouped((r) => r.variable_opex.breakdown);
+  const fixedOpexData = buildGrouped(
+    (r) => Object.fromEntries(Object.entries(r.fixed_opex).filter(([k]) => k !== "total")),
+    fixedOpexLabel,
+  );
+
+  // Grouped rows as % of each plant's own total (the library's pct=True)
+  const asPlantShare = (rows: { category: string; [k: string]: string | number }[]) => {
+    const totals = new Map(plants.map((p) => [dn(p), rows.reduce((t, r) => t + Number(r[dn(p)] ?? 0), 0)]));
+    return rows.map((r) => {
+      const out = { ...r };
+      totals.forEach((t, k) => { out[k] = t ? (Number(r[k] ?? 0) / t) * 100 : 0; });
+      return out;
+    });
+  };
 
   // Single-metric comparison data
   function buildMetricBars(
@@ -166,10 +187,10 @@ export default function ComparePage({
 
   // Library-rendered figure of the ticked plants; only when every one has
   // its inputs to rebuild from (results-only imports get the screen render)
-  const libraryPlot = (kind: string) =>
+  const libraryPlot = (kind: string, pct = false) =>
     plants.every((p) => p.source)
       ? async () => {
-          if (currencies.size > 1) {
+          if (currencies.size > 1 && !pct) {
             await warn(
               `These plants use mixed currencies (${[...currencies].join(", ")}). ` +
               `The figure's axis label uses the first plant's currency (${plants[0].currency}).`,
@@ -178,9 +199,24 @@ export default function ComparePage({
           }
           return fetchPlotPng(`/plots/compare/${kind}`, {
             extra_plants: plants.map((p) => ({ ...p.source!, name: dn(p) })),
+            pct,
           });
         }
       : undefined;
+
+  // The bars are coloured per plant (Cell), which the default tooltip can't
+  // see, so write the value in the hovered bar's colour
+  const metricTooltip = (show: (v: number) => string) =>
+    ({ active, payload, label }: TooltipContentProps<ValueType, NameType>) => {
+      const item = payload?.[0];
+      if (!active || !item) return null;
+      return (
+        <div className="recharts-default-tooltip" style={{ padding: 10, border: "1px solid", whiteSpace: "nowrap" }}>
+          <p style={{ margin: 0 }}>{label}</p>
+          <p style={{ margin: 0, paddingTop: 4, color: item.payload?.fill }}>value : {show(Number(item.value))}</p>
+        </div>
+      );
+    };
 
   const lcopBars = buildMetricBars((r) => r.metrics.levelized_cost);
   const npvBars = buildMetricBars((r) => r.metrics.npv);
@@ -289,15 +325,18 @@ export default function ComparePage({
       {/* CAPEX breakdown */}
       {capexData.length > 0 && (
         <div className="card">
-          <h2>Capital Cost Breakdown ({currencyLabel})</h2>
-          <DownloadableChart filename="compare_capex" height={350} serverPlot={libraryPlot("capital")}>
+          <div className="card-head">
+            <h2>Capital Cost ({currencyLabel})</h2>
+            <PctToggle pct={!!pctOn.capital} onChange={pctSet("capital")} />
+          </div>
+          <DownloadableChart filename="compare_capex" height={350} serverPlot={libraryPlot("capital", !!pctOn.capital)}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={capexData} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
+              <BarChart data={pctOn.capital ? asPlantShare(capexData) : capexData} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="category" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={(v: number) => fmtCompact(v)} />
-                <Tooltip formatter={(v) => fmt(Number(v))} />
-                <Legend />
+                <YAxis tickFormatter={(v: number) => (pctOn.capital ? fmtPct(v) : fmtCompact(v))} />
+                <Tooltip formatter={(v) => (pctOn.capital ? fmtPct(Number(v)) : fmt(Number(v)))} />
+                <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: 8 }} />
                 {plants.map((p) => (
                   <Bar key={p.id} dataKey={dn(p)} fill={colorOf(p)} radius={[4, 4, 0, 0]} />
                 ))}
@@ -307,18 +346,23 @@ export default function ComparePage({
         </div>
       )}
 
+      {/* Variable and fixed OPEX side by side (stacked on narrow windows) */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 20 }}>
       {/* Variable OPEX breakdown */}
       {varOpexData.length > 0 && (
         <div className="card">
-          <h2>Variable OPEX Breakdown ({currencyLabel})</h2>
-          <DownloadableChart filename="compare_variable_opex" height={350} serverPlot={libraryPlot("variable_opex")}>
+          <div className="card-head">
+            <h2>Annual Variable OPEX ({currencyLabel})</h2>
+            <PctToggle pct={!!pctOn.variable_opex} onChange={pctSet("variable_opex")} />
+          </div>
+          <DownloadableChart filename="compare_variable_opex" height={400} serverPlot={libraryPlot("variable_opex", !!pctOn.variable_opex)}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={varOpexData} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
+              <BarChart data={pctOn.variable_opex ? asPlantShare(varOpexData) : varOpexData} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="category" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={(v: number) => fmtCompact(v)} />
-                <Tooltip formatter={(v) => fmt(Number(v))} />
-                <Legend />
+                <XAxis dataKey="category" tick={{ fontSize: 11 }} angle={-35} textAnchor="end" height={70} interval={0} />
+                <YAxis tickFormatter={(v: number) => (pctOn.variable_opex ? fmtPct(v) : fmtCompact(v))} />
+                <Tooltip formatter={(v) => (pctOn.variable_opex ? fmtPct(Number(v)) : fmt(Number(v)))} />
+                <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: 8 }} />
                 {plants.map((p) => (
                   <Bar key={p.id} dataKey={dn(p)} fill={colorOf(p)} radius={[4, 4, 0, 0]} />
                 ))}
@@ -327,6 +371,32 @@ export default function ComparePage({
           </DownloadableChart>
         </div>
       )}
+
+      {/* Fixed OPEX breakdown */}
+      {fixedOpexData.length > 0 && (
+        <div className="card">
+          <div className="card-head">
+            <h2>Annual Fixed OPEX ({currencyLabel})</h2>
+            <PctToggle pct={!!pctOn.fixed_opex} onChange={pctSet("fixed_opex")} />
+          </div>
+          <DownloadableChart filename="compare_fixed_opex" height={400} serverPlot={libraryPlot("fixed_opex", !!pctOn.fixed_opex)}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={pctOn.fixed_opex ? asPlantShare(fixedOpexData) : fixedOpexData} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="category" tick={{ fontSize: 11 }} angle={-35} textAnchor="end" height={70} interval={0} />
+                <YAxis tickFormatter={(v: number) => (pctOn.fixed_opex ? fmtPct(v) : fmtCompact(v))} />
+                <Tooltip formatter={(v) => (pctOn.fixed_opex ? fmtPct(Number(v)) : fmt(Number(v)))} />
+                <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: 8 }} />
+                {plants.map((p) => (
+                  <Bar key={p.id} dataKey={dn(p)} fill={colorOf(p)} radius={[4, 4, 0, 0]} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </DownloadableChart>
+        </div>
+      )}
+
+      </div>
 
       {/* Key metrics comparison */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
@@ -339,7 +409,7 @@ export default function ComparePage({
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(v: number) => v.toFixed(2)} />
-                <Tooltip formatter={(v) => fmt(Number(v))} />
+                <Tooltip content={metricTooltip(fmt)} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                   {lcopBars.map((entry, i) => (
                     <Cell key={i} fill={entry.fill} />
@@ -359,7 +429,7 @@ export default function ComparePage({
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(v: number) => fmtCompact(v)} />
-                <Tooltip formatter={(v) => fmt(Number(v))} />
+                <Tooltip content={metricTooltip(fmt)} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                   {npvBars.map((entry, i) => (
                     <Cell key={i} fill={entry.fill} />
@@ -379,7 +449,7 @@ export default function ComparePage({
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(v: number) => (v * 100).toFixed(1) + "%"} />
-                <Tooltip formatter={(v) => pct(Number(v))} />
+                <Tooltip content={metricTooltip(pct)} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                   {irrBars.map((entry, i) => (
                     <Cell key={i} fill={entry.fill} />

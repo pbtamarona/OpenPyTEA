@@ -18,6 +18,7 @@ from fastapi import APIRouter, HTTPException  # noqa: E402
 from fastapi.responses import Response  # noqa: E402
 
 from openpytea.analysis import (  # noqa: E402
+    direct_costs_data,
     fixed_capital_data,
     fixed_opex_data,
     variable_opex_data,
@@ -60,6 +61,7 @@ def _require_plant():
 
 
 _STACKED_DATA_FUNCS = {
+    "direct_costs": direct_costs_data,
     "capital": fixed_capital_data,
     "fixed_opex": fixed_opex_data,
     "variable_opex": variable_opex_data,
@@ -67,15 +69,15 @@ _STACKED_DATA_FUNCS = {
 
 
 @router.get("/stacked/{kind}")
-def stacked_plot(kind: str):
-    """Stacked cost bar (capital / fixed opex / variable opex), library-rendered."""
+def stacked_plot(kind: str, pct: bool = False):
+    """Stacked cost bar (direct costs / capital / fixed opex / variable opex), library-rendered."""
     data_func = _STACKED_DATA_FUNCS.get(kind)
     if data_func is None:
         raise HTTPException(status_code=404, detail=f"Unknown stacked plot '{kind}'")
     plant = _require_plant()
     with _mpl_lock:
         try:
-            data = data_func(plant)
+            data = data_func(plant, pct=pct)
             fig, _ = plot_stacked_bar(data, show=False)
         except HTTPException:
             raise
@@ -87,6 +89,7 @@ def stacked_plot(kind: str):
 _COMPARE_DATA_FUNCS = {
     "capital": fixed_capital_data,
     "variable_opex": variable_opex_data,
+    "fixed_opex": fixed_opex_data,
     "levelized_cost": levelized_cost_data,
 }
 
@@ -100,7 +103,7 @@ def compare_plot(kind: str, payload: ComparePlotIn):
     plants = _plants_for(payload)
     with _mpl_lock:
         try:
-            fig, _ = plot_stacked_bar(data_func(plants), show=False)
+            fig, _ = plot_stacked_bar(data_func(plants, pct=payload.pct), show=False)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Plot failed: {e}")
         return _png(fig)

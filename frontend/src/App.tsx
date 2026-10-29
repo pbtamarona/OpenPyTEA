@@ -918,6 +918,7 @@ function App() {
             setResults={setResults}
             setError={setError}
             setNotice={setNotice}
+            markDirty={markDirty}
             project={project}
             onSwitchPlant={handleSwitchPlant}
           />

@@ -275,6 +275,8 @@ class ComparePlotIn(BaseModel):
     """The Compare tab's ticked plants, for a library-rendered figure."""
     extra_plants: list[PlantInput] = Field(min_length=1, max_length=8)
     include_active: bool = False
+    # Each bar as percentages of its total
+    pct: bool = False
 
 
 class SensitivityIn(BaseModel):
