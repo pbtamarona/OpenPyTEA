@@ -35,7 +35,7 @@ def set_json_version(path: Path, version: str) -> None:
     data = json.loads(path.read_text(encoding="utf-8"))
     data["version"] = version
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    print(f"✓ {path.relative_to(REPO_ROOT)} → {version}")
+    print(f"{path.relative_to(REPO_ROOT)} -> {version}")
 
 
 def set_cargo_version(path: Path, version: str) -> None:
@@ -52,7 +52,7 @@ def set_cargo_version(path: Path, version: str) -> None:
     if n != 1:
         raise SystemExit(f"no package version line found in {path}")
     path.write_text(new_text, encoding="utf-8")
-    print(f"✓ {path.relative_to(REPO_ROOT)} → {version}")
+    print(f"{path.relative_to(REPO_ROOT)} -> {version}")
 
 
 def main() -> int:

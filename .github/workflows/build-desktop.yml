@@ -1,8 +1,8 @@
 name: Build desktop apps
 
 # Builds the standalone OpenPyTEA desktop app for every platform on each
-# push to main that touches the app, and publishes the installers to a
-# GitHub Release. Pushes update a rolling "desktop-latest" pre-release.
+# release tag and publishes the installers to that tag's GitHub Release. A
+# manual run (workflow_dispatch) updates a rolling "desktop-latest" pre-release.
 # The app shares the library's version: a release tag (v3.2.2, or v3.2.2rc1
 # for a pre-release) attaches the installers to that tag's release, the one
 # that publishes to PyPI.
@@ -14,9 +14,11 @@ name: Build desktop apps
 
 on:
   push:
-    branches: [main, standalone-package]
-    # Path filters only apply to branch pushes; tags always build
-    paths: [frontend/**, backend/**, src/**, scripts/**, docs/**, .github/workflows/build-desktop.yml]
+    # Branch builds of desktop-latest are paused so release builds don't
+    # queue behind them; run the workflow by hand (Actions > Run workflow)
+    # for one. To resume, restore:
+    #   branches: [main]
+    #   paths: [frontend/**, backend/**, src/**, scripts/**, docs/**, .github/workflows/build-desktop.yml]
     tags: ["v[0-9]+.[0-9]+.[0-9]+", "v[0-9]+.[0-9]+.[0-9]+rc[0-9]+"]
   workflow_dispatch:
 
@@ -185,7 +187,7 @@ jobs:
             flags+=(--prerelease)
           fi
           if [[ "$tag" == desktop-latest ]]; then
-            notes="$notes  Rolling pre-release — updated on every push to main."
+            notes="$notes  Rolling pre-release — updated by manual builds of main."
           else
             # Tag pushed before its release: leave a draft, so publishing it
             # yourself still triggers the PyPI upload (a release made by this
