@@ -642,6 +642,7 @@ The table below lists the valid ``material`` strings and their factors
 :math:`f_m`. Costs are relative to carbon steel (= 1.0).
 
 *Source: Towler & Sinnott (2022)*
+
 *EDF rows (316 welded/machined, glass-reinforced plastic, exotic material): Aromada, Eldrup & Øi (2021), Table 4.*
 
 .. list-table::
@@ -690,6 +691,10 @@ Towler & Sinnott table — it's added here, set equal to
 ``"304 stainless steel"`` since that's the most common general-purpose
 grade. This is also the value used in ``cost_correlations.csv`` for
 rows whose ``default material`` is unspecified-grade stainless steel.
+
+The ``"(welded)"`` and ``"(machined)"`` rows of 316 stainless steel follow
+the EDF method; plain ``"316 stainless steel"`` keeps the Towler & Sinnott
+value, equal to the machined one.
 
 .. _process-factors:
 
