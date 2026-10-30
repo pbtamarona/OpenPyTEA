@@ -31,6 +31,7 @@ maintainers = [
 [project.urls]
 Homepage = "https://github.com/pbtamarona/OpenPyTEA"
 Documentation = "https://openpytea.readthedocs.io"
+"Desktop app" = "https://github.com/pbtamarona/OpenPyTEA/releases/latest"
 Changelog = "https://github.com/pbtamarona/OpenPyTEA/releases"
 Issues = "https://github.com/pbtamarona/OpenPyTEA/issues"
 

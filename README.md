@@ -19,6 +19,9 @@ https://openpytea.readthedocs.io
 **For some case-study examples, please check the `examples` folder:**
 https://github.com/pbtamarona/OpenPyTEA/tree/main/examples
 
+**To use OpenPyTEA without writing code, download the desktop app for Windows or macOS** (installing is explained in the Graphical User Interface section below):
+https://github.com/pbtamarona/OpenPyTEA/releases/tag/v3.2.2
+
 ---
 ## 🎓 Workshop
 
