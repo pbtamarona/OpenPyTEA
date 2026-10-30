@@ -518,6 +518,9 @@ class Equipment:
         "Nickel": 1.7,
         "Inconel": 1.7,
         "316 stainless steel (welded)": 1.75,
+        # EDF (Aromada et al. 2021) doesn't define "exotic
+        # material", so titanium or zirconium aren't
+        # mapped to it
         "Exotic material (machined)": 1.75,
         "Exotic material (welded)": 2.5,
     }

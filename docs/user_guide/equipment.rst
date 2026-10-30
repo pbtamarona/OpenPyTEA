@@ -696,6 +696,10 @@ The ``"(welded)"`` and ``"(machined)"`` rows of 316 stainless steel follow
 the EDF method; plain ``"316 stainless steel"`` keeps the Towler & Sinnott
 value, equal to the machined one.
 
+The EDF source doesn't define what counts as ``"Exotic material"``, so
+specific materials such as titanium or zirconium aren't linked to it;
+choose it for your own material only if you judge the factor fits.
+
 .. _process-factors:
 
 Process installation factors
