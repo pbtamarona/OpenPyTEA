@@ -371,7 +371,7 @@ class Equipment:
         Values are dicts with factors: fer, fp, fi, fel, fc, fs, fl.
     material_factors : dict
         Material type multipliers mapping material names to cost factors
-        (1.0 to 1.7).
+        (1.0 to 2.5).
 
     Parameters
     ----------
@@ -510,11 +510,16 @@ class Equipment:
         "Stainless steel": 1.3,
         "304 stainless steel": 1.3,
         "316 stainless steel": 1.3,
+        "316 stainless steel (machined)": 1.3,
+        "Glass-reinforced plastic": 1.4,
         "321 stainless steel": 1.5,
         "Hastelloy C": 1.55,
         "Monel": 1.65,
         "Nickel": 1.7,
         "Inconel": 1.7,
+        "316 stainless steel (welded)": 1.75,
+        "Exotic material (machined)": 1.75,
+        "Exotic material (welded)": 2.5,
     }
 
     def __init__(
