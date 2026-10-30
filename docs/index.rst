@@ -96,8 +96,8 @@ Source code, issue tracker, and contributions:
       :link: gui
       :link-type: doc
 
-      Run TEA interactively without writing code. **Still in active development
-      — not all features are available yet.**
+      Run TEA interactively without writing code, in the desktop app for
+      Windows and macOS.
 
 Key features
 ------------
@@ -107,7 +107,7 @@ Key features
 * **Extensive financial metrics** — NPV, IRR, ROI, levelized cost, payback time, and full cash-flow tables
 * **Multiple depreciation methods** — straight-line, declining-balance, MACRS
 * **Sensitivity & uncertainty** — one-way sensitivity, tornado diagrams, Monte Carlo simulation
-* **Graphical user interface** — installable desktop app (or run from source) for no-code analysis *(work in progress)**
+* **Graphical user interface** — installable desktop app (or run from source) for no-code analysis
 * **Reproducible workflows** — JSON-based configuration files and result export
 * **Research-oriented design** — easy integration with other frameworks (optimization, LCA, etc.)
 
@@ -130,6 +130,7 @@ Contents
    user_guide/plant
    user_guide/analysis
    user_guide/io_workflow
+   gui_development
 
 .. toctree::
    :maxdepth: 1

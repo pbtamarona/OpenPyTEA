@@ -27,6 +27,7 @@ examples in action.
    plant
    analysis
    io_workflow
+   ../gui_development
 
 Overview of the workflow
 ------------------------

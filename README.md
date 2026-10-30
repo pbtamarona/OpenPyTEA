@@ -143,7 +143,7 @@ An optional desktop app provides the full TEA workflow — equipment costing, pl
 - **Windows:** run the `.exe` and follow the setup wizard. If SmartScreen shows *"Windows protected your PC"* (the app isn't code-signed), click **More info** → **Run anyway**.
 - **macOS:** open the `.dmg` and drag OpenPyTEA into **Applications**. Before the first launch, run `xattr -dr com.apple.quarantine /Applications/OpenPyTEA.app` once in Terminal (the app isn't code-signed).
 
-Then click **Examples** in the app to load a case study and explore. To run the GUI from source, see [`GUI_ARCHITECTURE.md`](https://github.com/pbtamarona/OpenPyTEA/blob/main/GUI_ARCHITECTURE.md#how-to-run); to build the installers yourself, see [`PACKAGING.md`](https://github.com/pbtamarona/OpenPyTEA/blob/main/PACKAGING.md).
+Then click **Examples** in the app to load a case study and explore. To run the GUI from source, see the [GUI page of the docs](https://openpytea.readthedocs.io/en/latest/gui.html#running-from-source); to build the installers yourself, see [GUI development](https://openpytea.readthedocs.io/en/latest/gui_development.html).
 
 ---
 ## 🧠 Core Concepts

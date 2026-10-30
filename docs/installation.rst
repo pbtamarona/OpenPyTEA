@@ -103,21 +103,9 @@ Verify installation
    import openpytea
    print(openpytea.__version__)
 
-Web GUI (Work in progress)
-------------------
+Desktop app (GUI)
+-----------------
 
-The interactive web GUI requires additional setup. See :doc:`gui` for full
-instructions. **Please note, the GUI is still in active development and not 
-all features are available yet.**
-
-.. code-block:: bash
-
-   # Backend (FastAPI)
-   cd backend
-   pip install -r requirements.txt
-   uvicorn app.main:app --reload
-
-   # Frontend (React + Vite) — in a separate terminal
-   cd frontend
-   npm install
-   npm run dev
+The graphical interface is installed separately, as a desktop app for
+Windows and macOS that needs no Python. See :doc:`gui` for the download,
+installation, and running it from source.
