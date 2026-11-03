@@ -184,7 +184,7 @@
 }
 
 .welcome-card {
-  max-width: 640px;
+  max-width: 1040px;
   width: 100%;
   background: #1c1e2a;
   border: 1px solid #2d3042;
@@ -195,11 +195,35 @@
   color: #fff;
 }
 
+/* Logo on the left, feature list on the right; stacked when narrow */
+.welcome-columns {
+  display: grid;
+  grid-template-columns: minmax(220px, 360px) 1fr;
+  gap: 40px;
+  align-items: center;
+  margin: 0 0 24px;
+}
+
 .welcome-logo {
-  width: 180px;
+  width: 100%;
+  max-width: 360px;
   height: auto;
-  margin: 0 auto 16px;
+  margin: 0 auto;
   display: block;
+}
+
+/* Short windows (the app's minimum is 1024 × 700): no scrolling */
+@media (max-height: 780px) {
+  .welcome-card { padding-top: 28px; padding-bottom: 28px; }
+  .welcome-subtitle { margin-bottom: 16px; }
+  .welcome-columns { margin-bottom: 16px; }
+  .welcome-logo { max-width: 300px; }
+}
+
+@media (max-width: 760px) {
+  .welcome-card { padding: 32px 24px; }
+  .welcome-columns { grid-template-columns: 1fr; gap: 16px; }
+  .welcome-logo { max-width: 200px; }
 }
 
 /* ===== Animated logo (welcome screen) ===== */
@@ -267,7 +291,7 @@
 .welcome-features {
   list-style: none;
   padding: 0;
-  margin: 0 0 24px;
+  margin: 0;
   text-align: left;
 }
 
