@@ -149,6 +149,19 @@ An optional desktop app provides the full TEA workflow — equipment costing, pl
 Then click **Examples** in the app to load a case study and explore. To run the GUI from source, see the [GUI page of the docs](https://openpytea.readthedocs.io/en/latest/gui.html#running-from-source); to build the installers yourself, see [GUI development](https://openpytea.readthedocs.io/en/latest/gui_development.html).
 
 ---
+
+## 🤖 AI Assistants (MCP Server)
+
+OpenPyTEA includes an [MCP](https://modelcontextprotocol.io) server, so AI assistants such as Claude Code or Claude Desktop can cost equipment, evaluate plants, and run sensitivity, tornado and Monte Carlo analyses with the library:
+
+```bash
+pip install "openpytea[mcp]"
+claude mcp add openpytea -- openpytea-mcp
+```
+
+See the [MCP page of the docs](https://openpytea.readthedocs.io/en/latest/mcp.html) for the tools and for other clients.
+
+---
 ## 🧠 Core Concepts
 
 ### 1. **Equipment-level costing**

@@ -149,5 +149,6 @@ Contents
    examples
    tutorials
    gui
+   mcp
    contributing
    citation
