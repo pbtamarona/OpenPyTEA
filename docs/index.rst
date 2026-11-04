@@ -99,6 +99,13 @@ Source code, issue tracker, and contributions:
       Run TEA interactively without writing code, in the desktop app for
       Windows and macOS.
 
+   .. grid-item-card:: :octicon:`dependabot` AI Assistants (MCP)
+      :link: mcp
+      :link-type: doc
+
+      Let Claude or another AI assistant cost equipment, evaluate plants
+      and run analyses with OpenPyTEA through its MCP server.
+
 Key features
 ------------
 
@@ -108,6 +115,7 @@ Key features
 * **Multiple depreciation methods** — straight-line, declining-balance, MACRS
 * **Sensitivity & uncertainty** — one-way sensitivity, tornado diagrams, Monte Carlo simulation
 * **Graphical user interface** — installable desktop app (or run from source) for no-code analysis
+* **AI assistant integration** — an MCP server lets Claude and other assistants run TEAs and draw the figures
 * **Reproducible workflows** — JSON-based configuration files and result export
 * **Research-oriented design** — easy integration with other frameworks (optimization, LCA, etc.)
 

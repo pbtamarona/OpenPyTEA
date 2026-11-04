@@ -28,13 +28,26 @@ import json
 import math
 import os
 import re
+import threading
 from copy import deepcopy
 from importlib import resources
 from importlib.metadata import version
+from io import BytesIO
+from pathlib import Path
 
 import numpy as np
 
-from openpytea.analysis import monte_carlo, sensitivity_data, tornado_data
+from openpytea.analysis import (
+    cash_flow_data,
+    direct_costs_data,
+    fixed_capital_data,
+    fixed_opex_data,
+    levelized_cost_data,
+    monte_carlo,
+    sensitivity_data,
+    tornado_data,
+    variable_opex_data,
+)
 from openpytea.equipment import COST_DB_DF, Equipment
 from openpytea.helpers import _collect_sensitivity_keys
 from openpytea.io import _build_equipment_list
@@ -464,12 +477,16 @@ def run_tornado(plant_name, plus_minus_value=0.2, metric="LCOP",
     })
 
 
-def run_monte_carlo(plant_name, num_samples=20_000, random_seed=None,
-                    additional_capex=False):
-    """
-    Monte Carlo uncertainty analysis for a session plant, using the
-    uncertainty ranges in its configuration; returns summary statistics.
-    """
+def _prices_set(plant):
+    """True when every product has a price (needed for NPV, ROI, PBT)."""
+    return all(
+        isinstance(p, dict) and p.get("price") is not None
+        for p in plant.plant_products.values()
+    )
+
+
+def _monte_carlo(plant_name, num_samples, random_seed, additional_capex):
+    """Run a Monte Carlo simulation and keep it for the plot tools."""
     plant = _get_plant(plant_name)
     num_samples = int(num_samples)
     if not 100 <= num_samples <= MAX_MC_SAMPLES:
@@ -483,10 +500,20 @@ def run_monte_carlo(plant_name, num_samples=20_000, random_seed=None,
         additional_capex=additional_capex,
         random_seed=random_seed,
     )
-    prices_set = all(
-        isinstance(p, dict) and p.get("price") is not None
-        for p in plant.plant_products.values()
-    )
+    _SESSION[plant_name]["monte_carlo"] = result
+    return result
+
+
+def run_monte_carlo(plant_name, num_samples=20_000, random_seed=None,
+                    additional_capex=False):
+    """
+    Monte Carlo uncertainty analysis for a session plant, using the
+    uncertainty ranges in its configuration; returns summary statistics.
+    """
+    plant = _get_plant(plant_name)
+    result = _monte_carlo(plant_name, num_samples, random_seed,
+                          additional_capex)
+    prices_set = _prices_set(plant)
     metrics = {}
     for name, values in result["metrics"].items():
         if name != "LCOP" and not prices_set:
@@ -514,6 +541,259 @@ def run_monte_carlo(plant_name, num_samples=20_000, random_seed=None,
         "inputs": inputs,
         "notes": notes,
     })
+
+
+# ---------------------------------------------------------------------------
+# Plots
+# ---------------------------------------------------------------------------
+
+# pyplot is not thread-safe, and the server runs tools in worker threads
+_PLOT_LOCK = threading.Lock()
+SAVE_FORMATS = (".png", ".pdf", ".svg", ".jpg", ".jpeg", ".eps")
+
+_BREAKDOWNS = {
+    "direct_costs": direct_costs_data,
+    "fixed_capital": fixed_capital_data,
+    "fixed_opex": fixed_opex_data,
+    "variable_opex": variable_opex_data,
+    "levelized_cost": levelized_cost_data,
+}
+
+
+def _plants(plant_names):
+    if isinstance(plant_names, str):
+        plant_names = [plant_names]
+    if not plant_names:
+        raise ValueError("Give at least one plant name.")
+    return [_get_plant(name) for name in plant_names]
+
+
+def _save_path(save_to, stem=None):
+    """``save_to`` as a path, with ``_<stem>`` added for multi-figure plots."""
+    path = Path(save_to).expanduser()
+    if path.suffix.lower() not in SAVE_FORMATS:
+        raise ValueError(
+            f"save_to must end in one of {', '.join(SAVE_FORMATS)}."
+        )
+    if stem:
+        path = path.with_name(f"{path.stem}_{stem}{path.suffix}")
+    return path
+
+
+def _render(make_figures, save_to=None, dpi=200):
+    """
+    Draw the figures ``make_figures()`` returns (a list of ``(stem, fig)``)
+    and return them as PNG bytes, plus the paths of the files saved when
+    ``save_to`` is set (at 600 dpi for raster formats, as the library's
+    saved figures are).
+    """
+    import matplotlib.pyplot as plt
+
+    if save_to:
+        _save_path(save_to)  # check the extension before any work
+    images, saved = [], []
+    with _PLOT_LOCK:
+        figures = make_figures()
+        try:
+            for stem, fig in figures:
+                buf = BytesIO()
+                fig.savefig(buf, format="png", dpi=dpi, bbox_inches="tight")
+                images.append(buf.getvalue())
+                if save_to:
+                    path = _save_path(
+                        save_to, stem if len(figures) > 1 else None
+                    )
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    fig.savefig(path, dpi=600, bbox_inches="tight")
+                    saved.append(str(path.resolve()))
+        finally:
+            for _, fig in figures:
+                plt.close(fig)
+    return images, saved
+
+
+def _plot_result(images, saved, **info):
+    out = {"images": images, **info}
+    if saved:
+        out["saved_to"] = saved
+    return out
+
+
+def plot_costs(plant_names, breakdown="levelized_cost", pct=False,
+               by_category=False, save_to=None, dpi=200):
+    """
+    A stacked-bar cost breakdown of one or more session plants (one bar per
+    plant): direct costs, fixed capital, fixed or variable OPEX, or the
+    levelized cost.
+    """
+    from openpytea.plotting import plot_stacked_bar
+
+    if breakdown not in _BREAKDOWNS:
+        raise ValueError(
+            f"breakdown must be one of {', '.join(_BREAKDOWNS)}."
+        )
+    plants = _plants(plant_names)
+    kwargs = {"pct": pct}
+    if breakdown == "direct_costs":
+        kwargs["by_category"] = by_category
+    data = _BREAKDOWNS[breakdown](plants, **kwargs)
+    images, saved = _render(
+        lambda: [(breakdown, plot_stacked_bar(data, show=False)[0])],
+        save_to, dpi,
+    )
+    return _plot_result(images, saved, plot=breakdown,
+                        plants=[p.name for p in plants])
+
+
+def plot_cash_flow(plant_names, save_to=None, dpi=200):
+    """The cumulative cash flow diagram of one or more session plants."""
+    from openpytea.plotting import plot_cash_flow as plot
+
+    plants = _plants(plant_names)
+    data = cash_flow_data(plants)
+    images, saved = _render(
+        lambda: [("cash_flow", plot(data, show=False)[0])], save_to, dpi
+    )
+    return _plot_result(images, saved, plot="cash_flow",
+                        plants=[p.name for p in plants])
+
+
+def plot_sensitivity(plant_names, parameter, plus_minus_value=0.2,
+                     metric="LCOP", n_points=21, x_axis="percent",
+                     additional_capex=False, save_to=None, dpi=200):
+    """A metric against one parameter, for one or more session plants."""
+    from openpytea.plotting import plot_sensitivity as plot
+
+    if x_axis not in ("percent", "value"):
+        raise ValueError("x_axis must be 'percent' or 'value'.")
+    plants = _plants(plant_names)
+    data = sensitivity_data(
+        plants,
+        parameter=parameter,
+        plus_minus_value=plus_minus_value,
+        n_points=max(3, min(int(n_points), 101)),
+        metric=_metric(metric),
+        additional_capex=additional_capex,
+    )
+    images, saved = _render(
+        lambda: [("sensitivity",
+                  plot(data, show=False, x_axis=x_axis)[0])],
+        save_to, dpi,
+    )
+    return _plot_result(
+        images, saved, plot="sensitivity", plants=[p.name for p in plants],
+        parameter=data["parameter"], metric=data["metric"],
+        baselines={c["plant"]: c["baseline"] for c in data["curves"]},
+    )
+
+
+def plot_tornado(plant_name, plus_minus_value=0.2, metric="LCOP",
+                 category="economic", additional_capex=False, save_to=None,
+                 dpi=200):
+    """The tornado chart of a session plant."""
+    from openpytea.plotting import plot_tornado as plot
+
+    plant = _get_plant(plant_name)
+    if category not in ("economic", "process", "both"):
+        raise ValueError("category must be 'economic', 'process' or 'both'.")
+    data = tornado_data(
+        plant,
+        plus_minus_value=plus_minus_value,
+        metric=_metric(metric),
+        category=category,
+        additional_capex=additional_capex,
+    )
+    images, saved = _render(
+        lambda: [("tornado", plot(data, show=False)[0])], save_to, dpi
+    )
+    return _plot_result(
+        images, saved, plot="tornado", plant=plant.name,
+        metric=data["metric"], base_value=data["base_value"],
+    )
+
+
+def _mc_result(plant_name, num_samples, random_seed):
+    """The plant's last Monte Carlo result, or a new run when asked for."""
+    _get_plant(plant_name)
+    stored = _SESSION[plant_name].get("monte_carlo")
+    if num_samples is None and stored is not None:
+        return stored
+    return _monte_carlo(plant_name, num_samples or 20_000, random_seed,
+                        False)
+
+
+def plot_monte_carlo(plant_names, metric="LCOP", num_samples=None,
+                     random_seed=None, show_fit=True, save_to=None,
+                     dpi=200):
+    """
+    Monte Carlo histogram of a metric, one plant or several overlaid. Uses
+    each plant's last run_monte_carlo result unless num_samples is given
+    (or the plant has none yet).
+    """
+    from openpytea.plotting import (plot_monte_carlo as plot,
+                                    plot_multiple_monte_carlo)
+
+    metric = _metric(metric)
+    if metric == "IRR":
+        raise ValueError(
+            "Monte Carlo covers LCOP, NPV, ROI and PBT, not IRR."
+        )
+    plants = _plants(plant_names)
+    if metric != "LCOP":
+        unpriced = [p.name for p in plants if not _prices_set(p)]
+        if unpriced:
+            raise ValueError(
+                f"{metric} needs a price on every product; missing for: "
+                f"{', '.join(unpriced)}."
+            )
+    results = [_mc_result(p.name, num_samples, random_seed) for p in plants]
+
+    def figures():
+        if len(results) == 1:
+            fig = plot(results[0], metric=metric, show_fit=show_fit,
+                       show=False)[0]
+        else:
+            fig = plot_multiple_monte_carlo(
+                results, metric=metric, show_fit=show_fit, show=False
+            )[0]
+        return [(f"monte_carlo_{metric.lower()}", fig)]
+
+    images, saved = _render(figures, save_to, dpi)
+    return _plot_result(
+        images, saved, plot="monte_carlo", metric=metric,
+        plants=[p.name for p in plants],
+        stats={r["name"]: _stats(r["metrics"][metric]) for r in results},
+        num_samples={r["name"]: r["num_samples"] for r in results},
+    )
+
+
+def plot_monte_carlo_inputs(plant_name, category="both", num_samples=None,
+                            random_seed=None, save_to=None, dpi=200):
+    """Histograms of the inputs a Monte Carlo run sampled."""
+    from openpytea.plotting import plot_monte_carlo_inputs as plot
+
+    if category not in ("economic", "process", "both"):
+        raise ValueError("category must be 'economic', 'process' or 'both'.")
+    result = _mc_result(plant_name, num_samples, random_seed)
+    groups = ("process", "economic") if category == "both" else (category,)
+
+    def figures():
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            out = plot(result, category=category, show=False)
+        # out is (fig, axes) per group, flattened; None for an empty group
+        return [
+            (group, fig) for group, fig in zip(groups, out[::2])
+            if fig is not None
+        ]
+
+    images, saved = _render(figures, save_to, dpi)
+    if not images:
+        raise ValueError(f"No {category} inputs were sampled.")
+    return _plot_result(images, saved, plot="monte_carlo_inputs",
+                        plant=plant_name, category=category)
 
 
 INPUT_FORMAT_GUIDE = """\
@@ -572,7 +852,10 @@ read the input format (get_input_format); cost equipment
 (search_cost_correlations, cost_equipment); evaluate a plant
 (evaluate_plant or load_example) to get CAPEX, OPEX, the levelized cost of
 the main product (LCOP), NPV, IRR and payback; then run_sensitivity,
-run_tornado or run_monte_carlo on it by plant name. To change a plant,
+run_tornado or run_monte_carlo on it by plant name. The plot_* tools draw
+the library's figures (cost breakdowns, cash flow, sensitivity, tornado,
+Monte Carlo) as images, for one plant or several to compare, and can save
+them to a file (save_to). To change a plant,
 fetch its inputs with get_plant_config, edit them and call evaluate_plant
 again. Fractions (rates, utilization, plus_minus_value) are 0-1, e.g. 0.2
 for +/-20%. Report the currency and the unit basis with any number.
@@ -586,8 +869,10 @@ def build_server():
 
     from pydantic import Field
 
+    import matplotlib
+
     try:
-        from mcp.server.mcpserver import MCPServer
+        from mcp.server.mcpserver import Image, MCPServer
         from mcp.server.mcpserver.exceptions import ToolError
         from mcp.types import ToolAnnotations
     except ImportError as exc:  # pragma: no cover
@@ -595,6 +880,9 @@ def build_server():
             "The OpenPyTEA MCP server needs the 'mcp' package (version 2 or "
             'later): pip install "openpytea[mcp]"'
         ) from exc
+
+    # Figures are only ever rendered to files/bytes, from worker threads
+    matplotlib.use("Agg")
 
     server = MCPServer(
         name="openpytea",
@@ -612,21 +900,36 @@ def build_server():
         open_world_hint=False,
     )
 
-    def tool(annotations):
-        """Register ``fn`` as a tool; library errors reach the model."""
+    def tool(annotations, image=False):
+        """
+        Register ``fn`` as a tool; library errors reach the model. With
+        ``image``, ``fn`` returns a plot result (PNG bytes under
+        ``"images"``), sent as images followed by the rest as JSON text.
+        """
         def register(fn):
             @functools.wraps(fn)
             def call(*args, **kwargs):
                 try:
-                    return fn(*args, **kwargs)
+                    result = fn(*args, **kwargs)
                 except ToolError:
                     raise
                 except (ValueError, KeyError, TypeError) as exc:
                     raise ToolError(str(exc)) from exc
+                if not image:
+                    return result
+                images = result.pop("images")
+                return [Image(data=png, format="png") for png in images] + [
+                    json.dumps(_jsonable(result), indent=2)
+                ]
+            if image:
+                call.__annotations__ = {
+                    **fn.__annotations__, "return": list[Any]
+                }
             # the wrappers end in "_" so as not to shadow the module-level
             # functions they call
             server.tool(name=fn.__name__.rstrip("_"),
-                        annotations=annotations)(call)
+                        annotations=annotations,
+                        structured_output=False if image else None)(call)
             return fn
         return register
 
@@ -771,6 +1074,122 @@ def build_server():
         sampled inputs."""
         return run_monte_carlo(plant_name, num_samples, random_seed,
                                additional_capex)
+
+    PlantNames = Annotated[
+        list[str],
+        Field(min_length=1, description="One or more session plant names; "
+                                        "several are drawn side by side."),
+    ]
+    SaveTo = Annotated[str | None, Field(
+        description="Also save the figure to this file (.png, .pdf, .svg, "
+                    ".jpg or .eps; raster formats at 600 dpi). Absolute "
+                    "path, or relative to the server's working directory."
+    )]
+    Dpi = Annotated[int, Field(
+        ge=50, le=600, description="Resolution of the returned image.")]
+    Samples = Annotated[int | None, Field(
+        ge=100, le=MAX_MC_SAMPLES,
+        description="Run a new simulation with this many samples; leave "
+                    "out to reuse the plant's last run_monte_carlo result.",
+    )]
+
+    @tool(read_only, image=True)
+    def plot_costs_(
+        plant_names: PlantNames,
+        breakdown: Literal["direct_costs", "fixed_capital", "fixed_opex",
+                           "variable_opex", "levelized_cost"
+                           ] = "levelized_cost",
+        pct: Annotated[bool, Field(
+            description="Show shares in % instead of amounts.")] = False,
+        by_category: Annotated[bool, Field(
+            description="direct_costs only: one segment per equipment "
+                        "category instead of per item.")] = False,
+        save_to: SaveTo = None,
+        dpi: Dpi = 200,
+    ):
+        """Stacked-bar cost breakdown, one bar per plant: direct
+        (equipment) costs, fixed capital, fixed OPEX, variable OPEX or the
+        levelized cost (LCOP) build-up."""
+        return plot_costs(plant_names, breakdown, pct, by_category,
+                          save_to, dpi)
+
+    @tool(read_only, image=True)
+    def plot_cash_flow_(
+        plant_names: PlantNames, save_to: SaveTo = None, dpi: Dpi = 200,
+    ):
+        """Cumulative cash flow diagram over the project lifetime."""
+        return plot_cash_flow(plant_names, save_to, dpi)
+
+    @tool(read_only, image=True)
+    def plot_sensitivity_(
+        plant_names: PlantNames,
+        parameter: Annotated[str, Field(
+            description="From list_sensitivity_parameters.")],
+        plus_minus_value: Fraction = 0.2,
+        metric: Metric = "LCOP",
+        n_points: Annotated[int, Field(ge=3, le=101)] = 21,
+        x_axis: Annotated[Literal["percent", "value"], Field(
+            description="x as % change, or as the parameter's own value."
+        )] = "percent",
+        additional_capex: AddCapex = False,
+        save_to: SaveTo = None,
+        dpi: Dpi = 200,
+    ):
+        """Sensitivity plot: a metric against one parameter varied by
+        ±plus_minus_value, one curve per plant."""
+        return plot_sensitivity(plant_names, parameter, plus_minus_value,
+                                metric, n_points, x_axis, additional_capex,
+                                save_to, dpi)
+
+    @tool(read_only, image=True)
+    def plot_tornado_(
+        plant_name: PlantName,
+        plus_minus_value: Fraction = 0.2,
+        metric: Metric = "LCOP",
+        category: Literal["economic", "process", "both"] = "economic",
+        additional_capex: AddCapex = False,
+        save_to: SaveTo = None,
+        dpi: Dpi = 200,
+    ):
+        """Tornado chart: the parameters ranked by how much a
+        ±plus_minus_value change moves the metric."""
+        return plot_tornado(plant_name, plus_minus_value, metric, category,
+                            additional_capex, save_to, dpi)
+
+    @tool(computes, image=True)
+    def plot_monte_carlo_(
+        plant_names: PlantNames,
+        metric: Literal["LCOP", "NPV", "ROI", "PBT"] = "LCOP",
+        num_samples: Samples = None,
+        random_seed: Annotated[int | None, Field(
+            description="With num_samples, for reproducible results.")
+        ] = None,
+        show_fit: Annotated[bool, Field(
+            description="Overlay a fitted normal distribution.")] = True,
+        save_to: SaveTo = None,
+        dpi: Dpi = 200,
+    ):
+        """Monte Carlo histogram of a metric (several plants overlaid), with
+        the summary statistics."""
+        return plot_monte_carlo(plant_names, metric, num_samples,
+                                random_seed, show_fit, save_to, dpi)
+
+    @tool(computes, image=True)
+    def plot_monte_carlo_inputs_(
+        plant_name: PlantName,
+        category: Literal["economic", "process", "both"] = "both",
+        num_samples: Samples = None,
+        random_seed: Annotated[int | None, Field(
+            description="With num_samples, for reproducible results.")
+        ] = None,
+        save_to: SaveTo = None,
+        dpi: Dpi = 200,
+    ):
+        """Histograms of the sampled Monte Carlo inputs (one figure per
+        category; with save_to, '_process' / '_economic' is added to the
+        file name)."""
+        return plot_monte_carlo_inputs(plant_name, category, num_samples,
+                                       random_seed, save_to, dpi)
 
     return server
 

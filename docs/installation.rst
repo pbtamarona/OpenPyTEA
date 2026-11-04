@@ -92,6 +92,10 @@ Optional extras
    # is not included -- install it separately, e.g. `pip install jupyter`)
    pip install "OpenPyTEA[ipython]"
 
+   # MCP server for AI assistants (the openpytea-mcp command, see
+   # "AI Assistants (MCP Server)")
+   pip install "OpenPyTEA[mcp]"
+
    # Development / testing
    pip install "OpenPyTEA[test]"
 

@@ -259,6 +259,10 @@ Example presets
      - Geothermal Power Plant
      - Case study 3 (7 equipment)
 
+The same files ship with the library in ``src/openpytea/data/examples/``
+for the :doc:`MCP server <mcp>` (``list_examples`` / ``load_example``).
+When you add or change a preset, copy it there too.
+
 Known limitations
 -----------------
 

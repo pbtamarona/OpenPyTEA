@@ -52,6 +52,7 @@ Lunch, snacks, coffee, and drinks will be provided!
 - **Parameter dependencies:** declare how quantities depend on one another — cooling water scaling with production, a byproduct's yield tracking the main product, capital cost scaling with capacity — and every analysis honours the same graph.
 - **Workflow using JSON configuration files:** standardized input/output structure via `io.py` for reproducible analyses and multi-scenario evaluation.
 - **Flexible analysis and visualization:** separation of data processing (`analysis.py`) and plotting (`plotting.py`) allows users to apply custom visualization tools.
+- **AI assistant integration:** an MCP server (`openpytea-mcp`) lets Claude and other AI assistants cost equipment, evaluate plants, run the analyses and draw the figures.
 - **Interoperable and extensible:** easy integration with process simulators, optimization frameworks, and LCA tools.  
 - **Education-friendly:** ideal for teaching TEA and process design without reliance on proprietary software.  
 - **Community-driven:** users can contribute new correlations, improve models, request features, and shape the evolution of the platform.  
@@ -116,7 +117,9 @@ src/openpytea/
 ├── plotting.py             # Visualization functions (plots and figures)
 ├── io.py                   # JSON-based workflow: load inputs and export results
 ├── helpers.py              # Helper functions for data handling and common operations
-└── data/                   # Cost correlations database and CEPCI data
+├── cli.py                  # The openpytea command-line tool
+├── mcp_server.py           # MCP server for AI assistants (openpytea-mcp)
+└── data/                   # Cost correlations database, CEPCI data and example plants
 examples/                   # Example notebooks and case studies
 walkthrough/                # Walkthrough of the package, split into five notebooks (part_1 ... part_5)
 pyproject.toml
@@ -152,7 +155,7 @@ Then click **Examples** in the app to load a case study and explore. To run the 
 
 ## 🤖 AI Assistants (MCP Server)
 
-OpenPyTEA includes an [MCP](https://modelcontextprotocol.io) server, so AI assistants such as Claude Code or Claude Desktop can cost equipment, evaluate plants, and run sensitivity, tornado and Monte Carlo analyses with the library:
+OpenPyTEA includes an [MCP](https://modelcontextprotocol.io) server, so AI assistants such as Claude Code or Claude Desktop can cost equipment, evaluate plants, run sensitivity, tornado and Monte Carlo analyses, and draw the library's figures:
 
 ```bash
 pip install "openpytea[mcp]"

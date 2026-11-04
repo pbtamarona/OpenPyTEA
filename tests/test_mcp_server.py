@@ -152,3 +152,81 @@ def test_server_tools():
             assert "No evaluated plant" in res.content[0].text
 
     asyncio.run(run())
+
+
+PNG = b"\x89PNG\r\n\x1a\n"
+
+
+def test_plots(tmp_path):
+    wn = m.load_example("h2_electrolysis")["plant_name"]
+    smr = m.load_example("h2_smr")["plant_name"]
+
+    for breakdown in m._BREAKDOWNS:
+        out = m.plot_costs([wn, smr], breakdown, dpi=60)
+        assert len(out["images"]) == 1 and out["images"][0].startswith(PNG)
+
+    assert m.plot_cash_flow([wn, smr], dpi=60)["images"][0].startswith(PNG)
+
+    out = m.plot_sensitivity([wn, smr], "fixed_capital", x_axis="value",
+                             n_points=5, dpi=60)
+    assert set(out["baselines"]) == {wn, smr}
+
+    out = m.plot_tornado(smr, category="both", dpi=60,
+                         save_to=str(tmp_path / "sub" / "tornado.pdf"))
+    assert (tmp_path / "sub" / "tornado.pdf").exists()
+    assert out["saved_to"] == [str((tmp_path / "sub" / "tornado.pdf"))]
+
+    with pytest.raises(ValueError, match="save_to must end"):
+        m.plot_tornado(smr, save_to=str(tmp_path / "tornado.txt"))
+
+
+def test_monte_carlo_plots_reuse_last_run(tmp_path):
+    name = m.load_example("h2_smr")["plant_name"]
+    run = m.run_monte_carlo(name, num_samples=500, random_seed=2)
+
+    out = m.plot_monte_carlo([name], dpi=60)
+    assert out["num_samples"][name] == 500
+    assert out["stats"][name] == run["metrics"]["LCOP"]
+
+    out = m.plot_monte_carlo([name], "NPV", num_samples=300, dpi=60)
+    assert out["num_samples"][name] == 300
+
+    out = m.plot_monte_carlo_inputs(
+        name, save_to=str(tmp_path / "inputs.png"), dpi=60
+    )
+    assert len(out["images"]) == 2
+    assert {p.split("_")[-1] for p in out["saved_to"]} == {
+        "process.png", "economic.png"
+    }
+
+    with pytest.raises(ValueError, match="not IRR"):
+        m.plot_monte_carlo([name], "IRR")
+
+
+def test_monte_carlo_plot_needs_prices():
+    example = m.get_example("h2_electrolysis")
+    for product in example["plant"]["plant_products"].values():
+        product.pop("price", None)
+    name = m.evaluate_plant(example["equipment"],
+                            example["plant"])["plant_name"]
+    with pytest.raises(ValueError, match="needs a price"):
+        m.plot_monte_carlo([name], "NPV")
+
+
+def test_server_plot_tool_returns_image():
+    pytest.importorskip("mcp.server.mcpserver")
+    from mcp import Client
+
+    async def run():
+        async with Client(m.build_server()) as client:
+            await client.call_tool("load_example", {"example_id": "h2_smr"})
+            res = await client.call_tool(
+                "plot_costs",
+                {"plant_names": ["Steam Reforming"], "dpi": 60},
+            )
+            assert not res.is_error
+            kinds = [block.type for block in res.content]
+            assert kinds == ["image", "text"]
+            assert res.content[0].mime_type == "image/png"
+
+    asyncio.run(run())

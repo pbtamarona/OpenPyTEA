@@ -74,6 +74,41 @@ Tools
      - Uncertainty analysis: mean, standard deviation and percentiles of
        LCOP, NPV, ROI and payback, and of the sampled inputs.
 
+Plot tools
+~~~~~~~~~~
+
+These draw the library's own figures (the ones ``run_tea``, the
+``plot_*`` functions and the GUI's downloads produce) and return them as
+images the assistant can show you. Every plot tool also takes
+``save_to``, a file path ending in ``.png``, ``.pdf``, ``.svg``, ``.jpg``
+or ``.eps``, to save the figure (raster formats at 600 dpi), e.g. for a
+report.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 32 68
+
+   * - Tool
+     - What it draws
+   * - ``plot_costs``
+     - Stacked-bar breakdown, one bar per plant: direct (equipment) costs,
+       fixed capital, fixed OPEX, variable OPEX or the levelized cost
+       build-up; amounts or shares in %.
+   * - ``plot_cash_flow``
+     - Cumulative cash flow over the project lifetime, one line per plant.
+   * - ``plot_sensitivity``
+     - A metric against one parameter, one curve per plant; x as % change
+       or as the parameter's own value.
+   * - ``plot_tornado``
+     - The tornado chart of a plant.
+   * - ``plot_monte_carlo``
+     - Histogram of LCOP, NPV, ROI or payback, several plants overlaid.
+       Reuses each plant's last ``run_monte_carlo`` result unless
+       ``num_samples`` is given.
+   * - ``plot_monte_carlo_inputs``
+     - Histograms of the sampled inputs, one figure for the process and
+       one for the economic parameters.
+
 Inputs use the same layout as the :doc:`JSON workflow <user_guide/io_workflow>`
 files, so a plant built by the assistant can be saved (``get_plant_config``)
 and run with ``run_tea``, the ``openpytea`` command or the GUI's import
