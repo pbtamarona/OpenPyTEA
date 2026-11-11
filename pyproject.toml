@@ -83,3 +83,11 @@ ignore = []
 
 [tool.ruff.format]
 quote-style = "double"
+
+# Type checking, read by VS Code's Pylance and by the pyright CLI
+# (`npx pyright` from the repo root)
+[tool.pyright]
+typeCheckingMode = "basic"
+pythonVersion = "3.10"
+venvPath = "."
+venv = ".venv"
