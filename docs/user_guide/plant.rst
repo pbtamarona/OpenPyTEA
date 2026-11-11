@@ -99,6 +99,22 @@ merged recursively, so unspecified sub-keys are preserved:
    })
    plant.calculate_all()
 
+To remove a nested entry, set it to ``None``. This works for a whole item or a
+single field:
+
+.. code-block:: python
+
+   plant.update_configuration({
+       "variable_opex_inputs": {"steam": None},                    # drop steam
+       "plant_products": {"H2": {"production_uncertainty": None}}, # drop one field
+       "fixed_capital_factors": {"contingency": None},
+   })
+
+A top-level ``None`` (e.g. ``"loc_factor": None``) still just sets that
+setting to ``None``. If you remove an item that another item's dependency
+points at, ``update_configuration`` warns you; remove that dependency too
+(in the same call or a later one), or the analyses will raise an error.
+
 ``plant.config`` is a snapshot of the configuration as given at creation:
 ``update_configuration()`` does not change it. For the current settings use
 :meth:`~openpytea.plant.Plant.to_dict`:

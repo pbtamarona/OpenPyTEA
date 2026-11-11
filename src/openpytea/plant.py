@@ -239,6 +239,10 @@ class Plant:
         (``variable_opex_inputs``, ``plant_products``, ``operator_hourly_rate``,
         ``project_uncertainties``, ``fixed_opex_factors``,
         ``fixed_capital_factors``) are deep-merged rather than replaced.
+        Inside these nested dicts, a value of ``None`` removes that key,
+        e.g. ``{"variable_opex_inputs": {"steam": None}}`` drops steam.
+        Top-level ``None`` (e.g. ``"loc_factor": None``) still just sets
+        the scalar to ``None``.
 
         Parameters
         ----------
@@ -264,12 +268,16 @@ class Plant:
         for key in ("fixed_capital_factors", "fixed_capital_components",
                     "fixed_opex_factors", "fixed_opex_components"):
             if key in configuration:
-                setattr(self, key, {**getattr(self, key), **configuration[key]})
+                merged = {**getattr(self, key), **configuration[key]}
+                setattr(self, key,
+                        {k: v for k, v in merged.items() if v is not None})
 
-        # merge nested dicts without clobbering
+        # merge nested dicts without clobbering; None deletes the key
         def recursive_update(original, updates):
             for key, value in updates.items():
-                if isinstance(value, dict) and isinstance(
+                if value is None:
+                    original.pop(key, None)
+                elif isinstance(value, dict) and isinstance(
                     original.get(key), dict
                 ):
                     recursive_update(original[key], value)
@@ -299,7 +307,8 @@ class Plant:
             scalars keep those fields inline, so it is ``None`` for them.
             """
             for name, incoming in updates.items():
-                if not isinstance(incoming, dict) or dep_key not in incoming:
+                # None removes the dependency, so nothing is superseded
+                if not isinstance(incoming, dict) or incoming.get(dep_key) is None:
                     continue
                 existing = original.get(name)
                 if not isinstance(existing, dict):
@@ -339,6 +348,27 @@ class Plant:
 
         if "project_uncertainties" in configuration:
             _validate_project_uncertainties(self.project_uncertainties)
+
+        self._warn_dangling_dependencies()
+
+    def _warn_dangling_dependencies(self):
+        """Warn about dependencies that point at a missing opex item or product."""
+        from openpytea.helpers import _collect_dependency_specs
+
+        existing = {"consumption": self.variable_opex_inputs,
+                    "production": self.plant_products}
+        for (kind, name), dep in _collect_dependency_specs(self).items():
+            weights = dep.get("depends_on") if isinstance(dep, dict) else None
+            for spec in weights or {}:
+                parent_kind, _, parent = str(spec).partition(":")
+                # malformed specs are left for the analyses to report
+                if parent_kind in existing and parent not in existing[parent_kind]:
+                    warnings.warn(
+                        f"{kind}:{name} depends on {spec}, which no longer "
+                        "exists; remove that dependency too, or analyses "
+                        "(monte_carlo, tornado_data, ...) will fail.",
+                        stacklevel=3,
+                    )
 
     def calculate_purchased_cost(self, print_results=False):
         """

@@ -370,12 +370,18 @@ save(fig, "dependency_scatter_natural_gas")
 
 # Deterministic analyses with vs. without dependencies
 independent_plant = deepcopy(demo_plant)
-independent_plant.update_configuration({"plant_name": "Demo Plant (no dependencies)"})
-for props in independent_plant.variable_opex_inputs.values():
-    props.pop("consumption_dependency", None)
-for props in independent_plant.plant_products.values():
-    props.pop("production_dependency", None)
-independent_plant.project_uncertainties["fixed_capital_factor"].pop("dependency", None)
+independent_plant.update_configuration({
+    "plant_name": "Demo Plant (no dependencies)",
+    "variable_opex_inputs": {
+        name: {"consumption_dependency": None}
+        for name in demo_plant.variable_opex_inputs
+    },
+    "plant_products": {
+        name: {"production_dependency": None}
+        for name in demo_plant.plant_products
+    },
+    "project_uncertainties": {"fixed_capital_factor": {"dependency": None}},
+})
 
 TORNADO_TALL = (FIGSIZE[0], 3.4)
 fig, _ = plot_tornado(

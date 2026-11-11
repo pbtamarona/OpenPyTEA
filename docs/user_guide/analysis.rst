@@ -1196,18 +1196,24 @@ dependencies until you ask for process parameters.
 
 To see the difference, compare against the *same plant analysed as if its
 parameters were independent*. Strip the dependency blocks back out of a
-copy (``update_configuration`` merges, so it can add a dependency but never
-remove one — pop the keys directly), then run the same tornado call on each:
+copy (setting a nested key to ``None`` in ``update_configuration`` removes
+it), then run the same tornado call on each:
 
 .. code-block:: python
 
    independent_plant = deepcopy(plant)
-   independent_plant.update_configuration({"plant_name": "Demo Plant (no dependencies)"})
-   for props in independent_plant.variable_opex_inputs.values():
-       props.pop("consumption_dependency", None)
-   for props in independent_plant.plant_products.values():
-       props.pop("production_dependency", None)
-   independent_plant.project_uncertainties["fixed_capital_factor"].pop("dependency", None)
+   independent_plant.update_configuration({
+       "plant_name": "Demo Plant (no dependencies)",
+       "variable_opex_inputs": {
+           name: {"consumption_dependency": None}
+           for name in plant.variable_opex_inputs
+       },
+       "plant_products": {
+           name: {"production_dependency": None}
+           for name in plant.plant_products
+       },
+       "project_uncertainties": {"fixed_capital_factor": {"dependency": None}},
+   })
 
    td_indep = tornado_data(plant=independent_plant, plus_minus_value=0.5,
                            metric="ROI", category="both")

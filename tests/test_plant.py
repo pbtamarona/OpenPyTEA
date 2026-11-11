@@ -98,6 +98,44 @@ def test_plants_do_not_share_configuration(test_plant):
     assert a.equipment_list[0] is base["equipment"][0]
 
 
+def test_update_configuration_none_removes_nested_keys(test_plant):
+    unc = {"min": 40, "max": 60}
+    dep = {"depends_on": {"consumption:electricity": 0.5}}
+    test_plant.update_configuration({
+        "fixed_capital_factors": {"contingency": 0.2},
+        "plant_products": {"hydrogen": {"production_uncertainty": unc,
+                                        "production_dependency": dep}},
+    })
+    test_plant.update_configuration({
+        "variable_opex_inputs": {"water": None},
+        "plant_products": {"hydrogen": {"production_dependency": None}},
+        "fixed_capital_factors": {"contingency": None},
+    })
+    assert "water" not in test_plant.variable_opex_inputs
+    assert "contingency" not in test_plant.fixed_capital_factors
+    hydrogen = test_plant.plant_products["hydrogen"]
+    assert "production_dependency" not in hydrogen
+    # Removing a dependency must not wipe the item's own uncertainty
+    assert hydrogen["production_uncertainty"] == unc
+    test_plant.calculate_levelized_cost()
+
+
+def test_removing_a_dependency_parent_warns(test_plant):
+    dep = {"depends_on": {"consumption:water": 2.0}}
+    test_plant.update_configuration({
+        "variable_opex_inputs": {"electricity": {"consumption_dependency": dep}},
+    })
+    with pytest.warns(UserWarning, match="consumption:water"):
+        test_plant.update_configuration({"variable_opex_inputs": {"water": None}})
+
+    # Removing parent and dependency in one call is clean
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        test_plant.update_configuration({"variable_opex_inputs": {
+            "electricity": {"consumption_dependency": None},
+        }})
+
+
 def test_plant_calculate_all(test_plant):
     test_plant.calculate_all()
 
