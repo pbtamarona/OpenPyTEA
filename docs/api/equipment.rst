@@ -10,6 +10,8 @@ openpytea.equipment
 
 .. autofunction:: openpytea.equipment.inflation_adjustment
 
+.. autofunction:: openpytea.equipment.equipment_options
+
 .. rubric:: Classes
 
 .. autoclass:: openpytea.equipment.CostCorrelationDB

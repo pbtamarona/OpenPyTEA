@@ -122,10 +122,24 @@ item via constructor keyword arguments** — see Example 9 for details.
 Equipment Cost Correlations
 ----------------------------
 
-``cost_correlations.csv`` bundles 417 correlations spanning 34 equipment
+``cost_correlations.csv`` bundles 430 correlations spanning 36 equipment
 categories from Turton, Towler & Sinnott, Perry's, Seider, Ulrich, and
 several process-specific studies. Browse, search, and filter all of them
 on the dedicated :doc:`cost_correlations` page.
+
+From Python, :func:`~openpytea.equipment.equipment_options` lists them:
+
+.. code-block:: python
+
+   from openpytea import equipment_options
+
+   equipment_options()          # all category names
+   equipment_options("Pumps")   # that category's types, with units, size
+                                # range, default material and source
+
+A misspelled category, type, ``process_type`` or ``material`` raises an
+error that suggests the closest valid names, e.g.
+``Unknown type 'gear' for category 'Pumps'. Did you mean 'External gear'?``
 
 The ``Equipment`` class
 -----------------------
@@ -777,6 +791,7 @@ See also
 * :class:`~openpytea.equipment.CompositeEquipment` — equipment assembled from sub-components
 * :class:`~openpytea.equipment.CostCorrelationDB` — database interface
 * :func:`~openpytea.equipment.inflation_adjustment` — CEPCI utility
+* :func:`~openpytea.equipment.equipment_options` — list categories and types
 * `Walkthrough Part 1: Defining Equipment <https://github.com/pbtamarona/OpenPyTEA/blob/main/walkthrough/part_1_equipment.ipynb>`_ — worked equipment-costing examples
 
 .. _equip-references:

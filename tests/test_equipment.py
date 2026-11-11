@@ -1,5 +1,5 @@
 import pytest
-from openpytea import Equipment
+from openpytea import CompositeEquipment, Equipment, equipment_options
 
 
 def test_equipment_fixture_objects(test_equipment):
@@ -109,3 +109,55 @@ def test_renamed_category_still_accepted():
         old = Equipment(category="compressors & blowers", **kwargs)
     assert old.category == new.category
     assert old.purchased_cost == new.purchased_cost
+
+
+@pytest.mark.parametrize("kwargs, error, match", [
+    # fuzzy match on a category
+    ({"category": "Reactor"}, KeyError, "Did you mean 'Reactors'"),
+    ({"category": "Compressors, fans and blowers"}, KeyError,
+     "Did you mean 'Compressors, fans, & blowers'"),
+    # types are suggested only from within the given category
+    ({"category": "Pumps", "type": "centrifugal pump"}, KeyError,
+     "type 'centrifugal pump' for category 'Pumps'. Did you mean 'Centrifugal'"),
+    # a partial word matches by substring
+    ({"category": "Pumps", "type": "gear"}, KeyError,
+     "Did you mean 'External gear'"),
+    # nothing close: point to the lookup
+    ({"category": "Pumps", "type": "zzz"}, KeyError,
+     r"See openpytea.equipment_options\('Pumps'\)"),
+    ({"category": "zzz"}, KeyError, r"See openpytea.equipment_options\(\)"),
+    ({"category": "Pumps", "type": "Centrifugal", "process_type": "Fluid"},
+     ValueError, "process_type 'Fluid'. Did you mean 'Fluids'"),
+    ({"category": "Pumps", "type": "Centrifugal", "material": "304 stainless"},
+     ValueError, "Did you mean '304 stainless steel'"),
+])
+def test_unknown_names_suggest_valid_ones(kwargs, error, match):
+    kwargs = {"name": "X", "param": 10, "process_type": "Fluids", **kwargs}
+    with pytest.raises(error, match=match):
+        Equipment(**kwargs)
+
+
+def test_composite_unknown_names_suggest_valid_ones():
+    with pytest.raises(ValueError, match="Did you mean 'Fluids'"):
+        CompositeEquipment(name="X", process_type="Fluid", components=[])
+    with pytest.raises(ValueError, match="Did you mean 'composite'"):
+        CompositeEquipment(name="X", process_type="Fluids",
+                           installation="composit", components=[])
+
+
+def test_equipment_options():
+    categories = equipment_options()
+    assert "Pumps" in categories and categories == sorted(categories)
+
+    pumps = equipment_options("pumps")  # case-insensitive
+    assert "Centrifugal" in pumps["type"].tolist()
+    assert {"units", "s_lower", "s_upper", "default material"} <= set(pumps)
+
+    # a listed type and its size range can be used as-is
+    row = pumps.iloc[0]
+    eq = Equipment(name="P", param=row["s_lower"], process_type="Fluids",
+                   category="Pumps", type=row["type"])
+    assert eq.purchased_cost > 0
+
+    with pytest.raises(KeyError, match="Did you mean 'Reactors'"):
+        equipment_options("Reactor")

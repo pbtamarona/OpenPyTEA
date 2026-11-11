@@ -6,7 +6,8 @@ economic sensitivity and uncertainty evaluation.
 from importlib.metadata import version
 
 from .plant import Plant
-from .equipment import Equipment, CompositeEquipment, inflation_adjustment
+from .equipment import (Equipment, CompositeEquipment, inflation_adjustment,
+                        equipment_options)
 from .analysis import (direct_costs_data, fixed_capital_data,
                        fixed_opex_data, variable_opex_data,
                        levelized_cost_data, cash_flow_data,
@@ -30,6 +31,7 @@ __all__ = [
     "Equipment",
     "CompositeEquipment",
     "inflation_adjustment",
+    "equipment_options",
     "direct_costs_data",
     "fixed_capital_data",
     "fixed_opex_data",

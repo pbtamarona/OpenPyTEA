@@ -1,3 +1,4 @@
+import difflib
 import warnings
 
 import numpy as np
@@ -36,6 +37,62 @@ def _current_category(category):
         )
         return new
     return category
+
+
+def _unknown(what, value, valid, scope="", see=None):
+    """Error text for a bad name, suggesting the closest valid ones."""
+    valid = list(valid)
+    text = str(value).lower()
+    # "gear" -> "External gear": substring first, then fuzzy matching
+    hits = [v for v in valid if text in v.lower()] or difflib.get_close_matches(
+        str(value), valid, n=3, cutoff=0.5)
+    msg = f"Unknown {what} {value!r}{scope}."
+    if hits:
+        return msg + " Did you mean " + " or ".join(map(repr, hits[:3])) + "?"
+    if see:
+        return msg + f" See {see}."
+    return msg + f" Valid options are: {valid}"
+
+
+def equipment_options(category=None):
+    """
+    List the equipment the bundled cost database covers.
+
+    Parameters
+    ----------
+    category : str | None, optional
+        A category name (case-insensitive). Default is None.
+
+    Returns
+    -------
+    list[str] | pd.DataFrame
+        Without ``category``: the sorted category names. With it: one row
+        per type in that category, with the size parameter's units and
+        valid range, the default material and the source.
+
+    Raises
+    ------
+    KeyError
+        If ``category`` is not in the database.
+
+    Examples
+    --------
+    >>> equipment_options()[:2]
+    ['Adsorption & membrane separation', 'Agitators, blenders, & mixers']
+    >>> equipment_options("Pumps")["type"].head(1).tolist()
+    ['Centrifugal']
+    """
+    df = CostCorrelationDB().df
+    if category is None:
+        return sorted(df["category"].dropna().unique())
+    category = _current_category(category)
+    rows = df[df["category"].str.lower() == str(category).lower()]
+    if rows.empty:
+        raise KeyError(_unknown("category", category, df["category"].unique(),
+                                see="openpytea.equipment_options()"))
+    columns = ["type", "units", "s_lower", "s_upper", "s2_lower", "s2_upper",
+               "default material", "cost_year", "source", "key"]
+    return rows[columns].reset_index(drop=True)
 
 
 def inflation_adjustment(equipment_cost, cost_year, target_year=2024):
@@ -455,9 +512,10 @@ class Equipment:
     --------
     >>> eq = Equipment(
     ...     name="Reactor",
-    ...     param=100,
+    ...     param=10,  # volume, m^3
     ...     process_type="Fluids",
-    ...     category="Reactor",
+    ...     category="Reactors",
+    ...     type="Jacketed agitated",
     ...     material="304 stainless steel"
     ... )
     >>> print(eq.direct_cost)
@@ -572,20 +630,16 @@ class Equipment:
             material_was_auto or material == resolved_default_material
         )
 
-        valid_process_types = list(self.process_factors.keys())
         if process_type not in self.process_factors:
             raise ValueError(
-                f"Invalid process_type '{process_type}'. "
-                f"Valid options are: {valid_process_types}"
+                _unknown("process_type", process_type, self.process_factors)
             )
-        valid_materials = list(self.material_factors.keys())
         if (
             material not in self.material_factors
             and not uses_default_material
         ):
             raise ValueError(
-                f"Invalid material '{material}'. "
-                f"Valid options are: {valid_materials}"
+                _unknown("material", material, self.material_factors)
             )
 
         _set_install_factors(
@@ -659,10 +713,17 @@ class Equipment:
             self.category, self.type
         )
         if key is None:
+            df = self._db.df
+            in_cat = df[df["category"].str.lower() == str(self.category).lower()]
+            if in_cat.empty:
+                msg = _unknown("category", self.category, df["category"].unique(),
+                               see="openpytea.equipment_options()")
+            else:
+                msg = _unknown("type", self.type, in_cat["type"].dropna(),
+                               f" for category '{self.category}'",
+                               see=f"openpytea.equipment_options({self.category!r})")
             raise KeyError(
-                f"No CSV correlation matches category='{self.category}', "
-                f"type='{self.type}'. "
-                f"Add a row to the CSV or specify cost_func manually."
+                msg + " Or add a row to the CSV, or specify cost_func manually."
             )
         return key
 
@@ -932,13 +993,11 @@ class CompositeEquipment:
         """Initialize the composite and compute purchased and direct costs."""
         if process_type not in Equipment.process_factors:
             raise ValueError(
-                f"Invalid process_type '{process_type}'. "
-                f"Valid options are: {list(Equipment.process_factors)}"
+                _unknown("process_type", process_type, Equipment.process_factors)
             )
         if installation not in ("component", "composite"):
             raise ValueError(
-                f"Invalid installation '{installation}'. "
-                f"Valid options are: ['component', 'composite']"
+                _unknown("installation", installation, ["component", "composite"])
             )
         if not components:
             raise ValueError(
