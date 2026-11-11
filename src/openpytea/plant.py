@@ -377,6 +377,12 @@ class Plant:
         else:
             return self.purchased_cost
 
+    def _used_region(self):
+        """Region if the country has regional factors, else None."""
+        if isinstance(self.locFactors.get(self.country), dict):
+            return self.region
+        return None
+
     def _resolve_loc_factor(self) -> float:
         """
         Resolve the location factor from explicit override or country/region lookup.
@@ -1901,7 +1907,7 @@ class Plant:
                 "plant_name": self.name,
                 "process_type": self.process_type,
                 "country": self.country,
-                "region": self.region,
+                "region": self._used_region(),
                 "currency": self.currency,
                 "exchange_rate": self.exchange_rate,
                 "interest_rate": self.interest_rate,
@@ -2073,12 +2079,14 @@ class Plant:
             if lines:
                 results_block += f"\n{title}:\n" + "\n".join(lines) + "\n"
 
+        region = self._used_region()
+        location = f"{self.country} / {region}" if region else self.country
         return (
             f"Plant Configuration\n"
             f"{'-'*40}\n"
             f"Plant Name:                 {self.name}\n"
             f"Process Type:               {self.process_type}\n"
-            f"Country / Region:           {self.country} / {self.region}\n"
+            f"Country / Region:           {location}\n"
             f"Interest Rate:              {self.interest_rate}\n"
             f"Project Lifetime (years):   {self.project_lifetime}\n"
             f"Plant Utilization:          {self.plant_utilization}\n"

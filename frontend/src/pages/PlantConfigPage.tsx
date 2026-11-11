@@ -517,7 +517,11 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
           </div>
           <div className="form-group">
             <label>Country<HelpTip id="plant.country" /></label>
-            <select value={config.country} onChange={(e) => { u("country", e.target.value); u("region", ""); }}>
+            <select value={config.country} onChange={(e) => {
+              const loc = locations[e.target.value];
+              u("country", e.target.value);
+              u("region", loc && typeof loc === "object" ? Object.keys(loc)[0] : "");
+            }}>
               {Object.keys(locations).map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
