@@ -161,3 +161,21 @@ def test_equipment_options():
 
     with pytest.raises(KeyError, match="Did you mean 'Reactors'"):
         equipment_options("Reactor")
+
+
+def test_literal_hints_match_the_data():
+    from typing import get_args
+    from openpytea import Category, EquipmentType, Material, ProcessType
+    from openpytea.equipment import CostCorrelationDB
+
+    # A failure here means the CSV or a factor table changed: update the
+    # Literal in equipment.py to match
+    db = CostCorrelationDB().df
+    assert set(get_args(ProcessType)) == set(Equipment.process_factors)
+    assert set(get_args(Category)) == set(equipment_options())
+    types = get_args(EquipmentType)
+    assert len(types) == len(set(types))  # each name listed once
+    assert set(types) == set(db["type"].dropna())
+    defaults = db["default material"].dropna().str.strip()
+    expected = (set(Equipment.material_factors) | set(defaults)) - {"n.a."}
+    assert set(get_args(Material)) == expected
