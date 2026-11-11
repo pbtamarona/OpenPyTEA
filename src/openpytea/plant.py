@@ -384,7 +384,7 @@ class Plant:
 
     # Settings set in __init__ from the configuration (see _SCALARS), so
     # type checkers and IDEs know them. Numbers may hold scenario arrays.
-    name: str | None
+    name: str
     process_type: str
     country: str
     region: str | None
@@ -661,7 +661,7 @@ class Plant:
                 )
         return loc_factor
 
-    def calculate_isbl(self, fc: float | None = 1.0, print_results=False):
+    def calculate_isbl(self, fc=1.0, print_results=False):
         """
         Calculate Inside Battery Limits (ISBL) cost.
 
@@ -2478,7 +2478,7 @@ _FIXED_OPEX_ITEMS = (
 # Plain Plant attributes: config key -> (attribute name, __init__ default).
 # update_configuration overwrites each one whose key it is given.
 _SCALARS = {
-    "plant_name": ("name", None),
+    "plant_name": ("name", ""),
     "process_type": ("process_type", None),
     "country": ("country", "United States"),
     "region": ("region", "Gulf Coast"),

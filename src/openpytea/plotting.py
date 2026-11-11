@@ -1,7 +1,11 @@
 import shutil
 import warnings
 from itertools import cycle
+from typing import Literal, overload
+
+from matplotlib.figure import Figure
 from scipy.stats import norm
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -42,7 +46,7 @@ except (AttributeError, ImportError):
         stacklevel=2,
     )
 
-cmap = plt.cm.plasma
+cmap = matplotlib.colormaps["plasma"]
 
 
 # PLOTTING TOOLS
@@ -331,7 +335,7 @@ def plot_sensitivity(data, figsize=(3.2, 2.2), ax=None, show=True,
     if ax is None:
         created_fig, ax = plt.subplots(figsize=figsize)
 
-    line_colors = cycle(plt.cm.Set2.colors)
+    line_colors = cycle(matplotlib.color_sequences["Set2"])
 
     # A plant lacking the parameter has no values of its own; on the value
     # axis it spans the other plants' values at its baseline, as on the % axis
@@ -573,7 +577,7 @@ def plot_cash_flow(data, figsize=(3.6, 2.6), ax=None, show=True):
     if ax is None:
         created_fig, ax = plt.subplots(figsize=figsize)
 
-    line_colors = cycle(plt.cm.Set2.colors)
+    line_colors = cycle(matplotlib.color_sequences["Set2"])
     all_cumulative = []
 
     for curve in curves:
@@ -641,7 +645,7 @@ def plot_cash_flow(data, figsize=(3.6, 2.6), ax=None, show=True):
 
 def plot_monte_carlo(
     data,
-    metric: str = None,
+    metric: str | None = None,
     bins: int = 30,
     show_fit: bool = True,
     label: str | None = None,
@@ -777,7 +781,7 @@ def plot_monte_carlo(
     if ax is None:
         created_fig, ax = plt.subplots(figsize=figsize)
 
-    hist_color = line_color = plt.cm.tab10.colors[0]
+    hist_color = line_color = matplotlib.color_sequences["tab10"][0]
 
     ax.hist(
         values,
@@ -960,6 +964,29 @@ def _plot_input_histogram_grid(inputs, figsize, bins, hist_color, title,
     return fig, axes
 
 
+# Overloads for type checkers: one figure and axes for a single group, two
+# of each for "both", so `fig, axes = ...` and the 4-name form both check
+@overload
+def plot_monte_carlo_inputs(
+    data,
+    category: Literal["process", "economic"],
+    figsize=None,
+    bins: int = 50,
+    show: bool = True,
+) -> tuple[Figure | None, np.ndarray | None]: ...
+
+
+@overload
+def plot_monte_carlo_inputs(
+    data,
+    category: Literal["both"] = "both",
+    figsize=None,
+    bins: int = 50,
+    show: bool = True,
+) -> tuple[Figure | None, np.ndarray | None,
+           Figure | None, np.ndarray | None]: ...
+
+
 def plot_monte_carlo_inputs(
     data,
     category: str = "both",
@@ -1041,7 +1068,7 @@ def plot_monte_carlo_inputs(
         if not _is_process_monte_carlo_input(label)
     }
 
-    hist_color = plt.cm.tab10.colors[1]
+    hist_color = matplotlib.color_sequences["tab10"][1]
 
     def _build(group_inputs, title):
         if not group_inputs:
@@ -1117,7 +1144,7 @@ def plot_multiple_monte_carlo(
     if ax is None:
         created_fig, ax = plt.subplots(figsize=figsize)
 
-    color_cycle = cycle(plt.cm.tab10.colors)
+    color_cycle = cycle(matplotlib.color_sequences["tab10"])
     currency = _tex_escape("$")
     plotted_any = False
 

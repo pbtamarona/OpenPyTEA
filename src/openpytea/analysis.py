@@ -1188,8 +1188,10 @@ def _has_uncertainty(cfg):
     return _resolve_scale(cfg) > 0 or "dist_id" in cfg
 
 
-def _resolve_dist_params(cfg, default_loc=0.0, default_scale=0.0,
-                          default_min=0, default_max=99999, default_id=3):
+def _resolve_dist_params(cfg, default_loc: float = 0.0,
+                          default_scale: float = 0.0,
+                          default_min: float = 0, default_max: float = 99999,
+                          default_id: int = 3):
     """
     Extract ``(dist_id, loc, scale, shape, minimum, maximum)`` from a config dict.
 
@@ -1590,7 +1592,7 @@ def monte_carlo(plant,
                  num_samples: int = 100_000,
                  batch_size: int = 10_000,
                  additional_capex: bool = False,
-                 random_seed: int = None):
+                 random_seed: int | None = None):
     """
     Run a Monte Carlo uncertainty simulation over a plant's financial metrics.
 
@@ -1740,9 +1742,11 @@ def monte_carlo(plant,
     def cfg(name):
         return op_cfg if name == "operator_hourly_rate" else pu.get(name, {})
 
-    factor_window = dict(
-        default_loc=1, default_scale=0.3, default_min=0.25, default_max=1.75,
-    )
+    def factor_dist(name):
+        return _resolve_dist_params(
+            cfg(name), default_loc=1, default_scale=0.3,
+            default_min=0.25, default_max=1.75,
+        )
     # (name, dist params, sampled only when it configures uncertainty)
     project_inputs = [
         ("plant_utilization", _window_dist_params(
@@ -1750,10 +1754,8 @@ def monte_carlo(plant,
             floor=0.0, cap=1.0), True),
         ("tax_rate", _window_dist_params(
             cfg("tax_rate"), plant.tax_rate, 0, floor=0.0, cap=1.0), True),
-        ("fixed_capital_factor", _resolve_dist_params(
-            cfg("fixed_capital_factor"), **factor_window), False),
-        ("fixed_opex_factor", _resolve_dist_params(
-            cfg("fixed_opex_factor"), **factor_window), False),
+        ("fixed_capital_factor", factor_dist("fixed_capital_factor"), False),
+        ("fixed_opex_factor", factor_dist("fixed_opex_factor"), False),
         ("operator_hourly_rate", _resolve_item_dist_params(
             op_cfg, "rate", DEFAULT_OPERATOR_HOURLY_RATE, 10), False),
         ("project_lifetime", _window_dist_params(

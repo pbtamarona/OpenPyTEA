@@ -91,3 +91,5 @@ typeCheckingMode = "basic"
 pythonVersion = "3.10"
 venvPath = "."
 venv = ".venv"
+# The notebooks use `from openpytea.analysis import *` on purpose
+reportWildcardImportFromLibrary = false
