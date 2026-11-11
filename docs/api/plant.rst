@@ -11,3 +11,20 @@ openpytea.plant
 .. autoclass:: openpytea.plant.Plant
    :members:
    :show-inheritance:
+
+.. rubric:: Configuration types
+
+.. autoclass:: openpytea.plant.PlantConfig
+   :undoc-members:
+
+.. autoclass:: openpytea.plant.OpexInput
+   :undoc-members:
+
+.. autoclass:: openpytea.plant.ProductInput
+   :undoc-members:
+
+.. autoclass:: openpytea.plant.Uncertainty
+   :undoc-members:
+
+.. autoclass:: openpytea.plant.Dependency
+   :undoc-members:

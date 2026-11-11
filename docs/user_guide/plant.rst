@@ -21,12 +21,12 @@ Creating a ``Plant``
 
 .. code-block:: python
 
-   from openpytea import Plant, Equipment
+   from openpytea import Plant, PlantConfig, Equipment
 
    # Define equipment first (see Equipment guide)
    # hx, comp1, comp2 = Equipment(...)
 
-   config = {
+   config: PlantConfig = {
        "plant_name": "Demo Plant",                  # used in plots
        # Basic plant information
        "process_type": "Fluids",                    # "Solids" | "Fluids" | "Mixed"
@@ -80,6 +80,16 @@ Creating a ``Plant``
    demo_plant = Plant(config)
    print(demo_plant)
    demo_plant.calculate_all(print_results=True)
+
+The ``config: PlantConfig`` annotation is optional: ``Plant`` accepts any plain
+dict, as before. With it, your editor (VS Code, PyCharm) completes the setting
+names and values such as ``"country"`` and flags typos like
+``"interst_rate"`` before you run anything; otherwise a misspelled key is
+silently ignored and its default is used. ``OpexInput``, ``ProductInput``,
+``Uncertainty`` and ``Dependency`` do the same for nested entries you build
+separately, e.g. ``steam: OpexInput = {"consumption": 4.0e5, "price": 0.02}``.
+In VS Code, typos are only underlined with ``python.analysis.typeCheckingMode``
+set to ``"basic"`` or stricter.
 
 
 Updating configuration

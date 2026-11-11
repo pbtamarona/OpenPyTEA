@@ -4,12 +4,191 @@ import warnings
 import numpy as np
 import pandas as pd
 from copy import deepcopy
+from collections.abc import Sequence
 from types import SimpleNamespace
-from typing import List, Dict, Optional
+from typing import List, Dict, Literal, Optional, TypedDict
 from scipy.optimize import root_scalar
+
+from openpytea.equipment import CompositeEquipment, Equipment
 
 # Operator wage [currency/h] used when operator_hourly_rate sets no "rate"
 DEFAULT_OPERATOR_HOURLY_RATE = 38.11
+
+
+# ----------------------------------------------------------------------
+# Configuration types: annotate a config as ``config: PlantConfig = {...}``
+# and IDEs complete its keys and values and flag typos. They only describe
+# the dict; Plant still accepts any plain dict at runtime. Every key is
+# optional (total=False), and values allow None because None removes a
+# nested key in update_configuration.
+# ----------------------------------------------------------------------
+
+# A scalar, or an array of scenario values
+Number = float | Sequence[float] | np.ndarray
+
+Country = Literal[
+    "United States", "Canada", "Mexico", "Brazil", "China", "Japan",
+    "Southeast Asia", "Australia", "India", "Middle East", "France",
+    "Germany", "Italy", "Netherlands", "Russia", "United Kingdom",
+]
+# All regions; which ones are valid depends on the country
+Region = Literal[
+    "Gulf Coast", "East Coast", "West Coast", "Midwest",  # United States
+    "Ontario", "Fort McMurray",                           # Canada
+    "imported", "indigenous",                             # China
+]
+
+
+class Dependency(TypedDict, total=False):
+    """Makes a quantity follow others, e.g. ``{"depends_on": {"production:methanol": 9.3}}``."""
+    depends_on: dict[str, float]
+    offset: float
+
+
+class Uncertainty(TypedDict, total=False):
+    """Monte Carlo distribution of one input."""
+    dist_id: int
+    std: float
+    min: float
+    max: float
+    loc: float
+    mean: float
+    scale: float
+    shape: float | Sequence[float]
+    minimum: float
+    maximum: float
+    noise: float
+    dependency: Dependency | None
+
+
+class OpexInput(TypedDict, total=False):
+    """One ``variable_opex_inputs`` entry."""
+    consumption: Number
+    price: Number
+    consumption_uncertainty: Uncertainty | None
+    price_uncertainty: Uncertainty | None
+    consumption_dependency: Dependency | None
+
+
+class ProductInput(TypedDict, total=False):
+    """One ``plant_products`` entry; the first product is the main one."""
+    production: Number
+    price: Number
+    production_uncertainty: Uncertainty | None
+    price_uncertainty: Uncertainty | None
+    production_dependency: Dependency | None
+
+
+class OperatorRate(TypedDict, total=False):
+    """``operator_hourly_rate``, e.g. ``{"rate": 35}``."""
+    rate: Number
+    rate_uncertainty: Uncertainty | None
+    dependency: Dependency | None
+
+
+class ProjectUncertainties(TypedDict, total=False):
+    fixed_capital_factor: Uncertainty | None
+    fixed_opex_factor: Uncertainty | None
+    project_lifetime: Uncertainty | None
+    interest_rate: Uncertainty | None
+    plant_utilization: Uncertainty | None
+    tax_rate: Uncertainty | None
+
+
+class FixedCapitalFactors(TypedDict, total=False):
+    osbl: float | None
+    de: float | None
+    contingency: float | None
+
+
+class FixedCapitalComponents(TypedDict, total=False):
+    osbl: float | None
+    dne: float | None
+    contingency: float | None
+
+
+class FixedOpexFactors(TypedDict, total=False):
+    supervision: float | None
+    direct_salary_overhead: float | None
+    laboratory_charges: float | None
+    maintenance: float | None
+    taxes_insurance: float | None
+    rent_of_land: float | None
+    environmental_charges: float | None
+    operating_supplies: float | None
+    general_plant_overhead: float | None
+    working_capital: float | None
+    working_capital_interest: float | None
+    patents_royalties: float | None
+    distribution_selling: float | None
+    rnd: float | None
+
+
+class FixedOpexComponents(TypedDict, total=False):
+    supervision_costs: float | None
+    direct_salary_overhead: float | None
+    laboratory_charges: float | None
+    maintenance_costs: float | None
+    taxes_insurance_costs: float | None
+    rent_of_land_costs: float | None
+    environmental_charges: float | None
+    operating_supplies: float | None
+    general_plant_overhead: float | None
+    interest_working_capital: float | None
+    patents_royalties: float | None
+    distribution_selling_costs: float | None
+    RnD_costs: float | None
+
+
+class Depreciation(TypedDict, total=False):
+    method: Literal["straight_line", "declining_balance", "macrs"]
+    life: float | None
+    db_factor: float
+    salvage_fraction: float
+    macrs_class: Literal[3, 5, 7, 10, 15, 20]
+    convention: Literal["half_year"]
+    service_start_year: int
+
+
+class PlantConfig(TypedDict, total=False):
+    """
+    The settings dict ``Plant`` takes. See the configuration reference in
+    the Plant user guide for what each key means and its default.
+    """
+    plant_name: str
+    process_type: Literal["Solids", "Fluids", "Mixed"]
+    country: Country
+    region: Region | None
+    currency: str
+    exchange_rate: Number
+    loc_factor: Number | None
+    equipment: Sequence[Equipment | CompositeEquipment]
+    interest_rate: Number
+    project_lifetime: Number
+    plant_utilization: Number
+    tax_rate: Number
+    working_capital: Number | None
+    depreciation: Depreciation | None
+    capex_ramp: Sequence[float] | None
+    production_ramp: Sequence[float] | None
+    additional_capex_years: Sequence[int] | np.ndarray | None
+    additional_capex_cost: Sequence[float] | np.ndarray | None
+    production_type: Literal["continuous", "batch"]
+    operators_per_shift: Number | None
+    operators_hired: Number | None
+    operator_hourly_rate: OperatorRate | Number
+    working_weeks_per_year: Number
+    working_shifts_per_week: Number
+    operating_shifts_per_day: Number
+    fc: Number | None
+    fp: Number | None
+    fixed_capital_factors: FixedCapitalFactors
+    fixed_capital_components: FixedCapitalComponents
+    fixed_opex_factors: FixedOpexFactors
+    fixed_opex_components: FixedOpexComponents
+    variable_opex_inputs: dict[str, OpexInput | None]
+    plant_products: dict[str, ProductInput | None]
+    project_uncertainties: ProjectUncertainties
 
 
 class Plant:
@@ -160,7 +339,7 @@ class Plant:
             monte_carlo_metrics (dict or None): Distribution results populated
                 after running monte_carlo().
     Example:
-        >>> config = {
+        >>> config: PlantConfig = {  # annotation optional; any dict works
         ...     "plant_name": "Example Plant",
         ...     "process_type": "Fluids",
         ...     "country": "United States",
@@ -203,7 +382,7 @@ class Plant:
         "United Kingdom": 1.02,
     }
 
-    def __init__(self, configuration: dict):
+    def __init__(self, configuration: PlantConfig | dict):
         """Initialize plant from a configuration dictionary."""
         # Snapshot of the input as given; never updated afterwards
         self.config = deepcopy(configuration)
@@ -231,7 +410,7 @@ class Plant:
         self.monte_carlo_inputs = None
         self.monte_carlo_metrics = None
 
-    def update_configuration(self, configuration: dict):
+    def update_configuration(self, configuration: PlantConfig | dict):
         """
         Update plant parameters while preserving nested structures.
 

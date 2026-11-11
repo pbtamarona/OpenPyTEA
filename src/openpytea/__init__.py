@@ -5,7 +5,8 @@ economic sensitivity and uncertainty evaluation.
 
 from importlib.metadata import version
 
-from .plant import Plant
+from .plant import (Plant, PlantConfig, OpexInput, ProductInput,
+                    Uncertainty, Dependency)
 from .equipment import (Equipment, CompositeEquipment, inflation_adjustment,
                         equipment_options, ProcessType, Category,
                         EquipmentType, Material)
@@ -29,6 +30,11 @@ __license__ = "MIT"
 
 __all__ = [
     "Plant",
+    "PlantConfig",
+    "OpexInput",
+    "ProductInput",
+    "Uncertainty",
+    "Dependency",
     "Equipment",
     "CompositeEquipment",
     "inflation_adjustment",

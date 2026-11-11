@@ -19,7 +19,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-from openpytea import Equipment, Plant  # noqa: E402
+from openpytea import Equipment, Plant, PlantConfig  # noqa: E402
 from openpytea.analysis import (  # noqa: E402
     cash_flow_data,
     direct_costs_data,
@@ -79,7 +79,7 @@ comp2 = Equipment(
     category="Compressors, fans, & blowers", type="Compressor, centrifugal",
 )
 
-config = {
+config: PlantConfig = {
     "plant_name": "Demo Plant",
     "process_type": "Fluids",
     "country": "United States",

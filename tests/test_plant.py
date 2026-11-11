@@ -664,3 +664,24 @@ def test_to_dict_with_multi_entry_additional_capex(test_plant):
 
     d = test_plant.to_dict()
     assert "roi_with_additional_capex" in d["metrics"]
+
+
+def test_plant_config_types_match_what_plant_reads():
+    from typing import get_args
+    from openpytea.plant import (
+        _SCALARS, Country, PlantConfig, ProjectUncertainties, Region,
+        _UNCERTAINTY_KEYS,
+    )
+
+    # A failure here means Plant gained or lost a setting: update the
+    # TypedDicts in plant.py to match
+    nested = {"equipment", "operator_hourly_rate", "project_uncertainties",
+              "variable_opex_inputs", "plant_products", "fixed_opex_factors",
+              "fixed_opex_components", "fixed_capital_factors",
+              "fixed_capital_components"}
+    assert set(PlantConfig.__annotations__) == set(_SCALARS) | nested
+    assert set(get_args(Country)) == set(Plant.locFactors)
+    assert set(get_args(Region)) == {
+        r for v in Plant.locFactors.values() if isinstance(v, dict) for r in v
+    }
+    assert set(ProjectUncertainties.__annotations__) == _UNCERTAINTY_KEYS

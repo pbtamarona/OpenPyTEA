@@ -9,7 +9,7 @@ Step 1 — Import the library
 
 .. code-block:: python
 
-   from openpytea import Equipment, Plant
+   from openpytea import Equipment, Plant, PlantConfig
    from openpytea import sensitivity_data, plot_sensitivity
    from openpytea import fixed_capital_data, plot_stacked_bar
 
@@ -55,11 +55,13 @@ Engineering Plant Cost Index (:download:`CEPCI <../src/openpytea/data/cepci_valu
 Step 3 — Configure the plant
 -----------------------------
 
-Pass equipment and financial parameters to :class:`~openpytea.plant.Plant`:
+Pass equipment and financial parameters to :class:`~openpytea.plant.Plant`.
+The ``PlantConfig`` annotation is optional; it lets your editor complete the
+setting names and flag typos:
 
 .. code-block:: python
 
-   plant = Plant({
+   config: PlantConfig = {
        "plant_name": "Ammonia Plant",
        "process_type": "Fluids",
        "country": "Netherlands",
@@ -85,7 +87,9 @@ Pass equipment and financial parameters to :class:`~openpytea.plant.Plant`:
                "price": 75,             # USD/MWh
            }
        },
-   })
+   }
+
+   plant = Plant(config)
 
 To learn more about plant configuration inputs, see the :doc:`Plant user guide <user_guide/plant>`.
 

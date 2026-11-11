@@ -191,9 +191,10 @@ psa.breakdown()                             # one row per sub-component
 Multiple equipment objects can be grouped into a `Plant` instance for full TEA
 
 ```python
-from openpytea.plant import Plant
+from openpytea.plant import Plant, PlantConfig
 
-ammonia_plant = Plant({
+# The PlantConfig annotation is optional; it lets your editor complete keys and flag typos
+config: PlantConfig = {
     'plant_name': 'Ammonia Production Plant',
     'country': 'Netherlands',
     'process_type': 'Fluids',
@@ -216,8 +217,9 @@ ammonia_plant = Plant({
             'price': 2  # US$/kg
         },
     },
-})
+}
 
+ammonia_plant = Plant(config)
 ammonia_plant.calculate_cash_flow(print_results=True)
 ammonia_plant.calculate_levelized_cost()
 ```
