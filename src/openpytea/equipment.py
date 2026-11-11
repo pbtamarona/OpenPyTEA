@@ -1,6 +1,6 @@
 import difflib
 import warnings
-from typing import Literal
+from typing import Literal, overload
 
 import numpy as np
 import pandas as pd
@@ -25,6 +25,9 @@ with as_file(
 # Equipment.material_factors (+ CSV default materials) by
 # tests/test_equipment.py::test_literal_hints_match_the_data
 ProcessType = Literal["Solids", "Fluids", "Mixed", "Electrical"]
+
+# Size parameter: one value, or two for two-parameter correlations
+Param = float | tuple[float, float] | list[float]
 
 Category = Literal[
     "Adsorption & membrane separation",
@@ -1062,14 +1065,100 @@ class Equipment:
         "Exotic material (welded)": 2.5,
     }
 
+    # Installation factors, set in __init__ by _set_install_factors
+    erection_factor: float
+    piping_factor: float
+    instrumentation_factor: float
+    electrical_factor: float
+    civil_factor: float
+    structural_factor: float
+    lagging_factor: float
+
+    # Three overloads, for type checkers only: category and type must be
+    # names from the cost database when the cost comes from it, but are
+    # free labels when purchased_cost or cost_func gives the cost
+    @overload
     def __init__(
         self,
         name: str,
-        param: float | tuple[float, float] | list[float],
+        param: Param,
         process_type: ProcessType,
         category: Category,
         type: EquipmentType | None = None,
         material: Material | None = None,
+        num_units: int | None = None,
+        purchased_cost: None = None,
+        cost_year: int | None = None,
+        cost_func: None = None,
+        target_year: int = 2024,
+        erection_factor: float | None = None,
+        piping_factor: float | None = None,
+        instrumentation_factor: float | None = None,
+        electrical_factor: float | None = None,
+        civil_factor: float | None = None,
+        structural_factor: float | None = None,
+        lagging_factor: float | None = None,
+        material_factor: float | None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        name: str,
+        param: Param | None,
+        process_type: ProcessType,
+        category: str,
+        type: str | None = None,
+        material: Material | None = None,
+        num_units: int | None = None,
+        *,
+        purchased_cost: float,
+        cost_year: int | None = None,
+        cost_func: str | None = None,
+        target_year: int = 2024,
+        erection_factor: float | None = None,
+        piping_factor: float | None = None,
+        instrumentation_factor: float | None = None,
+        electrical_factor: float | None = None,
+        civil_factor: float | None = None,
+        structural_factor: float | None = None,
+        lagging_factor: float | None = None,
+        material_factor: float | None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        name: str,
+        param: Param,
+        process_type: ProcessType,
+        category: str,
+        type: str | None = None,
+        material: Material | None = None,
+        num_units: int | None = None,
+        *,
+        purchased_cost: None = None,
+        cost_year: int | None = None,
+        cost_func: str,
+        target_year: int = 2024,
+        erection_factor: float | None = None,
+        piping_factor: float | None = None,
+        instrumentation_factor: float | None = None,
+        electrical_factor: float | None = None,
+        civil_factor: float | None = None,
+        structural_factor: float | None = None,
+        lagging_factor: float | None = None,
+        material_factor: float | None = None,
+    ) -> None: ...
+
+    def __init__(
+        self,
+        name: str,
+        param: Param | None,
+        process_type: str,
+        category: str,
+        type: str | None = None,
+        material: str | None = None,
         num_units: int | None = None,
         purchased_cost: float | None = None,
         cost_year: int | None = None,
@@ -1447,6 +1536,15 @@ class CompositeEquipment:
     ...                          category="Adsorption", type="PSA")
     >>> psa.breakdown()  # DataFrame with one row per sub-component
     """
+
+    # Installation factors, set in __init__ by _set_install_factors
+    erection_factor: float
+    piping_factor: float
+    instrumentation_factor: float
+    electrical_factor: float
+    civil_factor: float
+    structural_factor: float
+    lagging_factor: float
 
     def __init__(
         self,

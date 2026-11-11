@@ -66,12 +66,12 @@ def save(fig, name):
 # ----------------------------------------------------------------------
 hx = Equipment(
     name="HX-101", param=900, process_type="Fluids",
-    category="Heat Exchangers", type="U-tube shell & tube",
+    category="Heat exchangers", type="U-tube shell & tube",
     material="316 stainless steel",
 )
 comp1 = Equipment(
     name="Comp-1", process_type="Fluids", material="Carbon steel", param=1,
-    category="Compressors, fans, & Blowers", type="Compressor, centrifugal",
+    category="Compressors, fans, & blowers", type="Compressor, centrifugal",
     cost_func="co2_compressor_manzolini_2011",
 )
 comp2 = Equipment(

@@ -6,7 +6,7 @@ import pandas as pd
 from copy import deepcopy
 from collections.abc import Sequence
 from types import SimpleNamespace
-from typing import List, Dict, Literal, Optional, TypedDict
+from typing import Any, List, Dict, Literal, Optional, TypedDict
 from scipy.optimize import root_scalar
 
 from openpytea.equipment import CompositeEquipment, Equipment
@@ -382,6 +382,40 @@ class Plant:
         "United Kingdom": 1.02,
     }
 
+    # Settings set in __init__ from the configuration (see _SCALARS), so
+    # type checkers and IDEs know them. Numbers may hold scenario arrays.
+    name: str | None
+    process_type: str
+    country: str
+    region: str | None
+    currency: str
+    exchange_rate: float
+    working_capital: Any  # number or array; None until computed if not given
+    interest_rate: float
+    project_lifetime: int
+    plant_utilization: float
+    tax_rate: float
+    depreciation: dict | None
+    operators_per_shift: float | None
+    operators_hired: float | None
+    production_type: str
+    working_weeks_per_year: float
+    working_shifts_per_week: float
+    operating_shifts_per_day: float
+    additional_capex_years: Any  # list or array of years, or None
+    additional_capex_cost: Any  # list or array of costs, or None
+    fc: float | None
+    fp: float | None
+    capex_ramp: Sequence[float] | None
+    production_ramp: Sequence[float] | None
+    loc_factor: float | None
+    operator_hourly_rate: dict
+    project_uncertainties: dict
+    variable_opex_inputs: dict
+    plant_products: dict
+    fixed_opex_factors: dict
+    fixed_opex_components: dict
+
     def __init__(self, configuration: PlantConfig | dict):
         """Initialize plant from a configuration dictionary."""
         # Snapshot of the input as given; never updated afterwards
@@ -627,7 +661,7 @@ class Plant:
                 )
         return loc_factor
 
-    def calculate_isbl(self, fc=1.0, print_results=False):
+    def calculate_isbl(self, fc: float | None = 1.0, print_results=False):
         """
         Calculate Inside Battery Limits (ISBL) cost.
 

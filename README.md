@@ -162,7 +162,7 @@ compressor = Equipment(
     name='COMP',
     param=5000,  # kW
     process_type='Fluids',
-    category='Compressors, fans, & Blowers',
+    category='Compressors, fans, & blowers',
     type='Compressor, centrifugal',
     material='Carbon steel'
 )
