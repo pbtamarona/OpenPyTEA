@@ -99,6 +99,15 @@ export const runCalculations = () =>
   request<CalculationResults>("/plant/calculate", { method: "POST" });
 
 // Analysis
+/** analysis.cash_flow_data: one cumulative curve per plant */
+export interface CashFlowCurve {
+  plant: string;
+  years: number[];
+  cumulative: number[];
+  breakeven_year: number | null;
+}
+export const runCashFlow = (params: { extra_plants?: PlantInput[]; include_active?: boolean }) =>
+  request<{ curves: CashFlowCurve[] }>("/analysis/cash-flow", { method: "POST", body: JSON.stringify(params) });
 export const getSensitivityParameters = () => request<string[]>("/analysis/sensitivity/parameters");
 export const runSensitivity = (params: {
   parameter: string; plus_minus_value: number; n_points: number; metric: string;

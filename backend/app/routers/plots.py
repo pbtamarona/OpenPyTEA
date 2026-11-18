@@ -18,6 +18,7 @@ from fastapi import APIRouter, HTTPException  # noqa: E402
 from fastapi.responses import Response  # noqa: E402
 
 from openpytea.analysis import (  # noqa: E402
+    cash_flow_data,
     direct_costs_data,
     fixed_capital_data,
     fixed_opex_data,
@@ -27,6 +28,7 @@ from openpytea.analysis import (  # noqa: E402
     tornado_data,
 )
 from openpytea.plotting import (  # noqa: E402
+    plot_cash_flow,
     plot_stacked_bar,
     plot_sensitivity,
     plot_tornado,
@@ -38,7 +40,7 @@ from openpytea.plotting import (  # noqa: E402
 from app import state  # noqa: E402
 from app.plant_factory import require_active_plant  # noqa: E402
 from app.routers.analysis import _plants_for  # noqa: E402
-from app.schemas import ComparePlotIn, SensitivityPlotIn, TornadoIn, MCPlotIn  # noqa: E402
+from app.schemas import CashFlowIn, ComparePlotIn, SensitivityPlotIn, TornadoIn, MCPlotIn  # noqa: E402
 
 router = APIRouter()
 
@@ -91,6 +93,20 @@ def stacked_plot(kind: str, pct: bool = False, by_category: bool = False,
         try:
             data = data_func(plant, pct=pct, **extra)
             fig, _ = plot_stacked_bar(data, show=False)
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Plot failed: {e}")
+        return _png(fig, grid)
+
+
+@router.post("/cash-flow")
+def cash_flow_plot(payload: CashFlowIn, grid: bool = False):
+    """plot_cash_flow() of the ticked plants (cumulative cash position)."""
+    plants = _plants_for(payload)
+    with _mpl_lock:
+        try:
+            fig, _ = plot_cash_flow(cash_flow_data(plants), show=False)
         except HTTPException:
             raise
         except Exception as e:

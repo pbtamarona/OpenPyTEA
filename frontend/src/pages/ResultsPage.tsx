@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { runCalculations, getPlantConfig, setPlantConfig as savePlantConfig, fetchPlotPng, exportJsonResults } from "../api/client";
+import CashFlowChart from "../components/CashFlowChart";
 import type { CalculationResults, PlantConfig, ProjectOverview, QuantityItem } from "../types";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -562,17 +563,24 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
       {results.cash_flow.cash_flow && results.cash_flow.cash_flow.length > 0 && (
         <div className="card">
           <h2>Cash Flow (in {currency})</h2>
-          {plantConfig && (
-            <RampEditor
-              capexRamp={plantConfig.capex_ramp}
-              productionRamp={plantConfig.production_ramp}
-              fixedOpexRamp={plantConfig.fixed_opex_ramp}
-              variableOpexRamp={plantConfig.variable_opex_ramp}
-              lifetime={plantConfig.project_lifetime}
-              busy={loading}
-              onApply={applyRamps}
-            />
-          )}
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-start" }}>
+            {plantConfig && (
+              <div style={{ flex: "1 1 520px", minWidth: 0 }}>
+                <RampEditor
+                  capexRamp={plantConfig.capex_ramp}
+                  productionRamp={plantConfig.production_ramp}
+                  fixedOpexRamp={plantConfig.fixed_opex_ramp}
+                  variableOpexRamp={plantConfig.variable_opex_ramp}
+                  lifetime={plantConfig.project_lifetime}
+                  busy={loading}
+                  onApply={applyRamps}
+                />
+              </div>
+            )}
+            {/* Open plant only; other plants are overlaid on the Compare tab.
+                #66c2a5: plot_cash_flow's first (Set2) colour, as the download */}
+            <CashFlowChart body={{}} refreshKey={results} colors={["#66c2a5"]} currency={currency} style={{ flex: "1 1 360px", minWidth: 300, marginBottom: 20 }} />
+          </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ textAlign: "center" }}>
               <thead>

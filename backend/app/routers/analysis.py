@@ -3,13 +3,13 @@
 import numpy as np
 from fastapi import APIRouter, HTTPException
 
-from openpytea.analysis import sensitivity_data, tornado_data, monte_carlo
+from openpytea.analysis import cash_flow_data, sensitivity_data, tornado_data, monte_carlo
 from openpytea.helpers import _collect_dependency_specs, _sensitivity_key_node
 
 from app import state
 from app.plant_factory import build_plant, require_active_plant
 from app.schemas import (
-    SensitivityIn, TornadoIn, MonteCarloIn,
+    CashFlowIn, SensitivityIn, TornadoIn, MonteCarloIn,
     SensitivityResult, TornadoResult,
     MonteCarloMultiResult,
     PlantInput,
@@ -67,6 +67,16 @@ def get_sensitivity_parameters():
         k for k in top + var_keys + prod_keys + qty_keys
         if _sensitivity_key_node(k) not in dependents
     ]
+
+
+@router.post("/cash-flow")
+def run_cash_flow(data: CashFlowIn):
+    """cash_flow_data() for the open plant and/or other project plants."""
+    plants = _plants_for(data)
+    try:
+        return to_jsonable(cash_flow_data(plants))
+    except (ValueError, KeyError) as e:
+        raise HTTPException(status_code=400, detail=f"Cash flow failed: {e}")
 
 
 @router.post("/sensitivity", response_model=SensitivityResult)

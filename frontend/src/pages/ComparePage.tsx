@@ -9,6 +9,7 @@ import DownloadableChart from "../components/DownloadableChart";
 import { fetchPlotPng, type PlotOptions } from "../api/client";
 import { fixedOpexLabel, fmtPct, nameLabel } from "../format";
 import PctToggle from "../components/PctToggle";
+import CashFlowChart from "../components/CashFlowChart";
 
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
 
@@ -409,6 +410,19 @@ export default function ComparePage({
             </ResponsiveContainer>
           </DownloadableChart>
         </div>
+
+        {/* Cumulative cash flow, rebuilt from the plants' saved inputs */}
+        {plants.length > 0 && plants.every((p) => p.source) && (
+          <div className="card" style={{ gridColumn: "1 / -1" }}>
+            <h2>Cumulative Cash Flow ({currencyLabel})</h2>
+            <CashFlowChart
+              body={{ extra_plants: plants.map((p) => ({ ...p.source!, name: dn(p) })), include_active: false }}
+              colors={plants.map(colorOf)}
+              currency={plants[0].currency}
+              height={350}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

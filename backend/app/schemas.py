@@ -294,6 +294,13 @@ class ComparePlotIn(BaseModel):
     pct: bool = False
 
 
+class CashFlowIn(BaseModel):
+    """Plants of the cumulative cash flow diagram (Results tab)."""
+    extra_plants: list[PlantInput] = Field(default_factory=list, max_length=8)
+    # False shows the extra plants only (the open plant left out)
+    include_active: bool = True
+
+
 class SensitivityIn(BaseModel):
     parameter: str
     plus_minus_value: float = Field(default=0.2, gt=0, le=10)
