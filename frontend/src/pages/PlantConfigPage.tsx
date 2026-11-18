@@ -6,6 +6,7 @@ import UncertaintyEditor, { DISTRIBUTIONS, paramSummary } from "../components/Un
 import HelpTip from "../components/HelpTip";
 import { openJsonFile, saveJsonFile } from "../jsonFiles";
 import { nameLabel } from "../format";
+import NumberInput from "../components/NumberInput";
 
 // ── Parameter dependencies (3.0 dependency DAG) ────────────────────
 // A dependency ties one parameter to others: dependent = Σ weight·parent
@@ -624,7 +625,7 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
                 const outside = year < 1 || year > config.project_lifetime;
                 return (
                   <tr key={i}>
-                    <td><input type="number" min={0} value={cost} onChange={(e) => setAdditionalCapex(i, +e.target.value, year)} style={{ width: 140 }} /></td>
+                    <td><NumberInput value={cost} onChange={(v) => setAdditionalCapex(i, v, year)} style={{ width: 140 }} /></td>
                     <td>
                       <input
                         type="number" min={1} max={config.project_lifetime} step={1} value={year}
@@ -676,8 +677,8 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
                       <button className="value-edit" style={{ fontWeight: 700 }} title="Click to rename" onClick={() => { setEditingProductKey(key); setEditingProductName(key); }}>{nameLabel(key)}</button>
                     )}
                   </td>
-                  <td><input type="number" value={val.production ?? 0} onChange={(e) => updateProduct(key, "production", +e.target.value)} style={{ width: 100 }} /></td>
-                  <td><input type="number" value={val.price ?? 0} onChange={(e) => updateProduct(key, "price", +e.target.value)} style={{ width: 80 }} /></td>
+                  <td><NumberInput value={val.production ?? 0} onChange={(v) => updateProduct(key, "production", v)} style={{ width: 100 }} /></td>
+                  <td><NumberInput value={val.price ?? 0} onChange={(v) => updateProduct(key, "price", v)} style={{ width: 80 }} /></td>
                   <td>
                     {uncertaintyPicker({ kind: "price", root: "plant_products", key }, val.price_uncertainty ?? legacyNormal(val))}
                   </td>
@@ -732,8 +733,8 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
                       <button className="value-edit" style={{ fontWeight: 700 }} title="Click to rename" onClick={() => { setEditingVarOpexKey(key); setEditingVarOpexName(key); }}>{nameLabel(key)}</button>
                     )}
                   </td>
-                  <td><input type="number" value={val.consumption ?? 0} onChange={(e) => updateVarOpex(key, "consumption", +e.target.value)} style={{ width: 100 }} /></td>
-                  <td><input type="number" value={val.price ?? 0} onChange={(e) => updateVarOpex(key, "price", +e.target.value)} style={{ width: 80 }} /></td>
+                  <td><NumberInput value={val.consumption ?? 0} onChange={(v) => updateVarOpex(key, "consumption", v)} style={{ width: 100 }} /></td>
+                  <td><NumberInput value={val.price ?? 0} onChange={(v) => updateVarOpex(key, "price", v)} style={{ width: 80 }} /></td>
                   <td>
                     {uncertaintyPicker({ kind: "price", root: "variable_opex_inputs", key }, val.price_uncertainty ?? legacyNormal(val))}
                   </td>
