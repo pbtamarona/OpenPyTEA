@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect, useState, type ReactNode } from "react";
 import { saveFigure } from "../save";
+import type { PlotOptions } from "../api/client";
 
 interface Props {
   filename?: string;
@@ -12,8 +13,9 @@ interface Props {
   // When given, the download button fetches the backend's matplotlib
   // rendering of this chart — the exact figure the library produces in
   // Jupyter — instead of rasterizing the on-screen SVG. Falls back to the
-  // screen render if the request fails.
-  serverPlot?: () => Promise<Blob>;
+  // screen render if the request fails. Receives the chart's grid toggle,
+  // to pass on to fetchPlotPng so the figure shows the same grid.
+  serverPlot?: (opts: PlotOptions) => Promise<Blob>;
 }
 
 export default function DownloadableChart({
@@ -119,7 +121,7 @@ export default function DownloadableChart({
     if (serverPlot) {
       setBusy(true);
       try {
-        const blob = await serverPlot();
+        const blob = await serverPlot({ grid: hasGrid && showGrid });
         await saveFigure(blob, filename);
         return;
       } catch (e) {
@@ -129,7 +131,7 @@ export default function DownloadableChart({
       }
     }
     downloadScreenRender();
-  }, [serverPlot, filename, downloadScreenRender]);
+  }, [serverPlot, filename, downloadScreenRender, hasGrid, showGrid]);
 
   return (
     <div className="chart-panel" style={{

@@ -1000,17 +1000,22 @@ td input[type="number"] {
 }
 .welcome .app-footer a { color: #8fb0ff; }
 
-/* Monte Carlo: fitted-normal overlay toggle */
-.mc-fit-toggle {
+/* Monte Carlo: plot options (fitted normal, percentile levels) */
+.mc-plot-options {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 6px 16px;
   margin: 0 0 12px;
   font-size: 13px;
   color: var(--text-secondary);
-  cursor: pointer;
 }
+.mc-plot-options label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.mc-pct-level { display: inline-flex; align-items: center; gap: 3px; margin-left: -8px; }
+.mc-pct-level input { width: 56px; padding: 2px 4px; font-size: 13px; }
+.mc-pct-level input:disabled { opacity: 0.5; }
+.mc-pct-level input.invalid { border-color: #e03131; }
 
 /* Plant checkboxes on Analysis and Monte Carlo */
 .compare-plants { margin-bottom: 16px; }

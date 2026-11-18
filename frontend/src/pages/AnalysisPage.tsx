@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  getSensitivityParameters, runSensitivity, runTornado, fetchPlotPng,
+  getSensitivityParameters, runSensitivity, runTornado, fetchPlotPng, type PlotOptions,
 } from "../api/client";
 import type { AnalysisImport, SensitivityResult, TornadoCategory, TornadoResult, ProjectOverview } from "../types";
 import {
@@ -383,12 +383,12 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
               isTicked={sensPlants.isTicked}
               colorIndex={sensPlants.colorIndex}
               showLegend={multiPlant}
-              serverPlot={async () => {
+              serverPlot={async (opts) => {
                 // The figure of the result on screen: its run, ticked plants only
                 const req = await sensPlants.requestFor(panel.ids.filter(sensPlants.isTicked));
                 return fetchPlotPng("/plots/sensitivity", {
                   ...panel.ran!, additional_capex: false, x_axis: panel.x_axis, ...req.body,
-                });
+                }, opts);
               }}
               onChange={(patch) => updatePanel(panel.id, patch)}
               onRemove={() => removePanel(panel.id)}
@@ -432,9 +432,9 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
           <DownloadableChart
             filename="tornado"
             maxWidth={800}
-            serverPlot={async () => {
+            serverPlot={async (opts) => {
               const req = await tornSelection.requestFor(tornPlants.map((p) => p.pid));
-              return fetchPlotPng("/plots/tornado", { ...tornRan!, additional_capex: false, ...req.body });
+              return fetchPlotPng("/plots/tornado", { ...tornRan!, additional_capex: false, ...req.body }, opts);
             }}
             height={Math.max(
               220,
@@ -531,7 +531,7 @@ interface PanelProps {
   colorIndex: (plantId: string, fallback: number) => number;
   /** Name the plants even when one is shown (the project has several) */
   showLegend: boolean;
-  serverPlot: () => Promise<Blob>;
+  serverPlot: (opts: PlotOptions) => Promise<Blob>;
   onChange: (patch: Partial<Panel>) => void;
   onRemove: () => void;
 }

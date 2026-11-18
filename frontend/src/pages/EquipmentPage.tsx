@@ -532,7 +532,7 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
               <PctToggle pct={!!pctOn.direct_costs} onChange={pctSet("direct_costs")} />
             </div>
           </div>
-          <DownloadableChart filename={byCategory ? "direct_costs_by_category" : "direct_costs"} serverPlot={() => fetchPlotPng(`/plots/stacked/direct_costs${directQuery ? `?${directQuery}` : ""}`)} height={directData.length * 30 + 60}>
+          <DownloadableChart filename={byCategory ? "direct_costs_by_category" : "direct_costs"} serverPlot={(opts) => fetchPlotPng(`/plots/stacked/direct_costs${directQuery ? `?${directQuery}` : ""}`, undefined, opts)} height={directData.length * 30 + 60}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={directChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
                 <XAxis type="number" tickFormatter={pctOn.direct_costs ? fmtPct : (v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...directChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.direct_costs ? "Share of total (%)" : "Direct cost ($)", position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />

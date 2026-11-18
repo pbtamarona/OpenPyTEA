@@ -425,7 +425,7 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
             </tbody>
           </table>
           {capexData.length > 0 && (
-            <DownloadableChart filename="capital_costs" serverPlot={() => fetchPlotPng(`/plots/stacked/capital${pctQuery("capital")}`)} height={capexData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
+            <DownloadableChart filename="capital_costs" serverPlot={(opts) => fetchPlotPng(`/plots/stacked/capital${pctQuery("capital")}`, undefined, opts)} height={capexData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={capexChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
                   <XAxis type="number" tickFormatter={pctOn.capital ? fmtPct : (v: number) => (v / 1e6).toFixed(0) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...capexChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.capital ? "Share of total (%)" : `Cost (${currency})`, position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
@@ -469,7 +469,7 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
             </tbody>
           </table>
           {fixedOpexData.some((d) => d.value > 0) && (
-            <DownloadableChart filename="fixed_opex" serverPlot={() => fetchPlotPng(`/plots/stacked/fixed_opex${pctQuery("fixed_opex")}`)} height={fixedOpexData.filter((d) => d.value > 0).length * 30 + 60} style={{ flex: 1, minWidth: 300 }}>
+            <DownloadableChart filename="fixed_opex" serverPlot={(opts) => fetchPlotPng(`/plots/stacked/fixed_opex${pctQuery("fixed_opex")}`, undefined, opts)} height={fixedOpexData.filter((d) => d.value > 0).length * 30 + 60} style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={fixedOpexChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
                   <XAxis type="number" tickFormatter={pctOn.fixed_opex ? fmtPct : (v: number) => (v / 1e3).toFixed(0) + "k"} tick={{ fontSize: 12 }} domain={[0, Math.max(...fixedOpexChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.fixed_opex ? "Share of total (%)" : `Annual cost (${currency})`, position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
@@ -499,7 +499,7 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
                 <tr style={{ fontWeight: 700 }}><td style={{ paddingRight: 12 }}>Total</td><td className="number">{fmt(results.variable_opex.total)}</td></tr>
               </tbody>
             </table>
-            <DownloadableChart filename="variable_opex" serverPlot={() => fetchPlotPng(`/plots/stacked/variable_opex${pctQuery("variable_opex")}`)} height={varOpexData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
+            <DownloadableChart filename="variable_opex" serverPlot={(opts) => fetchPlotPng(`/plots/stacked/variable_opex${pctQuery("variable_opex")}`, undefined, opts)} height={varOpexData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={varOpexChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
                   <XAxis type="number" tickFormatter={pctOn.variable_opex ? fmtPct : (v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...varOpexChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.variable_opex ? "Share of total (%)" : `Annual cost (${currency})`, position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />

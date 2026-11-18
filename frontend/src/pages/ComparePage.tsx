@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import type { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
 import DownloadableChart from "../components/DownloadableChart";
-import { fetchPlotPng } from "../api/client";
+import { fetchPlotPng, type PlotOptions } from "../api/client";
 import { fixedOpexLabel, fmtPct, nameLabel } from "../format";
 import PctToggle from "../components/PctToggle";
 
@@ -189,7 +189,7 @@ export default function ComparePage({
   // its inputs to rebuild from (results-only imports get the screen render)
   const libraryPlot = (kind: string, pct = false) =>
     plants.every((p) => p.source)
-      ? async () => {
+      ? async (opts: PlotOptions) => {
           if (currencies.size > 1 && !pct) {
             await warn(
               `These plants use mixed currencies (${[...currencies].join(", ")}). ` +
@@ -200,7 +200,7 @@ export default function ComparePage({
           return fetchPlotPng(`/plots/compare/${kind}`, {
             extra_plants: plants.map((p) => ({ ...p.source!, name: dn(p) })),
             pct,
-          });
+          }, opts);
         }
       : undefined;
 

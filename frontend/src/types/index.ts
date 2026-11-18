@@ -215,6 +215,8 @@ export interface MCMetricStats {
   p75: number;
   p95: number;
   histogram: MCHistogram;
+  /** np.percentile at 0, 0.1, ..., 100 (1001 values) */
+  quantiles: number[];
 }
 
 export interface PlantInput {

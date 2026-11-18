@@ -3,6 +3,7 @@ import { runMonteCarlo, fetchPlotPng } from "../api/client";
 import type { AnalysisImport, MonteCarloMultiResult, MonteCarloResult, ProjectOverview } from "../types";
 import {
   ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  ReferenceLine, ReferenceDot,
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
 import { fmtTick, fmtValue, niceTicks, texToText } from "../format";
@@ -135,17 +136,80 @@ function buildOverlayData(plants: ShownPlant[], metric: string, showFit: boolean
   });
 }
 
+/** Value at percentile `p` (0-100) from the run's 1001-point quantile
+    table (0.1% steps), interpolated between steps. */
+function quantileAt(q: number[], p: number): number {
+  const pos = (p / 100) * (q.length - 1);
+  const i = Math.floor(pos);
+  return i >= q.length - 1 ? q[q.length - 1] : q[i] + (pos - i) * (q[i + 1] - q[i]);
+}
+
+/** Power of ten (a multiple of 3) the percentile values are shown in, as
+    in the library's legend: 0 while the largest is in [0.001, 9999]. */
+function pctExponent(values: number[]): number {
+  const largest = Math.max(0, ...values.map(Math.abs));
+  if (largest === 0) return 0;
+  const e = Math.floor(Math.log10(largest));
+  return e >= -3 && e < 4 ? 0 : 3 * Math.floor(e / 3);
+}
+
+/** 3 significant figures, never in e-notation (the library's _fmt3) */
+function fmt3(x: number): string {
+  if (x === 0) return "0";
+  return x.toFixed(Math.max(0, 2 - Math.floor(Math.log10(Math.abs(x)))));
+}
+
+/** Cumulative curves of several plants on one x axis: rows of x and each
+    plant's cumulative probability at its own quantile points (the other
+    plants' keys stay undefined, bridged with connectNulls). */
+function buildCumulativeData(plants: ShownPlant[], metric: string): OverlayRow[] {
+  const rows: OverlayRow[] = [];
+  plants.forEach((p) => {
+    const q = p.metrics[metric]?.quantiles;
+    q?.forEach((x, i) => rows.push({ x, [`${p.pid}__cdf`]: i / (q.length - 1) }));
+  });
+  return rows.sort((a, b) => a.x - b.x);
+}
+
+type MCView = "histogram" | "cumulative";
+const DEFAULT_PCTS = ["10", "50", "90"];
+const validPct = (t: string) => t.trim() !== "" && Number.isFinite(Number(t)) && +t >= 0 && +t <= 100;
+
 export default function MonteCarloPage({ setError, setNotice, project }: Props) {
   const [numSamples, setNumSamples] = useState(50000);
   // Fitted-normal overlay on the metric histograms (screen and downloads);
-  // remembered across sessions
+  // off by default, as in the library; remembered across sessions
   const [showFit, setShowFit] = useState(() => {
-    try { return localStorage.getItem("openpytea-mc-fit") !== "off"; } catch { return true; }
+    try { return localStorage.getItem("openpytea-mc-fit") === "on"; } catch { return false; }
   });
   const toggleFit = (on: boolean) => {
     setShowFit(on);
     try { localStorage.setItem("openpytea-mc-fit", on ? "on" : "off"); } catch { /* private mode */ }
   };
+  // Percentile markers (the library's percentiles, P10/P50/P90 by default):
+  // three editable levels; a blank or out-of-range box is left out
+  const [showPct, setShowPct] = useState(() => {
+    try { return localStorage.getItem("openpytea-mc-pct") !== "off"; } catch { return true; }
+  });
+  const [pctText, setPctText] = useState<string[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("openpytea-mc-pct-levels") ?? "null");
+      if (Array.isArray(saved) && saved.length === 3) return saved.map(String);
+    } catch { /* missing or private mode */ }
+    return DEFAULT_PCTS;
+  });
+  const togglePct = (on: boolean) => {
+    setShowPct(on);
+    try { localStorage.setItem("openpytea-mc-pct", on ? "on" : "off"); } catch { /* private mode */ }
+  };
+  const setPctLevel = (i: number, text: string) => {
+    const next = pctText.map((t, j) => (j === i ? text : t));
+    setPctText(next);
+    try { localStorage.setItem("openpytea-mc-pct-levels", JSON.stringify(next)); } catch { /* private mode */ }
+  };
+  const percentiles = showPct ? pctText.filter(validPct).map(Number) : [];
+  // Histogram or cumulative distribution, per metric card
+  const [viewOf, setViewOf] = useState<Record<string, MCView>>({});
   const [batchSize, setBatchSize] = useState(1000);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MonteCarloMultiResult | null>(null);
@@ -287,36 +351,135 @@ export default function MonteCarloPage({ setError, setNotice, project }: Props) 
             </div>
           </div>
 
-          <label className="mc-fit-toggle">
-            <input type="checkbox" checked={showFit} onChange={(e) => toggleFit(e.target.checked)} />
-            Show fitted normal distribution
-          </label>
+          <div className="mc-plot-options">
+            <label>
+              <input type="checkbox" checked={showFit} onChange={(e) => toggleFit(e.target.checked)} />
+              Show fitted normal distribution
+            </label>
+            <label>
+              <input type="checkbox" checked={showPct} onChange={(e) => togglePct(e.target.checked)} />
+              Show percentiles
+            </label>
+            {pctText.map((t, i) => (
+              <span key={i} className="mc-pct-level">
+                P
+                <input
+                  type="number" min={0} max={100} step="any" value={t}
+                  disabled={!showPct}
+                  className={validPct(t) ? undefined : "invalid"}
+                  title="Percentile, 0 to 100 (P90: 90% of the samples are at or below it). Leave blank to drop it."
+                  onChange={(e) => setPctLevel(i, e.target.value)}
+                />
+              </span>
+            ))}
+          </div>
 
-          {/* Histograms for each metric — overlaid across plants */}
+          {/* Histograms or cumulative curves for each metric — overlaid across plants */}
           {metricNames.map((metric) => {
-            const data = buildOverlayData(plants, metric, showFit);
+            const view: MCView = viewOf[metric] ?? "histogram";
+            const cumulative = view === "cumulative";
+            const data = cumulative ? buildCumulativeData(plants, metric) : buildOverlayData(plants, metric, showFit);
             if (data.length === 0) return null;
             const seriesPlants = plants.filter((p) => p.metrics[metric] != null);
+            const multi = seriesPlants.length > 1;
             // Overlaid plants share one axis: name the currency only if they agree
             const currencies = [...new Set(seriesPlants.map((p) => p.currency))];
             const info = metricInfo(metric, currencies.length === 1 ? currencies[0] : "currency");
             const xLabel = withUnit(info.name, info.unit);
+            // Percentile values per plant, in one shared power of ten (as the figure's legend)
+            const pctValues = new Map(seriesPlants.map((p) => [p.pid, percentiles.map((pc) => quantileAt(p.metrics[metric]!.quantiles, pc))]));
+            const exp = pctExponent([...pctValues.values()].flat());
+            const pctHeader = percentiles.map((pc) => `P${pc}`).join(", ");
+            const xMin = data[0].x;
+            const xMax = data[data.length - 1].x;
 
             return (
               <div key={metric} className="card">
-                <h2>{metric} Distribution</h2>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                  <h2>{metric} Distribution</h2>
+                  <div className="seg-toggle" role="group" aria-label="Histogram or cumulative distribution">
+                    <button className={cumulative ? "" : "active"} onClick={() => setViewOf({ ...viewOf, [metric]: "histogram" })}>Histogram</button>
+                    <button className={cumulative ? "active" : ""} onClick={() => setViewOf({ ...viewOf, [metric]: "cumulative" })}>Cumulative</button>
+                  </div>
+                </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>
                   {seriesPlants.map((p) => {
                     const s = p.metrics[metric]!;
+                    const parts = [
+                      !cumulative && showFit ? `μ=${fmt(s.mean)}, σ=${fmt(s.std)}` : null,
+                      percentiles.length ? `${pctHeader} = ${pctValues.get(p.pid)!.map((v) => fmt3(v / 10 ** exp)).join(", ")}` : null,
+                    ].filter(Boolean);
                     return (
                       <span key={p.pid} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ width: 12, height: 12, background: colorOf(p), display: "inline-block" }} />
-                        <strong>{p.name}</strong> μ={fmt(s.mean)}, σ={fmt(s.std)}
+                        <strong>{p.name}</strong> {parts.join("; ")}
+                        {percentiles.length > 0 && exp !== 0 && <span>(×10<sup>{exp}</sup>)</span>}
                       </span>
                     );
                   })}
                 </div>
-                <DownloadableChart filename={`mc_${metric}`} height={430} serverPlot={() => fetchPlotPng("/plots/monte-carlo", { metric, show_fit: showFit, plants: seriesPlants.map((p) => p.pos) })}>
+                <DownloadableChart
+                  filename={`mc_${metric}${cumulative ? "_cumulative" : ""}`}
+                  height={430}
+                  serverPlot={(opts) => fetchPlotPng("/plots/monte-carlo", {
+                    metric,
+                    kind: view,
+                    show_fit: showFit,
+                    percentiles: percentiles.length ? percentiles : null,
+                    plants: seriesPlants.map((p) => p.pos),
+                  }, opts)}
+                >
+                  {cumulative ? (
+                  <ResponsiveContainer>
+                    <ComposedChart data={data} margin={{ bottom: 46, left: 12, top: 10, right: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="x"
+                        type="number"
+                        domain={["dataMin", "dataMax"]}
+                        ticks={niceTicks(xMin, xMax)}
+                        tickFormatter={fmtTick}
+                        label={{ value: xLabel, position: "insideBottom", offset: -30, style: { fontSize: 14, fill: "#666" } }}
+                      />
+                      <YAxis width={74} tick={{ fontSize: 11 }} domain={[0, 1]} ticks={[0, 0.2, 0.4, 0.6, 0.8, 1]} label={{ value: "Cumulative probability", angle: -90, position: "insideLeft", offset: 0, style: { fontSize: 14, fill: "#666", textAnchor: "middle" } }} />
+                      <Tooltip
+                        labelFormatter={(v) => `${metric}: ${fmtValue(Number(v), 3)}${info.unit && info.unit !== "-" ? ` ${info.unit}` : ""}`}
+                        formatter={(v, name) => {
+                          const pid = String(name).replace(/__cdf$/, "");
+                          const plantName = plants.find((p) => p.pid === pid)?.name ?? pid;
+                          return [`${(Number(v) * 100).toFixed(1)}% at or below`, plantName];
+                        }}
+                      />
+                      {/* Several plants: dashed levels, a dot where each curve crosses them */}
+                      {multi && percentiles.map((pc) => (
+                        <ReferenceLine key={`lvl-${pc}`} y={pc / 100} stroke="#999" strokeDasharray="4 3" />
+                      ))}
+                      {seriesPlants.map((p) => (
+                        <Line
+                          key={`${p.pid}-cdf`}
+                          type="linear"
+                          dataKey={`${p.pid}__cdf`}
+                          stroke={colorOf(p)}
+                          strokeWidth={2}
+                          dot={false}
+                          connectNulls
+                          isAnimationActive={false}
+                        />
+                      ))}
+                      {multi && seriesPlants.flatMap((p) => percentiles.map((pc, i) => (
+                        <ReferenceDot key={`${p.pid}-dot-${pc}`} x={pctValues.get(p.pid)![i]} y={pc / 100} r={3.5} fill={colorOf(p)} stroke="none" />
+                      )))}
+                      {/* One plant: guide lines from the y-axis to the curve and down */}
+                      {!multi && percentiles.flatMap((pc, i) => {
+                        const v = pctValues.get(seriesPlants[0].pid)![i];
+                        return [
+                          <ReferenceLine key={`h-${pc}`} segment={[{ x: xMin, y: pc / 100 }, { x: v, y: pc / 100 }]} stroke="#888" strokeDasharray="4 3" />,
+                          <ReferenceLine key={`v-${pc}`} segment={[{ x: v, y: 0 }, { x: v, y: pc / 100 }]} stroke="#888" strokeDasharray="4 3" />,
+                        ];
+                      })}
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                  ) : (
                   <ResponsiveContainer>
                     <ComposedChart data={data} margin={{ bottom: 46, left: 12, top: 10, right: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -366,8 +529,13 @@ export default function MonteCarloPage({ setError, setNotice, project }: Props) 
                           />,
                         ];
                       })}
+                      {/* Percentile lines, dashed in each plant's colour */}
+                      {seriesPlants.flatMap((p) => pctValues.get(p.pid)!.map((v, i) => (
+                        <ReferenceLine key={`${p.pid}-p-${i}`} x={v} stroke={multi ? colorOf(p) : "#888"} strokeDasharray="4 3" />
+                      )))}
                     </ComposedChart>
                   </ResponsiveContainer>
+                  )}
                 </DownloadableChart>
               </div>
             );

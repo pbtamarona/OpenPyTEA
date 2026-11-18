@@ -319,10 +319,23 @@ class MonteCarloIn(BaseModel):
 class MCPlotIn(BaseModel):
     """Which metric of the cached Monte Carlo run to render as a figure."""
     metric: str = "LCOP"
-    # Overlay the fitted normal distribution (the library's show_fit)
-    show_fit: bool = True
+    # Histogram (plot_monte_carlo) or cumulative distribution
+    # (plot_monte_carlo_cumulative)
+    kind: Literal["histogram", "cumulative"] = "histogram"
+    # Overlay the fitted normal distribution (the library's show_fit;
+    # histogram only)
+    show_fit: bool = False
+    # Percentiles to mark, each in [0, 100]; None or empty marks none
+    percentiles: list[float] | None = Field(default=None, max_length=20)
     # Positions in the run of the plants to draw (None: every plant)
     plants: list[int] | None = None
+
+    @field_validator("percentiles")
+    @classmethod
+    def _percentiles_in_range(cls, v):
+        if v is not None and any(not 0 <= p <= 100 for p in v):
+            raise ValueError("percentiles must each be between 0 and 100")
+        return v
 
 
 # ── Analysis results ──────────────────────────────────────────────
@@ -412,6 +425,9 @@ class MCMetricStats(BaseModel):
     p75: float
     p95: float
     histogram: Histogram
+    # np.percentile at 0, 0.1, ..., 100 (1001 values): the cumulative curve
+    # on screen, and any percentile the user types
+    quantiles: list[float]
 
 
 class MCInputStats(BaseModel):

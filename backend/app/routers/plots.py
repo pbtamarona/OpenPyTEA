@@ -31,6 +31,7 @@ from openpytea.plotting import (  # noqa: E402
     plot_sensitivity,
     plot_tornado,
     plot_monte_carlo,
+    plot_monte_carlo_cumulative,
     plot_monte_carlo_inputs,
 )
 
@@ -46,7 +47,13 @@ router = APIRouter()
 _mpl_lock = threading.Lock()
 
 
-def _png(fig) -> Response:
+def _png(fig, grid: bool = False) -> Response:
+    # grid: the chart's grid toggle in the GUI, so the download matches the
+    # screen (dashed, behind the data, like the on-screen grid lines)
+    if grid:
+        for ax in fig.axes:
+            ax.set_axisbelow(True)
+            ax.grid(True, linestyle="--", linewidth=0.4, alpha=0.6)
     buf = io.BytesIO()
     try:
         fig.savefig(buf, format="png", dpi=300, bbox_inches="tight")
@@ -68,7 +75,7 @@ _STACKED_DATA_FUNCS = {
 
 
 @router.get("/stacked/{kind}")
-def stacked_plot(kind: str, pct: bool = False, by_category: bool = False):
+def stacked_plot(kind: str, pct: bool = False, by_category: bool = False, grid: bool = False):
     """Stacked cost bar (direct costs / capital / fixed opex / variable opex), library-rendered."""
     data_func = _STACKED_DATA_FUNCS.get(kind)
     if data_func is None:
@@ -84,7 +91,7 @@ def stacked_plot(kind: str, pct: bool = False, by_category: bool = False):
             raise
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Plot failed: {e}")
-        return _png(fig)
+        return _png(fig, grid)
 
 
 _COMPARE_DATA_FUNCS = {
@@ -96,7 +103,7 @@ _COMPARE_DATA_FUNCS = {
 
 
 @router.post("/compare/{kind}")
-def compare_plot(kind: str, payload: ComparePlotIn):
+def compare_plot(kind: str, payload: ComparePlotIn, grid: bool = False):
     """Stacked breakdown of several plants side by side (Compare tab)."""
     data_func = _COMPARE_DATA_FUNCS.get(kind)
     if data_func is None:
@@ -107,11 +114,11 @@ def compare_plot(kind: str, payload: ComparePlotIn):
             fig, _ = plot_stacked_bar(data_func(plants, pct=payload.pct), show=False)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Plot failed: {e}")
-        return _png(fig)
+        return _png(fig, grid)
 
 
 @router.post("/sensitivity")
-def sensitivity_plot(payload: SensitivityPlotIn):
+def sensitivity_plot(payload: SensitivityPlotIn, grid: bool = False):
     """plot_sensitivity() over the same inputs the analysis endpoint uses."""
     plants = _plants_for(payload)
     with _mpl_lock:
@@ -129,11 +136,11 @@ def sensitivity_plot(payload: SensitivityPlotIn):
             raise
         except (ValueError, KeyError) as e:
             raise HTTPException(status_code=400, detail=f"Sensitivity plot failed: {e}")
-        return _png(fig)
+        return _png(fig, grid)
 
 
 @router.post("/tornado")
-def tornado_plot(payload: TornadoIn):
+def tornado_plot(payload: TornadoIn, grid: bool = False):
     """plot_tornado(); multiple plants become side-by-side subplots."""
     plants = _plants_for(payload)
     with _mpl_lock:
@@ -162,13 +169,13 @@ def tornado_plot(payload: TornadoIn):
             raise
         except (ValueError, KeyError) as e:
             raise HTTPException(status_code=400, detail=f"Tornado plot failed: {e}")
-        return _png(fig)
+        return _png(fig, grid)
 
 
 @router.post("/monte-carlo")
-def monte_carlo_plot(payload: MCPlotIn):
-    """plot_monte_carlo() over the cached raw run (overlaid when several
-    plants are selected)."""
+def monte_carlo_plot(payload: MCPlotIn, grid: bool = False):
+    """plot_monte_carlo() or plot_monte_carlo_cumulative() over the cached
+    raw run (overlaid when several plants are selected)."""
     raw = state.mc_raw
     if not raw:
         raise HTTPException(status_code=400, detail="Run a Monte Carlo simulation first")
@@ -178,19 +185,25 @@ def monte_carlo_plot(payload: MCPlotIn):
         raw = [raw[i] for i in payload.plants]
     with _mpl_lock:
         try:
-            # One plant: a plain histogram; several: overlaid, with a legend
-            fig, _ = plot_monte_carlo(
-                raw[0] if len(raw) == 1 else raw,
-                metric=payload.metric, show_fit=payload.show_fit, show=False)
+            # One plant: a single histogram/curve; several: overlaid
+            data = raw[0] if len(raw) == 1 else raw
+            percentiles = tuple(payload.percentiles or ()) or None
+            if payload.kind == "cumulative":
+                fig, _ = plot_monte_carlo_cumulative(
+                    data, metric=payload.metric, percentiles=percentiles, show=False)
+            else:
+                fig, _ = plot_monte_carlo(
+                    data, metric=payload.metric, show_fit=payload.show_fit,
+                    percentiles=percentiles, show=False)
         except HTTPException:
             raise
         except (ValueError, KeyError) as e:
             raise HTTPException(status_code=400, detail=f"Monte Carlo plot failed: {e}")
-        return _png(fig)
+        return _png(fig, grid)
 
 
 @router.get("/monte-carlo/inputs")
-def monte_carlo_inputs_plot(category: str = "process", plant: int = 0):
+def monte_carlo_inputs_plot(category: str = "process", plant: int = 0, grid: bool = False):
     """plot_monte_carlo_inputs() for one plant (its position in the run) of
     the cached raw run."""
     raw = state.mc_raw
@@ -209,4 +222,4 @@ def monte_carlo_inputs_plot(category: str = "process", plant: int = 0):
             raise HTTPException(status_code=400, detail=f"Inputs plot failed: {e}")
         if fig is None:
             raise HTTPException(status_code=404, detail=f"No {category} inputs in this run")
-        return _png(fig)
+        return _png(fig, grid)

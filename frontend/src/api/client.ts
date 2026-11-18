@@ -40,11 +40,18 @@ const getBase = (): Promise<string> =>
     throw e;
   }));
 
+/** Options a chart passes to its library-rendered download */
+export interface PlotOptions {
+  /** The chart's grid toggle: draw matching grid lines in the figure */
+  grid?: boolean;
+}
+
 // Fetch a matplotlib-rendered figure (PNG) from the backend — the exact
 // rendering the library produces in Jupyter. GET when no body is given.
-export async function fetchPlotPng(path: string, body?: unknown): Promise<Blob> {
+export async function fetchPlotPng(path: string, body?: unknown, opts?: PlotOptions): Promise<Blob> {
   const base = await getBase();
-  const res = await fetch(`${base}${path}`, body === undefined ? undefined : {
+  const url = opts?.grid ? `${path}${path.includes("?") ? "&" : "?"}grid=true` : path;
+  const res = await fetch(`${base}${url}`, body === undefined ? undefined : {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

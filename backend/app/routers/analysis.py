@@ -174,6 +174,7 @@ def _summarize_mc(result: dict) -> dict:
                 "bin_edges": bin_edges.tolist(),
                 "counts": counts.tolist(),
             },
+            "quantiles": np.percentile(arr, np.linspace(0, 100, 1001)).tolist(),
         }
 
     for input_name, values in result["inputs"].items():

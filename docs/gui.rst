@@ -5,7 +5,8 @@ OpenPyTEA includes a graphical user interface (GUI) that lets you perform
 a complete techno-economic assessment — equipment costing, plant
 configuration, results, sensitivity/tornado analysis, Monte Carlo, and
 multi-plant comparison — without writing any Python code. Every chart can
-be downloaded as the same figure the library draws in Jupyter.
+be downloaded as the same figure the library draws in Jupyter, with grid
+lines when the chart's grid toggle (#) is on.
 
 Installing
 ----------
@@ -81,8 +82,9 @@ The tabs follow the TEA workflow:
      - Sensitivity plots (several panels, several plants) and tornado
        diagrams.
    * - Monte Carlo
-     - Uncertainty analysis with histograms and summary statistics, for one
-       or several plants.
+     - Uncertainty analysis with summary statistics and, per metric, a
+       histogram or cumulative distribution with editable percentile
+       markers (P10/P50/P90 by default), for one or several plants.
    * - Compare
      - Side-by-side capital cost, OPEX, levelized cost, NPV and IRR of the
        project's plants.
