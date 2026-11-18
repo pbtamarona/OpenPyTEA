@@ -4,7 +4,7 @@ import {
   getCostDBCategories, getProcessTypes, getMaterials,
   importEquipment, exportEquipmentInput, exportJsonResults, fetchPlotPng,
 } from "../api/client";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
 import PctToggle from "../components/PctToggle";
 import { asShare, fmtPct } from "../format";
@@ -549,6 +549,7 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
           <DownloadableChart filename={`direct_costs${byCategory ? "_by_category" : ""}${expand ? "_components" : ""}`} serverPlot={(opts) => fetchPlotPng(`/plots/stacked/direct_costs${directQuery ? `?${directQuery}` : ""}`, undefined, opts)} height={directData.length * 30 + 60}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={directChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" tickFormatter={pctOn.direct_costs ? fmtPct : (v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...directChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.direct_costs ? "Share of total (%)" : "Direct cost ($)", position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
                 <YAxis type="category" dataKey="name" width={expand ? 190 : 130} tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(v) => (pctOn.direct_costs ? fmtPct(Number(v)) : fmt(Number(v)))} />

@@ -3,7 +3,7 @@ import { runCalculations, getPlantConfig, setPlantConfig as savePlantConfig, fet
 import CashFlowChart from "../components/CashFlowChart";
 import type { CalculationResults, PlantConfig, ProjectOverview, QuantityItem } from "../types";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
 import PlantPicker from "../components/PlantPicker";
@@ -442,6 +442,7 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
             <DownloadableChart filename="capital_costs" serverPlot={(opts) => fetchPlotPng(`/plots/stacked/capital${pctQuery("capital")}`, undefined, opts)} height={capexData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={capexChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" tickFormatter={pctOn.capital ? fmtPct : (v: number) => (v / 1e6).toFixed(0) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...capexChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.capital ? "Share of total (%)" : `Cost (${currency})`, position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
                   <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(v) => (pctOn.capital ? fmtPct(Number(v)) : fmt(Number(v)))} />
@@ -486,6 +487,7 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
             <DownloadableChart filename="fixed_opex" serverPlot={(opts) => fetchPlotPng(`/plots/stacked/fixed_opex${pctQuery("fixed_opex")}`, undefined, opts)} height={fixedOpexData.filter((d) => d.value > 0).length * 30 + 60} style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={fixedOpexChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" tickFormatter={pctOn.fixed_opex ? fmtPct : (v: number) => (v / 1e3).toFixed(0) + "k"} tick={{ fontSize: 12 }} domain={[0, Math.max(...fixedOpexChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.fixed_opex ? "Share of total (%)" : `Annual cost (${currency})`, position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
                   <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={(v) => (pctOn.fixed_opex ? fmtPct(Number(v)) : fmt(Number(v)))} />
@@ -516,6 +518,7 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
             <DownloadableChart filename="variable_opex" serverPlot={(opts) => fetchPlotPng(`/plots/stacked/variable_opex${pctQuery("variable_opex")}`, undefined, opts)} height={varOpexData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={varOpexChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" tickFormatter={pctOn.variable_opex ? fmtPct : (v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...varOpexChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.variable_opex ? "Share of total (%)" : `Annual cost (${currency})`, position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(v) => (pctOn.variable_opex ? fmtPct(Number(v)) : fmt(Number(v)))} />
@@ -547,6 +550,7 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
               <DownloadableChart filename="revenue" height={revenueData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenueChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" tickFormatter={pctOn.revenue ? fmtPct : (v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...revenueChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.revenue ? "Share of total (%)" : `Annual revenue (${currency})`, position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
                     <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
                     <Tooltip formatter={(v) => (pctOn.revenue ? fmtPct(Number(v)) : fmt(Number(v)))} />
