@@ -298,12 +298,13 @@ Pass `include_process_params=True` to rank consumption and production quantities
 Monte Carlo Simulation
 ```python
 from openpytea.analysis import monte_carlo
-from openpytea.plotting import plot_monte_carlo
+from openpytea.plotting import plot_monte_carlo, plot_monte_carlo_cumulative
 
 results = monte_carlo(ammonia_plant, num_samples=1_000_000)
-fig, ax = plot_monte_carlo(results)
+fig, ax = plot_monte_carlo(results)             # histogram
+fig, ax = plot_monte_carlo_cumulative(results)  # cumulative distribution
 ```
-Outputs include probability distributions and confidence intervals for LCOP, NPV, ROI, and payback time—supporting uncertainty-informed decision-making. Given a list of plants, `plot_monte_carlo` can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons. `plot_monte_carlo_inputs` shows the sampled inputs themselves, split into **process** and **economic** figures, to confirm each distribution came out as intended.
+Outputs include probability distributions for LCOP, NPV, ROI, and payback time—supporting uncertainty-informed decision-making. Both plots mark the P10, P50 and P90 and list their values; the cumulative plot also reads probabilities such as "P(LCOP ≤ x)" straight off the curve. Given a list of plants, either function compares Monte Carlo results for multiple plants on one plot. `plot_monte_carlo_inputs` shows the sampled inputs themselves, split into **process** and **economic** figures, to confirm each distribution came out as intended.
 
 Uncertainty is configured per item: `price_uncertainty` on any `variable_opex_inputs` or `plant_products` entry, `consumption_uncertainty`/`production_uncertainty` for the quantities, and `project_uncertainties` for the project-level scalars.
 

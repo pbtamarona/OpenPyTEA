@@ -1,9 +1,10 @@
 import shutil
 import warnings
 from itertools import cycle
-from typing import Literal, overload
+from typing import Any, Literal, overload
 
 from matplotlib.figure import Figure
+from matplotlib.lines import Line2D
 from scipy.stats import norm
 import matplotlib
 import matplotlib.pyplot as plt
@@ -650,20 +651,20 @@ def plot_monte_carlo(
     data,
     metric: str | None = None,
     bins: int = 30,
-    show_fit: bool = True,
+    show_fit: bool = False,
     label: str | None = None,
     figsize=(3.2, 2.2),
     ax=None,
     show: bool = True,
+    percentiles=(10, 50, 90),
 ):
     """
-    Plot a histogram with a fitted normal distribution overlay for Monte Carlo
-    simulation results. This function visualizes Monte Carlo data by
-    displaying a histogram of sample values overlaid with a normal
-    distribution curve fitted to the data. It supports multiple input types:
-    Monte Carlo data dictionaries, Plant objects with monte_carlo_metrics,
-    or raw numpy arrays. Pass a list of them to compare several cases on
-    one axes.
+    Plot a histogram of Monte Carlo simulation results, with dashed lines
+    at chosen percentiles (P10, P50, P90 by default) whose values are
+    listed in the legend. A fitted normal distribution can be overlaid with
+    ``show_fit``. It supports multiple input types: Monte Carlo data
+    dictionaries, Plant objects with monte_carlo_metrics, or raw numpy
+    arrays. Pass a list of them to compare several cases on one axes.
     Parameters
     ----------
     data : dict, Plant, list of dict/Plant, or array-like
@@ -671,9 +672,10 @@ def plot_monte_carlo(
         - A dictionary containing a "metrics" key with metric values
         - A Plant object with a monte_carlo_metrics attribute
         - A list or tuple of such dicts and/or Plants: one semi-transparent
-          histogram (and fit) per item, overlaid and labelled in the legend
-          by each item's name (``"Case 1"``, ``"Case 2"``, ... when it has
-          none). Items missing ``metric`` are skipped.
+          histogram (percentile lines, and fit) per item, overlaid and
+          labelled in the legend by each item's name (``"Case 1"``,
+          ``"Case 2"``, ... when it has none). Items missing ``metric`` are
+          skipped.
         - A raw array-like of numeric values
     metric : str, optional
         The name of the metric to plot (case-insensitive). Default is "LCOP".
@@ -683,8 +685,8 @@ def plot_monte_carlo(
     show_fit : bool, optional
         Whether to overlay a normal distribution fitted to the data (or,
         when the fitted standard deviation is 0, a vertical line at the
-        mean). If False, only the histogram is plotted and the legend is
-        omitted. Default is True.
+        mean). Off by default, since Monte Carlo results need not be
+        normal. Default is False.
     label : str or None, optional
         X-axis label. If None, a default label is generated based on the metric
         and currency. Default is None.
@@ -696,6 +698,12 @@ def plot_monte_carlo(
     show : bool, optional
         Whether to display the plot using plt.show(). Only applies if a new
         figure was created. Default is True.
+    percentiles : sequence of float or None, optional
+        Percentiles to mark, each in [0, 100]. ``P90`` is the value 90% of
+        the samples are at or below (``np.percentile(values, 90)``), the
+        usual convention for costs. Large values share one power of ten,
+        shown in the legend. None or an empty sequence marks none. Default
+        is (10, 50, 90).
     Returns
     -------
     tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
@@ -729,6 +737,7 @@ def plot_monte_carlo(
     ):
         return _plot_overlaid_monte_carlo(
             data, metric, bins, show_fit, figsize, label, ax, show,
+            percentiles=percentiles,
         )
 
     # --- Case 1: Monte Carlo data dict ---
@@ -748,15 +757,16 @@ def plot_monte_carlo(
 
     # --- Case 2: Plant object ---
     elif hasattr(data, "monte_carlo_metrics"):
-        if metric not in data.monte_carlo_metrics:
-            available = ", ".join(data.monte_carlo_metrics.keys())
+        mc_metrics = getattr(data, "monte_carlo_metrics")
+        if metric not in mc_metrics:
+            available = ", ".join(mc_metrics.keys())
             raise ValueError(
                 f"Metric '{metric}' not found in "
                 f"plant.monte_carlo_metrics. "
                 f"Available: {available}"
             )
 
-        values = np.asarray(data.monte_carlo_metrics[metric], dtype=float)
+        values = np.asarray(mc_metrics[metric], dtype=float)
 
         if label is None:
             currency = getattr(data, "currency", _tex_escape("$"))
@@ -789,25 +799,28 @@ def plot_monte_carlo(
         edgecolor="black",
         alpha=0.6,
         zorder=1,
-        label="Samples",
     )
 
     if show_fit:
         _plot_normal_fit(ax, values, line_color)
 
+    handles, labels = ax.get_legend_handles_labels()  # the fit, if any
+    if percentiles:
+        qs = np.percentile(values, percentiles)
+        for q in qs:
+            ax.axvline(q, color="black", zorder=2, **_PCT_LINE)
+        handles.append(_NO_SYMBOL)
+        labels.append(_percentile_label(percentiles, qs))
+
     ax.set_xlabel(_format_scripts(label))
     ax.set_ylabel("Density")
 
-    if show_fit:
-        ax.legend(
-                loc="best",
-                ncol=1,
-                fontsize=4,
-                frameon=True,
-                facecolor="white",
-                framealpha=0.6,
-                fancybox=True,
-            )
+    if handles:
+        # No symbol space when the only entry is the percentile text
+        no_symbols = all(h is _NO_SYMBOL for h in handles)
+        ax.legend(handles, labels, loc="best",
+                  handlelength=0 if no_symbols else 1.6,
+                  handletextpad=0 if no_symbols else 0.8, **_LEGEND)
 
     if created_fig is not None and show:
         created_fig.tight_layout()
@@ -855,6 +868,57 @@ def _plot_normal_fit(ax, values, color):
     else:
         stat_label = rf"$\mu$={mu:.3g}, $\sigma$={std:.3g}"
         ax.axvline(mu, label=stat_label, **style)
+
+
+# Percentile markers and legend, shared by plot_monte_carlo and
+# plot_monte_carlo_cumulative
+_PCT_LINE: dict[str, Any] = dict(linestyle="--", linewidth=0.7)
+_LEGEND = dict(fontsize="x-small", frameon=True, facecolor="white",
+               framealpha=0.8, edgecolor="0.8", fancybox=False,
+               borderpad=0.5, labelspacing=0.3)
+# Legend entry that is text only
+_NO_SYMBOL = Line2D([], [], linestyle="none")
+
+
+def _percentile_exponent(values):
+    """
+    Power of ten (a multiple of 3) the percentile values are shown in: 0
+    while the largest magnitude is between 0.001 and 9999, else e.g. 6 for
+    millions, so every value stays short.
+    """
+    largest = float(np.max(np.abs(values))) if np.size(values) else 0.0
+    if largest == 0:
+        return 0
+    e = int(np.floor(np.log10(largest)))
+    return 0 if -3 <= e < 4 else 3 * (e // 3)
+
+
+def _fmt3(x):
+    """``x`` to 3 significant figures, never in e-notation."""
+    if x == 0:
+        return "0"
+    decimals = max(0, 2 - int(np.floor(np.log10(abs(x)))))
+    return f"{x:.{decimals}f}"
+
+
+def _percentile_header(percentiles, exponent):
+    """``"P10, P50, P90"``, plus ``" (×10^6)"`` when values are scaled."""
+    names = ", ".join(f"P{p:g}" for p in percentiles)
+    return names + (rf" ($\times 10^{{{exponent}}}$)" if exponent else "")
+
+
+def _percentile_values(qs, exponent):
+    """``"66.6, 135, 228"``: the percentile values in units of
+    ``10**exponent``."""
+    return ", ".join(_fmt3(q / 10**exponent) for q in qs)
+
+
+def _percentile_label(percentiles, qs):
+    """One-line legend text for a single case,
+    ``"P10, P50, P90 = 66.6, 135, 228"``."""
+    e = _percentile_exponent(qs)
+    return (f"{_percentile_header(percentiles, e)} = "
+            f"{_percentile_values(qs, e)}")
 
 
 def _is_process_monte_carlo_input(label):
@@ -1162,10 +1226,11 @@ def _is_monte_carlo_case(item):
 
 
 def _plot_overlaid_monte_carlo(data_list, metric, bins, show_fit, figsize,
-                               label, ax, show):
-    """Overlaid histograms (and fits) of ``metric``, one per case; behind
-    :func:`plot_monte_carlo` given a list. Warnings are attributed to the
-    public function's caller."""
+                               label, ax, show, percentiles=None):
+    """Overlaid histograms (percentile lines, and fits) of ``metric``, one
+    per case; behind :func:`plot_monte_carlo` given a list. Without
+    ``percentiles`` it draws exactly what plot_multiple_monte_carlo always
+    did. Warnings are attributed to the public function's caller."""
     created_fig = None
     if ax is None:
         created_fig, ax = plt.subplots(figsize=figsize)
@@ -1173,6 +1238,7 @@ def _plot_overlaid_monte_carlo(data_list, metric, bins, show_fit, figsize,
     color_cycle = cycle(matplotlib.color_sequences["tab10"])
     currency = _tex_escape("$")
     plotted_any = False
+    marked = []  # (bars, name, percentile values) per case
 
     for i, item in enumerate(data_list):
         values = None
@@ -1216,7 +1282,7 @@ def _plot_overlaid_monte_carlo(data_list, metric, bins, show_fit, figsize,
         plotted_any = True
         color = next(color_cycle)
 
-        ax.hist(
+        bars = ax.hist(
             values,
             bins=bins,
             alpha=0.5,
@@ -1225,11 +1291,18 @@ def _plot_overlaid_monte_carlo(data_list, metric, bins, show_fit, figsize,
             linewidth=0.5,
             color=color,
             zorder=1,
-            label=_format_scripts(name),
-        )
+            # with percentiles, labelled below once all values are known
+            label=None if percentiles else _format_scripts(name),
+        )[2]
 
         if show_fit:
             _plot_normal_fit(ax, values, color)
+
+        if percentiles:
+            qs = np.percentile(values, percentiles)
+            for q in qs:
+                ax.axvline(q, color=color, zorder=2, **_PCT_LINE)
+            marked.append((bars, name, qs))
 
     if label is None:
         label = _default_metric_label(currency, metric)
@@ -1237,11 +1310,21 @@ def _plot_overlaid_monte_carlo(data_list, metric, bins, show_fit, figsize,
     ax.set_xlabel(_format_scripts(label))
     ax.set_ylabel("Probability density")
 
+    bbox = None
+    if marked:
+        # One shared power of ten, so it can sit in the legend title
+        e = _percentile_exponent(np.concatenate([qs for *_, qs in marked]))
+        for bars, name, qs in marked:
+            bars.set_label(
+                f"{_format_scripts(name)}: {_percentile_values(qs, e)}")
+        ax.legend(loc="best", handlelength=1.6, alignment="left",
+                  title=_percentile_header(percentiles, e),
+                  title_fontsize="x-small", **_LEGEND)
+
     handles, labels_list = ax.get_legend_handles_labels()
     n_items = len(labels_list)
 
-    bbox = None
-    if plotted_any and n_items > 0:
+    if not marked and plotted_any and n_items > 0:
         if n_items <= 4:
             ncol, loc, bbox = 1, "best", None
         elif n_items <= 6:
@@ -1272,5 +1355,161 @@ def _plot_overlaid_monte_carlo(data_list, metric, bins, show_fit, figsize,
         # customize, save, or show -- closing it here (unlike every
         # sibling plot function) made plt.show() and Jupyter display
         # silently render nothing
+
+    return ax.figure, ax
+
+
+def plot_monte_carlo_cumulative(
+    data,
+    metric: str | None = None,
+    label: str | None = None,
+    figsize=(3.2, 2.2),
+    ax=None,
+    show: bool = True,
+    percentiles=(10, 50, 90),
+):
+    """
+    Plot the cumulative distribution (empirical CDF) of Monte Carlo results.
+
+    Each curve gives, for every value on the x-axis, the fraction of samples
+    at or below it, so probabilities such as "P(LCOP <= 2.0)" read straight
+    off the plot. Chosen percentiles (P10, P50, P90 by default) are marked
+    and their values listed in the legend: for one case with dashed guide
+    lines to both axes, for several with a dot where each curve crosses a
+    dashed level. Accepts the same inputs as :func:`plot_monte_carlo`.
+
+    Parameters
+    ----------
+    data : dict, Plant, list of dict/Plant, or array-like
+        - A dictionary containing a "metrics" key with metric values
+        - A Plant object with a monte_carlo_metrics attribute
+        - A list or tuple of such dicts and/or Plants: one curve per item,
+          labelled in the legend by each item's name (``"Case 1"``,
+          ``"Case 2"``, ... when it has none). Items missing ``metric`` are
+          skipped.
+        - A raw array-like of numeric values
+    metric : str, optional
+        The metric to plot (case-insensitive). Default is "LCOP".
+    label : str or None, optional
+        X-axis label. If None, one is generated from the metric and
+        currency. Default is None.
+    figsize : tuple, optional
+        Figure size as (width, height) in inches. Default is (3.2, 2.2).
+    ax : matplotlib.axes.Axes, optional
+        Existing axes to plot on. If None, a new figure and axes are
+        created. Default is None.
+    show : bool, optional
+        Whether to call plt.show(). Only applies if a new figure was
+        created. Default is True.
+    percentiles : sequence of float or None, optional
+        Percentiles to mark, each in [0, 100]; see
+        :func:`plot_monte_carlo`. None or an empty sequence marks none.
+        Default is (10, 50, 90).
+
+    Returns
+    -------
+    tuple of (matplotlib.figure.Figure, matplotlib.axes.Axes)
+        When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
+
+    Raises
+    ------
+    ValueError
+        If a single dict or Plant lacks ``metric``, or no finite values are
+        left to plot.
+    """
+    metric = (metric or "LCOP").upper()
+    multi = isinstance(data, (list, tuple)) and bool(data) and all(
+        _is_monte_carlo_case(item) for item in data
+    )
+
+    # (name, values) per case; a raw array is one unnamed case
+    cases = []
+    currency = None
+    for i, item in enumerate(data if multi else [data]):
+        if isinstance(item, dict) and "metrics" in item:
+            metrics = item["metrics"]
+            name, item_currency = item.get("name"), item.get("currency")
+        elif hasattr(item, "monte_carlo_metrics"):
+            metrics = getattr(item, "monte_carlo_metrics")
+            name = getattr(item, "name", None)
+            item_currency = getattr(item, "currency", None)
+        else:
+            cases.append((None, np.asarray(item, dtype=float)))
+            continue
+        if metric not in metrics:
+            if multi:
+                continue
+            raise ValueError(
+                f"Metric '{metric}' not found. "
+                f"Available: {', '.join(metrics.keys())}"
+            )
+        cases.append((name or f"Case {i + 1}",
+                      np.asarray(metrics[metric], dtype=float)))
+        currency = currency or item_currency
+
+    created_fig = None
+    if ax is None:
+        created_fig, ax = plt.subplots(figsize=figsize)
+
+    colors = cycle(matplotlib.color_sequences["tab10"])
+    drawn = []  # (curve, name, percentile values or None) per case
+    for name, values in cases:
+        values = _finite(values, f"Monte Carlo data for '{name}'"
+                         if name else "Monte Carlo data", stacklevel=3)
+        if values.size == 0:
+            warnings.warn(
+                f"No finite values for '{name}'; skipping it.",
+                RuntimeWarning, stacklevel=2,
+            )
+            continue
+        color = next(colors)
+        curve = ax.ecdf(values, color=color, linewidth=1.2)
+        qs = np.percentile(values, percentiles) if percentiles else None
+        if qs is not None and multi:
+            ax.plot(qs, np.asarray(percentiles) / 100, "o", color=color,
+                    markersize=2.5, zorder=3)
+        drawn.append((curve, name, qs))
+
+    if not drawn:
+        raise ValueError(
+            "No finite Monte Carlo values available for plotting."
+        )
+
+    if label is None:
+        label = _default_metric_label(currency or _tex_escape("$"), metric)
+    ax.set_xlabel(_format_scripts(label))
+    ax.set_ylabel("Cumulative probability")
+    ax.set_ylim(0, 1)
+
+    # Legends go bottom right: below every curve, so always empty
+    if multi and percentiles:
+        for p in percentiles:
+            ax.axhline(p / 100, color="0.6", zorder=0, **_PCT_LINE)
+        # One shared power of ten, so it can sit in the legend title
+        e = _percentile_exponent(np.concatenate([qs for *_, qs in drawn]))
+        ax.legend([curve for curve, *_ in drawn],
+                  [f"{_format_scripts(name)}: {_percentile_values(qs, e)}"
+                   for _, name, qs in drawn],
+                  loc="lower right", handlelength=1.6, alignment="left",
+                  title=_percentile_header(percentiles, e),
+                  title_fontsize="x-small", **_LEGEND)
+    elif multi:
+        ax.legend([curve for curve, *_ in drawn],
+                  [_format_scripts(name) for _, name, _ in drawn],
+                  loc="lower right", handlelength=1.6, **_LEGEND)
+    elif percentiles:
+        # Guide lines from the y-axis to the curve and down to the x-axis
+        qs = drawn[0][2]
+        x_left = ax.get_xlim()[0]
+        for p, q in zip(percentiles, qs):
+            ax.plot([x_left, q, q], [p / 100, p / 100, 0], color="black",
+                    zorder=2, **_PCT_LINE)
+        ax.set_xlim(left=x_left)  # keep the guides from widening the axis
+        ax.legend([_NO_SYMBOL], [_percentile_label(percentiles, qs)],
+                  loc="lower right", handlelength=0, handletextpad=0, **_LEGEND)
+
+    if created_fig is not None and show:
+        created_fig.tight_layout()
+        plt.show()
 
     return ax.figure, ax

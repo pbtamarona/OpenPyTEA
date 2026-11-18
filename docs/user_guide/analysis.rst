@@ -38,7 +38,7 @@ walkthrough notebooks `Part 3: Cost Analysis and Sensitivity <https://github.com
    )
    from openpytea.plotting import (
        plot_stacked_bar, plot_cash_flow, plot_sensitivity, plot_tornado,
-       plot_monte_carlo, plot_monte_carlo_inputs,
+       plot_monte_carlo, plot_monte_carlo_cumulative, plot_monte_carlo_inputs,
    )
 
 CAPEX and OPEX breakdowns
@@ -846,7 +846,8 @@ Visualizing results
 
 Pass the plant (or ``mc_results``) to
 :func:`~openpytea.plotting.plot_monte_carlo` to draw a histogram of one
-metric's distribution:
+metric's distribution. Dashed lines mark the P10, P50 and P90, and the
+legend lists their values:
 
 .. code-block:: python
 
@@ -860,6 +861,42 @@ metric's distribution:
 .. image:: ../_static/plotting/monte_carlo_lcop.png
    :width: 450px
    :align: center
+
+P90 is the value 90% of the samples are at or below
+(``np.percentile(values, 90)``), the usual convention for costs. For a
+cost, P90 is therefore the pessimistic end; for NPV it is the optimistic
+end. Very large or small values share one power of ten, shown in the
+legend, e.g. ``P10, P50, P90 (×10⁶) = -9.85, 0.947, 8.65``.
+
+:func:`~openpytea.plotting.plot_monte_carlo_cumulative` draws the same
+results as a cumulative distribution: for every value on the x-axis, the
+fraction of samples at or below it. Probabilities such as "P(LCOP ≤ 2.0)"
+read straight off the curve, and the same percentiles are marked with
+guide lines to both axes:
+
+.. code-block:: python
+
+   from openpytea.plotting import plot_monte_carlo_cumulative
+
+   fig, ax = plot_monte_carlo_cumulative(plant, metric="LCOP")
+
+.. image:: ../_static/plotting/monte_carlo_cumulative.png
+   :width: 450px
+   :align: center
+
+Both functions take ``percentiles`` to mark other or more levels, or
+``percentiles=None`` for none. A normal distribution fitted to the samples
+can be overlaid on the histogram with ``show_fit=True``; it is off by
+default because Monte Carlo results are often skewed (as above), and a
+normal curve would misrepresent them.
+
+.. code-block:: python
+
+   # Four levels instead of three
+   fig, ax = plot_monte_carlo_cumulative(plant, percentiles=(5, 20, 50, 95))
+
+   # Plain histogram with the fitted normal curve and no percentiles
+   fig, ax = plot_monte_carlo(plant, show_fit=True, percentiles=None)
 
 Visualizing input distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -902,9 +939,10 @@ Comparing multiple plants under uncertainty
 
 Given a list, :func:`~openpytea.plotting.plot_monte_carlo` overlays the
 metric distributions of several plants (or ``monte_carlo`` result dicts) on
-one set of axes, each named in the legend. (This replaces
-``plot_multiple_monte_carlo``, which still works but is deprecated and will
-be removed in OpenPyTEA 4.0.)
+one set of axes. Each plant's percentile lines are drawn in its colour, and
+the legend lists each plant's values on one line under a shared
+``P10, P50, P90`` header. (This replaces ``plot_multiple_monte_carlo``,
+which still works but is deprecated and will be removed in OpenPyTEA 4.0.)
 
 .. code-block:: python
 
@@ -919,6 +957,20 @@ be removed in OpenPyTEA 4.0.)
    )
 
 .. image:: ../_static/plotting/monte_carlo_multiple.png
+   :width: 450px
+   :align: center
+
+:func:`~openpytea.plotting.plot_monte_carlo_cumulative` takes the same list
+and draws one curve per plant. Dashed lines mark the percentile levels and a
+dot shows where each curve crosses them. A curve further left is cheaper at
+every probability level, which is often easier to judge than overlapping
+histograms:
+
+.. code-block:: python
+
+   fig, ax = plot_monte_carlo_cumulative([plant, plant_b], metric="LCOP")
+
+.. image:: ../_static/plotting/monte_carlo_cumulative_multiple.png
    :width: 450px
    :align: center
 

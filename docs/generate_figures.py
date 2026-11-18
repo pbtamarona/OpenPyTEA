@@ -34,6 +34,7 @@ from openpytea.analysis import (  # noqa: E402
 from openpytea.plotting import (  # noqa: E402
     plot_cash_flow,
     plot_monte_carlo,
+    plot_monte_carlo_cumulative,
     plot_monte_carlo_inputs,
     plot_sensitivity,
     plot_stacked_bar,
@@ -263,6 +264,9 @@ mc_results = monte_carlo(demo_plant, num_samples=NUM_SAMPLES, batch_size=BATCH_S
 fig, _ = plot_monte_carlo(demo_plant, metric="LCOP", bins=30, figsize=FIGSIZE, show=False)
 save(fig, "monte_carlo_lcop")
 
+fig, _ = plot_monte_carlo_cumulative(demo_plant, metric="LCOP", figsize=FIGSIZE, show=False)
+save(fig, "monte_carlo_cumulative")
+
 fig_p, _, fig_e, _ = plot_monte_carlo_inputs(mc_results, bins=40, show=False)
 save(fig_p, "monte_carlo_inputs_process")
 save(fig_e, "monte_carlo_inputs_economic")
@@ -285,6 +289,9 @@ monte_carlo(copy_plant, num_samples=NUM_SAMPLES, batch_size=BATCH_SIZE, random_s
 
 fig, _ = plot_monte_carlo([demo_plant, copy_plant], metric="LCOP", bins=30, figsize=FIGSIZE, show=False)
 save(fig, "monte_carlo_multiple")
+
+fig, _ = plot_monte_carlo_cumulative([demo_plant, copy_plant], metric="LCOP", figsize=FIGSIZE, show=False)
+save(fig, "monte_carlo_cumulative_multiple")
 
 # ----------------------------------------------------------------------
 # Dependencies (walkthrough Part 4)

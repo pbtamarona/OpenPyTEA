@@ -220,10 +220,88 @@ def test_plot_monte_carlo_list_overlays_cases(test_plant, test_plant_b):
     fig, ax = plot_monte_carlo([r1, r2], metric="LCOP", show=False)
     # the returned figure must still be registered with pyplot
     assert plt.fignum_exists(fig.number)
-    # one histogram per case, named in the legend
-    legend = [t.get_text() for t in ax.get_legend().get_texts()]
-    assert {test_plant.name, test_plant_b.name} <= set(legend)
+    # one histogram per case, named in the legend with its percentiles
+    legend = ax.get_legend()
+    assert legend.get_title().get_text() == "P10, P50, P90"
+    texts = [t.get_text() for t in legend.get_texts()]
+    assert [t.split(":")[0] for t in texts] == [test_plant.name,
+                                                test_plant_b.name]
     plt.close(fig)
+
+
+def test_plot_monte_carlo_marks_percentiles():
+    from openpytea import plot_monte_carlo
+
+    values = np.random.default_rng(0).lognormal(4, 0.5, 5000)
+    p10, p50, p90 = np.percentile(values, [10, 50, 90])
+    fig, ax = plot_monte_carlo(values, show=False)
+    # no normal fit by default: only the three percentile lines
+    assert [line.get_xdata()[0] for line in ax.lines] == [p10, p50, p90]
+    (text,) = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert text == f"P10, P50, P90 = {p10:.3g}, {p50:.3g}, {p90:.3g}"
+    plt.close(fig)
+
+    fig, ax = plot_monte_carlo(values, percentiles=None, show=False)
+    assert not ax.lines and ax.get_legend() is None
+    plt.close(fig)
+
+
+def test_percentile_label_shares_one_power_of_ten():
+    from openpytea.plotting import _percentile_label
+
+    assert _percentile_label((10, 50, 90), [-9.85e6, 9.47e5, 8.65e6]) == (
+        r"P10, P50, P90 ($\times 10^{6}$) = -9.85, 0.947, 8.65"
+    )
+    # up to 9999 stays unscaled and never turns into e-notation
+    assert _percentile_label((5, 95), [0.0123, 1234.0]) == (
+        "P5, P95 = 0.0123, 1234"
+    )
+
+
+def test_plot_monte_carlo_cumulative_is_the_ecdf():
+    from openpytea import plot_monte_carlo_cumulative
+
+    values = np.array([3.0, 1.0, 2.0, np.nan])  # NaN dropped with a warning
+    with pytest.warns(RuntimeWarning, match="non-finite"):
+        fig, ax = plot_monte_carlo_cumulative(values, percentiles=None,
+                                              show=False)
+    x, y = ax.lines[0].get_data()
+    # step curve: fraction of samples at or below each value
+    np.testing.assert_allclose(np.interp([1.0, 2.0, 3.0], x[1::2], y[1::2]),
+                               [1 / 3, 2 / 3, 1.0])
+    assert ax.get_ylim() == (0.0, 1.0)
+    assert ax.get_legend() is None  # single case, nothing to tell apart
+    plt.close(fig)
+
+    # default percentiles: a guide line per level, values in the legend
+    fig, ax = plot_monte_carlo_cumulative(values[:3], show=False)
+    assert len(ax.lines) == 1 + 3
+    (text,) = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert text.startswith("P10, P50, P90 = ")
+    plt.close(fig)
+
+
+def test_plot_monte_carlo_cumulative_list(test_plant, test_plant_b):
+    from openpytea import monte_carlo, plot_monte_carlo_cumulative
+
+    r1 = monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
+    r2 = monte_carlo(test_plant_b, num_samples=100, batch_size=100, random_seed=1)
+
+    fig, ax = plot_monte_carlo_cumulative([r1, r2], metric="npv", show=False)
+    texts = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert [t.split(":")[0] for t in texts] == [test_plant.name,
+                                                test_plant_b.name]
+    assert plt.fignum_exists(fig.number)
+    plt.close(fig)
+
+    fig, ax = plot_monte_carlo_cumulative([r1, r2], metric="npv",
+                                          percentiles=None, show=False)
+    texts = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert texts == [test_plant.name, test_plant_b.name]
+    plt.close(fig)
+
+    with pytest.raises(ValueError, match="not found"):
+        plot_monte_carlo_cumulative(r1, metric="nope", show=False)
 
 
 def test_plot_multiple_monte_carlo_deprecated(test_plant, test_plant_b):
@@ -243,9 +321,10 @@ def test_plot_monte_carlo_sigma_label_uses_times():
     from openpytea.plotting import plot_monte_carlo
 
     values = np.random.default_rng(0).normal(500, 50, 1000)
-    fig, ax = plot_monte_carlo(values, metric="LCOP", show=False)
+    fig, ax = plot_monte_carlo(values, metric="LCOP", show_fit=True,
+                               show=False)
     labels = [t.get_text() for t in ax.get_legend().get_texts()]
-    assert r"$\times 10^{1}$" in labels[1]
+    assert r"$\times 10^{1}$" in labels[0]  # the fit; percentiles follow
     plt.close(fig)
 
 

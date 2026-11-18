@@ -18,6 +18,7 @@ from .analysis import (direct_costs_data, fixed_capital_data,
 from .plotting import (plot_stacked_bar, plot_cash_flow,
                        plot_sensitivity,
                        plot_tornado, plot_monte_carlo,
+                       plot_monte_carlo_cumulative,
                        plot_monte_carlo_inputs,
                        plot_multiple_monte_carlo)
 
@@ -57,6 +58,7 @@ __all__ = [
     "plot_sensitivity",
     "plot_tornado",
     "plot_monte_carlo",
+    "plot_monte_carlo_cumulative",
     "plot_monte_carlo_inputs",
     "plot_multiple_monte_carlo",
     "load_results",
