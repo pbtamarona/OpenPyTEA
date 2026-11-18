@@ -124,7 +124,7 @@
           "installation": "composite",
           "components": [
             {
-              "name": "PSA-VESSEL",
+              "name": "VESSEL",
               "param": 30,
               "process_type": "Fluids",
               "category": "Pressure vessels",
@@ -133,14 +133,14 @@
               "num_units": 4
             },
             {
-              "name": "PSA-ZEOLITE",
+              "name": "ZEOLITE",
               "param": 2400,
               "process_type": "Solids",
               "category": "Packings & adsorbents",
               "type": "Molecular sieves"
             },
             {
-              "name": "PSA-CARBON",
+              "name": "CARBON",
               "param": 2200,
               "process_type": "Solids",
               "category": "Packings & adsorbents",
@@ -319,7 +319,7 @@
           "installation": "composite",
           "components": [
             {
-              "name": "PSA-VESSEL",
+              "name": "VESSEL",
               "param": 30,
               "process_type": "Fluids",
               "category": "Pressure vessels",
@@ -328,14 +328,14 @@
               "num_units": 4
             },
             {
-              "name": "PSA-ZEOLITE",
+              "name": "ZEOLITE",
               "param": 2400,
               "process_type": "Solids",
               "category": "Packings & adsorbents",
               "type": "Molecular sieves"
             },
             {
-              "name": "PSA-CARBON",
+              "name": "CARBON",
               "param": 2200,
               "process_type": "Solids",
               "category": "Packings & adsorbents",
