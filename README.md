@@ -23,26 +23,6 @@ https://github.com/pbtamarona/OpenPyTEA/tree/main/examples
 https://github.com/pbtamarona/OpenPyTEA/releases/tag/v3.2.2
 
 ---
-## 🎓 Workshop
-
-We are hosting a one-day workshop on open-science techno-economic assessment using **OpenPyTEA**!
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/pbtamarona/OpenPyTEA/main/workshop-flyer.jpg" alt="OpenPyTEA" width="800"/>
-</p>
-
-**Open-Science Techno-Economic Assessment with OpenPyTEA: From Process Design to Economic Insights**
-
-The workshop covers the full workflow from process design and simulation to economic evaluation, combining lectures, a hands-on session with OpenPyTEA, and an industry talk by Shell. It closes with a community discussion on establishing shared TEA standards, bringing together students, researchers, engineers, and policymakers across chemical, energy, and sustainability sciences.
-
-- 📅 **Date:** November 6, 2026 | 09:30 – 18:00
-- 📍 **Location:** Process & Energy, TU Delft, Delft, The Netherlands
-- 📝 **Registration:** [aanmelder.nl/openpytea2026](https://aanmelder.nl/openpytea2026)
-- ⏰ **Deadline:** $${\color{red}\textbf{Registration closes on October 15, 2026}}$$
-
-Lunch, snacks, coffee, and drinks will be provided!
-
----
 ## ✨ Key Features
 - **Modular architecture:** clean separation of cost correlations, equipment objects, plant economics, and uncertainty analysis.  
 - **Transparent and reproducible:** all algorithms, equations, and assumptions are openly available for full traceability.

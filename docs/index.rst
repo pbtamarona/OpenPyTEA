@@ -27,21 +27,28 @@ Source code, issue tracker, and contributions:
 
 ----
 
-.. admonition:: 🎓 Upcoming Workshop — Register Now!
+.. admonition:: 🎓 Workshop Recap — Open-Science TEA in Action
    :class: important
 
    **Open-Science Techno-Economic Assessment with OpenPyTEA: From Process Design to Economic Insights**
 
-   We are hosting a one-day workshop covering the full workflow from process design and simulation
-   to economic evaluation, with lectures, a hands-on OpenPyTEA session, and an industry talk by Shell.
-   It closes with a community discussion on establishing shared TEA standards.
+   On November 6, 2026, we hosted the first OpenPyTEA workshop at TU Delft. More than 70 participants
+   joined from many countries and from across industry, academia, and research institutes.
 
-   - 📅 **Date:** November 6, 2026 | 09:30 – 18:00
-   - 📍 **Location:** Process & Energy, TU Delft, Delft, The Netherlands
-   - 📝 **Registration:** `aanmelder.nl/openpytea2026 <https://aanmelder.nl/openpytea2026>`_
-   - ⏰ **Deadline:** :red-bold:`Registration closes on October 15, 2026`
+   The day ran from process design and TEA fundamentals, through a hands-on OpenPyTEA session and an
+   industry perspective, to a look at multi-agent systems for process design.
 
-   Lunch, snacks, coffee, and drinks will be provided!
+   Thank you to everyone who joined us in Delft, to our invited speakers Arnoud Higler and Artur
+   Schweidtmann, to fellow organizers Thijs Vlugt and Mahinder Ramdin, and to the TU Delft Process &
+   Product Technology Institute (Pro2Tech) and the TU Delft Institute for Computational Science and
+   Engineering for making it possible.
+
+   The workshop materials stay online at
+   `github.com/pbtamarona/openpytea_workshop <https://github.com/pbtamarona/openpytea_workshop>`_.
+   Want to try OpenPyTEA and get involved? Everything is open source on
+   `GitHub <https://github.com/pbtamarona/OpenPyTEA>`_.
+
+   Keep an eye out for the next one! 👀
 
    .. image:: _static/workshop-flyer.jpg
       :alt: OpenPyTEA Workshop Flyer
