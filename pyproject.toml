@@ -93,3 +93,5 @@ venvPath = "."
 venv = ".venv"
 # The notebooks use `from openpytea.analysis import *` on purpose
 reportWildcardImportFromLibrary = false
+# Don't report type-check diagnostics in notebooks (they're user-facing examples)
+ignore = ["**/*.ipynb"]
