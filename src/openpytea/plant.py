@@ -174,6 +174,8 @@ class PlantConfig(TypedDict, total=False):
     depreciation: Depreciation | None
     capex_ramp: Sequence[float] | None
     production_ramp: Sequence[float] | None
+    fixed_opex_ramp: Sequence[float] | None
+    variable_opex_ramp: Sequence[float] | None
     additional_capex_years: Sequence[int] | np.ndarray | None
     additional_capex_cost: Sequence[float] | np.ndarray | None
     production_type: Literal["continuous", "batch"]
@@ -243,6 +245,16 @@ class Plant:
                 are set to 1.0 (full capacity). Length must not exceed
                 project_lifetime.
                 Default: [0, 0, 0.4, 0.8] (full capacity from year 4 on).
+            fixed_opex_ramp (list or None): Fraction of the annual fixed
+                OPEX charged in each project year (>= 0; values above 1
+                model start-up overspend). Years beyond the list are 1.0.
+                Length must not exceed project_lifetime.
+                Default: None (full fixed OPEX from the first production
+                year on, none during construction).
+            variable_opex_ramp (list or None): Fraction of the annual
+                variable OPEX charged in each project year, with the same
+                rules as fixed_opex_ramp. Default: None (follows
+                production_ramp).
         Capital Cost Factors:
             loc_factor (float or None): Location factor applied to ISBL.
                                         Overrides country/region lookup when
@@ -411,6 +423,8 @@ class Plant:
     fp: float | None
     capex_ramp: Sequence[float] | None
     production_ramp: Sequence[float] | None
+    fixed_opex_ramp: Sequence[float] | None
+    variable_opex_ramp: Sequence[float] | None
     loc_factor: float | None
     operator_hourly_rate: dict
     project_uncertainties: dict
@@ -1301,15 +1315,16 @@ class Plant:
         Raises
         ------
         ValueError
-            If ``project_lifetime < 3``, ``capex_ramp`` or
-            ``production_ramp`` are invalid, or no plant products are defined.
+            If ``project_lifetime < 3``, any of the ramps is invalid, or no
+            plant products are defined.
 
         Notes
         -----
-        Operating costs follow Towler & Sinnott Table 9.2: variable
-        costs scale with the production ramp, while fixed costs are
-        charged in full from the first production year onwards and are
-        not charged during construction.
+        By default operating costs follow Towler & Sinnott Table 9.2:
+        variable costs scale with the production ramp, while fixed costs
+        are charged in full from the first production year onwards and are
+        not charged during construction. ``fixed_opex_ramp`` and
+        ``variable_opex_ramp`` override either schedule.
 
         Income tax follows the Towler & Sinnott 1-year lag: tax on year
         ``n``'s taxable income is paid in year ``n + 1``. Because the
@@ -1521,10 +1536,26 @@ class Plant:
         # the first production year onwards (never during construction);
         # only variable costs follow the ramp. cumsum latches on at start-up
         # so a later zero-production year (turnaround) still pays fixed OPEX.
-        in_production = np.cumsum(ramp) > 0
+        # fixed_opex_ramp / variable_opex_ramp override either schedule.
+        def opex_ramp(name, default):
+            value = getattr(self, name, None)
+            if value is None:
+                return default
+            r = _as_ramp(value, name)
+            if np.any(r < 0):
+                raise ValueError(f"All values in {name} must be >= 0.")
+            if len(r) > n_years:
+                raise ValueError(
+                    f"{name} has {len(r)} entries but project_lifetime "
+                    f"is only {n_years}."
+                )
+            return np.concatenate((r, np.ones(n_years - len(r))))
+
+        fixed_ramp = opex_ramp("fixed_opex_ramp", np.cumsum(ramp) > 0)
+        var_ramp = opex_ramp("variable_opex_ramp", ramp)
         cash_cost[:] = (
-            per_sample(fixed_opex) * in_production
-            + per_sample(var_opex) * ramp
+            per_sample(fixed_opex) * fixed_ramp
+            + per_sample(var_opex) * var_ramp
         )
         gross_profit[:] = revenue - cash_cost
 
@@ -2503,6 +2534,8 @@ _SCALARS = {
     "fp": ("fp", None),
     "capex_ramp": ("capex_ramp", None),
     "production_ramp": ("production_ramp", None),
+    "fixed_opex_ramp": ("fixed_opex_ramp", None),
+    "variable_opex_ramp": ("variable_opex_ramp", None),
     "loc_factor": ("loc_factor", None),
 }
 

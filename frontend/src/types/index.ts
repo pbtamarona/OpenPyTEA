@@ -135,6 +135,10 @@ export interface PlantConfig {
   capex_ramp?: number[] | null;
   /** Capacity fraction per project year (0–1); absent = the library default */
   production_ramp?: number[] | null;
+  /** Fraction of annual fixed / variable OPEX per project year (≥ 0);
+      absent = the library default (from start-up / follows production) */
+  fixed_opex_ramp?: number[] | null;
+  variable_opex_ramp?: number[] | null;
   /** Overrides of the OSBL / D&E / contingency factors ("osbl", "de", "contingency") */
   fixed_capital_factors?: Record<string, number | null> | null;
   /** Component costs set directly ("osbl", "dne", "contingency") */

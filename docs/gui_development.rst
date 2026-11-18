@@ -190,7 +190,8 @@ Results
    each equation; amounts can be set directly, overriding their factor
    through the library's component overrides. The cash flow card has the
    construction and start-up schedule editor (``capex_ramp``,
-   ``production_ramp``).
+   ``production_ramp``, and optionally ``fixed_opex_ramp`` /
+   ``variable_opex_ramp`` when their row is set to custom).
 
 Analysis
    Sensitivity panels (parameter, metric, ±variation, x axis as % change or

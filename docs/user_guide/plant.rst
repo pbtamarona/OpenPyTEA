@@ -251,6 +251,12 @@ Configuration reference
    * - ``production_ramp``
      - ``[0, 0, 0.4, 0.8]``
      - Capacity fractions by project year. Years beyond the list default to 1.0.
+   * - ``fixed_opex_ramp``
+     - ``None``
+     - Fraction of the annual fixed OPEX charged by project year (≥ 0; above 1.0 for start-up overspend). Years beyond the list default to 1.0. ``None``: full fixed OPEX from the first production year, none during construction.
+   * - ``variable_opex_ramp``
+     - ``None``
+     - Fraction of the annual variable OPEX charged by project year, same rules as ``fixed_opex_ramp``. ``None``: follows ``production_ramp``.
    * - ``depreciation``
      - ``{}``
      - Depreciation settings (method, life, etc.) — see :ref:`depreciation`.

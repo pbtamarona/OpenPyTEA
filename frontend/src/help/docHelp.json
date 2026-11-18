@@ -115,6 +115,14 @@
     "text": "Capacity fractions by project year. Years beyond the list default to 1.0. (Default: [0, 0, 0.4, 0.8].)",
     "doc": "user_guide/plant.html#configuration-reference"
   },
+  "plant.fixed_opex_ramp": {
+    "text": "Fraction of the annual fixed OPEX charged by project year (≥ 0; above 1.0 for start-up overspend). Years beyond the list default to 1.0. None: full fixed OPEX from the first production year, none during construction. (Default: None.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
+  "plant.variable_opex_ramp": {
+    "text": "Fraction of the annual variable OPEX charged by project year, same rules as fixed_opex_ramp. None: follows production_ramp. (Default: None.)",
+    "doc": "user_guide/plant.html#configuration-reference"
+  },
   "plant.depreciation": {
     "text": "Depreciation settings (method, life, etc.) — see depreciation. (Default: {}.)",
     "doc": "user_guide/plant.html#configuration-reference"

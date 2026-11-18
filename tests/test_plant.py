@@ -343,6 +343,33 @@ def test_fixed_opex_charged_in_shutdown_year(test_plant):
     assert np.isclose(test_plant.cash_cost_array[0][3], fcop)
 
 
+def test_opex_ramp_overrides(test_plant):
+    # Explicit ramps are fractions of the full annual cost, independent of
+    # production; > 1 models start-up overspend; years past the list are 1.
+    test_plant.production_ramp = [0, 0, 0.4, 0.8]
+    test_plant.fixed_opex_ramp = [0, 0.5, 1.2]
+    test_plant.variable_opex_ramp = [0, 0, 0.6]
+    test_plant.calculate_cash_flow()
+    fcop = float(test_plant.fixed_production_costs)
+    vcop = float(test_plant.variable_production_costs)
+    cash_cost = test_plant.cash_cost_array[0]
+
+    assert np.isclose(cash_cost[0], 0)
+    assert np.isclose(cash_cost[1], 0.5 * fcop)
+    assert np.isclose(cash_cost[2], 1.2 * fcop + 0.6 * vcop)
+    assert np.isclose(cash_cost[3], fcop + vcop)
+
+
+def test_opex_ramp_validation(test_plant):
+    test_plant.variable_opex_ramp = [0, -0.1]
+    with pytest.raises(ValueError, match="variable_opex_ramp must be >= 0"):
+        test_plant.calculate_npv()
+    test_plant.variable_opex_ramp = None
+    test_plant.fixed_opex_ramp = [1.0] * (test_plant.project_lifetime + 1)
+    with pytest.raises(ValueError, match="fixed_opex_ramp has"):
+        test_plant.calculate_npv()
+
+
 def test_working_capital_interest_defaults_to_zero(test_plant):
     # Treatment A: the cash flow already carries working capital as an
     # investment, so no interest is charged on top of it by default.

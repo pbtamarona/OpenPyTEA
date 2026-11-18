@@ -7,47 +7,76 @@ const DEFAULT_PRODUCTION = [0, 0, 40, 80];
 
 const toPct = (r: number[] | null | undefined, fallback: number[]) =>
   r && r.length ? r.map((v) => Math.round(v * 1e6) / 1e4) : fallback;
+// OPEX ramps: null = the library default (derived from production)
+const toPctOrNull = (r: number[] | null | undefined) => (r && r.length ? toPct(r, []) : null);
 const same = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
+const sameOrNull = (a: number[] | null, b: number[] | null) => (a && b ? same(a, b) : a === b);
+
+/** Fractions (0–1, OPEX may exceed 1) to save; null = back to the library default */
+export interface Ramps {
+  capex_ramp: number[] | null;
+  production_ramp: number[] | null;
+  fixed_opex_ramp: number[] | null;
+  variable_opex_ramp: number[] | null;
+}
 
 interface Props {
   capexRamp: number[] | null | undefined;
   productionRamp: number[] | null | undefined;
+  fixedOpexRamp: number[] | null | undefined;
+  variableOpexRamp: number[] | null | undefined;
   lifetime: number;
   busy: boolean;
-  /** Fractions (0–1) to save, or null to go back to the library default */
-  onApply: (capex: number[] | null, production: number[] | null) => void;
+  onApply: (ramps: Ramps) => void;
 }
 
 /** Edit how CAPEX is spent over the construction years and how production
-    ramps up; OPEX follows production, as in the library. */
-export default function RampEditor({ capexRamp, productionRamp, lifetime, busy, onApply }: Props) {
+    ramps up; OPEX follows production as in the library unless a row is
+    switched to custom. */
+export default function RampEditor({ capexRamp, productionRamp, fixedOpexRamp, variableOpexRamp, lifetime, busy, onApply }: Props) {
   const savedCapex = toPct(capexRamp, DEFAULT_CAPEX);
   const savedProd = toPct(productionRamp, DEFAULT_PRODUCTION);
+  const savedFixed = toPctOrNull(fixedOpexRamp);
+  const savedVar = toPctOrNull(variableOpexRamp);
   const [capex, setCapex] = useState(savedCapex);
   const [prod, setProd] = useState(savedProd);
+  const [fixed, setFixed] = useState(savedFixed);
+  const [vari, setVari] = useState(savedVar);
 
   const total = capex.reduce((s, v) => s + v, 0);
   const totalOk = Math.abs(total - 100) < 1e-4;
   const prodOk = prod.every((v) => v >= 0 && v <= 100);
-  const changed = !same(capex, savedCapex) || !same(prod, savedProd);
-  const isDefault = same(savedCapex, DEFAULT_CAPEX) && same(savedProd, DEFAULT_PRODUCTION);
+  const opexOk = [fixed, vari].every((r) => !r || r.every((v) => v >= 0));
+  const changed = !same(capex, savedCapex) || !same(prod, savedProd)
+    || !sameOrNull(fixed, savedFixed) || !sameOrNull(vari, savedVar);
+  const isDefault = same(savedCapex, DEFAULT_CAPEX) && same(savedProd, DEFAULT_PRODUCTION)
+    && savedFixed === null && savedVar === null;
 
-  // One column per year, plus a last "Year n+" column at full capacity
-  const nCols = Math.max(capex.length, prod.length) + 1;
+  // One column per year, plus a last "Year n+" column at 100%
+  const nCols = Math.max(capex.length, prod.length, fixed?.length ?? 0, vari?.length ?? 0) + 1;
   const years = Array.from({ length: nCols }, (_, i) => i);
 
   const resize = (arr: number[], n: number, fill: number) =>
     n > arr.length ? [...arr, ...Array(n - arr.length).fill(fill)] : arr.slice(0, n);
   const setAt = (arr: number[], i: number, v: number) => arr.map((x, j) => (j === i ? v : x));
+  // Custom OPEX rows span the construction and ramp-up columns
+  const setSpan = (c: number[], p: number[]) => {
+    const n = Math.max(c.length, p.length);
+    setCapex(c);
+    setProd(p);
+    setFixed((r) => r && resize(r, n, 100));
+    setVari((r) => r && resize(r, n, 100));
+  };
 
-  // Fixed OPEX is charged from the first year with any production on
+  // Library defaults: variable OPEX follows production, fixed OPEX is
+  // charged in full from the first year with any production on
   const startUp = prod.findIndex((v) => v > 0);
   const prodAt = (y: number) => (y < prod.length ? prod[y] : 100);
-  const fixedOn = (y: number) => (startUp === -1 ? y >= prod.length : y >= startUp);
+  const fixedOn = (y: number) => ((startUp === -1 ? y >= prod.length : y >= startUp) ? 100 : 0);
 
-  const input = (value: number, onChange: (v: number) => void, bad = false) => (
+  const input = (value: number, onChange: (v: number) => void, bad = false, max: number | undefined = 100) => (
     <input
-      type="number" min={0} max={100} step={5} value={value}
+      type="number" min={0} max={max} step={5} value={value}
       onChange={(e) => onChange(e.target.value === "" ? 0 : +e.target.value)}
       style={{ width: 64, textAlign: "right", borderColor: bad ? "var(--error-text)" : undefined }}
     />
@@ -63,6 +92,31 @@ export default function RampEditor({ capexRamp, productionRamp, lifetime, busy, 
   const muted = { color: "var(--text-muted)" };
   const rowHead = { textAlign: "left" as const, whiteSpace: "nowrap" as const, paddingRight: 12 };
 
+  const opexRow = (
+    label: string, help: string, defaultNote: string, row: number[] | null,
+    set: (r: number[] | null) => void, derived: (y: number) => number,
+  ) => (
+    <tr style={row ? undefined : muted}>
+      <td style={rowHead}>
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <input
+            type="checkbox" checked={row !== null} title="Custom schedule"
+            onChange={(e) => set(e.target.checked ? years.slice(0, -1).map(derived) : null)}
+          />
+          {label}
+        </label>
+        {row ? <HelpTip id={help} /> : <em> {defaultNote}</em>}
+      </td>
+      {years.map((y) => (
+        <td key={y} style={{ textAlign: "center" }}>
+          {row && y < row.length
+            ? input(row[y], (v) => set(setAt(row, y, v)), row[y] < 0, undefined)
+            : <span style={muted}>{row ? 100 : derived(y)}</span>}
+        </td>
+      ))}
+    </tr>
+  );
+
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
@@ -71,12 +125,13 @@ export default function RampEditor({ capexRamp, productionRamp, lifetime, busy, 
       </div>
       <p style={{ ...muted, fontSize: 13, margin: "0 0 10px" }}>
         How the fixed capital is spent over the construction years, and how fast production reaches full capacity.
-        Variable OPEX and revenue follow production; fixed OPEX is paid in full from the first year with production.
+        By default variable OPEX and revenue follow production and fixed OPEX is paid in full from the first year with production;
+        tick an OPEX row to set its own schedule (% of the full annual cost, above 100% for start-up overspend).
       </p>
 
       <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 10 }}>
-        {stepper("Construction years", capex.length, (n) => setCapex(resize(capex, n, 0)), 1, lifetime - 1)}
-        {stepper("Ramp-up years", prod.length, (n) => setProd(resize(prod, n, 100)), 1, lifetime - 1)}
+        {stepper("Construction years", capex.length, (n) => setSpan(resize(capex, n, 0), prod), 1, lifetime - 1)}
+        {stepper("Ramp-up years", prod.length, (n) => setSpan(capex, resize(prod, n, 100)), 1, lifetime - 1)}
       </div>
 
       <div style={{ overflowX: "auto" }}>
@@ -107,14 +162,8 @@ export default function RampEditor({ capexRamp, productionRamp, lifetime, busy, 
                 </td>
               ))}
             </tr>
-            <tr style={muted}>
-              <td style={rowHead}>Variable OPEX (%) <em>follows production</em></td>
-              {years.map((y) => <td key={y} style={{ textAlign: "center" }}>{prodAt(y)}</td>)}
-            </tr>
-            <tr style={muted}>
-              <td style={rowHead}>Fixed OPEX (%) <em>from start-up</em></td>
-              {years.map((y) => <td key={y} style={{ textAlign: "center" }}>{fixedOn(y) ? 100 : 0}</td>)}
-            </tr>
+            {opexRow("Variable OPEX (%)", "plant.variable_opex_ramp", "follows production", vari, setVari, prodAt)}
+            {opexRow("Fixed OPEX (%)", "plant.fixed_opex_ramp", "from start-up", fixed, setFixed, fixedOn)}
           </tbody>
         </table>
       </div>
@@ -122,15 +171,24 @@ export default function RampEditor({ capexRamp, productionRamp, lifetime, busy, 
       <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center" }}>
         <button
           className="btn-primary"
-          disabled={busy || !changed || !totalOk || !prodOk}
-          onClick={() => onApply(capex.map((v) => v / 100), prod.map((v) => v / 100))}
+          disabled={busy || !changed || !totalOk || !prodOk || !opexOk}
+          onClick={() => {
+            const frac = (r: number[] | null) => r && r.map((v) => v / 100);
+            onApply({
+              capex_ramp: frac(capex), production_ramp: frac(prod),
+              fixed_opex_ramp: frac(fixed), variable_opex_ramp: frac(vari),
+            });
+          }}
         >
           {busy && <span className="spinner" />}Apply &amp; recalculate
         </button>
         <button
           className="btn-secondary"
           disabled={busy || (isDefault && !changed)}
-          onClick={() => { setCapex(DEFAULT_CAPEX); setProd(DEFAULT_PRODUCTION); onApply(null, null); }}
+          onClick={() => {
+            setCapex(DEFAULT_CAPEX); setProd(DEFAULT_PRODUCTION); setFixed(null); setVari(null);
+            onApply({ capex_ramp: null, production_ramp: null, fixed_opex_ramp: null, variable_opex_ramp: null });
+          }}
         >
           Reset to defaults
         </button>

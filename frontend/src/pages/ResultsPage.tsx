@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import DownloadableChart from "../components/DownloadableChart";
 import PlantPicker from "../components/PlantPicker";
-import RampEditor from "../components/RampEditor";
+import RampEditor, { type Ramps } from "../components/RampEditor";
 import FactorChip from "../components/FactorChip";
 import HelpTip from "../components/HelpTip";
 import { asShare, fixedOpexLabel, fmtFactor, fmtPct, nameLabel } from "../format";
@@ -108,13 +108,12 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
     await calculate();
   };
 
-  // CAPEX / production schedule (null = library default, so the key is
-  // left out of saved files)
-  const applyRamps = (capex: number[] | null, production: number[] | null) => {
+  // CAPEX / production / OPEX schedules (null = library default, so the key
+  // is left out of saved files)
+  const applyRamps = (ramps: Ramps) => {
     if (!plantConfig) return;
-    const next: PlantConfig = { ...plantConfig, capex_ramp: capex, production_ramp: production };
-    if (capex === null) delete next.capex_ramp;
-    if (production === null) delete next.production_ramp;
+    const next: PlantConfig = { ...plantConfig, ...ramps };
+    for (const [k, v] of Object.entries(ramps)) if (v === null) delete next[k as keyof Ramps];
     applyConfig(next);
   };
 
@@ -553,6 +552,8 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
             <RampEditor
               capexRamp={plantConfig.capex_ramp}
               productionRamp={plantConfig.production_ramp}
+              fixedOpexRamp={plantConfig.fixed_opex_ramp}
+              variableOpexRamp={plantConfig.variable_opex_ramp}
               lifetime={plantConfig.project_lifetime}
               busy={loading}
               onApply={applyRamps}
