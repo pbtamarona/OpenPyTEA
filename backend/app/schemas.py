@@ -120,6 +120,8 @@ class EquipmentOut(BaseModel):
     quoted_cost_year: int | None = None
     # One dict per component: {"spec": <input spec>, "purchased_cost": .., "direct_cost": ..}
     components: list[dict] | None = None
+    # direct_cost_breakdown() per leaf: {"label", "category", "direct_cost"}
+    leaf_direct_costs: list[dict] | None = None
     # Installation-factor overrides of the input ({"erection_factor": 1.2})
     factors: dict[str, float] = Field(default_factory=dict)
 

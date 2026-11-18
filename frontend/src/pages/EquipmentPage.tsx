@@ -255,6 +255,7 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
   // Direct cost chart as % of the total
   const [pctOn, setPctOn] = useState<Record<string, boolean>>({});
   const [byCategory, setByCategory] = useState(false);
+  const [expandComposites, setExpandComposites] = useState(false);
   const pctSet = (k: string) => (on: boolean) => setPctOn((prev) => ({ ...prev, [k]: on }));
   const [categories, setCategories] = useState<Record<string, CostDBEntry[]>>({});
   const [processTypes, setProcessTypes] = useState<string[]>([]);
@@ -445,9 +446,15 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
   };
 
   // Direct cost breakdown chart: the table's direct costs per equipment or
-  // summed per category (as direct_costs_data(by_category=True)), largest first
+  // summed per category (as direct_costs_data(by_category=True)), largest first;
+  // composites optionally split into their leaves (expand_composites=True)
+  const hasComposite = items.some((i) => i.is_composite);
+  const expand = expandComposites && hasComposite;
   const directTotals = new Map<string, number>();
-  items.filter((i) => i.direct_cost > 0).forEach((i) => {
+  items.flatMap((i) => expand && i.leaf_direct_costs
+    ? i.leaf_direct_costs.map((l) => ({ name: l.label, category: l.category, direct_cost: l.direct_cost }))
+    : [i],
+  ).filter((i) => i.direct_cost > 0).forEach((i) => {
     const key = byCategory ? i.category : i.name;
     directTotals.set(key, (directTotals.get(key) ?? 0) + i.direct_cost);
   });
@@ -457,6 +464,7 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
   const directQuery = new URLSearchParams({
     ...(pctOn.direct_costs ? { pct: "true" } : {}),
     ...(byCategory ? { by_category: "true" } : {}),
+    ...(expand ? { expand_composites: "true" } : {}),
   }).toString();
 
   return (
@@ -525,6 +533,12 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
           <div className="card-head">
             <h2>Direct Cost Breakdown ($)</h2>
             <div style={{ display: "flex", gap: 8 }}>
+              {hasComposite && (
+                <div className="seg-toggle" role="group" aria-label="Show composites whole or split into components">
+                  <button className={expand ? "" : "active"} onClick={() => setExpandComposites(false)}>Composite</button>
+                  <button className={expand ? "active" : ""} onClick={() => setExpandComposites(true)}>Components</button>
+                </div>
+              )}
               <div className="seg-toggle" role="group" aria-label="Show each equipment or each category">
                 <button className={byCategory ? "" : "active"} onClick={() => setByCategory(false)}>Equipment</button>
                 <button className={byCategory ? "active" : ""} onClick={() => setByCategory(true)}>Category</button>
@@ -532,11 +546,11 @@ export default function EquipmentPage({ setError, setNotice, markDirty, project,
               <PctToggle pct={!!pctOn.direct_costs} onChange={pctSet("direct_costs")} />
             </div>
           </div>
-          <DownloadableChart filename={byCategory ? "direct_costs_by_category" : "direct_costs"} serverPlot={(opts) => fetchPlotPng(`/plots/stacked/direct_costs${directQuery ? `?${directQuery}` : ""}`, undefined, opts)} height={directData.length * 30 + 60}>
+          <DownloadableChart filename={`direct_costs${byCategory ? "_by_category" : ""}${expand ? "_components" : ""}`} serverPlot={(opts) => fetchPlotPng(`/plots/stacked/direct_costs${directQuery ? `?${directQuery}` : ""}`, undefined, opts)} height={directData.length * 30 + 60}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={directChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
                 <XAxis type="number" tickFormatter={pctOn.direct_costs ? fmtPct : (v: number) => (v / 1e6).toFixed(1) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...directChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.direct_costs ? "Share of total (%)" : "Direct cost ($)", position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
-                <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="name" width={expand ? 190 : 130} tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(v) => (pctOn.direct_costs ? fmtPct(Number(v)) : fmt(Number(v)))} />
                 <Bar dataKey="value" fill="#f77f00" radius={[0, 4, 4, 0]} barSize={14} />
               </BarChart>

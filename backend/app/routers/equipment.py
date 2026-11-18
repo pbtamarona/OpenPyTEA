@@ -64,6 +64,17 @@ def _eq_to_out(i: int, eq) -> dict:
             if is_composite
             else None
         ),
+        # as direct_costs_data(expand_composites=True) pairs them
+        leaf_direct_costs=(
+            [
+                {"label": label, "category": leaf.category, "direct_cost": cost}
+                for (_, leaf, _), (label, cost) in zip(
+                    eq.leaves(), eq.direct_cost_breakdown().items()
+                )
+            ]
+            if is_composite
+            else None
+        ),
         factors={k: v for k, v in getattr(eq, "_input_spec", {}).items() if k in _FACTOR_KEYS},
     ).model_dump()
 

@@ -19,6 +19,8 @@ export interface EquipmentItem {
   quoted_purchased_cost: number | null;
   quoted_cost_year: number | null;
   components: { spec: EquipmentInput; purchased_cost: number; direct_cost: number }[] | null;
+  /** direct_cost_breakdown() per leaf component ("PSA / Vessel"), sums to direct_cost */
+  leaf_direct_costs: { label: string; category: string; direct_cost: number }[] | null;
   /** Installation-factor overrides of the input ({ erection_factor: 1.2 }) */
   factors: Record<string, number>;
 }
