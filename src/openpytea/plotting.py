@@ -128,8 +128,11 @@ def plot_stacked_bar(data, figsize=(1.2, 1.8), ax=None, show=True):
 
     # sort stacked components (excluding side revenue) by their total value
     # across all bars, descending, so order is stable
+    # Skip components that are zero in every bar (e.g. interest on working
+    # capital when the plant isn't debt-funded): no empty legend entries
     labels_sorted = sorted(
-        {k for c in components_list for k in c if k != side_key},
+        {k for c in components_list for k, v in c.items()
+         if k != side_key and v != 0},
         key=lambda lab: -sum(c.get(lab, 0.0) for c in components_list),
     )
 

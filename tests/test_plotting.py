@@ -24,6 +24,19 @@ def test_plot_stacked_bar_runs(test_plant):
     assert ax is not None
 
 
+def test_plot_stacked_bar_skips_all_zero_components():
+    data = {
+        "components": [{"A": 5.0, "Zero": 0.0, "Once": 0.0},
+                       {"A": 3.0, "Zero": 0.0, "Once": 2.0}],
+        "xlabels": ["P1", "P2"], "ylabel": "Cost", "currency": "EUR",
+        "pct": False,
+    }
+    fig, ax = plot_stacked_bar(data, show=False)
+    legend = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert legend == ["A", "Once"]  # nonzero in one bar is still shown
+    plt.close(fig)
+
+
 def test_plot_cash_flow_runs(test_plant):
     data = cash_flow_data(test_plant)
     fig, ax = plot_cash_flow(data, show=False)
