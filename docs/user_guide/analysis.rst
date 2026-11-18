@@ -38,7 +38,7 @@ walkthrough notebooks `Part 3: Cost Analysis and Sensitivity <https://github.com
    )
    from openpytea.plotting import (
        plot_stacked_bar, plot_cash_flow, plot_sensitivity, plot_tornado,
-       plot_monte_carlo, plot_monte_carlo_inputs, plot_multiple_monte_carlo,
+       plot_monte_carlo, plot_monte_carlo_inputs,
    )
 
 CAPEX and OPEX breakdowns
@@ -900,18 +900,20 @@ varies and what is held fixed — is visible at a glance.
 Comparing multiple plants under uncertainty
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:func:`~openpytea.plotting.plot_multiple_monte_carlo` overlays the metric
-distributions of several plants (or ``monte_carlo`` result dicts) on one
-set of axes:
+Given a list, :func:`~openpytea.plotting.plot_monte_carlo` overlays the
+metric distributions of several plants (or ``monte_carlo`` result dicts) on
+one set of axes, each named in the legend. (This replaces
+``plot_multiple_monte_carlo``, which still works but is deprecated and will
+be removed in OpenPyTEA 4.0.)
 
 .. code-block:: python
 
-   from openpytea.plotting import plot_multiple_monte_carlo
+   from openpytea.plotting import plot_monte_carlo
 
    mc_b = monte_carlo(plant_b, num_samples=1_000_000, batch_size=10_000)
 
-   fig, ax = plot_multiple_monte_carlo(
-       data_list=[plant, plant_b],
+   fig, ax = plot_monte_carlo(
+       [plant, plant_b],
        metric="LCOP",
        bins=30,
    )

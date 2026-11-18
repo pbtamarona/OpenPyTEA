@@ -48,7 +48,7 @@ Key topics demonstrated
 * Using both cost correlations and direct supply quotes for equipment purchased costs
 * Modelling byproduct revenues and mid-project ``additional_capex`` for equipment replacement
 * Running the same analysis on three :class:`~openpytea.plant.Plant` instances
-* Using :func:`~openpytea.plotting.plot_multiple_monte_carlo` for cross-scenario comparison
+* Using :func:`~openpytea.plotting.plot_monte_carlo` with a list for cross-scenario comparison
 * Interpreting tornado diagrams to identify cost drivers
 
 Case Study 2 — Hydrogen Liquefaction Precooling

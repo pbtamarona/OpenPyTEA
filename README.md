@@ -303,7 +303,7 @@ from openpytea.plotting import plot_monte_carlo
 results = monte_carlo(ammonia_plant, num_samples=1_000_000)
 fig, ax = plot_monte_carlo(results)
 ```
-Outputs include probability distributions and confidence intervals for LCOP, NPV, ROI, and payback time—supporting uncertainty-informed decision-making. With `plot_multiple_monte_carlo`, **OpenPyTEA** can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons. `plot_monte_carlo_inputs` shows the sampled inputs themselves, split into **process** and **economic** figures, to confirm each distribution came out as intended.
+Outputs include probability distributions and confidence intervals for LCOP, NPV, ROI, and payback time—supporting uncertainty-informed decision-making. Given a list of plants, `plot_monte_carlo` can also visualize Monte Carlo results for multiple plants to enable uncertainty comparisons. `plot_monte_carlo_inputs` shows the sampled inputs themselves, split into **process** and **economic** figures, to confirm each distribution came out as intended.
 
 Uncertainty is configured per item: `price_uncertainty` on any `variable_opex_inputs` or `plant_products` entry, `consumption_uncertainty`/`production_uncertainty` for the quantities, and `project_uncertainties` for the project-level scalars.
 

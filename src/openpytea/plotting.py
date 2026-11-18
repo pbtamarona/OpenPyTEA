@@ -662,14 +662,18 @@ def plot_monte_carlo(
     displaying a histogram of sample values overlaid with a normal
     distribution curve fitted to the data. It supports multiple input types:
     Monte Carlo data dictionaries, Plant objects with monte_carlo_metrics,
-    or raw numpy arrays.
+    or raw numpy arrays. Pass a list of them to compare several cases on
+    one axes.
     Parameters
     ----------
-    data : dict, Plant, list of Plant, or array-like
+    data : dict, Plant, list of dict/Plant, or array-like
         The Monte Carlo data to plot. Can be:
         - A dictionary containing a "metrics" key with metric values
         - A Plant object with a monte_carlo_metrics attribute
-        - A list or tuple of Plant objects
+        - A list or tuple of such dicts and/or Plants: one semi-transparent
+          histogram (and fit) per item, overlaid and labelled in the legend
+          by each item's name (``"Case 1"``, ``"Case 2"``, ... when it has
+          none). Items missing ``metric`` are skipped.
         - A raw array-like of numeric values
     metric : str, optional
         The name of the metric to plot (case-insensitive). Default is "LCOP".
@@ -719,6 +723,14 @@ def plot_monte_carlo(
         metric = "LCOP"
     metric = metric.upper()
 
+    # --- Several cases: overlaid histograms ---
+    if isinstance(data, (list, tuple)) and data and all(
+        _is_monte_carlo_case(item) for item in data
+    ):
+        return _plot_overlaid_monte_carlo(
+            data, metric, bins, show_fit, figsize, label, ax, show,
+        )
+
     # --- Case 1: Monte Carlo data dict ---
     if isinstance(data, dict) and "metrics" in data:
 
@@ -734,37 +746,20 @@ def plot_monte_carlo(
             currency = data.get("currency", _tex_escape("$"))
             label = _default_metric_label(currency, metric)
 
-    # ponytail: list-of-plants pooling has no callers; drop Case 2
-    # --- Case 2: Plant object(s) ---
-    elif hasattr(data, "monte_carlo_metrics") or (
-        isinstance(data, (list, tuple)) and all(
-            hasattr(p, "monte_carlo_metrics") for p in data
-        )
-    ):
-
-        plants = data if isinstance(data, (list, tuple)) else [data]
-
-        values_list = []
-        currencies = []
-
-        for plant in plants:
-            if metric not in plant.monte_carlo_metrics:
-                available = ", ".join(plant.monte_carlo_metrics.keys())
-                raise ValueError(
-                    f"Metric '{metric}' not found in "
-                    f"plant.monte_carlo_metrics. "
-                    f"Available: {available}"
-                )
-
-            values_list.append(
-                np.asarray(plant.monte_carlo_metrics[metric], dtype=float)
+    # --- Case 2: Plant object ---
+    elif hasattr(data, "monte_carlo_metrics"):
+        if metric not in data.monte_carlo_metrics:
+            available = ", ".join(data.monte_carlo_metrics.keys())
+            raise ValueError(
+                f"Metric '{metric}' not found in "
+                f"plant.monte_carlo_metrics. "
+                f"Available: {available}"
             )
-            currencies.append(getattr(plant, "currency", _tex_escape("$")))
 
-        values = np.concatenate(values_list)
+        values = np.asarray(data.monte_carlo_metrics[metric], dtype=float)
 
         if label is None:
-            currency = currencies[0] if currencies else _tex_escape("$")
+            currency = getattr(data, "currency", _tex_escape("$"))
             label = _default_metric_label(currency, metric)
 
     # --- Case 3: Raw array ---
@@ -1114,6 +1109,10 @@ def plot_multiple_monte_carlo(
     Plot multiple Monte Carlo simulation results as overlaid histograms
     with fitted normal distributions.
 
+    .. deprecated:: 3.3.0
+        Use :func:`plot_monte_carlo`, which now accepts a list.
+        ``plot_multiple_monte_carlo`` will be removed in OpenPyTEA 4.0.
+
     Parameters
     ----------
     data_list : list of dict or list of Plant
@@ -1141,8 +1140,32 @@ def plot_multiple_monte_carlo(
         The figure and axes containing the overlaid histograms.
         When *ax* is supplied by the caller, ``fig`` is ``ax.figure``.
     """
-    metric = metric.upper()
+    warnings.warn(
+        "plot_multiple_monte_carlo is deprecated and will be removed in "
+        "OpenPyTEA 4.0; use plot_monte_carlo, which now accepts a list.",
+        FutureWarning,
+        stacklevel=2,
+    )
+    # Called directly, not via plot_monte_carlo: keeps this function's
+    # figsize=None default and its tolerance of an empty list
+    return _plot_overlaid_monte_carlo(
+        data_list, metric.upper(), bins, show_fit, figsize, label, ax, show,
+    )
 
+
+def _is_monte_carlo_case(item):
+    """True for one case :func:`plot_monte_carlo` can overlay: a Monte
+    Carlo result dict or a Plant that has run one."""
+    return (isinstance(item, dict) and "metrics" in item) or hasattr(
+        item, "monte_carlo_metrics"
+    )
+
+
+def _plot_overlaid_monte_carlo(data_list, metric, bins, show_fit, figsize,
+                               label, ax, show):
+    """Overlaid histograms (and fits) of ``metric``, one per case; behind
+    :func:`plot_monte_carlo` given a list. Warnings are attributed to the
+    public function's caller."""
     created_fig = None
     if ax is None:
         created_fig, ax = plt.subplots(figsize=figsize)
@@ -1179,14 +1202,14 @@ def plot_multiple_monte_carlo(
             continue
 
         values = _finite(
-            values, f"Monte Carlo data for '{name}'", stacklevel=3
+            values, f"Monte Carlo data for '{name}'", stacklevel=4
         )
         if values.size == 0:
             warnings.warn(
                 f"No finite values available for Monte Carlo data "
                 f"for '{name}'. Skipping dataset.",
                 RuntimeWarning,
-                stacklevel=2,
+                stacklevel=3,
             )
             continue
 

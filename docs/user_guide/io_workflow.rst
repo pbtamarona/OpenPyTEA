@@ -474,8 +474,8 @@ compare them on the same figure:
    smr_mc = load_results("outputs/smr_results/Steam Reforming_analysis_results.json")["monte_carlo"]
    aec_mc = load_results("outputs/aec_results/Electrolysis_analysis_results.json")["monte_carlo"]
 
-   from openpytea.plotting import plot_multiple_monte_carlo
-   plot_multiple_monte_carlo(data_list=[smr_mc, aec_mc], metric="LCOP", bins=30)
+   from openpytea.plotting import plot_monte_carlo
+   plot_monte_carlo([smr_mc, aec_mc], metric="LCOP", bins=30)
 
 See also
 --------

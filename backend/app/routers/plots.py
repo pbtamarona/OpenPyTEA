@@ -31,7 +31,6 @@ from openpytea.plotting import (  # noqa: E402
     plot_sensitivity,
     plot_tornado,
     plot_monte_carlo,
-    plot_multiple_monte_carlo,
     plot_monte_carlo_inputs,
 )
 
@@ -168,7 +167,8 @@ def tornado_plot(payload: TornadoIn):
 
 @router.post("/monte-carlo")
 def monte_carlo_plot(payload: MCPlotIn):
-    """plot_monte_carlo()/plot_multiple_monte_carlo() over the cached raw run."""
+    """plot_monte_carlo() over the cached raw run (overlaid when several
+    plants are selected)."""
     raw = state.mc_raw
     if not raw:
         raise HTTPException(status_code=400, detail="Run a Monte Carlo simulation first")
@@ -178,12 +178,10 @@ def monte_carlo_plot(payload: MCPlotIn):
         raw = [raw[i] for i in payload.plants]
     with _mpl_lock:
         try:
-            if len(raw) == 1:
-                fig, _ = plot_monte_carlo(
-                    raw[0], metric=payload.metric, show_fit=payload.show_fit, show=False)
-            else:
-                fig, _ = plot_multiple_monte_carlo(
-                    raw, metric=payload.metric, show_fit=payload.show_fit, show=False)
+            # One plant: a plain histogram; several: overlaid, with a legend
+            fig, _ = plot_monte_carlo(
+                raw[0] if len(raw) == 1 else raw,
+                metric=payload.metric, show_fit=payload.show_fit, show=False)
         except HTTPException:
             raise
         except (ValueError, KeyError) as e:

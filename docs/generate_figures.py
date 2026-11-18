@@ -35,7 +35,6 @@ from openpytea.plotting import (  # noqa: E402
     plot_cash_flow,
     plot_monte_carlo,
     plot_monte_carlo_inputs,
-    plot_multiple_monte_carlo,
     plot_sensitivity,
     plot_stacked_bar,
     plot_tornado,
@@ -284,7 +283,7 @@ copy_plant.update_configuration({
 })
 monte_carlo(copy_plant, num_samples=NUM_SAMPLES, batch_size=BATCH_SIZE, random_seed=SEED)
 
-fig, _ = plot_multiple_monte_carlo(data_list=[demo_plant, copy_plant], metric="LCOP", bins=30, figsize=FIGSIZE, show=False)
+fig, _ = plot_monte_carlo([demo_plant, copy_plant], metric="LCOP", bins=30, figsize=FIGSIZE, show=False)
 save(fig, "monte_carlo_multiple")
 
 # ----------------------------------------------------------------------

@@ -1,3 +1,4 @@
+import pytest
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -210,14 +211,29 @@ def test_plot_tornado_fractional_percentage_label(test_plant):
     plt.close(fig)
 
 
-def test_plot_multiple_monte_carlo_returns_live_figure(test_plant, test_plant_b):
+def test_plot_monte_carlo_list_overlays_cases(test_plant, test_plant_b):
+    from openpytea import monte_carlo, plot_monte_carlo
+
+    r1 = monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
+    r2 = monte_carlo(test_plant_b, num_samples=100, batch_size=100, random_seed=1)
+
+    fig, ax = plot_monte_carlo([r1, r2], metric="LCOP", show=False)
+    # the returned figure must still be registered with pyplot
+    assert plt.fignum_exists(fig.number)
+    # one histogram per case, named in the legend
+    legend = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert {test_plant.name, test_plant_b.name} <= set(legend)
+    plt.close(fig)
+
+
+def test_plot_multiple_monte_carlo_deprecated(test_plant, test_plant_b):
     from openpytea import monte_carlo, plot_multiple_monte_carlo
 
     r1 = monte_carlo(test_plant, num_samples=100, batch_size=100, random_seed=1)
     r2 = monte_carlo(test_plant_b, num_samples=100, batch_size=100, random_seed=1)
 
-    fig, _ = plot_multiple_monte_carlo([r1, r2], metric="LCOP", show=False)
-    # the returned figure must still be registered with pyplot
+    with pytest.warns(FutureWarning, match="removed in OpenPyTEA 4.0"):
+        fig, _ = plot_multiple_monte_carlo([r1, r2], metric="LCOP", show=False)
     assert plt.fignum_exists(fig.number)
     plt.close(fig)
 
