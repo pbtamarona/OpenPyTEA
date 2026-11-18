@@ -362,6 +362,50 @@ def test_sample_distribution_impossible_bounds_raises():
         sample_distribution(3, 100, loc=0.0, scale=1.0, minimum=50, maximum=60)
 
 
+def test_reversed_lognormal_samples():
+    from openpytea.analysis import sample_distribution
+
+    def draw(maximum=0.95, seed=1):
+        return sample_distribution(13, 100_000, loc=0.85, scale=0.10,
+                                   minimum=0.60, maximum=maximum,
+                                   random_state=seed)
+
+    x = draw()
+    assert x.mean() == pytest.approx(0.85, abs=1e-3)  # mean hit after truncation
+    assert x.min() >= 0.60 and x.max() <= 0.95
+    assert np.mean((x - x.mean()) ** 3) < 0  # long tail points down
+    np.testing.assert_array_equal(x, draw())  # same seed, same samples
+    # max is the mirror point: with the mean pinned, raising it widens
+    # the gap above the mean but the mean itself stays put
+    assert draw(maximum=0.99).mean() == pytest.approx(0.85, abs=1e-3)
+
+
+@pytest.mark.parametrize("kwargs, match", [
+    (dict(loc=0.97, scale=0.1, minimum=0.6, maximum=0.95), "minimum < mean"),
+    (dict(loc=0.85, scale=0.0, minimum=0.6, maximum=0.95), "std > 0"),
+    (dict(loc=0.6003, scale=0.3, minimum=0.6, maximum=0.95), "too close"),
+])
+def test_reversed_lognormal_rejects_bad_input(kwargs, match):
+    from openpytea.analysis import sample_distribution
+
+    with pytest.raises(ValueError, match=match):
+        sample_distribution(13, 10, **kwargs)
+
+
+def test_reversed_lognormal_in_monte_carlo(test_plant):
+    unc = {"dist_id": 13, "std": 0.02, "min": 0.0, "max": 0.10}
+    test_plant.variable_opex_inputs["electricity"]["price_uncertainty"] = unc
+    result = monte_carlo(test_plant, num_samples=2000, batch_size=2000)
+    price = np.asarray(result["inputs"]["Electricity price"])
+    assert price.mean() == pytest.approx(0.08, abs=1e-3)  # baseline is the mean
+    assert price.max() <= 0.10
+
+    # Without an explicit max the cap would silently default
+    del unc["max"]
+    with pytest.raises(ValueError, match="explicit 'max'"):
+        monte_carlo(test_plant, num_samples=10, batch_size=10)
+
+
 def test_monte_carlo_out_of_range_baselines(test_plant):
     # Default truncation bounds are centered on each baseline, so
     # negative prices (disposal credits), very large prices (JPY/IDR

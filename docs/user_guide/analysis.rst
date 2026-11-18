@@ -738,6 +738,12 @@ mathematical definition:
      - `Student's t <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html>`_
      - ``loc`` (median), ``scale``, ``shape`` (ν, degrees of freedom)
      -
+   * - 13
+     - Reversed lognormal
+     - ``loc`` (mean), ``scale`` (std), ``min``, ``max`` (cap, required)
+     - Lognormal mirrored at ``max``: never above it, long tail down to
+       ``min``. The sampled mean equals ``loc``; ``scale`` is the std
+       before truncation, so the sampled std is smaller.
 
 .. code-block:: python
 
@@ -768,9 +774,20 @@ Triangular, and Discrete uniform the bounds define the distribution itself.
 Weibull, Gamma, GEV, and Student's t ignore ``min``/``max`` entirely (Beta
 uses ``max`` as its upper scale bound instead).
 
+Reversed lognormal (``dist_id`` 13) suits inputs with a hard ceiling that
+can occasionally fall well short of it, such as a conversion or an
+efficiency. Its ``max`` is the point the distribution is mirrored at, not
+just a cut-off: moving it changes the shape of every draw, so it must be
+given explicitly. ``loc`` defaults to the item's baseline value, and
+``min`` to the usual window (baseline − 2·std):
+
+.. code-block:: python
+
+   "price_uncertainty": {"dist_id": 13, "std": 0.05, "min": 0.60, "max": 0.95}
+
 For direct programmatic use outside of ``monte_carlo``, the same families
 are available via :func:`~openpytea.analysis.make_distribution` (returns a
-frozen ``scipy.stats`` distribution) and
+frozen ``scipy.stats`` distribution; not for ``dist_id`` 13) and
 :func:`~openpytea.analysis.sample_distribution` (draws an array of samples,
 with optional truncation).
 

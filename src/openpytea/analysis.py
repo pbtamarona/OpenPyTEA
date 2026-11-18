@@ -2,6 +2,7 @@ import warnings
 from copy import deepcopy
 from tqdm.auto import tqdm
 from scipy import stats
+from scipy.optimize import root_scalar
 import numpy as np
 
 from openpytea.plant import DEFAULT_OPERATOR_HOURLY_RATE
@@ -995,6 +996,9 @@ def make_distribution(dist_id, loc=None, scale=None, shape=None,
         - 10 : Beta (``loc``=alpha, ``shape``=beta, ``maximum``=upper bound)
         - 11 : GEV (``loc``=mu, ``scale``=sigma, ``shape``=xi)
         - 12 : Student's t (``loc``=median, ``scale``=scale, ``shape``=nu)
+
+        13 (Reversed lognormal) has no frozen SciPy form; only
+        :func:`sample_distribution` supports it.
     loc : float, optional
         Location parameter; meaning depends on ``dist_id`` (see above).
     scale : float, optional
@@ -1063,8 +1067,67 @@ def make_distribution(dist_id, loc=None, scale=None, shape=None,
     elif dist_id == 12:  # Student's t: loc=median, scale=scale, shape=nu
         return stats.t(df=shape, loc=loc, scale=scale)
 
+    elif dist_id == 13:
+        raise ValueError(
+            "dist_id 13 (Reversed lognormal) has no frozen SciPy "
+            "distribution; draw it with sample_distribution."
+        )
+
     else:
         raise ValueError(f"Unsupported dist_id for make_distribution: {dist_id}")
+
+
+def _reversed_lognormal_quantile(u, mean, std, minimum, maximum):
+    """
+    Quantiles ``u`` of a lognormal mirrored at ``maximum`` (long tail
+    towards ``minimum``), truncated to ``[minimum, maximum]``.
+
+    ``x = maximum - y`` with ``y`` lognormal on ``(0, maximum - minimum]``.
+    ``sigma`` of ``ln y`` is set from ``std`` (the spread before
+    truncation, so the sampled spread comes out smaller), and ``mu`` is
+    solved so the truncated mean equals ``mean``. Quantiles increase
+    with ``u``.
+    """
+    if maximum is None or minimum is None or mean is None:
+        raise ValueError(
+            "Reversed lognormal (dist_id 13) needs a mean, minimum and "
+            "maximum."
+        )
+    if not minimum < mean < maximum:
+        raise ValueError(
+            "Reversed lognormal (dist_id 13) needs minimum < mean < "
+            f"maximum (got {minimum}, {mean}, {maximum})."
+        )
+    if not std or std <= 0:
+        raise ValueError(
+            f"Reversed lognormal (dist_id 13) needs std > 0 (got {std})."
+        )
+
+    y_mean, y_high = maximum - mean, maximum - minimum
+    sigma = np.sqrt(np.log(1 + (std / y_mean) ** 2))
+    log_high = np.log(y_high)
+
+    def truncated_mean_gap(mu):
+        # E[y | y <= y_high] - y_mean, closed form for a lognormal; y's
+        # lower bound is 0, so only the upper cut appears
+        b = (log_high - mu) / sigma
+        return (np.exp(mu + sigma**2 / 2) * stats.norm.cdf(b - sigma)
+                / stats.norm.cdf(b) - y_mean)
+
+    try:
+        mu = root_scalar(
+            truncated_mean_gap, method="brentq",
+            bracket=(np.log(y_mean) - 5 * sigma - 1, log_high + 3 * sigma),
+        ).root
+    except ValueError:
+        raise ValueError(
+            "Reversed lognormal (dist_id 13): no lognormal with std "
+            f"{std} has mean {mean} within [{minimum}, {maximum}]; the "
+            "mean is too close to the minimum for that spread. Lower std "
+            "or widen the window."
+        ) from None
+    y = stats.lognorm(s=sigma, scale=np.exp(mu))
+    return maximum - y.ppf((1 - np.asarray(u)) * y.cdf(y_high))
 
 
 def sample_distribution(dist_id, size, loc=None, scale=None, shape=None,
@@ -1078,6 +1141,13 @@ def sample_distribution(dist_id, size, loc=None, scale=None, shape=None,
     are given for Lognormal, Normal, or Bernoulli (``dist_id`` 2, 3, 6),
     samples are drawn and re-drawn (rejection sampling) until ``size``
     values fall within ``[minimum, maximum]``.
+
+    ``dist_id`` 13 (Reversed lognormal) is drawn here only: a lognormal
+    mirrored at ``maximum``, so its long tail points down to ``minimum``.
+    ``loc`` is the mean of the samples and ``scale`` their std before
+    truncation (the sampled std comes out smaller), both in real units.
+    ``maximum`` is the mirror point, not just a cut-off: moving it moves
+    every sample.
 
     Parameters
     ----------
@@ -1120,6 +1190,11 @@ def sample_distribution(dist_id, size, loc=None, scale=None, shape=None,
     """
     if dist_id in (0, 1):
         return np.full(size, loc if loc is not None else 0.0)
+
+    if dist_id == 13:  # Reversed lognormal: loc=mean, scale=std, [min, max]
+        rng = np.random.default_rng(random_state)
+        return _reversed_lognormal_quantile(
+            rng.uniform(size=size), loc, scale, minimum, maximum)
 
     dist = make_distribution(dist_id, loc=loc, scale=scale, shape=shape,
                               minimum=minimum, maximum=maximum)
@@ -1240,6 +1315,13 @@ def _resolve_dist_params(cfg, default_loc: float = 0.0,
         where the rest of the distribution config isn't needed yet.
     """
     dist_id = cfg.get("dist_id", default_id)
+    if dist_id == 13 and "max" not in cfg and "maximum" not in cfg:
+        # The cap is where the distribution is mirrored; a default one
+        # (99999, or baseline + 2*std) would silently move every sample
+        raise ValueError(
+            "Reversed lognormal (dist_id 13) needs an explicit 'max': it "
+            "is the cap the distribution is mirrored at."
+        )
     loc = cfg.get(
         "loc", cfg.get("mean", cfg.get("price", cfg.get("rate", default_loc)))
     )

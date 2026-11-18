@@ -42,6 +42,18 @@ export const DISTRIBUTIONS: DistSpec[] = [
     ],
   },
   {
+    id: 13, name: "Reversed lognormal",
+    // Max is the mirror point, not a cut-off: the library refuses a
+    // missing one rather than defaulting it
+    fields: [
+      { key: "loc", label: "Mean", optional: true, placeholder: "baseline" },
+      { key: "std", label: "Std dev" },
+      { key: "min", label: "Min (long-tail end)", optional: true },
+      { key: "max", label: "Max (cap)" },
+    ],
+    note: "Mirrored lognormal: never above Max, long tail down to Min.",
+  },
+  {
     id: 4, name: "Uniform",
     fields: [
       { key: "min", label: "Minimum" },

@@ -303,6 +303,10 @@
     "text": "Student's t — loc (median), scale, shape (ν, degrees of freedom)",
     "doc": "user_guide/analysis.html#configuring-input-uncertainties"
   },
+  "dist.13": {
+    "text": "Reversed lognormal — loc (mean), scale (std), min, max (cap, required) — Lognormal mirrored at max: never above it, long tail down to min. The sampled mean equals loc; scale is the std before truncation, so the sampled std is smaller.",
+    "doc": "user_guide/analysis.html#configuring-input-uncertainties"
+  },
   "metric.LCOP": {
     "text": "Pre-tax levelized cost of the primary product (default).",
     "doc": "user_guide/analysis.html#one-way-sensitivity-analysis"
