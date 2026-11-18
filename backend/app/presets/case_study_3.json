@@ -310,7 +310,11 @@
           "args": {
             "num_samples": 100000,
             "batch_size": 10000
-          }
+          },
+          "metric": [
+            "LCOP",
+            "NPV"
+          ]
         }
       },
       "sensitivity_plants": [
@@ -351,5 +355,11 @@
       "tornado_plants": [],
       "monte_carlo_plants": []
     }
-  ]
+  ],
+  "output": {
+    "save_json": true,
+    "save_plots": true,
+    "plot_format": "png",
+    "dpi": 300
+  }
 }

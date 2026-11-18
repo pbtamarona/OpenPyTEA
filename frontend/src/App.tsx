@@ -9,7 +9,7 @@ import {
   newProject, getExamples, loadExample, runCalculations,
   getProject, activatePlant, addPlant,
 } from "./api/client";
-import type { ExampleAutoRun, ExamplePreset } from "./api/client";
+import type { ExampleAutoRun, ExamplePreset, LoadResult } from "./api/client";
 import ComparePage from "./pages/ComparePage";
 import { projectComparison } from "./plantSources";
 import WelcomePage from "./pages/WelcomePage";
@@ -17,7 +17,7 @@ import ProjectPage from "./pages/ProjectPage";
 import { openDocs } from "./docs";
 import AppFooter from "./components/AppFooter";
 import type {
-  CalculationResults, ComparedPlant, PlantInput, ProjectOverview,
+  CalculationResults, ComparedPlant, ProjectOverview,
 } from "./types";
 import "./App.css";
 
@@ -68,10 +68,23 @@ function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [examples, setExamples] = useState<ExamplePreset[]>([]);
   const [examplesOpen, setExamplesOpen] = useState(false);
-  // Analyses of the loaded example, by plant id: that plant's Analysis and
-  // Monte Carlo pages run them when they mount (the open plant's pages are
-  // mounted right after loading, the others on their first visit)
-  const [autoRuns, setAutoRuns] = useState<Record<string, ExampleAutoRun>>({});
+  // The project's analysis runs, by plant id (the file's "runs"): loaded
+  // from an opened project or example, and updated whenever an analysis
+  // is run, so File ▸ Save keeps them. A plant's Analysis and Monte Carlo
+  // pages run its loaded run when they mount (the open plant's right after
+  // loading, the others on their first visit).
+  const [runs, setRuns] = useState<Record<string, ExampleAutoRun>>({});
+  const runsRef = useRef(runs);
+  runsRef.current = runs;
+  /** Record the settings and plants of an analysis just run on a plant. */
+  const recordRun = useCallback((plantId: string, patch: Partial<ExampleAutoRun>) => {
+    setRuns((prev) => {
+      const cur = prev[plantId] ?? {
+        plant_id: plantId, analysis: {}, sensitivity_plants: [], tornado_plants: [], monte_carlo_plants: [],
+      };
+      return { ...prev, [plantId]: { ...cur, ...patch, analysis: { ...cur.analysis, ...patch.analysis } } };
+    });
+  }, []);
   const [brandOpen, setBrandOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [dark, setDark] = useState(() => {
@@ -79,9 +92,7 @@ function App() {
     if (saved) return saved === "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
-  // Plants imported on the Compare tab (from saved files); the project's
-  // own plants are always compared (projectCompared, loaded on the tab)
-  const [comparedPlants, setComparedPlants] = useState<ComparedPlant[]>([]);
+  // The project's plants, compared on the Compare tab (loaded on the tab)
   const [projectCompared, setProjectCompared] = useState<ComparedPlant[]>([]);
   // Plants unticked on the Compare tab
   const [compareHidden, setCompareHidden] = useState<Set<string>>(new Set());
@@ -91,29 +102,20 @@ function App() {
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
-  // Colours follow the project's plant order (as on Analysis and Monte
-  // Carlo); imported plants come after the project's plants
+  // Colours follow the project's plant order (as on Analysis and Monte Carlo)
   const compareColorIndex = (id: string, fallback: number) => {
-    const plants = project?.plants ?? [];
-    const i = plants.findIndex((p) => `project:${p.id}` === id);
-    if (i >= 0) return i;
-    const j = comparedPlants.findIndex((p) => p.id === id);
-    return j >= 0 ? plants.length + j : fallback;
+    const i = (project?.plants ?? []).findIndex((p) => `project:${p.id}` === id);
+    return i >= 0 ? i : fallback;
   };
   const [showWelcome, setShowWelcome] = useState(true);
   const [inTauri, setInTauri] = useState(false);
 
-  // Project file state.
-  //   dirty           = user edited inputs (equipment / plant config)
-  //                     since the last save / load. Used for the
-  //                     "Load an example anyway?" switch-prompt.
-  //   comparisonDirty = user added/removed compared plants since the
-  //                     last save / load. NOT used for switch-prompts
-  //                     (would block the typical multi-example
-  //                     comparison flow) but IS checked on app close.
+  // Project file state. dirty = user edited inputs (equipment / plant
+  // config) since the last save / load; it drives the unsaved-changes
+  // prompts. Running analyses doesn't count (an example's auto-run would
+  // otherwise mark it edited straight away).
   const [currentPath, setCurrentPath] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
-  const [comparisonDirty, setComparisonDirty] = useState(false);
   const markDirty = useCallback(() => setDirty(true), []);
 
   // Close-confirmation modal state (Tauri-only: triggered when the
@@ -127,12 +129,8 @@ function App() {
   // need to read freshly. Reassigning a ref in render is safe — these
   // are not part of React's render output.
   const dirtyRef = useRef(dirty);
-  const comparisonDirtyRef = useRef(comparisonDirty);
-  const comparedPlantsRef = useRef(comparedPlants);
   const currentPathRef = useRef(currentPath);
   dirtyRef.current = dirty;
-  comparisonDirtyRef.current = comparisonDirty;
-  comparedPlantsRef.current = comparedPlants;
   currentPathRef.current = currentPath;
   const projectRef = useRef(project);
   projectRef.current = project;
@@ -170,11 +168,6 @@ function App() {
     } finally {
       setLoadingMsg(null);
     }
-  };
-
-  const removeFromComparison = (id: string) => {
-    setComparedPlants((prev) => prev.filter((p) => p.id !== id));
-    setComparisonDirty(true);
   };
 
   useEffect(() => {
@@ -285,11 +278,8 @@ function App() {
   // window.confirm is suppressed in Tauri's WebKit webview, so use the
   // native ask dialog when running inside Tauri and fall back to
   // window.confirm in browser-dev.
-  const confirmIfDirty = async (verb: string, includeComparison = false): Promise<boolean> => {
-    // Comparison-only changes are deliberately excluded from switch-prompts
-    // (open / load-example keep the comparison list), but must count for
-    // flows that destroy it — New — and for app close.
-    if (!(dirty || (includeComparison && comparisonDirty))) return true;
+  const confirmIfDirty = async (verb: string): Promise<boolean> => {
+    if (!dirty) return true;
     const message = `You have unsaved changes. ${verb} anyway?`;
     if (await detectTauri()) {
       const { ask } = await import("@tauri-apps/plugin-dialog");
@@ -303,14 +293,12 @@ function App() {
   };
 
   const handleNew = useCallback(async () => {
-    // includeComparison: New wipes comparedPlants, unlike open/load-example.
-    if (!(await confirmIfDirty("Start a new project", true))) return;
+    if (!(await confirmIfDirty("Start a new project"))) return;
     try {
       setLoadingMsg("Creating new project…");
       await newProject();
       setCurrentPath(null);
-      setComparedPlants([]);
-      setComparisonDirty(false);
+      setRuns({});
       setDirty(false);
       setResults(null);
       setError(null);
@@ -322,34 +310,20 @@ function App() {
     } finally {
       setLoadingMsg(null);
     }
-  }, [dirty, comparisonDirty]);
+  }, [dirty]);
 
-  /** Restore the imported compared plants from a parsed save-file. UUIDs
-      are regenerated; everything else is taken verbatim. */
-  const restoreComparedPlants = (parsed: unknown): ComparedPlant[] => {
-    const file = parsed as {
-      compared_plants?: unknown; plants?: { name?: string }[]; plant?: { plant_name?: string };
-    };
-    const arr = file.compared_plants;
-    if (!Array.isArray(arr)) return [];
-    // Older files listed the project's own plants here too; those are now
-    // compared automatically
-    const own = new Set(
-      Array.isArray(file.plants) ? file.plants.map((p) => p.name) : [file.plant?.plant_name],
-    );
-    return arr.filter((p: { name?: string }) => !own.has(p?.name)).map((p: unknown) => {
-      const obj = p as {
-        name?: string; currency?: string;
-        results?: CalculationResults; source?: PlantInput;
-      };
-      return {
-        id: crypto.randomUUID(),
-        name: obj.name ?? "Plant",
-        currency: obj.currency ?? "$",
-        results: obj.results as CalculationResults,
-        source: obj.source,
-      };
-    }).filter((p) => p.results != null);
+  /** After a project or example has loaded and been calculated: keep its
+      runs and start them; the open plant's Analysis and Monte Carlo pages
+      are mounted now (hidden) and run in the background. */
+  const startRuns = (loaded: LoadResult, title?: string) => {
+    setRuns(Object.fromEntries(loaded.autorun.map((r) => [r.plant_id, r])));
+    const open = loaded.active_plant_id;
+    const msgs = [...loaded.notes];
+    if (open && loaded.autorun.some((r) => r.plant_id === open)) {
+      setKept((prev) => [...prev, `Analysis|${open}`, `Monte Carlo|${open}`]);
+      msgs.unshift(`${title ? `Loaded ${title}. Its` : "The project's saved"} analyses are running in the background; see the Analysis and Monte Carlo tabs.`);
+    }
+    setNotice(msgs.length ? msgs.join(" ") : null);
   };
 
   /** Load a project file at a known path (Tauri only). Shared between
@@ -362,13 +336,10 @@ function App() {
       // disk) without granting the webview filesystem access.
       const { invoke } = await import("@tauri-apps/api/core");
       const text = await invoke<string>("read_project_text", { path });
-      const parsed = JSON.parse(text);
 
       setLoadingMsg("Loading project…");
-      await loadProjectFromText(text);
+      const loaded = await loadProjectFromText(text);
 
-      setComparedPlants(restoreComparedPlants(parsed));
-      setComparisonDirty(false);
       setCurrentPath(path);
       setDirty(false);
       setError(null);
@@ -389,6 +360,7 @@ function App() {
       } catch {
         setResults(null);
       }
+      startRuns(loaded);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Open failed");
     } finally {
@@ -420,15 +392,7 @@ function App() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      await loadProject(file);
-      // Restore the comparison list from the file, like the Tauri path does.
-      try {
-        const parsed = JSON.parse(await file.text());
-        setComparedPlants(restoreComparedPlants(parsed));
-      } catch {
-        setComparedPlants([]);
-      }
-      setComparisonDirty(false);
+      const loaded = await loadProject(file);
       setCurrentPath(file.name); // browser only gives us a basename
       setDirty(false);
       setResults(null);
@@ -441,31 +405,33 @@ function App() {
       } catch {
         // the open plant can't be calculated yet
       }
+      startRuns(loaded);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Load failed");
     }
     e.target.value = "";
   };
 
-  /** Serialize the full project (backend state + compared plants) to JSON.
+  /** Serialize the full project to JSON: the backend's project plus the
+      analysis runs (plants by index, in the project's order), so opening
+      the file (in the app, or with openpytea run) runs them again.
       Shared by the Tauri file write and the browser blob download so both
       produce identical files. */
   const buildProjectText = async (): Promise<string> => {
     const backendData = await saveProject() as Record<string, unknown>;
-    // Read compared plants via ref so we always serialize the latest list,
-    // even when this function is called from a memoized handler whose
-    // closure captured an older `comparedPlants` value.
-    const cps = comparedPlantsRef.current;
-    const full = {
-      ...backendData,
-      compared_plants: cps.map((p) => ({
-        name: p.name,
-        currency: p.currency,
-        results: p.results,
-        source: p.source,
-      })),
-    };
-    return JSON.stringify(full, null, 2);
+    const order = (await getProject()).plants.map((p) => p.id);
+    const index = (id: string) => order.indexOf(id);
+    const fileRuns = Object.values(runsRef.current)
+      .filter((r) => index(r.plant_id) >= 0 && Object.keys(r.analysis).length > 0)
+      .map((r) => ({
+        plant: index(r.plant_id),
+        analysis: r.analysis,
+        sensitivity_plants: r.sensitivity_plants.map(index).filter((i) => i >= 0),
+        tornado_plants: r.tornado_plants.map(index).filter((i) => i >= 0),
+        monte_carlo_plants: r.monte_carlo_plants.map(index).filter((i) => i >= 0),
+      }))
+      .sort((a, b) => a.plant - b.plant);
+    return JSON.stringify({ ...backendData, runs: fileRuns }, null, 2);
   };
 
   const writeProjectTo = async (path: string) => {
@@ -491,7 +457,6 @@ function App() {
         await writeProjectTo(path);
         setCurrentPath(path);
         setDirty(false);
-        setComparisonDirty(false);
         return true;
       } else {
         // Browser fallback: blob download. Uses the same envelope as the
@@ -505,7 +470,6 @@ function App() {
         a.click();
         URL.revokeObjectURL(url);
         setDirty(false);
-        setComparisonDirty(false);
         return true;
       }
     } catch (e: unknown) {
@@ -522,7 +486,6 @@ function App() {
     try {
       await writeProjectTo(currentPath);
       setDirty(false);
-      setComparisonDirty(false);
       return true;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Save failed");
@@ -579,15 +542,12 @@ function App() {
     try {
       setLoadingMsg("Loading example…");
       const loaded = await loadExample(id);
-      setComparedPlants([]);
-      setComparisonDirty(false);
       setCurrentPath(null);
       setDirty(false);
       setError(null);
       resetProjectView();
       setRefreshKey((k) => k + 1);
       setTab("Project");
-      setAutoRuns(Object.fromEntries(loaded.autorun.map((r) => [r.plant_id, r])));
 
       setLoadingMsg("Calculating…");
       try {
@@ -597,13 +557,7 @@ function App() {
         setResults(null);
       }
 
-      // Run the example's analyses: mount the open plant's Analysis and
-      // Monte Carlo pages now (hidden), so they run in the background
-      const open = loaded.active_plant_id;
-      if (open && loaded.autorun.some((r) => r.plant_id === open)) {
-        setKept((prev) => [...prev, `Analysis|${open}`, `Monte Carlo|${open}`]);
-        setNotice(`Loaded ${loaded.title}. Its analyses are running in the background; see the Analysis and Monte Carlo tabs.`);
-      }
+      startRuns(loaded, loaded.title ?? undefined);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load example");
     } finally {
@@ -698,9 +652,9 @@ function App() {
       if (!(await detectTauri())) return;
       const { listen } = await import("@tauri-apps/api/event");
       const un = await listen("request-close", () => {
-        const d = dirtyRef.current, cd = comparisonDirtyRef.current;
-        console.log("[close] request-close received; dirty=", d, "comparisonDirty=", cd);
-        if (d || cd) {
+        const d = dirtyRef.current;
+        console.log("[close] request-close received; dirty=", d);
+        if (d) {
           setCloseConfirmOpen(true);
         } else {
           // No unsaved work — just quit.
@@ -784,13 +738,7 @@ function App() {
       <div className="modal" style={{ maxWidth: 440 }}>
         <h2>Unsaved Changes</h2>
         <p style={{ marginTop: 0, color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.5 }}>
-          You have unsaved work
-          {dirty && comparisonDirty
-            ? " (edited inputs and an unsaved comparison)"
-            : dirty
-              ? " (edited inputs)"
-              : " (unsaved comparison)"}
-          . Do you want to save before quitting?
+          You have unsaved changes to the inputs. Do you want to save before quitting?
         </p>
         <div className="modal-actions">
           <button className="btn-secondary" onClick={handleCloseCancel}>Cancel</button>
@@ -940,25 +888,21 @@ function App() {
         )}
         {keptPlants("Analysis").map((id) => (
           <div key={id} hidden={!shown("Analysis", id)}>
-            <AnalysisPage setError={setError} setNotice={setNotice} project={project} active={shown("Analysis", id)} autoRun={autoRuns[id]} />
+            <AnalysisPage setError={setError} setNotice={setNotice} project={project} active={shown("Analysis", id)} autoRun={runs[id]} onRan={(patch) => recordRun(id, patch)} />
           </div>
         ))}
         {keptPlants("Monte Carlo").map((id) => (
           <div key={id} hidden={!shown("Monte Carlo", id)}>
-            <MonteCarloPage setError={setError} setNotice={setNotice} project={project} autoRun={autoRuns[id]} />
+            <MonteCarloPage setError={setError} setNotice={setNotice} project={project} autoRun={runs[id]} onRan={(patch) => recordRun(id, patch)} />
           </div>
         ))}
         {tab === "Compare" && (
           <ComparePage
             projectPlants={projectCompared}
             notCalculated={project?.plants.filter((p) => p.metrics == null).map((p) => p.name) ?? []}
-            plants={comparedPlants}
             hidden={compareHidden}
             onToggle={toggleCompared}
             colorIndex={compareColorIndex}
-            onRemove={removeFromComparison}
-            onImport={(plant) => setComparedPlants((prev) => [...prev, plant])}
-            setError={setError}
           />
         )}
       </main>

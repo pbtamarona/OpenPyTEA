@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { ComparedPlant, CalculationResults } from "../types";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Cell,
@@ -32,30 +32,23 @@ interface Props {
   projectPlants: ComparedPlant[];
   /** Names of project plants without results yet */
   notCalculated: string[];
-  /** Plants imported from saved files */
-  plants: ComparedPlant[];
   /** Plants unticked (not shown) */
   hidden: Set<string>;
   onToggle: (id: string) => void;
   /** Colour slot of a plant, the same as on Analysis and Monte Carlo */
   colorIndex: (id: string, fallback: number) => number;
-  onRemove: (id: string) => void;
-  onImport: (plant: ComparedPlant) => void;
-  setError: (e: string | null) => void;
 }
 
 export default function ComparePage({
-  projectPlants, notCalculated, plants: imported, hidden, onToggle, colorIndex, onRemove, onImport, setError,
+  projectPlants, notCalculated, hidden, onToggle, colorIndex,
 }: Props) {
-  const fileRef = useRef<HTMLInputElement>(null);
   // Breakdown charts shown as % of each plant's total, by chart
   const [pctOn, setPctOn] = useState<Record<string, boolean>>({});
   const pctSet = (k: string) => (on: boolean) => setPctOn((prev) => ({ ...prev, [k]: on }));
-  const all = [...projectPlants, ...imported];
+  const all = projectPlants;
   // Only the ticked plants are compared
   const plants = all.filter((p) => !hidden.has(p.id));
   const colorOf = (p: ComparedPlant) => COLORS[colorIndex(p.id, all.indexOf(p)) % COLORS.length];
-  const importedIds = new Set(imported.map((p) => p.id));
   const pendingNote = notCalculated.length > 0 && (
     <p className="compare-plants-note">
       Not calculated yet (open on the Results tab to include): {notCalculated.join(", ")}
@@ -93,34 +86,6 @@ export default function ComparePage({
   });
 
   const dn = (p: ComparedPlant) => displayNames.get(p.id) || p.name;
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result as string);
-        if (!data.results || !data.results.metrics) {
-          setError("JSON file does not contain calculation results. Run calculations before saving.");
-          return;
-        }
-        const name = data.plant?.plant_name || file.name.replace(/\.json$/, "");
-        const hasSource = Array.isArray(data.equipment) && data.equipment.length > 0 && data.plant;
-        onImport({
-          id: crypto.randomUUID(),
-          name,
-          currency: data.plant?.currency || "USD",
-          results: data.results as CalculationResults,
-          source: hasSource ? { name, equipment: data.equipment, plant: data.plant } : undefined,
-        });
-      } catch {
-        setError("Failed to parse JSON file");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  };
 
   // Mixed currencies?
   const currencies = new Set(plants.map((p) => p.currency));
@@ -185,8 +150,7 @@ export default function ComparePage({
     }));
   }
 
-  // Library-rendered figure of the ticked plants; only when every one has
-  // its inputs to rebuild from (results-only imports get the screen render)
+  // Library-rendered figure of the ticked plants, rebuilt from their inputs
   const libraryPlot = (kind: string, pct = false) =>
     plants.every((p) => p.source)
       ? async (opts: PlotOptions) => {
@@ -227,13 +191,9 @@ export default function ComparePage({
       <div className="card" style={{ textAlign: "center", padding: 60 }}>
         <p style={{ color: "var(--text-muted)", marginBottom: 16 }}>
           Every calculated plant of the project is compared here. Calculate a
-          plant on the Results tab, or import a saved project JSON.
+          plant on the Results tab, or add plants on the Project tab.
         </p>
         {pendingNote}
-        <button className="btn-primary" onClick={() => fileRef.current?.click()}>
-          Import from JSON
-        </button>
-        <input ref={fileRef} type="file" accept=".json" hidden onChange={handleImport} />
       </div>
     );
   }
@@ -241,10 +201,6 @@ export default function ComparePage({
   const toolbar = (
     <>
       <div style={{ display: "flex", gap: 8, marginBottom: 20, alignItems: "center" }}>
-        <button className="btn-primary" onClick={() => fileRef.current?.click()}>
-          Import from JSON
-        </button>
-        <input ref={fileRef} type="file" accept=".json" hidden onChange={handleImport} />
         <span style={{ color: "var(--text-muted)", fontSize: 13 }}>
           {plants.length} of {all.length} plant{all.length !== 1 ? "s" : ""} in comparison
         </span>
@@ -257,7 +213,6 @@ export default function ComparePage({
               <input type="checkbox" checked={!hidden.has(p.id)} onChange={() => onToggle(p.id)} />
               <span className="compare-plants-swatch" style={{ background: colorOf(p) }} />
               {dn(p)}
-              {imported.includes(p) && <span className="compare-plants-tag">imported</span>}
             </label>
           ))}
         </div>
@@ -290,7 +245,7 @@ export default function ComparePage({
               <tr>
                 <th>Plant</th><th>Currency</th><th>Fixed Capital</th>
                 <th>Fixed OPEX</th><th>Variable OPEX</th><th>Revenue</th>
-                <th>LCOP</th><th>NPV</th><th>IRR</th><th>ROI</th><th>PBT</th><th></th>
+                <th>LCOP</th><th>NPV</th><th>IRR</th><th>ROI</th><th>PBT</th>
               </tr>
             </thead>
             <tbody>
@@ -310,11 +265,6 @@ export default function ComparePage({
                   <td className="number">{pct(p.results.metrics.irr)}</td>
                   <td className="number">{p.results.metrics.roi != null ? p.results.metrics.roi.toFixed(2) + "%" : "-"}</td>
                   <td className="number">{fmt(p.results.metrics.payback_time)}</td>
-                  <td>
-                    {importedIds.has(p.id) && (
-                      <button className="btn-danger" onClick={() => onRemove(p.id)} title="Remove this imported plant">Remove</button>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>

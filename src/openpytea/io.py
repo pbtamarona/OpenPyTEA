@@ -24,6 +24,7 @@ from openpytea.plotting import (
     plot_sensitivity,
     plot_tornado,
     plot_monte_carlo,
+    plot_monte_carlo_cumulative,
     plot_monte_carlo_inputs,
 )
 from openpytea.helpers import (
@@ -267,6 +268,11 @@ def load_openpytea_config(filepath):
     'plant', and 'analysis' keys (plus the optional 'output' key normally
     nested under 'analysis.json'). See :func:`run_openpytea`.
 
+    The file may instead describe a multi-plant project, as the desktop
+    app's project files and example presets do: a top-level 'plants' list
+    whose entries each carry 'equipment' and 'plant', plus the optional
+    'runs', 'analysis' and 'output' keys (see :func:`run_openpytea`).
+
     Parameters
     ----------
     filepath : str or Path
@@ -276,13 +282,14 @@ def load_openpytea_config(filepath):
     -------
     dict
         The parsed JSON data, containing at least 'equipment', 'plant',
-        and 'analysis' keys.
+        and 'analysis' keys, or a non-empty 'plants' list for a project.
 
     Raises
     ------
     ValueError
         If the file is missing any of the 'equipment', 'plant', or
-        'analysis' top-level keys.
+        'analysis' top-level keys, or, for a project, if 'plants' is empty
+        or a plant lacks 'equipment' or 'plant'.
     FileNotFoundError
         If the specified filepath does not exist.
     json.JSONDecodeError
@@ -294,6 +301,29 @@ def load_openpytea_config(filepath):
     >>> print(config['plant']['plant_name'])
     """
     data = _read_json(filepath)
+
+    if _is_project(data):
+        if not data["plants"]:
+            raise ValueError("'plants' must be a non-empty list.")
+        for i, entry in enumerate(data["plants"], start=1):
+            missing = [k for k in ("equipment", "plant")
+                       if not isinstance(entry, dict) or k not in entry]
+            if missing:
+                raise ValueError(f"Plant #{i} is missing key(s): {missing}.")
+        n = len(data["plants"])
+
+        def valid(index):
+            return isinstance(index, int) and 0 <= index < n
+
+        for i, run in enumerate(data.get("runs") or [], start=1):
+            indices = [run.get("plant")] + [
+                j for key in _RUN_PLANT_GROUPS for j in run.get(key, [])]
+            if not all(valid(j) for j in indices):
+                raise ValueError(
+                    f"Run #{i} must name plants by their index in 'plants' "
+                    f"(0 to {n - 1})."
+                )
+        return data
 
     required = ["equipment", "plant", "analysis"]
     missing = [k for k in required if k not in data]
@@ -573,12 +603,35 @@ def run_openpytea(config_path, output_dir=None):
     (calculations, JSON exports, and optional plots) is identical to
     :func:`run_tea`.
 
+    The file can also hold a **multi-plant project** (the format of the
+    desktop app's project files and example presets): a 'plants' list
+    whose entries each have 'equipment' and 'plant' blocks (and
+    optionally a 'name'), with optional top-level keys:
+
+    - 'runs': a list of ``{"plant": i, "analysis": {...}}`` entries giving
+      plant ``i`` (its index in 'plants') its analysis block. A run may
+      also list plants to compare under 'sensitivity_plants',
+      'tornado_plants' and 'monte_carlo_plants' (indices again); when a
+      list holds more than one plant, that analysis is also run for those
+      plants together: the sensitivity cases with one curve per plant,
+      the tornado once per plant, and the Monte Carlo simulation plotted
+      as overlaid histograms and cumulative distributions (a plant's own
+      Monte Carlo run, if it has one, is reused).
+    - 'analysis': the analysis block of plants without a run.
+    - 'output': the output settings, shared by all plants.
+
+    Every plant is calculated and its results (and plots) are written to
+    its own subfolder, named after the plant; the comparisons go to a
+    'comparison' subfolder, with file names starting with the name of the
+    run's plant. Other keys, such as the app's 'project' details, are
+    ignored.
+
     Parameters
     ----------
     config_path : str or Path
         Path to the combined configuration file, with top-level
         'equipment', 'plant', and 'analysis' keys (and optionally
-        'output').
+        'output'), or a 'plants' list for a project.
     output_dir : str or Path, optional
         Directory where results will be saved. Defaults to None: use the
         directory specified under the config's 'output' key, falling
@@ -587,7 +640,10 @@ def run_openpytea(config_path, output_dir=None):
     Returns
     -------
     dict
-        Same structure as returned by :func:`run_tea`.
+        Same structure as returned by :func:`run_tea`. For a project:
+        ``{"plants": {plant name: results}, "comparison": {run plant
+        name: {"sensitivity": ..., "tornado": ..., "monte_carlo": ...}}}``,
+        with "comparison" present only when a run compares plants.
 
     Examples
     --------
@@ -595,11 +651,143 @@ def run_openpytea(config_path, output_dir=None):
     >>> results["monte_carlo"]["metrics"]["LCOP"]
     """
     config = load_openpytea_config(config_path)
+    if _is_project(config):
+        return _run_project(config, output_dir)
 
     equipment_list = _build_equipment_list(config)
     plant = _build_plant(config, equipment_list)
 
     return _run_analyses(equipment_list, plant, config, output_dir)
+
+
+# Keys of a project run listing the plants (by index) an analysis compares
+_RUN_PLANT_GROUPS = ("sensitivity_plants", "tornado_plants",
+                     "monte_carlo_plants")
+
+
+def _is_project(data):
+    """True for a multi-plant project file (a top-level 'plants' list)."""
+    return isinstance(data, dict) and isinstance(data.get("plants"), list)
+
+
+def _run_project(config, output_dir):
+    """Run every plant of a project file, then the runs' comparisons.
+
+    See :func:`run_openpytea` for the file layout and the outputs.
+    """
+    output_cfg = config.get("output", {})
+    base = Path(output_dir if output_dir is not None
+                else output_cfg.get("directory", "results"))
+    runs = config.get("runs") or []
+    analysis_of = {}
+    for run in runs:
+        analysis_of.setdefault(run["plant"], run.get("analysis") or {})
+    default_analysis = config.get("analysis") or {}
+
+    plants, results = [], {}
+    for i, entry in enumerate(config["plants"]):
+        equipment_list = _build_equipment_list(entry)
+        plant = _build_plant(entry, equipment_list)
+        name = plant.name if plant.name not in results else f"{plant.name} ({i + 1})"
+        cfg = {"analysis": analysis_of.get(i, default_analysis),
+               "output": output_cfg}
+        results[name] = _run_analyses(
+            equipment_list, plant, cfg, base / _safe_filename(name))
+        plants.append((name, plant))
+
+    out = {"plants": results}
+    comparison = _run_comparisons(plants, runs, results, output_cfg,
+                                  base / "comparison")
+    if comparison:
+        out["comparison"] = comparison
+    return out
+
+
+def _run_comparisons(plants, runs, plant_results, output_cfg, output_dir):
+    """Run each project run's analyses for its groups of plants together
+    and export them (and optionally plots) to ``output_dir``.
+
+    ``plants`` is a list of (name, calculated Plant) in project order and
+    ``plant_results`` the per-plant results, whose Monte Carlo runs are
+    reused. Returns {run plant name: results}.
+    """
+    save_json = output_cfg.get("save_json", True)
+    save_plots = output_cfg.get("save_plots", False)
+    plot_format = output_cfg.get("plot_format", "png")
+    dpi = output_cfg.get("dpi", 300)
+
+    def save(fig, stem):
+        fig.savefig(output_dir / f"{stem}.{plot_format}", dpi=dpi,
+                    bbox_inches="tight")
+        plt.close(fig)
+
+    comparison = {}
+    for run in runs:
+        owner = plants[run["plant"]][0]
+        prefix = _safe_filename(owner)
+        block = run.get("analysis") or {}
+        capex = {"additional_capex": block.get("additional_capex", False)}
+
+        def group(key, cfg_key):
+            cfg = block.get(cfg_key) or {}
+            members = [plants[i] for i in run.get(key, [])]
+            return (members, cfg) if len(members) > 1 and cfg.get("run") else ([], cfg)
+
+        res, figs = {}, []
+        members, cfg = group("sensitivity_plants", "sensitivity")
+        if members:
+            res["sensitivity"] = {}
+            for j, case in enumerate(cfg.get("cases", []), start=1):
+                case_name = case.get("name", f"case_{j}")
+                data = sensitivity_data([p for _, p in members],
+                                        **{**capex, **case.get("args", {})})
+                res["sensitivity"][case_name] = data
+                figs.append((lambda d=data, a=case.get("plot_args", {}):
+                             plot_sensitivity(d, show=False, **a)[0],
+                             f"{prefix}_sensitivity_{_safe_filename(case_name)}"))
+
+        members, cfg = group("tornado_plants", "tornado")
+        if members:
+            res["tornado"] = {}
+            for name, p in members:
+                data = tornado_data(p, **{**capex, **cfg.get("args", {})})
+                res["tornado"][name] = data
+                figs.append((lambda d=data, a=cfg.get("plot_args", {}):
+                             plot_tornado(d, show=False, **a)[0],
+                             f"{prefix}_tornado_{_safe_filename(name)}"))
+
+        members, cfg = group("monte_carlo_plants", "monte_carlo")
+        if members:
+            mc = [plant_results.get(name, {}).get("monte_carlo")
+                  or monte_carlo(p, **{**capex, **cfg.get("args", {})})
+                  for name, p in members]
+            res["monte_carlo"] = {name: r for (name, _), r in zip(members, mc)}
+            metrics = cfg.get("metric") or []
+            for metric in [metrics] if isinstance(metrics, str) else metrics:
+                metric = metric.upper()
+                args = cfg.get("plot_args", {})
+                figs.append((lambda m=metric, a=args:
+                             plot_monte_carlo(mc, metric=m, show=False, **a)[0],
+                             f"{prefix}_monte_carlo_{metric.lower()}"))
+                cum_args = {k: v for k, v in args.items()
+                            if k not in ("bins", "show_fit")}
+                figs.append((lambda m=metric, a=cum_args:
+                             plot_monte_carlo_cumulative(
+                                 mc, metric=m, show=False, **a)[0],
+                             f"{prefix}_monte_carlo_cumulative_{metric.lower()}"))
+
+        if not res:
+            continue
+        comparison[owner] = res
+        if save_json or save_plots:
+            output_dir.mkdir(parents=True, exist_ok=True)
+        if save_json:
+            _write_json(output_dir / f"{prefix}_comparison_results.json",
+                        {"results": res})
+        if save_plots:
+            for make, stem in figs:
+                save(make(), stem)
+    return comparison
 
 
 # Analyses whose function takes an ``additional_capex`` argument

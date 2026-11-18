@@ -51,9 +51,13 @@ interface Props {
   setError: (e: string | null) => void;
   setNotice: (m: string | null) => void;
   project: ProjectOverview | null;
-  /** Monte Carlo settings of a just-loaded example, run once when the page
-      mounts (it mounts while its plant is the open one) */
+  /** The plant's loaded run (a project's or example's "runs"); its Monte
+      Carlo settings are run once when the page mounts (it mounts while
+      its plant is the open one) */
   autoRun?: ExampleAutoRun;
+  /** Called with the settings and plants of each run, which the app keeps
+      as the plant's run for File ▸ Save */
+  onRan?: (patch: Partial<ExampleAutoRun>) => void;
 }
 
 const SQRT_2PI = Math.sqrt(2 * Math.PI);
@@ -178,7 +182,7 @@ type MCView = "histogram" | "cumulative";
 const DEFAULT_PCTS = ["10", "50", "90"];
 const validPct = (t: string) => t.trim() !== "" && Number.isFinite(Number(t)) && +t >= 0 && +t <= 100;
 
-export default function MonteCarloPage({ setError, setNotice, project, autoRun }: Props) {
+export default function MonteCarloPage({ setError, setNotice, project, autoRun, onRan }: Props) {
   const [numSamples, setNumSamples] = useState(50000);
   // Fitted-normal overlay on the metric histograms (screen and downloads);
   // off by default, as in the library; remembered across sessions
@@ -218,6 +222,8 @@ export default function MonteCarloPage({ setError, setNotice, project, autoRun }
   const [result, setResult] = useState<MonteCarloMultiResult | null>(null);
   // Plant id of each plant in the result
   const [resultIds, setResultIds] = useState<string[]>([]);
+  // Settings of the shown result
+  const [ranWith, setRanWith] = useState<{ num_samples: number; batch_size: number } | null>(null);
   const selection = usePlantSelection(project);
   const [runCount, setRunCount] = useState(1);
 
@@ -235,6 +241,7 @@ export default function MonteCarloPage({ setError, setNotice, project, autoRun }
       });
       setResult(r);
       setResultIds(req.ids);
+      setRanWith({ num_samples: samples, batch_size: batch });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Monte Carlo failed");
     } finally {
@@ -242,10 +249,12 @@ export default function MonteCarloPage({ setError, setNotice, project, autoRun }
     }
   };
 
-  // An example's Monte Carlo settings fill the form and are run straight
-  // away, once
+  // The loaded run's Monte Carlo settings fill the form and are run
+  // straight away, once. Only the run the page mounted with counts.
+  const loadedRun = useRef(autoRun).current;
   const autoRan = useRef(false);
   useEffect(() => {
+    const autoRun = loadedRun;
     if (!autoRun || autoRan.current || autoRun.monte_carlo_plants.length === 0) return;
     autoRan.current = true;
     (async () => {
@@ -257,11 +266,22 @@ export default function MonteCarloPage({ setError, setNotice, project, autoRun }
         selection.setTicked(autoRun.monte_carlo_plants);
         await run(r.monte_carlo.num_samples, r.monte_carlo.batch_size, autoRun.monte_carlo_plants);
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : "Running the example's Monte Carlo failed");
+        setError(e instanceof Error ? e.message : "Running the saved Monte Carlo failed");
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRun]);
+  }, []);
+
+  // Report what was run, so saving the project keeps it as the plant's run
+  // (the metrics are the ones openpytea run plots)
+  useEffect(() => {
+    if (!onRan || !ranWith) return;
+    onRan({
+      analysis: { monte_carlo: { run: true, args: ranWith, metric: ["LCOP", "NPV"] } },
+      monte_carlo_plants: resultIds,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ranWith, resultIds]);
 
   const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2 });
   // Only the ticked plants of the run are shown

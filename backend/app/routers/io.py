@@ -134,9 +134,64 @@ MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 MAX_PLANTS = 50
 
 
-def _restore_project_state(data: dict) -> int:
-    """Apply a project payload to the in-memory state. Returns the active
-    plant's equipment count.
+RUN_PLANT_GROUPS = ("sensitivity_plants", "tornado_plants", "monte_carlo_plants")
+
+
+def _adopt_compared_plants(data: dict) -> list[str]:
+    """Turn an older file's `compared_plants` (plants imported on the
+    Compare tab, which no longer exists) into plants of the project.
+
+    Only compared plants saved with their inputs can be rebuilt; the
+    project's own plants, which older files listed there too, are skipped.
+    Returns notes for the user.
+    """
+    compared = data.get("compared_plants")
+    if not isinstance(compared, list) or not compared:
+        return []
+    plants = data.get("plants")
+    if not isinstance(plants, list) or not plants:
+        plants = [{"equipment": data.get("equipment") or [], "plant": data.get("plant") or {}}]
+    own = {p.get("name") or (p.get("plant") or {}).get("plant_name") for p in plants}
+    adopted, skipped = [], []
+    for c in compared:
+        name = c.get("name") if isinstance(c, dict) else None
+        if name in own:
+            continue
+        source = (c.get("source") or {}) if isinstance(c, dict) else {}
+        if source.get("equipment") and source.get("plant"):
+            plants.append({"name": name or source.get("name"),
+                           "equipment": source["equipment"], "plant": source["plant"]})
+            adopted.append(name or "a plant")
+        else:
+            skipped.append(name or "a plant")
+    data["plants"] = plants
+    notes = []
+    if adopted:
+        notes.append(f"Compared plants added to the project as plants: {', '.join(adopted)}.")
+    if skipped:
+        notes.append(f"Compared plants saved without their inputs were left out: {', '.join(skipped)}.")
+    return notes
+
+
+def _autorun(data: dict) -> list[dict]:
+    """The file's "runs" (plants by index) with the loaded plants' ids."""
+    ids = [s["id"] for s in state.plants]
+    valid = lambda i: isinstance(i, int) and 0 <= i < len(ids)  # noqa: E731
+    runs = []
+    for run in data.get("runs") or []:
+        if not isinstance(run, dict) or not valid(run.get("plant")):
+            continue
+        runs.append({
+            "plant_id": ids[run["plant"]],
+            "analysis": run.get("analysis") or {},
+            **{key: [ids[i] for i in run.get(key) or [] if valid(i)] for key in RUN_PLANT_GROUPS},
+        })
+    return runs
+
+
+def _restore_project_state(data: dict) -> dict:
+    """Apply a project payload to the in-memory state; returns the load
+    response (equipment count, open plant, the file's runs to re-run).
 
     Accepts the multi-plant envelope (v2) as well as v1 / legacy flat
     files, which have a single plant's `equipment` and `plant` at the top
@@ -144,9 +199,12 @@ def _restore_project_state(data: dict) -> int:
     """
     if not isinstance(data, dict):
         raise HTTPException(status_code=400, detail="Not an OpenPyTEA project file")
+    notes = _adopt_compared_plants(data)
     if len(data.get("plants") or []) > MAX_PLANTS:
         raise HTTPException(status_code=400, detail=f"Too many plants (max {MAX_PLANTS})")
-    return project_store.restore(data)
+    n = project_store.restore(data)
+    return {"ok": True, "equipment_count": n, "active_plant_id": state.active_plant_id,
+            "autorun": _autorun(data), "notes": notes}
 
 
 @router.post("/load", response_model=LoadResponse)
@@ -162,8 +220,7 @@ async def load_project(file: UploadFile = File(...)):
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON file")
 
-    n = _restore_project_state(data)
-    return {"ok": True, "equipment_count": n}
+    return _restore_project_state(data)
 
 
 @router.post("/load_json", response_model=LoadResponse)
@@ -173,8 +230,7 @@ async def load_project_json(data: dict):
     Avoids the Blob → File → FormData → multipart round-trip that's
     fragile inside WebKit-based webviews.
     """
-    n = _restore_project_state(data)
-    return {"ok": True, "equipment_count": n}
+    return _restore_project_state(data)
 
 
 @router.get("/examples", response_model=list[ExamplePreset])
@@ -208,18 +264,5 @@ def load_example(example_id: str):
         build_equipment_list(entry.get("equipment", []))  # validate before touching the project
 
     # An example is a whole project (like File ▸ Open): it replaces the
-    # current one. Its "runs" name the analyses the GUI runs right after
-    # loading, by plant index; they are returned with the new plant ids.
-    n = _restore_project_state(data)
-    ids = [s["id"] for s in state.plants]
-    autorun = [
-        {
-            "plant_id": ids[run["plant"]],
-            "analysis": run.get("analysis", {}),
-            **{key: [ids[i] for i in run.get(key, [])]
-               for key in ("sensitivity_plants", "tornado_plants", "monte_carlo_plants")},
-        }
-        for run in data.get("runs", [])
-    ]
-    return {"ok": True, "title": data.get("title"), "equipment_count": n,
-            "active_plant_id": state.active_plant_id, "autorun": autorun}
+    # current one, and its "runs" are run right after loading
+    return {**_restore_project_state(data), "title": data.get("title")}

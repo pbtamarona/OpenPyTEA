@@ -13,12 +13,20 @@ from openpytea.io import run_equipment, run_plant, run_tea, run_openpytea
 
 
 def _print_run_summary(results, output_dir):
-    ran = ", ".join(sorted(results)) or "(none)"
     dest = (
         output_dir
         if output_dir is not None
         else "the directory configured in the analysis file (default 'results')"
     )
+    if "plants" in results:  # a multi-plant project
+        for name, plant_results in results["plants"].items():
+            ran = ", ".join(sorted(plant_results)) or "calculations only"
+            print(f"{name}: ran {ran}")
+        for name, compared in results.get("comparison", {}).items():
+            print(f"Compared with {name}'s settings: {', '.join(sorted(compared))}")
+        print(f"Results written to: {dest} (one folder per plant, plus 'comparison')")
+        return
+    ran = ", ".join(sorted(results)) or "(none)"
     print(f"Ran: {ran}")
     print(f"Results written to: {dest}")
 

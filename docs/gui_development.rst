@@ -100,9 +100,13 @@ Key design decisions
    hold the *open* plant, so the plant-level routers don't know about the
    project. ``project_store`` parks the open plant (input specs, config,
    results) before switching and rebuilds the target. Save files are
-   format version 2 (``project``, ``plants``, ``active_plant``) and also
-   mirror the open plant at the top level, so older builds still open
-   them; version 1 files load as one-plant projects.
+   format version 2 (``project``, ``plants``, ``active_plant``, and
+   ``runs``, the analyses run on each plant, which opening a file re-runs)
+   and also mirror the open plant at the top level, so older builds still
+   open them; version 1 files load as one-plant projects. Plants that
+   older files kept under ``compared_plants`` (the Compare tab used to
+   import plants) become project plants when opened, if they were saved
+   with their inputs.
 3. **Validated responses.** Every endpoint declares a ``response_model``,
    so FastAPI checks each response against the Pydantic schemas.
 4. **No silent errors.** Every frontend API call reports failures in the
@@ -205,9 +209,8 @@ Monte Carlo
    and the input distributions.
 
 Compare
-   Every calculated plant of the project, plus plants imported from saved
-   files (kept in the project as ``compared_plants``); checkboxes choose
-   what the table and charts show.
+   Every calculated plant of the project; checkboxes choose what the table
+   and charts show.
 
 All breakdown charts have a Value / % toggle, and charts with a grid have a
 grid toggle. Names typed with ``_2`` or ``^3`` show as subscripts and
@@ -270,7 +273,16 @@ block in the format of :func:`openpytea.io.load_analysis_config` (its
 each analysis ticks (``sensitivity_plants``, ``tornado_plants``,
 ``monte_carlo_plants``). The open plant's runs start right after loading;
 another plant's start when its Analysis or Monte Carlo tab is first
-opened.
+opened. Saved projects use the same ``runs``: every sensitivity, tornado
+or Monte Carlo run is reported by its page to ``App.tsx``, which writes
+the last run of each plant into the file (Monte Carlo with ``metric``
+``["LCOP", "NPV"]`` for ``openpytea run``), and File ▸ Open re-runs them
+as an example's are. A loaded run a plant's pages haven't run yet is kept
+as it was. Running analyses doesn't mark the project as edited. The app ignores the optional ``output`` block and the Monte Carlo
+``metric`` and ``plot_args``; they are there so a preset also runs from
+the command line (``openpytea run backend/app/presets/case_study_1.json``),
+which reads this format as a :ref:`multi-plant project file
+<multi-plant-project-files>`.
 
 Known limitations
 -----------------

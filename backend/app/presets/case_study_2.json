@@ -694,6 +694,12 @@
           "args": {
             "num_samples": 100000,
             "batch_size": 10000
+          },
+          "metric": [
+            "LCOP"
+          ],
+          "plot_args": {
+            "label": "Levelized cost of precooling / [US\\$$\\cdot$kg$^{-1}_\\mathrm{H_2}$]"
           }
         }
       },
@@ -711,5 +717,11 @@
         3
       ]
     }
-  ]
+  ],
+  "output": {
+    "save_json": true,
+    "save_plots": true,
+    "plot_format": "png",
+    "dpi": 300
+  }
 }

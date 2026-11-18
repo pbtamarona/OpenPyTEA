@@ -59,10 +59,17 @@ interface Props {
   /** The page stays mounted (results kept) while hidden on other tabs;
       false while hidden. */
   active: boolean;
-  /** Analyses of a just-loaded example, run once when the page mounts
-      (it mounts while its plant is the open one) */
+  /** The plant's loaded run (a project's or example's "runs"), run once
+      when the page mounts (it mounts while its plant is the open one) */
   autoRun?: ExampleAutoRun;
+  /** Called with the settings and plants of each analysis run, which the
+      app keeps as the plant's run for File ▸ Save */
+  onRan?: (patch: Partial<ExampleAutoRun>) => void;
 }
+
+/** A sensitivity case name for the saved file: the varied item and metric */
+const caseName = (parameter: string, metric: string) =>
+  `${parameter.split(".").slice(1).join("_") || parameter}_${metric}`.toLowerCase();
 
 const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2, x_axis: XAxisMode = "percent"): Panel => ({
   id: crypto.randomUUID(),
@@ -76,7 +83,7 @@ const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2, x_axi
   x_axis,
 });
 
-export default function AnalysisPage({ setError, setNotice, project, active, autoRun }: Props) {
+export default function AnalysisPage({ setError, setNotice, project, active, autoRun, onRan }: Props) {
   const [parameters, setParameters] = useState<string[]>([]);
   const [sensPoints, setSensPoints] = useState(21);
   const [panels, setPanels] = useState<Panel[]>([newPanel()]);
@@ -243,10 +250,13 @@ export default function AnalysisPage({ setError, setNotice, project, active, aut
     if (adding) addTornPlant(plantId);
   };
 
-  // An example's sensitivity and tornado settings fill the page (as an
-  // imported analysis file does) and are run straight away, once
+  // The loaded run's sensitivity and tornado settings fill the page (as an
+  // imported analysis file does) and are run straight away, once. Only the
+  // run the page mounted with counts: later updates are this page's own.
+  const loadedRun = useRef(autoRun).current;
   const autoRan = useRef(false);
   useEffect(() => {
+    const autoRun = loadedRun;
     if (!autoRun || autoRan.current) return;
     autoRan.current = true;
     (async () => {
@@ -274,11 +284,41 @@ export default function AnalysisPage({ setError, setNotice, project, active, aut
         }
         await Promise.all(runs);
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : "Running the example's analyses failed");
+        setError(e instanceof Error ? e.message : "Running the saved analyses failed");
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRun]);
+  }, []);
+
+  // Report what was run, so saving the project keeps it as the plant's run
+  useEffect(() => {
+    const ran = panels.filter((p) => p.result && p.ran);
+    if (!onRan || ran.length === 0) return;
+    const names = ran.map((p) => caseName(p.ran!.parameter, p.ran!.metric));
+    onRan({
+      analysis: {
+        sensitivity: {
+          run: true,
+          cases: ran.map((p, i) => ({
+            name: names.indexOf(names[i]) === i ? names[i] : `${names[i]}_${i + 1}`,
+            args: {
+              parameter: p.ran!.parameter, plus_minus_value: p.ran!.plus_minus_value,
+              metric: p.ran!.metric, n_points: p.ran!.n_points,
+            },
+            plot_args: { x_axis: p.x_axis },
+          })),
+        },
+      },
+      sensitivity_plants: ran[0].ids,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panels]);
+
+  useEffect(() => {
+    if (!onRan || !tornRan) return;
+    onRan({ analysis: { tornado: { run: true, args: tornRan } }, tornado_plants: tornIds });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tornRan, tornIds]);
 
   /** An analysis input file's sensitivity cases become the panels and its
       tornado settings fill the tornado form; nothing is run. */

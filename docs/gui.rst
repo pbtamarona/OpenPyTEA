@@ -100,7 +100,10 @@ A typical session:
 4. **Analysis** / **Monte Carlo** → tick the plants to overlay, then run.
 5. **Compare** → see all calculated plants side by side.
 6. **File** ▸ **Save As…** to keep the whole project in a ``.openpytea``
-   file.
+   file, including the analyses you ran: opening it again re-runs them,
+   and ``openpytea run`` or :func:`~openpytea.io.run_openpytea` run the
+   same file from the command line or Python (see
+   :ref:`multi-plant-project-files`).
 
 The **File** menu (``Ctrl`` on Windows, ``⌘`` on macOS):
 
@@ -116,10 +119,12 @@ The **File** menu (``Ctrl`` on Windows, ``⌘`` on macOS):
      - Start an empty project.
    * - Open Project…
      - ``Ctrl+O``
-     - Open a ``.openpytea`` file.
+     - Open a ``.openpytea`` file (or a project ``.json``) and re-run the
+       analyses saved with it.
    * - Save / Save As…
      - ``Ctrl+S`` / ``Ctrl+Shift+S``
-     - Save the project.
+     - Save the project: its plants and the last sensitivity, tornado and
+       Monte Carlo run of each plant (settings and the plants compared).
    * - Save as JSON Files…
      - ``Ctrl+Shift+E``
      - Write the three ``run_tea`` result files of the open plant.

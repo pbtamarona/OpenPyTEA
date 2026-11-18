@@ -334,3 +334,62 @@ def test_run_openpytea_passes_factors_capex_and_plot_args(tmp_path):
 
     assert (out / "Test Plant_monte_carlo_inputs_economic.png").exists()
     assert not (out / "Test Plant_monte_carlo_inputs_process.png").exists()
+
+
+def test_run_openpytea_runs_a_multi_plant_project(tmp_path):
+    """A project file (the desktop app's format) runs every plant into its
+    own folder and the runs' plant groups together into 'comparison'."""
+    def plant_entry(name, price):
+        plant = _plant_data()["plant"]
+        plant["plant_name"] = name
+        plant["plant_products"]["hydrogen"]["price"] = price
+        return {"name": name, **_equipment_data(), "plant": plant}
+
+    block = _analysis_data()["analysis"]
+    project = {
+        "project": {"name": "Ignored by the library"},
+        "plants": [plant_entry("Plant A", 5.0), plant_entry("Plant B", 6.0),
+                   plant_entry("Plant C", 7.0)],
+        "runs": [{"plant": 1, "analysis": block,
+                  "sensitivity_plants": [0, 1, 2], "tornado_plants": [1],
+                  "monte_carlo_plants": [0, 1]}],
+        "analysis": {"levelized_cost": {"run": True}},
+        "output": {"save_json": True, "save_plots": True},
+    }
+    path = tmp_path / "project.json"
+    path.write_text(json.dumps(project), encoding="utf-8")
+    out = tmp_path / "results"
+
+    results = run_openpytea(path, output_dir=out)
+
+    # Plant B has the run's analyses; the others the top-level block
+    assert set(results["plants"]) == {"Plant A", "Plant B", "Plant C"}
+    assert "monte_carlo" in results["plants"]["Plant B"]
+    assert set(results["plants"]["Plant A"]) == {"levelized_cost"}
+    for name in ("Plant A", "Plant B", "Plant C"):
+        assert (out / name / f"{name}_plant_results.json").exists()
+    assert (out / "Plant B" / "Plant B_tornado.png").exists()
+
+    # Comparisons: groups of one plant (the tornado) are not repeated
+    compared = results["comparison"]["Plant B"]
+    assert set(compared) == {"sensitivity", "monte_carlo"}
+    curves = compared["sensitivity"]["interest_rate_case"]["curves"]
+    assert [c["plant"] for c in curves] == ["Plant A", "Plant B", "Plant C"]
+    # Plant B's own Monte Carlo run is reused, Plant A gets one
+    own_mc = results["plants"]["Plant B"]["monte_carlo"]
+    assert compared["monte_carlo"]["Plant B"] is own_mc
+    assert len(compared["monte_carlo"]["Plant A"]["metrics"]["LCOP"]) == 100
+    comp = out / "comparison"
+    assert (comp / "Plant B_comparison_results.json").exists()
+    assert (comp / "Plant B_sensitivity_interest_rate_case.png").exists()
+    assert (comp / "Plant B_monte_carlo_lcop.png").exists()
+    assert (comp / "Plant B_monte_carlo_cumulative_lcop.png").exists()
+
+
+def test_project_run_must_name_existing_plants(tmp_path):
+    project = {"plants": [{**_equipment_data(), **_plant_data()}],
+               "runs": [{"plant": 0, "analysis": {}, "monte_carlo_plants": [0, 3]}]}
+    path = tmp_path / "project.json"
+    path.write_text(json.dumps(project), encoding="utf-8")
+    with pytest.raises(ValueError, match="index in 'plants'"):
+        run_openpytea(path, output_dir=tmp_path / "out")

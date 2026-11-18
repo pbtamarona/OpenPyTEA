@@ -155,7 +155,28 @@ export const exportPlantInput = () => request<ExportedFile>("/plant/export-input
 export const importAnalysisConfig = (data: unknown) =>
   request<AnalysisImport>("/analysis/import-config", { method: "POST", body: JSON.stringify({ data }) });
 
-export const loadProject = async (file: File) => {
+/** Analyses run on one plant right after a project or example loads (the
+    file's "runs"): an analysis input block (the format importAnalysisConfig
+    reads) and the plants each analysis ticks. Also the record of the runs
+    the app saves. */
+export interface ExampleAutoRun {
+  plant_id: string;
+  analysis: Record<string, unknown>;
+  sensitivity_plants: string[];
+  tornado_plants: string[];
+  monte_carlo_plants: string[];
+}
+
+/** What loading a project or example returns. */
+export interface LoadResult {
+  ok: boolean;
+  equipment_count: number;
+  active_plant_id: string | null;
+  autorun: ExampleAutoRun[];
+  notes: string[];
+}
+
+export const loadProject = async (file: File): Promise<LoadResult> => {
   const base = await getBase();
   const form = new FormData();
   form.append("file", file);
@@ -179,7 +200,7 @@ export const loadProjectFromText = async (text: string) => {
   } catch {
     throw new Error("File is not valid JSON");
   }
-  return request<{ ok: boolean; equipment_count: number }>(
+  return request<LoadResult>(
     "/project/load_json",
     { method: "POST", body: JSON.stringify(parsed) },
   );
@@ -192,18 +213,5 @@ export interface ExamplePreset {
   description: string;
 }
 export const getExamples = () => request<ExamplePreset[]>("/project/examples");
-/** Analyses run on one plant right after an example loads: an analysis
-    input block (the format importAnalysisConfig reads) and the plants each
-    analysis ticks. */
-export interface ExampleAutoRun {
-  plant_id: string;
-  analysis: Record<string, unknown>;
-  sensitivity_plants: string[];
-  tornado_plants: string[];
-  monte_carlo_plants: string[];
-}
 export const loadExample = (id: string) =>
-  request<{
-    ok: boolean; title: string; equipment_count: number;
-    active_plant_id: string | null; autorun: ExampleAutoRun[];
-  }>(`/project/examples/${id}`, { method: "POST" });
+  request<LoadResult & { title: string | null }>(`/project/examples/${id}`, { method: "POST" });
