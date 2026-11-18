@@ -6,7 +6,7 @@ import json
 from fastapi import APIRouter, HTTPException
 from pydantic import ValidationError
 from openpytea.io import _safe_filename
-from openpytea.plant import DEFAULT_OPERATOR_HOURLY_RATE, Plant
+from openpytea.plant import DEFAULT_OPERATOR_HOURLY_RATE, Plant, _additional_capex_items
 
 from app import project_store, state
 from app.plant_factory import mark_plant_fresh
@@ -192,7 +192,24 @@ def _extract_results(plant: Plant) -> dict:
         "payback_time": to_jsonable(getattr(plant, "payback_time", None)),
     }
 
+    # As fixed_capital_data(additional_capex=True): named items one by one,
+    # an unnamed list as one summed "Additional CAPEX" (no single year)
+    items = _additional_capex_items(plant.additional_capex_cost, plant.additional_capex_years)
+    additional_capex = []
+    if items is not None:
+        names, costs, years = items
+        if names:
+            additional_capex = [
+                {"name": n, "cost": float(c), "year": int(y)}
+                for n, c, y in zip(names, costs, years)
+            ]
+        elif costs.sum() != 0:
+            additional_capex = [
+                {"name": "Additional CAPEX", "cost": float(costs.sum()), "year": None}
+            ]
+
     return to_jsonable({
+        "additional_capex": additional_capex,
         "capital_costs": capital_costs,
         "variable_opex": variable_opex,
         "fixed_opex": fixed_opex,

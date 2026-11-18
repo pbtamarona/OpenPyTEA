@@ -89,6 +89,9 @@ def stacked_plot(kind: str, pct: bool = False, by_category: bool = False,
         {"by_category": by_category, "expand_composites": expand_composites}
         if kind == "direct_costs" else {}
     )
+    # The capital bar shows each additional CAPEX item, as on screen
+    if kind == "capital":
+        extra = {"additional_capex": True}
     with _mpl_lock:
         try:
             data = data_func(plant, pct=pct, **extra)
@@ -131,7 +134,8 @@ def compare_plot(kind: str, payload: ComparePlotIn, grid: bool = False):
     plants = _plants_for(payload)
     with _mpl_lock:
         try:
-            fig, _ = plot_stacked_bar(data_func(plants, pct=payload.pct), show=False)
+            extra = {"additional_capex": True} if kind == "capital" else {}
+            fig, _ = plot_stacked_bar(data_func(plants, pct=payload.pct, **extra), show=False)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Plot failed: {e}")
         return _png(fig, grid)

@@ -220,6 +220,13 @@ class CapitalCosts(BaseModel):
     working_capital: float | None = None
 
 
+class AdditionalCapexItem(BaseModel):
+    name: str
+    cost: float
+    # None for the summed unnamed "Additional CAPEX" (several years)
+    year: int | None = None
+
+
 class VariableOpex(BaseModel):
     breakdown: dict[str, float]
     total: float
@@ -275,6 +282,8 @@ class CalculationResults(BaseModel):
     revenue: Revenue
     cash_flow: CashFlow
     metrics: Metrics
+    # One-off capital costs (additional_capex_*), each with its own bar
+    additional_capex: list[AdditionalCapexItem] = []
 
 
 # ── Analysis inputs ───────────────────────────────────────────────

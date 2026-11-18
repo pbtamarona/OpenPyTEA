@@ -336,7 +336,13 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
   const basisCell = (b: string) => <td style={{ whiteSpace: "nowrap", color: "var(--text-muted)", fontSize: 12, paddingRight: 12 }}>{b}</td>;
 
   // Chart rows, as values or as % of the chart's total
-  const capexChart = pctOn.capital ? asShare(capexData) : capexData;
+  // One-off capital costs: a bar each beside the FCI parts, as in
+  // fixed_capital_data(additional_capex=True)
+  const extraCapex = (results.additional_capex ?? [])
+    .filter((i) => i.cost > 0)
+    .map((i) => ({ name: nameLabel(i.name), value: i.cost, year: i.year }));
+  const capexBars = [...capexData.map(({ name, value }) => ({ name, value })), ...extraCapex].sort(byDesc);
+  const capexChart = pctOn.capital ? asShare(capexBars) : capexBars;
   const fixedOpexPos = fixedOpexData.filter((d) => d.value > 0);
   const fixedOpexChart = pctOn.fixed_opex ? asShare(fixedOpexPos) : fixedOpexPos;
   const varOpexChart = pctOn.variable_opex ? asShare(varOpexData) : varOpexData;
@@ -419,6 +425,13 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
                 <td />
                 <td className="number" style={{ whiteSpace: "nowrap" }}>{fmt(capex.fixed_capital)}</td>
               </tr>
+              {extraCapex.map((i) => (
+                <tr key={`extra-${i.name}`}>
+                  <td style={{ paddingRight: 12, whiteSpace: "nowrap" }}>{i.name}</td>
+                  <td style={{ whiteSpace: "nowrap", color: "var(--text-muted)", fontSize: 12 }}>additional CAPEX{i.year != null ? `, year ${i.year}` : ""}</td>
+                  <td className="number" style={{ whiteSpace: "nowrap" }}>{fmt(i.value)}</td>
+                </tr>
+              ))}
               <tr>
                 <td style={{ paddingRight: 12, whiteSpace: "nowrap" }}>Working Capital<HelpTip icon="i" text={workingCapitalEq} /></td>
                 <td style={{ whiteSpace: "nowrap" }}>
@@ -438,13 +451,13 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
               </tr>
             </tbody>
           </table>
-          {capexData.length > 0 && (
-            <DownloadableChart filename="capital_costs" serverPlot={(opts) => fetchPlotPng(`/plots/stacked/capital${pctQuery("capital")}`, undefined, opts)} height={capexData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
+          {capexBars.length > 0 && (
+            <DownloadableChart filename="capital_costs" serverPlot={(opts) => fetchPlotPng(`/plots/stacked/capital${pctQuery("capital")}`, undefined, opts)} height={capexBars.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={capexChart} layout="vertical" barCategoryGap={0} margin={{ top: 4, right: 16, bottom: 42, left: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" tickFormatter={pctOn.capital ? fmtPct : (v: number) => (v / 1e6).toFixed(0) + "M"} tick={{ fontSize: 12 }} domain={[0, Math.max(...capexChart.map((d) => d.value)) * 1.1]} label={{ value: pctOn.capital ? "Share of total (%)" : `Cost (${currency})`, position: "insideBottom", offset: -28, style: { fontSize: 14, fill: "#666" } }} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
+                  <YAxis type="category" dataKey="name" width={extraCapex.length ? 130 : 100} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(v) => (pctOn.capital ? fmtPct(Number(v)) : fmt(Number(v)))} />
                   <Bar dataKey="value" fill="#4361ee" radius={[0, 4, 4, 0]} barSize={14} />
                 </BarChart>

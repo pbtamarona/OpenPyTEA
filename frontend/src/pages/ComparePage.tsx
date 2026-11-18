@@ -122,6 +122,8 @@ export default function ComparePage({
     OSBL: r.capital_costs.osbl ?? 0,
     "D&E": r.capital_costs.design_and_engineering ?? 0,
     Contingency: r.capital_costs.contingency ?? 0,
+    // One-off capital costs, a bar group each (as the library figure)
+    ...Object.fromEntries((r.additional_capex ?? []).map((i) => [i.name, i.cost])),
   }));
 
   const varOpexData = buildGrouped((r) => r.variable_opex.breakdown);

@@ -154,6 +154,8 @@ export interface PlantConfig {
 
 export interface CalculationResults {
   capital_costs: Record<string, number | null>;
+  /** One-off capital costs by name (absent in older saved results) */
+  additional_capex?: { name: string; cost: number; year: number | null }[];
   variable_opex: { breakdown: Record<string, number>; total: number };
   fixed_opex: Record<string, number>;
   revenue: { breakdown: Record<string, number>; total: number };
