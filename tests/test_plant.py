@@ -77,6 +77,26 @@ def test_simple_payback_counts_additional_capex_once(test_plant):
     )
 
 
+def test_flagged_metrics_charge_only_capex_the_cash_flow_spent(test_plant):
+    test_plant.update_configuration(
+        {"plant_products": {"hydrogen": {"price": 500.0}}}
+    )
+    test_plant.project_lifetime = np.array([15, 20])
+    base_roi = test_plant.calculate_roi()
+    base_spb = test_plant.calculate_simple_payback_time()
+
+    # Year 18 is past sample 0's lifetime: its cash flow never spends it,
+    # so neither may its flagged ROI and simple payback
+    test_plant.additional_capex_years = [18]
+    test_plant.additional_capex_cost = [200_000.0]
+    roi = test_plant.calculate_roi(additional_capex=True)
+    spb = test_plant.calculate_simple_payback_time(additional_capex=True)
+    assert roi[0] == pytest.approx(base_roi[0])
+    assert spb[0] == pytest.approx(base_spb[0])
+    assert roi[1] < base_roi[1]
+    assert spb[1] > base_spb[1]
+
+
 def test_plants_do_not_share_configuration(test_plant):
     base = deepcopy(test_plant.config)
     base["equipment"] = test_plant.equipment_list

@@ -40,7 +40,10 @@ Region = Literal[
 
 
 class Dependency(TypedDict, total=False):
-    """Makes a quantity follow others, e.g. ``{"depends_on": {"production:methanol": 9.3}}``."""
+    """Makes a quantity follow others.
+
+    Example: ``{"depends_on": {"production:methanol": 9.3}}``.
+    """
     depends_on: dict[str, float]
     offset: float
 
@@ -1763,13 +1766,6 @@ class Plant:
         self.levelized_cost = lcop if is_array else lcop[0]
         return self.levelized_cost
 
-    def _extra_capex(self, additional_capex):
-        """Additional CAPEX to add to the investment (0 unless requested
-        and configured)."""
-        if additional_capex and self.additional_capex_cost is not None:
-            return np.sum(self.additional_capex_cost)
-        return 0.0
-
     def calculate_simple_payback_time(self, additional_capex: bool = False,
                                       print_results: bool = False):
         """
@@ -1813,9 +1809,11 @@ class Plant:
             np.asarray(self.cash_flow, dtype=float)
             + self.additional_capex_array
         )
+        # Per sample: only what the cash flow actually spent
+        extra = (self.additional_capex_array.sum(axis=1)
+                 if additional_capex else 0.0)
         total_fixed_capital = np.broadcast_to(
-            np.asarray(self.fixed_capital, dtype=float)
-            + self._extra_capex(additional_capex),
+            np.asarray(self.fixed_capital, dtype=float) + extra,
             len(cash_flow),
         )
 
@@ -1935,9 +1933,12 @@ class Plant:
             np.asarray(self.gross_profit_array, dtype=float)
             - np.asarray(self.tax_paid_array, dtype=float)
         )
+        # Per sample: only what the cash flow actually spent
+        extra = (self.additional_capex_array.sum(axis=1)
+                 if additional_capex else 0.0)
         total_investment = (
             np.asarray(self.fixed_capital, dtype=float)
-            + self._extra_capex(additional_capex)
+            + extra
             + np.asarray(self.working_capital, dtype=float)
         )
         roi = (
