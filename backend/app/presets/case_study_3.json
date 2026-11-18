@@ -243,121 +243,102 @@
       }
     }
   ],
-  "runs": [
-    {
-      "plant": 0,
-      "analysis": {
-        "sensitivity": {
-          "run": true,
-          "cases": [
-            {
-              "name": "heat_pbt",
-              "args": {
-                "parameter": "heat",
-                "plus_minus_value": 0.2,
-                "metric": "PBT",
-                "n_points": 50
-              },
-              "plot_args": {
-                "x_axis": "value"
-              }
-            },
-            {
-              "name": "heat_roi",
-              "args": {
-                "parameter": "heat",
-                "plus_minus_value": 0.2,
-                "metric": "ROI",
-                "n_points": 50
-              },
-              "plot_args": {
-                "x_axis": "value"
-              }
-            },
-            {
-              "name": "heat_irr",
-              "args": {
-                "parameter": "heat",
-                "plus_minus_value": 0.2,
-                "metric": "IRR",
-                "n_points": 50
-              },
-              "plot_args": {
-                "x_axis": "value"
-              }
-            },
-            {
-              "name": "heat_npv",
-              "args": {
-                "parameter": "heat",
-                "plus_minus_value": 0.2,
-                "metric": "NPV",
-                "n_points": 50
-              },
-              "plot_args": {
-                "x_axis": "value"
-              }
-            }
-          ]
-        },
-        "tornado": {
-          "run": true,
+  "analysis": {
+    "sensitivity": {
+      "run": true,
+      "cases": [
+        {
+          "name": "heat_pbt",
           "args": {
+            "parameter": "heat",
             "plus_minus_value": 0.2,
-            "metric": "NPV"
+            "metric": "PBT",
+            "n_points": 50
+          },
+          "plot_args": {
+            "x_axis": "value"
           }
         },
-        "monte_carlo": {
-          "run": true,
+        {
+          "name": "heat_roi",
           "args": {
-            "num_samples": 100000,
-            "batch_size": 10000
+            "parameter": "heat",
+            "plus_minus_value": 0.2,
+            "metric": "ROI",
+            "n_points": 50
           },
-          "metric": [
-            "LCOP",
-            "NPV"
-          ]
+          "plot_args": {
+            "x_axis": "value"
+          }
+        },
+        {
+          "name": "heat_irr",
+          "args": {
+            "parameter": "heat",
+            "plus_minus_value": 0.2,
+            "metric": "IRR",
+            "n_points": 50
+          },
+          "plot_args": {
+            "x_axis": "value"
+          }
+        },
+        {
+          "name": "heat_npv",
+          "args": {
+            "parameter": "heat",
+            "plus_minus_value": 0.2,
+            "metric": "NPV",
+            "n_points": 50
+          },
+          "plot_args": {
+            "x_axis": "value"
+          }
+        },
+        {
+          "name": "power_npv",
+          "args": {
+            "parameter": "power",
+            "plus_minus_value": 10,
+            "metric": "NPV",
+            "n_points": 50
+          },
+          "plot_args": {
+            "x_axis": "value"
+          }
         }
-      },
-      "sensitivity_plants": [
-        0
       ],
-      "tornado_plants": [
-        0
-      ],
-      "monte_carlo_plants": [
-        0,
-        1
+      "plants": [
+        "Heat pump",
+        "Power plant"
       ]
     },
-    {
-      "plant": 1,
-      "analysis": {
-        "sensitivity": {
-          "run": true,
-          "cases": [
-            {
-              "name": "power_npv",
-              "args": {
-                "parameter": "power",
-                "plus_minus_value": 10,
-                "metric": "NPV",
-                "n_points": 50
-              },
-              "plot_args": {
-                "x_axis": "value"
-              }
-            }
-          ]
-        }
+    "tornado": {
+      "run": true,
+      "args": {
+        "plus_minus_value": 0.2,
+        "metric": "NPV"
       },
-      "sensitivity_plants": [
-        1
+      "plants": [
+        "Heat pump"
+      ]
+    },
+    "monte_carlo": {
+      "run": true,
+      "args": {
+        "num_samples": 100000,
+        "batch_size": 10000
+      },
+      "metric": [
+        "LCOP",
+        "NPV"
       ],
-      "tornado_plants": [],
-      "monte_carlo_plants": []
+      "plants": [
+        "Heat pump",
+        "Power plant"
+      ]
     }
-  ],
+  },
   "output": {
     "save_json": true,
     "save_plots": true,

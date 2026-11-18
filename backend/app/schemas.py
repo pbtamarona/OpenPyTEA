@@ -12,10 +12,10 @@ class OkResponse(BaseModel):
 
 
 class ExampleAutoRun(BaseModel):
-    """Analyses the GUI runs on one plant right after a project or example
-    loads (the file's "runs"): an analysis input block (load_analysis_config
-    format) and the plants each analysis ticks."""
-    plant_id: str
+    """The project's analyses, which the GUI runs right after a project or
+    example loads (the file's "analysis" block): an analysis input block
+    (load_analysis_config format, without "plants") and the plants (ids)
+    each analysis ticks."""
     analysis: dict
     sensitivity_plants: list[str] = []
     tornado_plants: list[str] = []
@@ -26,7 +26,7 @@ class LoadResponse(BaseModel):
     ok: bool = True
     equipment_count: int
     active_plant_id: str | None = None
-    autorun: list[ExampleAutoRun] = []
+    autorun: ExampleAutoRun | None = None
     # e.g. which compared plants of an older file became project plants
     notes: list[str] = []
 

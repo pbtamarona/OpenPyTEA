@@ -514,87 +514,82 @@
       }
     }
   ],
-  "runs": [
-    {
-      "plant": 1,
-      "analysis": {
-        "sensitivity": {
-          "run": true,
-          "cases": [
-            {
-              "name": "interest_rate_npv",
-              "args": {
-                "parameter": "interest_rate",
-                "plus_minus_value": 1,
-                "metric": "NPV",
-                "n_points": 50
-              }
-            },
-            {
-              "name": "methane_feed_pbt",
-              "args": {
-                "parameter": "methane_feed",
-                "plus_minus_value": 0.58,
-                "metric": "PBT",
-                "n_points": 50
-              }
-            },
-            {
-              "name": "solid_carbon_lcop",
-              "args": {
-                "parameter": "solid_carbon",
-                "plus_minus_value": 0.8,
-                "metric": "LCOP",
-                "n_points": 50
-              }
-            },
-            {
-              "name": "electricity_roi",
-              "args": {
-                "parameter": "electricity",
-                "plus_minus_value": 0.55,
-                "metric": "ROI",
-                "n_points": 50
-              }
-            }
-          ]
-        },
-        "tornado": {
-          "run": true,
+  "analysis": {
+    "sensitivity": {
+      "run": true,
+      "cases": [
+        {
+          "name": "interest_rate_npv",
           "args": {
-            "plus_minus_value": 0.5,
-            "metric": "LCOP"
+            "parameter": "interest_rate",
+            "plus_minus_value": 1,
+            "metric": "NPV",
+            "n_points": 50
           }
         },
-        "monte_carlo": {
-          "run": true,
+        {
+          "name": "methane_feed_pbt",
           "args": {
-            "num_samples": 100000,
-            "batch_size": 10000
-          },
-          "metric": [
-            "LCOP"
-          ],
-          "plot_args": {
-            "label": "Levelized cost of hydrogen / [US\\$$\\cdot$kg$^{-1}_\\mathrm{H_2}$]"
+            "parameter": "methane_feed",
+            "plus_minus_value": 0.58,
+            "metric": "PBT",
+            "n_points": 50
+          }
+        },
+        {
+          "name": "solid_carbon_lcop",
+          "args": {
+            "parameter": "solid_carbon",
+            "plus_minus_value": 0.8,
+            "metric": "LCOP",
+            "n_points": 50
+          }
+        },
+        {
+          "name": "electricity_roi",
+          "args": {
+            "parameter": "electricity",
+            "plus_minus_value": 0.55,
+            "metric": "ROI",
+            "n_points": 50
           }
         }
+      ],
+      "plants": [
+        "Steam Reforming",
+        "Methane Pyrolysis",
+        "Water Electrolysis"
+      ]
+    },
+    "tornado": {
+      "run": true,
+      "args": {
+        "plus_minus_value": 0.5,
+        "metric": "LCOP"
       },
-      "sensitivity_plants": [
-        0,
-        1,
-        2
+      "plants": [
+        "Methane Pyrolysis"
+      ]
+    },
+    "monte_carlo": {
+      "run": true,
+      "args": {
+        "num_samples": 100000,
+        "batch_size": 10000
+      },
+      "metric": [
+        "LCOP"
       ],
-      "tornado_plants": [
-        1
-      ],
-      "monte_carlo_plants": [
-        0,
-        1,
-        2
+      "plot_args": {
+        "label": "Levelized cost of hydrogen / [US\\$$\\cdot$kg$^{-1}_\\mathrm{H_2}$]"
+      },
+      "plants": [
+        "Steam Reforming",
+        "Methane Pyrolysis",
+        "Water Electrolysis"
       ]
     }
-  ],
+  },
   "output": {
     "save_json": true,
     "save_plots": true,

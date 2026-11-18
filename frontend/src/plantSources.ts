@@ -19,43 +19,35 @@ export interface PlantsRequest {
 const OPEN = "__open__";
 
 /** Which project plants an analysis run covers, and which results are
-    shown. The open plant starts ticked; every plant, the open one
-    included, can be ticked or unticked. With a single plant there are no
-    checkboxes and everything is shown. */
+    shown. Every plant starts ticked (plants added later too) and can be
+    unticked; the open plant is not special. With a single plant there are
+    no checkboxes and everything is shown. */
 export function usePlantSelection(project: ProjectOverview | null) {
-  const [includeOpen, setIncludeOpen] = useState(true);
-  const [others, setOthers] = useState<Set<string>>(new Set());
+  // Unticked plants, so that new plants start ticked
+  const [off, setOff] = useState<Set<string>>(new Set());
   const activeId = project?.active_plant_id ?? OPEN;
   const multi = !!project && project.plants.length > 1;
 
-  const isTicked = (id: string) =>
-    !multi || (id === activeId ? includeOpen : others.has(id));
+  const isTicked = (id: string) => !multi || !off.has(id);
 
-  const toggle = (id: string) => {
-    if (id === activeId) {
-      setIncludeOpen((v) => !v);
-      return;
-    }
-    setOthers((prev) => {
+  const toggle = (id: string) =>
+    setOff((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
-  };
 
   /** Tick exactly these plants. */
-  const setTicked = (ids: string[]) => {
-    setIncludeOpen(ids.includes(activeId));
-    setOthers(new Set(ids.filter((id) => id !== activeId)));
-  };
+  const setTicked = (ids: string[]) =>
+    setOff(new Set((project?.plants ?? []).map((p) => p.id).filter((id) => !ids.includes(id))));
 
-  /** Ticked plants that can run (others need results), open plant first. */
+  /** Ticked plants that can run (the open one, or calculated ones), in
+      the project's order. */
   const tickedIds = (): string[] => {
     if (!multi) return [activeId];
-    const rest = project!.plants
-      .filter((p) => p.id !== activeId && p.metrics != null && others.has(p.id))
+    return project!.plants
+      .filter((p) => !off.has(p.id) && (p.id === activeId || p.metrics != null))
       .map((p) => p.id);
-    return includeOpen ? [activeId, ...rest] : rest;
   };
 
   /** Request fields for the given plants. The inputs of plants other than

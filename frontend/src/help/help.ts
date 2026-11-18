@@ -20,7 +20,7 @@ const GUI: Record<string, HelpEntry> = {
   "project.created": { text: "Set when the project was started (New Project). For a project file saved before projects had details, the date it was saved." },
   "project.description": { text: "Free text: scope, assumptions, data sources. Saved in the project file." },
   "project.plants": {
-    text: "Every plant of the project. Plant Config, Equipment, Results, Analysis and Monte Carlo work on the open plant (●); pick another with Open or the Plant dropdown.",
+    text: "Every plant of the project. Plant Config, Equipment and Results work on the open plant (●); pick another with Open or the Plant dropdown. Analysis, Monte Carlo and Compare cover the whole project: tick the plants to include there.",
   },
   "project.pfd": { text: "An image of the plant's process flow diagram, saved in the project file. It shows the open plant (●); double-click a plant in the Plants table to open it. Minimize a window to its title bar; maximize (or double-click the image) to view it full screen, Esc to close." },
   "plant.rate_uncertainty": {

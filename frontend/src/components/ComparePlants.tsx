@@ -7,8 +7,8 @@ interface Props {
   note?: string;
 }
 
-/** Checkbox per project plant, choosing the plants a run covers (the open
-    plant starts ticked). Plants that have never been calculated have no
+/** Checkbox per project plant, choosing the plants a run covers (all
+    plants start ticked). Plants that have never been calculated have no
     results yet and can't be ticked. Shown when the project has more than
     one plant, in place of the header plant switcher. */
 export default function ComparePlants({ project, isTicked, onToggle, note }: Props) {

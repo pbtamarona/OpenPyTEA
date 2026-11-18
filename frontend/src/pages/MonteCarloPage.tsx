@@ -57,12 +57,12 @@ interface Props {
   setError: (e: string | null) => void;
   setNotice: (m: string | null) => void;
   project: ProjectOverview | null;
-  /** The plant's loaded run (a project's or example's "runs"); its Monte
-      Carlo settings are run once when the page mounts (it mounts while
-      its plant is the open one) */
+  /** The project's loaded analyses (a project's or example's "analysis"
+      block); its Monte Carlo settings are run once when the page mounts
+      (right after loading) */
   autoRun?: ExampleAutoRun;
   /** Called with the settings and plants of each run, which the app keeps
-      as the plant's run for File ▸ Save */
+      as the project's analyses for File ▸ Save */
   onRan?: (patch: Partial<ExampleAutoRun>) => void;
 }
 
@@ -278,7 +278,7 @@ export default function MonteCarloPage({ setError, setNotice, project, autoRun, 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Report what was run, so saving the project keeps it as the plant's run
+  // Report what was run, so saving the project keeps it
   // (the metrics are the ones openpytea run plots)
   useEffect(() => {
     if (!onRan || !ranWith) return;

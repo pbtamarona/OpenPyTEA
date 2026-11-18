@@ -166,12 +166,11 @@ export const exportPlantInput = () => request<ExportedFile>("/plant/export-input
 export const importAnalysisConfig = (data: unknown) =>
   request<AnalysisImport>("/analysis/import-config", { method: "POST", body: JSON.stringify({ data }) });
 
-/** Analyses run on one plant right after a project or example loads (the
-    file's "runs"): an analysis input block (the format importAnalysisConfig
-    reads) and the plants each analysis ticks. Also the record of the runs
-    the app saves. */
+/** The project's analyses, run right after a project or example loads
+    (the file's "analysis" block): an analysis input block (the format
+    importAnalysisConfig reads) and the plants (ids) each analysis ticks.
+    Also the record of the analyses the app saves. */
 export interface ExampleAutoRun {
-  plant_id: string;
   analysis: Record<string, unknown>;
   sensitivity_plants: string[];
   tornado_plants: string[];
@@ -183,7 +182,7 @@ export interface LoadResult {
   ok: boolean;
   equipment_count: number;
   active_plant_id: string | null;
-  autorun: ExampleAutoRun[];
+  autorun: ExampleAutoRun | null;
   notes: string[];
 }
 

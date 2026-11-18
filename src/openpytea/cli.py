@@ -22,9 +22,11 @@ def _print_run_summary(results, output_dir):
         for name, plant_results in results["plants"].items():
             ran = ", ".join(sorted(plant_results)) or "calculations only"
             print(f"{name}: ran {ran}")
-        for name, compared in results.get("comparison", {}).items():
-            print(f"Compared with {name}'s settings: {', '.join(sorted(compared))}")
-        print(f"Results written to: {dest} (one folder per plant, plus 'comparison')")
+        compared = results.get("comparison")
+        if compared:
+            print(f"Compared across plants: {', '.join(sorted(compared))}")
+        print(f"Results written to: {dest} (one folder per plant"
+              f"{', plus comparison' if compared else ''})")
         return
     ran = ", ".join(sorted(results)) or "(none)"
     print(f"Ran: {ran}")

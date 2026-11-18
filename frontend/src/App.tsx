@@ -23,9 +23,9 @@ import "./App.css";
 
 const TABS = ["Project", "Plant Config", "Equipment", "Results", "Analysis", "Monte Carlo", "Compare"] as const;
 const PROJECT_EXT = "openpytea";
-// Tabs whose results live in the page itself: one page per plant, kept
-// mounted (just hidden) after its first visit, so switching tabs or plants
-// doesn't discard a plant's results
+// Tabs whose results live in the page itself: one page for the whole
+// project, kept mounted (just hidden) after its first visit, so switching
+// tabs or the open plant doesn't discard its results
 const KEEP_ALIVE = new Set<string>(["Analysis", "Monte Carlo"]);
 // Tabs where the header plant switcher is hidden: they have their own
 // picker (Analysis and Monte Carlo: the plant checkboxes), or, like
@@ -54,35 +54,35 @@ const basename = (path: string | null): string => {
 function App() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Project");
   const [project, setProject] = useState<ProjectOverview | null>(null);
-  // Keep-alive pages visited so far, as "<tab>|<plant id>"
+  // Keep-alive tabs visited so far in this project
   const [kept, setKept] = useState<string[]>([]);
   // Bumped when a different project loads (new / open): remounts the
-  // Project tab so its form starts from the new project's details.
+  // Project tab so its form starts from the new project's details, and
+  // drops the Analysis and Monte Carlo pages (and their results).
   const [projectEpoch, setProjectEpoch] = useState(0);
   const resetProjectView = () => {
     setProject(null);
     setProjectEpoch((n) => n + 1);
+    setKept([]);
+    setRun(null);
   };
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [examples, setExamples] = useState<ExamplePreset[]>([]);
   const [examplesOpen, setExamplesOpen] = useState(false);
-  // The project's analysis runs, by plant id (the file's "runs"): loaded
-  // from an opened project or example, and updated whenever an analysis
-  // is run, so File ▸ Save keeps them. A plant's Analysis and Monte Carlo
-  // pages run its loaded run when they mount (the open plant's right after
-  // loading, the others on their first visit).
-  const [runs, setRuns] = useState<Record<string, ExampleAutoRun>>({});
-  const runsRef = useRef(runs);
-  runsRef.current = runs;
-  /** Record the settings and plants of an analysis just run on a plant. */
-  const recordRun = useCallback((plantId: string, patch: Partial<ExampleAutoRun>) => {
-    setRuns((prev) => {
-      const cur = prev[plantId] ?? {
-        plant_id: plantId, analysis: {}, sensitivity_plants: [], tornado_plants: [], monte_carlo_plants: [],
-      };
-      return { ...prev, [plantId]: { ...cur, ...patch, analysis: { ...cur.analysis, ...patch.analysis } } };
+  // The project's analyses (the file's "analysis" block): loaded from an
+  // opened project or example, and updated whenever an analysis is run, so
+  // File ▸ Save keeps them. The Analysis and Monte Carlo pages run the
+  // loaded ones when they mount, right after loading.
+  const [run, setRun] = useState<ExampleAutoRun | null>(null);
+  const runRef = useRef(run);
+  runRef.current = run;
+  /** Record the settings and plants of an analysis just run. */
+  const recordRun = useCallback((patch: Partial<ExampleAutoRun>) => {
+    setRun((prev) => {
+      const cur = prev ?? { analysis: {}, sensitivity_plants: [], tornado_plants: [], monte_carlo_plants: [] };
+      return { ...cur, ...patch, analysis: { ...cur.analysis, ...patch.analysis } };
     });
   }, []);
   const [brandOpen, setBrandOpen] = useState(false);
@@ -221,22 +221,12 @@ function App() {
     });
   }, [showWelcome]);
 
-  const activePlantId = project?.active_plant_id ?? null;
   useEffect(() => {
-    if (!KEEP_ALIVE.has(tab) || !activePlantId) return;
-    const k = `${tab}|${activePlantId}`;
-    setKept((prev) => (prev.includes(k) ? prev : [...prev, k]));
-  }, [tab, activePlantId]);
-  /** Plants with a kept page on tab `t` (plus the one being shown), limited
-      to plants of the current project — a new/opened project or a deleted
-      plant drops its pages. */
-  const keptPlants = (t: string): string[] => {
-    const inProject = new Set(project?.plants.map((p) => p.id) ?? []);
-    const ids = kept.filter((k) => k.startsWith(`${t}|`)).map((k) => k.slice(t.length + 1));
-    if (tab === t && activePlantId && !ids.includes(activePlantId)) ids.push(activePlantId);
-    return ids.filter((id) => inProject.has(id));
-  };
-  const shown = (t: string, plantId: string) => tab === t && plantId === activePlantId;
+    if (!KEEP_ALIVE.has(tab)) return;
+    setKept((prev) => (prev.includes(tab) ? prev : [...prev, tab]));
+  }, [tab]);
+  /** A keep-alive page is mounted once visited (or while shown). */
+  const mounted = (t: string) => !!project && (kept.includes(t) || tab === t);
 
   // Keep the project overview (plant names, metrics) current: plant names
   // change on Plant Config and metrics on Results, so refetch on tab change.
@@ -298,7 +288,6 @@ function App() {
       setLoadingMsg("Creating new project…");
       await newProject();
       setCurrentPath(null);
-      setRuns({});
       setDirty(false);
       setResults(null);
       setError(null);
@@ -313,14 +302,13 @@ function App() {
   }, [dirty]);
 
   /** After a project or example has loaded and been calculated: keep its
-      runs and start them; the open plant's Analysis and Monte Carlo pages
-      are mounted now (hidden) and run in the background. */
+      analyses and start them; the Analysis and Monte Carlo pages are
+      mounted now (hidden) and run in the background. */
   const startRuns = (loaded: LoadResult, title?: string) => {
-    setRuns(Object.fromEntries(loaded.autorun.map((r) => [r.plant_id, r])));
-    const open = loaded.active_plant_id;
+    setRun(loaded.autorun);
     const msgs = [...loaded.notes];
-    if (open && loaded.autorun.some((r) => r.plant_id === open)) {
-      setKept((prev) => [...prev, `Analysis|${open}`, `Monte Carlo|${open}`]);
+    if (loaded.autorun) {
+      setKept(["Analysis", "Monte Carlo"]);
       msgs.unshift(`${title ? `Loaded ${title}. Its` : "The project's saved"} analyses are running in the background; see the Analysis and Monte Carlo tabs.`);
     }
     setNotice(msgs.length ? msgs.join(" ") : null);
@@ -413,25 +401,25 @@ function App() {
   };
 
   /** Serialize the full project to JSON: the backend's project plus the
-      analysis runs (plants by index, in the project's order), so opening
+      project's analysis block (each analysis' plants by name), so opening
       the file (in the app, or with openpytea run) runs them again.
       Shared by the Tauri file write and the browser blob download so both
       produce identical files. */
   const buildProjectText = async (): Promise<string> => {
     const backendData = await saveProject() as Record<string, unknown>;
-    const order = (await getProject()).plants.map((p) => p.id);
-    const index = (id: string) => order.indexOf(id);
-    const fileRuns = Object.values(runsRef.current)
-      .filter((r) => index(r.plant_id) >= 0 && Object.keys(r.analysis).length > 0)
-      .map((r) => ({
-        plant: index(r.plant_id),
-        analysis: r.analysis,
-        sensitivity_plants: r.sensitivity_plants.map(index).filter((i) => i >= 0),
-        tornado_plants: r.tornado_plants.map(index).filter((i) => i >= 0),
-        monte_carlo_plants: r.monte_carlo_plants.map(index).filter((i) => i >= 0),
-      }))
-      .sort((a, b) => a.plant - b.plant);
-    return JSON.stringify({ ...backendData, runs: fileRuns }, null, 2);
+    const r = runRef.current;
+    if (!r || Object.keys(r.analysis).length === 0) return JSON.stringify(backendData, null, 2);
+    const names = new Map((await getProject()).plants.map((p) => [p.id, p.name]));
+    const plantsOf: Record<string, string[]> = {
+      sensitivity: r.sensitivity_plants, tornado: r.tornado_plants, monte_carlo: r.monte_carlo_plants,
+    };
+    const analysis = Object.fromEntries(Object.entries(r.analysis).map(([key, cfg]) => [
+      key,
+      key in plantsOf && cfg && typeof cfg === "object"
+        ? { ...cfg, plants: plantsOf[key].map((id) => names.get(id)).filter(Boolean) }
+        : cfg,
+    ]));
+    return JSON.stringify({ ...backendData, analysis }, null, 2);
   };
 
   const writeProjectTo = async (path: string) => {
@@ -798,7 +786,7 @@ function App() {
         <div className="header-actions">
           {/* Hidden on the tabs that have their own picker */}
           {project && project.plants.length > 1 && !PAGES_WITH_PICKER.has(tab) && (
-            <label className="plant-switcher" title="Plant that Plant Config, Equipment, Results, Analysis and Monte Carlo work on">
+            <label className="plant-switcher" title="Plant that Plant Config, Equipment and Results work on">
               Plant
               <select value={project.active_plant_id} onChange={(e) => handleSwitchPlant(e.target.value)}>
                 {project.plants.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -886,16 +874,16 @@ function App() {
             onSwitchPlant={handleSwitchPlant}
           />
         )}
-        {keptPlants("Analysis").map((id) => (
-          <div key={id} hidden={!shown("Analysis", id)}>
-            <AnalysisPage setError={setError} setNotice={setNotice} project={project} active={shown("Analysis", id)} autoRun={runs[id]} onRan={(patch) => recordRun(id, patch)} />
+        {mounted("Analysis") && (
+          <div key={`analysis-${projectEpoch}`} hidden={tab !== "Analysis"}>
+            <AnalysisPage setError={setError} setNotice={setNotice} project={project} active={tab === "Analysis"} autoRun={run ?? undefined} onRan={recordRun} />
           </div>
-        ))}
-        {keptPlants("Monte Carlo").map((id) => (
-          <div key={id} hidden={!shown("Monte Carlo", id)}>
-            <MonteCarloPage setError={setError} setNotice={setNotice} project={project} autoRun={runs[id]} onRan={(patch) => recordRun(id, patch)} />
+        )}
+        {mounted("Monte Carlo") && (
+          <div key={`mc-${projectEpoch}`} hidden={tab !== "Monte Carlo"}>
+            <MonteCarloPage setError={setError} setNotice={setNotice} project={project} autoRun={run ?? undefined} onRan={recordRun} />
           </div>
-        ))}
+        )}
         {tab === "Compare" && (
           <ComparePage
             projectPlants={projectCompared}

@@ -682,46 +682,40 @@
       }
     }
   ],
-  "runs": [
-    {
-      "plant": 0,
-      "analysis": {
-        "tornado": {
-          "run": true,
-          "args": {
-            "plus_minus_value": 0.5,
-            "metric": "LCOP"
-          }
-        },
-        "monte_carlo": {
-          "run": true,
-          "args": {
-            "num_samples": 100000,
-            "batch_size": 10000
-          },
-          "metric": [
-            "LCOP"
-          ],
-          "plot_args": {
-            "label": "Levelized cost of precooling / [US\\$$\\cdot$kg$^{-1}_\\mathrm{H_2}$]"
-          }
-        }
+  "analysis": {
+    "tornado": {
+      "run": true,
+      "args": {
+        "plus_minus_value": 0.5,
+        "metric": "LCOP"
       },
-      "sensitivity_plants": [],
-      "tornado_plants": [
-        0,
-        1,
-        2,
-        3
+      "plants": [
+        "SMR best",
+        "SMR worst",
+        "DMR best",
+        "DMR worst"
+      ]
+    },
+    "monte_carlo": {
+      "run": true,
+      "args": {
+        "num_samples": 100000,
+        "batch_size": 10000
+      },
+      "metric": [
+        "LCOP"
       ],
-      "monte_carlo_plants": [
-        0,
-        1,
-        2,
-        3
+      "plot_args": {
+        "label": "Levelized cost of precooling / [US\\$$\\cdot$kg$^{-1}_\\mathrm{H_2}$]"
+      },
+      "plants": [
+        "SMR best",
+        "SMR worst",
+        "DMR best",
+        "DMR worst"
       ]
     }
-  ],
+  },
   "output": {
     "save_json": true,
     "save_plots": true,

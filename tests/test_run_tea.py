@@ -336,24 +336,34 @@ def test_run_openpytea_passes_factors_capex_and_plot_args(tmp_path):
     assert not (out / "Test Plant_monte_carlo_inputs_process.png").exists()
 
 
+def _project_plant(name, price, extra_input=None):
+    plant = _plant_data()["plant"]
+    plant["plant_name"] = name
+    plant["plant_products"]["hydrogen"]["price"] = price
+    if extra_input:
+        plant["variable_opex_inputs"][extra_input] = {
+            "consumption": 1.0, "price": 0.1}
+    return {"name": name, **_equipment_data(), "plant": plant}
+
+
 def test_run_openpytea_runs_a_multi_plant_project(tmp_path):
     """A project file (the desktop app's format) runs every plant into its
-    own folder and the runs' plant groups together into 'comparison'."""
-    def plant_entry(name, price):
-        plant = _plant_data()["plant"]
-        plant["plant_name"] = name
-        plant["plant_products"]["hydrogen"]["price"] = price
-        return {"name": name, **_equipment_data(), "plant": plant}
-
+    own folder, with the sections' plant lists run together into
+    'comparison'."""
     block = _analysis_data()["analysis"]
+    # only Plant C has 'steam'
+    block["sensitivity"]["cases"].append(
+        {"name": "steam_case",
+         "args": {"parameter": "steam", "plus_minus_value": 0.2,
+                  "n_points": 5, "metric": "NPV"}})
+    block["sensitivity"]["plants"] = ["Plant A", "Plant B", "Plant C"]
+    block["tornado"]["plants"] = ["Plant B"]
+    block["monte_carlo"]["plants"] = ["Plant A", "Plant B"]
     project = {
         "project": {"name": "Ignored by the library"},
-        "plants": [plant_entry("Plant A", 5.0), plant_entry("Plant B", 6.0),
-                   plant_entry("Plant C", 7.0)],
-        "runs": [{"plant": 1, "analysis": block,
-                  "sensitivity_plants": [0, 1, 2], "tornado_plants": [1],
-                  "monte_carlo_plants": [0, 1]}],
-        "analysis": {"levelized_cost": {"run": True}},
+        "plants": [_project_plant("Plant A", 5.0), _project_plant("Plant B", 6.0),
+                   _project_plant("Plant C", 7.0, extra_input="steam")],
+        "analysis": block,
         "output": {"save_json": True, "save_plots": True},
     }
     path = tmp_path / "project.json"
@@ -362,34 +372,88 @@ def test_run_openpytea_runs_a_multi_plant_project(tmp_path):
 
     results = run_openpytea(path, output_dir=out)
 
-    # Plant B has the run's analyses; the others the top-level block
-    assert set(results["plants"]) == {"Plant A", "Plant B", "Plant C"}
-    assert "monte_carlo" in results["plants"]["Plant B"]
-    assert set(results["plants"]["Plant A"]) == {"levelized_cost"}
+    plants = results["plants"]
+    assert set(plants) == {"Plant A", "Plant B", "Plant C"}
     for name in ("Plant A", "Plant B", "Plant C"):
         assert (out / name / f"{name}_plant_results.json").exists()
+        # sections without 'plants' run on every plant
+        assert "levelized_cost" in plants[name]
+    # sections run on their listed plants only
+    assert "tornado" in plants["Plant B"] and "tornado" not in plants["Plant A"]
+    assert "monte_carlo" not in plants["Plant C"]
     assert (out / "Plant B" / "Plant B_tornado.png").exists()
+    # a plant's own sensitivity skips cases on a parameter it lacks
+    assert set(plants["Plant A"]["sensitivity"]) == {"interest_rate_case"}
+    assert set(plants["Plant C"]["sensitivity"]) == {"interest_rate_case", "steam_case"}
 
-    # Comparisons: groups of one plant (the tornado) are not repeated
-    compared = results["comparison"]["Plant B"]
+    # Comparisons: a section listing one plant (the tornado) is not repeated
+    compared = results["comparison"]
     assert set(compared) == {"sensitivity", "monte_carlo"}
     curves = compared["sensitivity"]["interest_rate_case"]["curves"]
     assert [c["plant"] for c in curves] == ["Plant A", "Plant B", "Plant C"]
-    # Plant B's own Monte Carlo run is reused, Plant A gets one
-    own_mc = results["plants"]["Plant B"]["monte_carlo"]
-    assert compared["monte_carlo"]["Plant B"] is own_mc
+    # plants without the parameter are flat lines
+    steam = compared["sensitivity"]["steam_case"]["curves"]
+    assert steam[0]["x_value"] is None and len(set(steam[0]["y"])) == 1
+    assert steam[2]["x_value"] is not None
+    # each plant's own Monte Carlo run is reused
+    assert compared["monte_carlo"]["Plant B"] is plants["Plant B"]["monte_carlo"]
     assert len(compared["monte_carlo"]["Plant A"]["metrics"]["LCOP"]) == 100
     comp = out / "comparison"
-    assert (comp / "Plant B_comparison_results.json").exists()
-    assert (comp / "Plant B_sensitivity_interest_rate_case.png").exists()
-    assert (comp / "Plant B_monte_carlo_lcop.png").exists()
-    assert (comp / "Plant B_monte_carlo_cumulative_lcop.png").exists()
+    assert (comp / "comparison_results.json").exists()
+    assert (comp / "sensitivity_interest_rate_case.png").exists()
+    assert (comp / "sensitivity_steam_case.png").exists()
+    assert (comp / "monte_carlo_lcop.png").exists()
+    assert (comp / "monte_carlo_cumulative_lcop.png").exists()
 
 
-def test_project_run_must_name_existing_plants(tmp_path):
-    project = {"plants": [{**_equipment_data(), **_plant_data()}],
-               "runs": [{"plant": 0, "analysis": {}, "monte_carlo_plants": [0, 3]}]}
+def test_project_plant_without_any_case_parameter_gets_no_sensitivity(tmp_path):
+    block = {"sensitivity": {"run": True, "cases": [
+        {"name": "steam", "args": {"parameter": "steam", "plus_minus_value": 0.2,
+                                   "n_points": 3, "metric": "NPV"}}]}}
+    two = [_project_plant("Plant A", 5.0),
+           _project_plant("Plant B", 6.0, extra_input="steam")]
+    path = tmp_path / "project.json"
+    path.write_text(json.dumps({"plants": two, "analysis": block,
+                                "output": {"save_json": False}}), encoding="utf-8")
+    results = run_openpytea(path, output_dir=tmp_path / "out")["plants"]
+    assert "sensitivity" not in results["Plant A"]
+    assert set(results["Plant B"]["sensitivity"]) == {"steam"}
+
+
+def test_project_without_plant_lists_runs_each_plant_alone(tmp_path):
+    """No 'plants' anywhere: every plant gets every section, no comparison."""
+    two = [_project_plant("Plant A", 5.0), _project_plant("Plant B", 6.0)]
+    project = {"plants": two,
+               "analysis": {"tornado": {"run": True,
+                                        "args": {"plus_minus_value": 0.1}}},
+               "output": {"save_json": False}}
     path = tmp_path / "project.json"
     path.write_text(json.dumps(project), encoding="utf-8")
-    with pytest.raises(ValueError, match="index in 'plants'"):
+    results = run_openpytea(path, output_dir=tmp_path / "out")
+    assert all("tornado" in r for r in results["plants"].values())
+    assert "comparison" not in results
+
+
+@pytest.mark.parametrize("listed, match", [
+    (["Plant A", "Plant X"], "'Plant X' is not in the project"),
+    ("Plant A", "must be a list of plant names"),
+])
+def test_project_plant_lists_must_name_project_plants(tmp_path, listed, match):
+    project = {"plants": [_project_plant("Plant A", 5.0)],
+               "analysis": {"monte_carlo": {"run": True, "plants": listed}}}
+    path = tmp_path / "project.json"
+    path.write_text(json.dumps(project), encoding="utf-8")
+    with pytest.raises(ValueError, match=match):
+        run_openpytea(path, output_dir=tmp_path / "out")
+
+
+def test_project_sensitivity_parameter_must_exist_somewhere(tmp_path):
+    block = {"sensitivity": {"run": True, "cases": [
+        {"name": "typo", "args": {"parameter": "watr", "metric": "NPV"}}]}}
+    two = [_project_plant("Plant A", 5.0), _project_plant("Plant B", 6.0)]
+    project = {"plants": two,
+               "analysis": block}
+    path = tmp_path / "project.json"
+    path.write_text(json.dumps(project), encoding="utf-8")
+    with pytest.raises(ValueError, match="no plant has the parameter 'watr'"):
         run_openpytea(path, output_dir=tmp_path / "out")

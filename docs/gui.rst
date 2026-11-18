@@ -97,7 +97,7 @@ A typical session:
    Equipment and Plant Config tabs).
 2. **Results** → **Run Calculations** after changing inputs.
 3. Add more plants with **+ Add Plant** on the Project tab, and see the open plant's process flow diagram below the plants (double-click a plant to open it), where you upload an image (saved in the project file; the window minimizes, or maximizes to full screen).
-4. **Analysis** / **Monte Carlo** → tick the plants to overlay, then run.
+4. **Analysis** / **Monte Carlo** → tick the plants to overlay, then run. These tabs cover the whole project, whichever plant is open: every calculated plant starts ticked, and their results stay when you open another plant. In a sensitivity, a plant without the varied parameter is a flat line.
 5. **Compare** → see all calculated plants side by side.
 6. **File** ▸ **Save As…** to keep the whole project in a ``.openpytea``
    file, including the analyses you ran: opening it again re-runs them,
@@ -124,7 +124,8 @@ The **File** menu (``Ctrl`` on Windows, ``⌘`` on macOS):
    * - Save / Save As…
      - ``Ctrl+S`` / ``Ctrl+Shift+S``
      - Save the project: its plants and the last sensitivity, tornado and
-       Monte Carlo run of each plant (settings and the plants compared).
+       Monte Carlo run (settings and the plants ticked), as the file's
+       ``analysis`` block.
    * - Save as JSON Files…
      - ``Ctrl+Shift+E``
      - Write the three ``run_tea`` result files of the open plant.

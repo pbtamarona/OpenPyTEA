@@ -397,11 +397,11 @@ Multi-plant project files
 ``run_openpytea()`` also runs a whole **project**: several plants in one
 file, the format the desktop app saves (``.openpytea``) and uses for its
 example case studies (``backend/app/presets/case_study_*.json``). The app
-saves the analyses you ran as the file's ``runs`` and runs them again
-when it opens the file, so a project moves between the app, the command
-line and Python with its analyses. Instead
-of top-level ``equipment`` and ``plant`` blocks, the file has a ``plants``
-list, each entry with its own ``equipment`` and ``plant`` blocks:
+saves the project's analyses in the file's ``analysis`` block and runs them
+again when it opens the file, so a project moves between the app, the
+command line and Python with its analyses. Instead of top-level
+``equipment`` and ``plant`` blocks, the file has a ``plants`` list, each
+entry with its own ``equipment`` and ``plant`` blocks:
 
 .. code-block:: json
 
@@ -411,44 +411,42 @@ list, each entry with its own ``equipment`` and ``plant`` blocks:
        { "name": "Methane Pyrolysis", "equipment": [ "..." ], "plant": { "...": "..." } },
        { "name": "Water Electrolysis", "equipment": [ "..." ], "plant": { "...": "..." } }
      ],
-     "runs": [
-       {
-         "plant": 1,
-         "analysis": { "sensitivity": { "run": true, "cases": [ "..." ] },
-                       "monte_carlo": { "run": true, "metric": ["LCOP"] } },
-         "sensitivity_plants": [0, 1, 2],
-         "tornado_plants": [1],
-         "monte_carlo_plants": [0, 1, 2]
-       }
-     ],
-     "analysis": { "levelized_cost": { "run": true } },
+     "analysis": {
+       "levelized_cost": { "run": true },
+       "sensitivity": { "run": true, "cases": [ "..." ],
+                        "plants": ["Steam Reforming", "Methane Pyrolysis", "Water Electrolysis"] },
+       "tornado": { "run": true, "args": { "...": "..." }, "plants": ["Methane Pyrolysis"] },
+       "monte_carlo": { "run": true, "metric": ["LCOP"],
+                        "plants": ["Steam Reforming", "Methane Pyrolysis", "Water Electrolysis"] }
+     },
      "output": { "save_json": true, "save_plots": true }
    }
 
-* Each entry of ``runs`` gives one plant (``plant``: its index in
-  ``plants``, counting from 0) an ``analysis`` block, in the same format
-  as above. Plants without a run use the top-level ``analysis`` block; if
-  there is none, they are only calculated and their three result files
-  written.
-* ``sensitivity_plants``, ``tornado_plants`` and ``monte_carlo_plants``
-  (optional, plant indices) compare plants: when one lists two or more
-  plants, the run's sensitivity cases are also run for those plants
-  together (one curve per plant, as in
-  :ref:`Comparing multiple scenarios <comparing-multiple-scenarios>`), its
-  tornado once per plant, and its Monte Carlo simulation for each plant,
-  plotted as overlaid histograms and cumulative distributions. A plant's
-  own Monte Carlo run is reused.
+* ``analysis`` is the project's analysis block, in the same format as
+  above, run on every plant. Without it, the plants are only calculated
+  and their three result files written.
+* The ``sensitivity``, ``tornado`` and ``monte_carlo`` sections may list
+  the plants they run on under ``plants``, by plant name (each plant's
+  ``plant_name``). A section without ``plants`` runs on every plant, each
+  on its own.
+* When a section lists two or more plants, it is also run for those plants
+  together: the sensitivity cases with one curve per plant (as in
+  :ref:`Comparing multiple scenarios <comparing-multiple-scenarios>`), the
+  tornado once per plant, and the Monte Carlo simulation plotted as
+  overlaid histograms and cumulative distributions, reusing each plant's
+  own run. A plant without a case's parameter shows as a flat line at its
+  baseline; its own results leave that case out. A case whose parameter
+  none of its plants has is an error.
 * ``output`` is shared by all plants. Other keys, such as the app's
   ``project`` details and ``active_plant``, are ignored.
 
 Each plant's results and plots go to a subfolder named after the plant,
 and the comparisons to a ``comparison`` subfolder, as
-``{run plant}_comparison_results.json`` plus
-``{run plant}_sensitivity_{case}``, ``{run plant}_tornado_{plant}``,
-``{run plant}_monte_carlo_{metric}`` and
-``{run plant}_monte_carlo_cumulative_{metric}`` plots. The returned dict
-is ``{"plants": {plant name: results}, "comparison": {run plant name:
-{"sensitivity": ..., "tornado": ..., "monte_carlo": ...}}}``.
+``comparison_results.json`` plus ``sensitivity_{case}``,
+``tornado_{plant}``, ``monte_carlo_{metric}`` and
+``monte_carlo_cumulative_{metric}`` plots. The returned dict is
+``{"plants": {plant name: results}, "comparison": {"sensitivity": ...,
+"tornado": ..., "monte_carlo": ...}}``.
 
 The ``openpytea`` command
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -473,11 +471,11 @@ example one of the desktop app's case studies:
 .. code-block:: console
 
    $ openpytea run backend/app/presets/case_study_1.json -o outputs/cs1
-   Steam Reforming: ran calculations only
+   Steam Reforming: ran monte_carlo, sensitivity
    Methane Pyrolysis: ran monte_carlo, sensitivity, tornado
-   Water Electrolysis: ran calculations only
-   Compared with Methane Pyrolysis's settings: monte_carlo, sensitivity
-   Results written to: outputs/cs1 (one folder per plant, plus 'comparison')
+   Water Electrolysis: ran monte_carlo, sensitivity
+   Compared across plants: monte_carlo, sensitivity
+   Results written to: outputs/cs1 (one folder per plant, plus comparison)
 
 The other three functions are available as their own subcommands, for
 running a single stage of the pipeline:

@@ -142,7 +142,7 @@ def park_active():
     # The plant's Monte Carlo run travels with it (the MC tab keeps showing
     # it); whether it still matches the inputs is checked here, before
     # active_results() may recalculate, so Save as JSON can skip a stale run
-    mc_current = (state.mc_raw is not None and state.mc_snapshot is not None
+    mc_current = (state.mc_active_raw is not None and state.mc_snapshot is not None
                   and state.mc_snapshot == _calc_snapshot())
     slot["equipment"] = copy.deepcopy(equipment_specs(state.equipment_list))
     slot["plant"] = copy.deepcopy(state.plant_config)
@@ -151,7 +151,7 @@ def park_active():
     slot["analysis"] = {
         "tornado_args": state.tornado_args,
         "sensitivity_args": dict(state.sensitivity_args),
-        "mc_raw": state.mc_raw,
+        "mc_raw": state.mc_active_raw,
         "mc_results": state.mc_results,
         "mc_current": mc_current,
     }
@@ -163,7 +163,7 @@ def _load_slot(slot: dict):
     state.equipment_list = build_equipment_list(slot["equipment"])
     state.plant_config = copy.deepcopy(slot["plant"])
     state.active_plant_id = slot["id"]
-    state.reset_analysis_runs()
+    state.reset_plant_runs()
     state.tornado_args = slot["analysis"]["tornado_args"]
     state.sensitivity_args = dict(slot["analysis"]["sensitivity_args"])
     plant = _calculate(state.equipment_list, state.plant_config)
@@ -173,7 +173,7 @@ def _load_slot(slot: dict):
         mark_plant_fresh()
         # the plant's last Monte Carlo run (figure downloads, Save as JSON)
         if slot["analysis"].get("mc_raw") is not None:
-            state.mc_raw = slot["analysis"]["mc_raw"]
+            state.mc_active_raw = slot["analysis"]["mc_raw"]
             state.mc_results = slot["analysis"]["mc_results"]
             state.mc_snapshot = state.calc_snapshot if slot["analysis"]["mc_current"] else None
     slot["results"] = state.results or None

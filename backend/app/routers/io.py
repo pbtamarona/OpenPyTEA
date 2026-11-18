@@ -100,8 +100,8 @@ def export_json(only: Literal["equipment", "plant", "analysis"] | None = None):
             results["tornado"] = tornado_data(plant, **state.tornado_args)
         except (ValueError, KeyError):
             pass  # e.g. a varied item was since removed from the config
-    if state.mc_raw and state.mc_snapshot is not None and state.mc_snapshot == state.calc_snapshot:
-        results["monte_carlo"] = state.mc_raw[0]
+    if state.mc_active_raw and state.mc_snapshot is not None and state.mc_snapshot == state.calc_snapshot:
+        results["monte_carlo"] = state.mc_active_raw
 
     sensitivity = {}
     params = [p for p, _ in state.sensitivity_args]
@@ -136,7 +136,8 @@ MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 MAX_PLANTS = 50
 
 
-RUN_PLANT_GROUPS = ("sensitivity_plants", "tornado_plants", "monte_carlo_plants")
+# Analysis sections of a project file that list their plants
+ANALYSIS_PLANT_SECTIONS = ("sensitivity", "tornado", "monte_carlo")
 
 
 def _adopt_compared_plants(data: dict) -> list[str]:
@@ -175,25 +176,41 @@ def _adopt_compared_plants(data: dict) -> list[str]:
     return notes
 
 
-def _autorun(data: dict) -> list[dict]:
-    """The file's "runs" (plants by index) with the loaded plants' ids."""
-    ids = [s["id"] for s in state.plants]
-    valid = lambda i: isinstance(i, int) and 0 <= i < len(ids)  # noqa: E731
-    runs = []
-    for run in data.get("runs") or []:
-        if not isinstance(run, dict) or not valid(run.get("plant")):
-            continue
-        runs.append({
-            "plant_id": ids[run["plant"]],
-            "analysis": run.get("analysis") or {},
-            **{key: [ids[i] for i in run.get(key) or [] if valid(i)] for key in RUN_PLANT_GROUPS},
-        })
-    return runs
+def _autorun(data: dict, notes: list[str]) -> dict | None:
+    """The file's project-wide "analysis" block, with each section's
+    "plants" (plant names; all plants when left out) as the loaded plants'
+    ids, for the GUI to run right after loading."""
+    block = data.get("analysis")
+    if not isinstance(block, dict) or not block:
+        return None
+    ids_of: dict[str, str] = {}
+    for s in state.plants:
+        for name in (s["name"], s["plant"].get("plant_name")):
+            if name:
+                ids_of.setdefault(name, s["id"])
+    analysis, run = {}, {}
+    for key, cfg in block.items():
+        if key in ANALYSIS_PLANT_SECTIONS and isinstance(cfg, dict):
+            listed = cfg.get("plants")
+            if not isinstance(listed, list):
+                ids = [s["id"] for s in state.plants]
+            else:
+                ids = [ids_of[n] for n in listed if n in ids_of]
+                missing = [str(n) for n in listed if n not in ids_of]
+                if missing:
+                    label = {"sensitivity": "Sensitivity", "tornado": "Tornado",
+                             "monte_carlo": "Monte Carlo"}[key]
+                    notes.append(f"The {label} analysis lists plants this project "
+                                 f"doesn't have: {', '.join(missing)}.")
+            run[f"{key}_plants"] = ids
+            cfg = {k: v for k, v in cfg.items() if k != "plants"}
+        analysis[key] = cfg
+    return {"analysis": analysis, **run}
 
 
 def _restore_project_state(data: dict) -> dict:
     """Apply a project payload to the in-memory state; returns the load
-    response (equipment count, open plant, the file's runs to re-run).
+    response (equipment count, open plant, the file's analyses to re-run).
 
     Accepts the multi-plant envelope (v2) as well as v1 / legacy flat
     files, which have a single plant's `equipment` and `plant` at the top
@@ -206,7 +223,7 @@ def _restore_project_state(data: dict) -> dict:
         raise HTTPException(status_code=400, detail=f"Too many plants (max {MAX_PLANTS})")
     n = project_store.restore(data)
     return {"ok": True, "equipment_count": n, "active_plant_id": state.active_plant_id,
-            "autorun": _autorun(data), "notes": notes}
+            "autorun": _autorun(data, notes), "notes": notes}
 
 
 @router.post("/load", response_model=LoadResponse)
@@ -277,5 +294,5 @@ def load_example(example_id: str):
             )
 
     # An example is a whole project (like File ▸ Open): it replaces the
-    # current one, and its "runs" are run right after loading
+    # current one, and its analyses are run right after loading
     return {**_restore_project_state(data), "title": data.get("title")}

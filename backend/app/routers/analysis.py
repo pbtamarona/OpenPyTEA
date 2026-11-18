@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from openpytea.analysis import cash_flow_data, sensitivity_data, tornado_data, monte_carlo
 from openpytea.helpers import _collect_dependency_specs, _sensitivity_key_node
 
-from app import state
+from app import project_store, state
 from app.plant_factory import build_plant, require_active_plant
 from app.schemas import (
     CashFlowIn, SensitivityIn, TornadoIn, MonteCarloIn,
@@ -52,21 +52,40 @@ def _rehydrate_extras(extras: list[PlantInput]):
 
 @router.get("/sensitivity/parameters", response_model=list[str])
 def get_sensitivity_parameters():
-    plant = _require_plant()
+    """Parameters a sensitivity can vary, over every calculated plant of
+    the project (a plant without the chosen one is a flat line)."""
     top = ["fixed_capital", "fixed_opex", "project_lifetime", "interest_rate", "operator_hourly_rate"]
-    # Bare item keys vary the price; explicit .consumption/.production keys
-    # vary the process quantity (3.0).
-    var_keys = [f"variable_opex_inputs.{k}" for k in plant.variable_opex_inputs]
-    prod_keys = [f"plant_products.{k}" for k in plant.plant_products]
-    qty_keys = [f"variable_opex_inputs.{k}.consumption" for k in plant.variable_opex_inputs]
-    qty_keys += [f"plant_products.{k}.production" for k in plant.plant_products]
-    # A parameter set by a dependency has no value of its own to vary —
-    # sensitivity_data would reject it, so don't offer it.
-    dependents = _collect_dependency_specs(plant)
+    plants = _project_plants()
+    var_keys, prod_keys, qty_keys = [], [], []
+    for plant in plants:
+        # Bare item keys vary the price; explicit .consumption/.production
+        # keys vary the process quantity (3.0).
+        var_keys += [f"variable_opex_inputs.{k}" for k in plant.variable_opex_inputs]
+        prod_keys += [f"plant_products.{k}" for k in plant.plant_products]
+        qty_keys += [f"variable_opex_inputs.{k}.consumption" for k in plant.variable_opex_inputs]
+        qty_keys += [f"plant_products.{k}.production" for k in plant.plant_products]
+    # A parameter set by a dependency (on any plant) has no value of its
+    # own to vary — sensitivity_data would reject it, so don't offer it.
+    dependents = set().union(*(_collect_dependency_specs(p) for p in plants))
     return [
-        k for k in top + var_keys + prod_keys + qty_keys
+        k for k in dict.fromkeys(top + var_keys + prod_keys + qty_keys)
         if _sensitivity_key_node(k) not in dependents
     ]
+
+
+def _project_plants():
+    """The open plant (required) plus every other calculated project
+    plant; plants that no longer build are left out."""
+    plants = [_require_plant()]
+    project_store.park_active()
+    for slot in state.plants:
+        if slot["id"] == state.active_plant_id or not slot["results"]:
+            continue
+        try:
+            plants.append(build_plant(slot["equipment"], slot["plant"]))
+        except HTTPException:
+            pass
+    return plants
 
 
 @router.post("/cash-flow")
@@ -239,8 +258,10 @@ def run_monte_carlo(data: MonteCarloIn):
     state.mc_raw = raws
     # Only a run that includes the open plant (first) counts as its
     # Monte Carlo result for Save as JSON
-    state.mc_results = summaries[0] if data.include_active else None
-    state.mc_snapshot = state.calc_snapshot if data.include_active else None
+    if data.include_active:
+        state.mc_active_raw = raws[0]
+        state.mc_results = summaries[0]
+        state.mc_snapshot = state.calc_snapshot
 
     return {"plants": summaries}
 
@@ -282,6 +303,18 @@ def _resolve_parameter(parameter: str, config: dict) -> str:
     raise ValueError(f"'{parameter}' is not in this plant")
 
 
+def _resolve_in_project(parameter: str, configs: list[dict]) -> str:
+    """_resolve_parameter against the first plant config that has it."""
+    error = ValueError(f"'{parameter}' is not in any plant of the project")
+    for config in configs:
+        try:
+            return _resolve_parameter(parameter, config)
+        except ValueError as e:
+            if "both" in str(e):
+                error = e
+    raise error
+
+
 def _metric(value, where: str, notes: list[str]) -> str:
     metric = str(value or "LCOP").upper()
     if metric not in _METRICS:
@@ -310,7 +343,9 @@ def import_analysis_config(data: AnalysisImportIn):
     block = data.data.get("analysis")
     if not isinstance(block, dict):
         raise HTTPException(status_code=400, detail="Not a valid analysis file: it must contain an 'analysis' key.")
-    config = state.plant_config
+    project_store.park_active()
+    configs = [state.plant_config] + [
+        s["plant"] for s in state.plants if s["id"] != state.active_plant_id]
     notes: list[str] = []
     out: dict = {}
 
@@ -325,7 +360,7 @@ def import_analysis_config(data: AnalysisImportIn):
             name = case.get("name") or f"case_{i}"
             where = f"Sensitivity '{name}'"
             try:
-                parameter = _resolve_parameter(str(args.get("parameter", "")), config)
+                parameter = _resolve_in_project(str(args.get("parameter", "")), configs)
             except ValueError as e:
                 notes.append(f"{where} left out: {e}.")
                 continue

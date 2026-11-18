@@ -86,7 +86,8 @@ Data flow
    snapshots (``extra_plants``).
 5. **Monte Carlo** results are histogrammed on the backend (about 80 bins
    plus summary statistics, about 10 KB instead of about 40 MB); the raw
-   samples of the last run stay in memory for the figure downloads.
+   samples of the last run stay in memory for the figure downloads
+   (project-wide: they are kept when the open plant changes).
 
 Key design decisions
 ^^^^^^^^^^^^^^^^^^^^
@@ -101,7 +102,8 @@ Key design decisions
    project. ``project_store`` parks the open plant (input specs, config,
    results) before switching and rebuilds the target. Save files are
    format version 2 (``project``, ``plants``, ``active_plant``, and
-   ``runs``, the analyses run on each plant, which opening a file re-runs)
+   ``analysis``, the project's analyses with the plants each one ticks,
+   which opening a file re-runs)
    and also mirror the open plant at the top level, so older builds still
    open them; version 1 files load as one-plant projects. Plants that
    older files kept under ``compared_plants`` (the Compare tab used to
@@ -115,6 +117,11 @@ Key design decisions
    complete project (project details, plants, open plant) plus the
    analyses to run after loading; adding a ``.json`` file there adds an
    example, no code change needed.
+6. **Analysis and Monte Carlo tabs are project-wide.** One page per tab,
+   whichever plant is open; its plant checkboxes pick the plants of each
+   run. The backend still runs the open plant from the session and the
+   others from their snapshots (``include_active`` + ``extra_plants``), and
+   the sensitivity parameter list covers every calculated plant.
 
 API
 ---
@@ -258,27 +265,16 @@ notebook's plants and give the same results.
      - LCOP tornado and Monte Carlo of all four plants
    * - ``case_study_3``
      - Heat pump (open), Power plant
-     - Heat pump: sensitivity of payback time, ROI, IRR and NPV to the heat
-       price, NPV tornado, Monte Carlo of both plants. Power plant: NPV
-       sensitivity to the power price, run when it is first opened on the
-       Analysis tab
+     - Sensitivity of payback time, ROI, IRR and NPV to the heat price
+       and of NPV to the power price, for both plants (flat lines where a
+       plant lacks the price); NPV tornado of the heat pump; Monte Carlo of
+       both plants
 
 A preset file holds ``id``, ``title``, ``description`` (shown in the
 Examples menu), ``project`` (the Project Details: ``name``, ``user``,
 ``description``), ``active_plant`` (index of the plant that opens),
 ``plants`` (each with ``name``, ``equipment`` and ``plant``, as in a saved
-project, and optionally ``pfd``, the process flow diagram: an image file path relative to ``backend/app/presets`` such as ``img/CS_1-Fig_1.png``, which becomes an image data URL as in a saved project) and ``runs``. Each run names a ``plant`` by index, an ``analysis``
-block in the format of :func:`openpytea.io.load_analysis_config` (its
-``sensitivity``, ``tornado`` and ``monte_carlo`` entries), and the plants
-each analysis ticks (``sensitivity_plants``, ``tornado_plants``,
-``monte_carlo_plants``). The open plant's runs start right after loading;
-another plant's start when its Analysis or Monte Carlo tab is first
-opened. Saved projects use the same ``runs``: every sensitivity, tornado
-or Monte Carlo run is reported by its page to ``App.tsx``, which writes
-the last run of each plant into the file (Monte Carlo with ``metric``
-``["LCOP", "NPV"]`` for ``openpytea run``), and File ▸ Open re-runs them
-as an example's are. A loaded run a plant's pages haven't run yet is kept
-as it was. Running analyses doesn't mark the project as edited. The app ignores the optional ``output`` block and the Monte Carlo
+project, and optionally ``pfd``, the process flow diagram: an image file path relative to ``backend/app/presets`` such as ``img/CS_1-Fig_1.png``, which becomes an image data URL as in a saved project) and ``analysis``, the project's analysis block in the format of :func:`openpytea.io.load_analysis_config` (its ``sensitivity``, ``tornado`` and ``monte_carlo`` entries), each listing the plants it ticks by name under ``plants`` (all plants when left out). The analyses start right after loading. Saved projects use the same ``analysis`` block: every sensitivity, tornado or Monte Carlo run is reported by its page to ``App.tsx``, which writes the last one of each kind into the file with its ticked plants (Monte Carlo with ``metric`` ``["LCOP", "NPV"]`` for ``openpytea run``), and File ▸ Open re-runs them as an example's are. Running analyses doesn't mark the project as edited. The app ignores the optional ``output`` block and the Monte Carlo
 ``metric`` and ``plot_args``; they are there so a preset also runs from
 the command line (``openpytea run backend/app/presets/case_study_1.json``),
 which reads this format as a :ref:`multi-plant project file
