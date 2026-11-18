@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  getSensitivityParameters, runSensitivity, runTornado, fetchPlotPng, type PlotOptions,
+  getSensitivityParameters, runSensitivity, runTornado, fetchPlotPng, importAnalysisConfig,
+  type ExampleAutoRun, type PlotOptions,
 } from "../api/client";
 import type { AnalysisImport, SensitivityResult, TornadoCategory, TornadoResult, ProjectOverview } from "../types";
 import {
@@ -58,6 +59,9 @@ interface Props {
   /** The page stays mounted (results kept) while hidden on other tabs;
       false while hidden. */
   active: boolean;
+  /** Analyses of a just-loaded example, run once when the page mounts
+      (it mounts while its plant is the open one) */
+  autoRun?: ExampleAutoRun;
 }
 
 const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2, x_axis: XAxisMode = "percent"): Panel => ({
@@ -72,7 +76,7 @@ const newPanel = (parameter = "", metric = "LCOP", plus_minus_value = 0.2, x_axi
   x_axis,
 });
 
-export default function AnalysisPage({ setError, setNotice, project, active }: Props) {
+export default function AnalysisPage({ setError, setNotice, project, active, autoRun }: Props) {
   const [parameters, setParameters] = useState<string[]>([]);
   const [sensPoints, setSensPoints] = useState(21);
   const [panels, setPanels] = useState<Panel[]>([newPanel()]);
@@ -119,22 +123,25 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
     ]);
   };
 
-  const runAll = async () => {
+  /** Run every panel for the ticked plants. The arguments let the example
+      auto-run pass the panels, points and plants it has just set, before
+      React has applied those state updates. */
+  const runAll = async (list: Panel[] = panels, points: number = sensPoints, plantIds?: string[]) => {
     setError(null);
     let plantsReq: PlantsRequest;
     try {
-      plantsReq = await sensPlants.request();
+      plantsReq = plantIds ? await sensPlants.requestFor(plantIds) : await sensPlants.request();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Could not load the selected plants");
       return;
     }
     setPanels((prev) => prev.map((p) => ({ ...p, loading: true })));
 
-    const tasks = panels.map(async (panel) => {
+    const tasks = list.map(async (panel) => {
       const ran: SensRun = {
         parameter: panel.parameter,
         plus_minus_value: panel.plus_minus_value,
-        n_points: sensPoints,
+        n_points: points,
         metric: panel.metric,
       };
       try {
@@ -194,12 +201,15 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
     if (adding) addSensPlant(plantId);
   };
 
-  const doTornado = async () => {
+  const doTornado = async (
+    ran: { plus_minus_value: number; metric: string; category: TornadoCategory } =
+      { plus_minus_value: tornPM, metric: tornMetric, category: tornCategory },
+    plantIds?: string[],
+  ) => {
     setTornLoading(true);
     setError(null);
     try {
-      const ran = { plus_minus_value: tornPM, metric: tornMetric, category: tornCategory };
-      const req = await tornSelection.request();
+      const req = plantIds ? await tornSelection.requestFor(plantIds) : await tornSelection.request();
       const r = await runTornado({ ...ran, additional_capex: false, ...req.body });
       setTornResult(r);
       setTornIds(req.ids);
@@ -232,6 +242,43 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
     tornSelection.toggle(plantId);
     if (adding) addTornPlant(plantId);
   };
+
+  // An example's sensitivity and tornado settings fill the page (as an
+  // imported analysis file does) and are run straight away, once
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (!autoRun || autoRan.current) return;
+    autoRan.current = true;
+    (async () => {
+      try {
+        const [params, r] = await Promise.all([
+          getSensitivityParameters(),
+          importAnalysisConfig({ analysis: autoRun.analysis }),
+        ]);
+        setParameters(params);
+        const cases = (r.sensitivity ?? []).filter((c) => params.includes(c.parameter));
+        const runs: Promise<void>[] = [];
+        if (cases.length > 0 && autoRun.sensitivity_plants.length > 0) {
+          const list = cases.map((c) => newPanel(c.parameter, c.metric, c.plus_minus_value, c.x_axis));
+          setPanels(list);
+          setSensPoints(cases[0].n_points);
+          sensPlants.setTicked(autoRun.sensitivity_plants);
+          runs.push(runAll(list, cases[0].n_points, autoRun.sensitivity_plants));
+        }
+        if (r.tornado && autoRun.tornado_plants.length > 0) {
+          setTornPM(r.tornado.plus_minus_value);
+          setTornMetric(r.tornado.metric);
+          setTornCategory(r.tornado.category);
+          tornSelection.setTicked(autoRun.tornado_plants);
+          runs.push(doTornado(r.tornado, autoRun.tornado_plants));
+        }
+        await Promise.all(runs);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Running the example's analyses failed");
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRun]);
 
   /** An analysis input file's sensitivity cases become the panels and its
       tornado settings fill the tornado form; nothing is run. */
@@ -335,7 +382,7 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
         <ComparePlants project={project} isTicked={sensPlants.isTicked} onToggle={toggleSensPlant} />
 
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginBottom: 16 }}>
-          <button className="btn-primary" onClick={runAll} disabled={anyLoading}>
+          <button className="btn-primary" onClick={() => runAll()} disabled={anyLoading}>
             {anyLoading && <span className="spinner" />}Run Sensitivity{panels.length > 1 ? ` (${panels.length} panels)` : ""}
           </button>
           <button
@@ -423,7 +470,7 @@ export default function AnalysisPage({ setError, setNotice, project, active }: P
             </select>
           </div>
         </div>
-        <button className="btn-primary" onClick={doTornado} disabled={tornLoading}>
+        <button className="btn-primary" onClick={() => doTornado()} disabled={tornLoading}>
           {tornLoading && <span className="spinner" />}Run Tornado{isMultiTorn ? ` (${tornPlants.length} plants)` : ""}
         </button>
 

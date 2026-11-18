@@ -108,8 +108,9 @@ Key design decisions
 4. **No silent errors.** Every frontend API call reports failures in the
    error bar at the top of the page.
 5. **Examples are data.** Each preset in ``backend/app/presets/`` is a
-   complete project; adding a ``.json`` file there adds an example, no
-   code change needed.
+   complete project (project details, plants, open plant) plus the
+   analyses to run after loading; adding a ``.json`` file there adds an
+   example, no code change needed.
 
 API
 ---
@@ -233,31 +234,42 @@ Documentation and (?) help
 Example presets
 ---------------
 
+Each preset is one case study from ``examples/``. Loading it replaces the
+open project, like **File** ▸ **Open**. Its plants match the case study
+notebook's plants and give the same results.
+
 .. list-table::
    :header-rows: 1
-   :widths: 25 40 35
+   :widths: 20 40 40
 
    * - ID
-     - Title
-     - Source
-   * - ``h2_smr``
-     - Hydrogen – Steam Methane Reforming
-     - Case study 1 (14 equipment)
-   * - ``h2_methane_pyrolysis``
-     - Hydrogen – Methane Pyrolysis
-     - Case study 1 (13 equipment, carbon co-product)
-   * - ``h2_electrolysis``
-     - Hydrogen – Water Electrolysis
-     - Case study 1 (3 equipment, direct costs)
-   * - ``lh2_smr_best``
-     - Liquid H2 – SMR Best Case
-     - Case study 2 (11 equipment)
-   * - ``geothermal_heat_pump``
-     - Geothermal Heat Pump
-     - Case study 3 (8 equipment)
-   * - ``geothermal_power_plant``
-     - Geothermal Power Plant
-     - Case study 3 (7 equipment)
+     - Plants
+     - Run after loading
+   * - ``case_study_1``
+     - Steam Reforming, Methane Pyrolysis (open), Water Electrolysis
+     - Sensitivity of NPV, payback time, LCOH and ROI for all three plants;
+       LCOH tornado of methane pyrolysis; Monte Carlo of all three
+   * - ``case_study_2``
+     - SMR best (open), SMR worst, DMR best, DMR worst
+     - LCOP tornado and Monte Carlo of all four plants
+   * - ``case_study_3``
+     - Heat pump (open), Power plant
+     - Heat pump: sensitivity of payback time, ROI, IRR and NPV to the heat
+       price, NPV tornado, Monte Carlo of both plants. Power plant: NPV
+       sensitivity to the power price, run when it is first opened on the
+       Analysis tab
+
+A preset file holds ``id``, ``title``, ``description`` (shown in the
+Examples menu), ``project`` (the Project Details: ``name``, ``user``,
+``description``), ``active_plant`` (index of the plant that opens),
+``plants`` (each with ``name``, ``equipment`` and ``plant``, as in a saved
+project) and ``runs``. Each run names a ``plant`` by index, an ``analysis``
+block in the format of :func:`openpytea.io.load_analysis_config` (its
+``sensitivity``, ``tornado`` and ``monte_carlo`` entries), and the plants
+each analysis ticks (``sensitivity_plants``, ``tornado_plants``,
+``monte_carlo_plants``). The open plant's runs start right after loading;
+another plant's start when its Analysis or Monte Carlo tab is first
+opened.
 
 Known limitations
 -----------------

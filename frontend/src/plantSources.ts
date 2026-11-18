@@ -43,6 +43,12 @@ export function usePlantSelection(project: ProjectOverview | null) {
     });
   };
 
+  /** Tick exactly these plants. */
+  const setTicked = (ids: string[]) => {
+    setIncludeOpen(ids.includes(activeId));
+    setOthers(new Set(ids.filter((id) => id !== activeId)));
+  };
+
   /** Ticked plants that can run (others need results), open plant first. */
   const tickedIds = (): string[] => {
     if (!multi) return [activeId];
@@ -80,7 +86,7 @@ export function usePlantSelection(project: ProjectOverview | null) {
 
   const nameOf = (id: string) => project?.plants.find((p) => p.id === id)?.name ?? "";
 
-  return { isTicked, toggle, tickedIds, requestFor, request, colorIndex, nameOf };
+  return { isTicked, toggle, setTicked, tickedIds, requestFor, request, colorIndex, nameOf };
 }
 
 /** Every calculated plant of the project, for the Compare tab. */

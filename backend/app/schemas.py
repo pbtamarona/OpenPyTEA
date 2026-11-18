@@ -25,10 +25,23 @@ class ExportJsonResponse(BaseModel):
     files: list[ExportedFile]
 
 
+class ExampleAutoRun(BaseModel):
+    """Analyses the GUI runs on one plant right after an example loads:
+    an analysis input block (load_analysis_config format) and the plants
+    each analysis ticks."""
+    plant_id: str
+    analysis: dict
+    sensitivity_plants: list[str] = []
+    tornado_plants: list[str] = []
+    monte_carlo_plants: list[str] = []
+
+
 class LoadExampleResponse(BaseModel):
     ok: bool = True
     title: str | None = None
     equipment_count: int
+    active_plant_id: str | None = None
+    autorun: list[ExampleAutoRun] = []
 
 
 # ── Equipment ──────────────────────────────────────────────────────
@@ -380,7 +393,9 @@ class SensitivityCurve(BaseModel):
     # The parameter's value at each point; None if the plant lacks it
     x_value: list[float] | None = None
     y: list[float | None]
-    baseline: float
+    # None when the metric is undefined at the base case, e.g. the payback
+    # time of a plant that never breaks even
+    baseline: float | None
 
 
 class SensitivityResult(BaseModel):

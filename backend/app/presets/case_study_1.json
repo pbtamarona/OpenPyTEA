@@ -1,0 +1,589 @@
+{
+  "id": "case_study_1",
+  "title": "Case study 1: Hydrogen production pathways",
+  "description": "Steam methane reforming, methane pyrolysis and water electrolysis, 50 t/day H2, US Gulf Coast",
+  "project": {
+    "name": "Case study 1: Hydrogen production pathways",
+    "user": "OpenPyTEA",
+    "description": "Techno-economic comparison of three hydrogen production pathways producing 50 tonnes of H2 per day in the US Gulf Coast, sold at 5 US$/kg: steam methane reforming (SMR), methane pyrolysis (MP, with a solid carbon co-product) and alkaline water electrolysis (WE, with stack replacements in years 10 and 20). SMR and MP equipment is sized from Aspen Plus simulations; the WE costs come from a US DOE assessment. Loaded with the analyses of the notebook already run: sensitivity of NPV to the interest rate, payback time to the methane price, LCOH to the carbon price and ROI to the electricity price for all three plants, a tornado of the MP levelized cost, and a Monte Carlo simulation of every plant. Notebook: https://github.com/pbtamarona/OpenPyTEA/blob/main/examples/case_study_1.ipynb"
+  },
+  "active_plant": 1,
+  "plants": [
+    {
+      "name": "Steam Reforming",
+      "equipment": [
+        {
+          "name": "COMP-1",
+          "param": 945,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-1",
+          "param": 1050,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-2",
+          "param": 491,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-2",
+          "param": 545.5555556,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "HX-1",
+          "param": 31.87,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "304 stainless steel"
+        },
+        {
+          "name": "HX-2",
+          "param": 22.74,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "304 stainless steel"
+        },
+        {
+          "name": "HX-3",
+          "param": 107.19,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "304 stainless steel"
+        },
+        {
+          "name": "COOLER",
+          "param": 191.47,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "SMR-REACTOR",
+          "param": 160,
+          "process_type": "Fluids",
+          "category": "Reactors",
+          "type": "Tubular fixed bed",
+          "material": "304 stainless steel"
+        },
+        {
+          "name": "WGS-HT-REACTOR",
+          "param": 376.54,
+          "process_type": "Fluids",
+          "category": "Reactors",
+          "type": "Tubular fixed bed",
+          "material": "304 stainless steel"
+        },
+        {
+          "name": "WGS-LT-REACTOR",
+          "param": 3822.92,
+          "process_type": "Fluids",
+          "category": "Reactors",
+          "type": "Tubular fixed bed",
+          "material": "304 stainless steel"
+        },
+        {
+          "name": "FURNACE",
+          "param": 33.26,
+          "process_type": "Fluids",
+          "category": "Boilers, heaters, & furnaces",
+          "type": "Furnace, cylindrical",
+          "material": "304 stainless steel"
+        },
+        {
+          "name": "PUMP",
+          "param": 5.16,
+          "process_type": "Fluids",
+          "category": "Pumps",
+          "type": "Single-stage centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "PSA",
+          "process_type": "Fluids",
+          "category": "Adsorption & membrane separation",
+          "type": "Pressure-swing adsorber",
+          "installation": "composite",
+          "components": [
+            {
+              "name": "PSA-VESSEL",
+              "param": 30,
+              "process_type": "Fluids",
+              "category": "Pressure vessels",
+              "type": "Vertical",
+              "material": "Carbon steel",
+              "num_units": 4
+            },
+            {
+              "name": "PSA-ZEOLITE",
+              "param": 2400,
+              "process_type": "Solids",
+              "category": "Packings & adsorbents",
+              "type": "Molecular sieves"
+            },
+            {
+              "name": "PSA-CARBON",
+              "param": 2200,
+              "process_type": "Solids",
+              "category": "Packings & adsorbents",
+              "type": "Activated carbon"
+            }
+          ]
+        }
+      ],
+      "plant": {
+        "plant_name": "Steam Reforming",
+        "process_type": "Fluids",
+        "country": "United States",
+        "region": "Gulf Coast",
+        "interest_rate": 0.09,
+        "project_lifetime": 30,
+        "plant_utilization": 0.95,
+        "tax_rate": 0.25,
+        "operator_hourly_rate": {
+          "rate": 38.11,
+          "rate_uncertainty": {
+            "std": 10,
+            "max": 50,
+            "min": 25
+          }
+        },
+        "plant_products": {
+          "hydrogen": {
+            "production": 50000,
+            "price": 5
+          }
+        },
+        "variable_opex_inputs": {
+          "electricity": {
+            "consumption": 38293.33333,
+            "price": 0.05,
+            "price_uncertainty": {
+              "std": 0.03,
+              "max": 3,
+              "min": 0.01
+            }
+          },
+          "methane_feed": {
+            "consumption": 219936,
+            "price": 0.4,
+            "price_uncertainty": {
+              "std": 0.25,
+              "max": 5,
+              "min": 0
+            }
+          },
+          "cooling_water": {
+            "consumption": 485344.08,
+            "price": 0.00024592,
+            "price_uncertainty": {
+              "std": 0.0001,
+              "max": 0.0004,
+              "min": 1e-05
+            }
+          },
+          "CO$_2$_tax": {
+            "consumption": 602991.36,
+            "price": 0.075,
+            "price_uncertainty": {
+              "std": 0.02,
+              "max": 0.15,
+              "min": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Methane Pyrolysis",
+      "equipment": [
+        {
+          "name": "COMP-1",
+          "param": 205,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-1",
+          "param": 227.7777778,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-2",
+          "param": 2993,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-2",
+          "param": 3325.555556,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-3",
+          "param": 363,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-3",
+          "param": 403.3333333,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "HX-1",
+          "param": 28.37,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "316 stainless steel"
+        },
+        {
+          "name": "COOLER-1",
+          "param": 41.85,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COOLER-2",
+          "param": 26.21,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "REACTOR",
+          "param": 147.26,
+          "process_type": "Mixed",
+          "category": "Reactors",
+          "type": "Indirect fluidized-bed",
+          "material": "316 stainless steel"
+        },
+        {
+          "name": "FURNACE",
+          "param": 22608,
+          "process_type": "Fluids",
+          "category": "Boilers, heaters, & furnaces",
+          "type": "Pyrolysis furnace",
+          "material": "316 stainless steel"
+        },
+        {
+          "name": "CYCLONE",
+          "param": 36.7,
+          "process_type": "Mixed",
+          "category": "Dust collectors",
+          "type": "Gas multi-cyclone",
+          "material": "316 stainless steel"
+        },
+        {
+          "name": "PSA",
+          "process_type": "Fluids",
+          "category": "Adsorption & membrane separation",
+          "type": "Pressure-swing adsorber",
+          "installation": "composite",
+          "components": [
+            {
+              "name": "PSA-VESSEL",
+              "param": 30,
+              "process_type": "Fluids",
+              "category": "Pressure vessels",
+              "type": "Vertical",
+              "material": "Carbon steel",
+              "num_units": 4
+            },
+            {
+              "name": "PSA-ZEOLITE",
+              "param": 2400,
+              "process_type": "Solids",
+              "category": "Packings & adsorbents",
+              "type": "Molecular sieves"
+            },
+            {
+              "name": "PSA-CARBON",
+              "param": 2200,
+              "process_type": "Solids",
+              "category": "Packings & adsorbents",
+              "type": "Activated carbon"
+            }
+          ]
+        }
+      ],
+      "plant": {
+        "plant_name": "Methane Pyrolysis",
+        "process_type": "Mixed",
+        "country": "United States",
+        "region": "Gulf Coast",
+        "interest_rate": 0.09,
+        "project_lifetime": 30,
+        "plant_utilization": 0.95,
+        "tax_rate": 0.25,
+        "operator_hourly_rate": {
+          "rate": 38.11,
+          "rate_uncertainty": {
+            "std": 10,
+            "max": 50,
+            "min": 25
+          }
+        },
+        "plant_products": {
+          "hydrogen": {
+            "production": 50000,
+            "price": 5
+          },
+          "solid_carbon": {
+            "production": 73200,
+            "price": 1,
+            "price_uncertainty": {
+              "std": 0.4,
+              "max": 3,
+              "min": 0
+            }
+          }
+        },
+        "variable_opex_inputs": {
+          "electricity": {
+            "consumption": 94960,
+            "price": 0.05,
+            "price_uncertainty": {
+              "std": 0.03,
+              "max": 3,
+              "min": 0.01
+            }
+          },
+          "methane_feed": {
+            "consumption": 287016,
+            "price": 0.4,
+            "price_uncertainty": {
+              "std": 0.25,
+              "max": 5,
+              "min": 0
+            }
+          },
+          "cooling_water": {
+            "consumption": 565753.68,
+            "price": 0.00024592,
+            "price_uncertainty": {
+              "std": 0.0001,
+              "max": 0.0004,
+              "min": 1e-05
+            }
+          },
+          "CO$_2$_tax": {
+            "consumption": 248568,
+            "price": 0.075,
+            "price_uncertainty": {
+              "std": 0.02,
+              "max": 0.15,
+              "min": 0
+            }
+          },
+          "carbon_disposal_fee": {
+            "consumption": 73200,
+            "price": 0.5,
+            "price_uncertainty": {
+              "std": 0.4,
+              "max": 1,
+              "min": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Water Electrolysis",
+      "equipment": [
+        {
+          "name": "Stack",
+          "process_type": "Fluids",
+          "category": "Electrolysis",
+          "type": "Stack",
+          "material": "Carbon steel",
+          "purchased_cost": 17194000,
+          "cost_year": 2020
+        },
+        {
+          "name": "Mechanical BOP",
+          "process_type": "Fluids",
+          "category": "Electrolysis",
+          "type": "Mechanical",
+          "material": "Carbon steel",
+          "purchased_cost": 11019000,
+          "cost_year": 2020
+        },
+        {
+          "name": "Electrical BOP",
+          "process_type": "Electrical",
+          "category": "Electrolysis",
+          "type": "Electrical",
+          "material": "Carbon steel",
+          "purchased_cost": 16974000,
+          "cost_year": 2020
+        }
+      ],
+      "plant": {
+        "plant_name": "Water Electrolysis",
+        "process_type": "Fluids",
+        "country": "United States",
+        "region": "Gulf Coast",
+        "interest_rate": 0.09,
+        "project_lifetime": 30,
+        "plant_utilization": 0.95,
+        "tax_rate": 0.25,
+        "operator_hourly_rate": {
+          "rate": 38.11,
+          "rate_uncertainty": {
+            "std": 10,
+            "max": 50,
+            "min": 25
+          }
+        },
+        "plant_products": {
+          "hydrogen": {
+            "production": 50000,
+            "price": 5
+          }
+        },
+        "variable_opex_inputs": {
+          "electricity": {
+            "consumption": 2352000,
+            "price": 0.05,
+            "price_uncertainty": {
+              "std": 0.03,
+              "max": 3,
+              "min": 0.01
+            }
+          },
+          "water": {
+            "consumption": 378000,
+            "price": 0.003,
+            "price_uncertainty": {
+              "std": 0.001,
+              "max": 0.005,
+              "min": 0
+            }
+          }
+        },
+        "operators_hired": 14,
+        "additional_capex_cost": [
+          23071452.53,
+          23071452.53
+        ],
+        "additional_capex_years": [
+          10,
+          20
+        ]
+      }
+    }
+  ],
+  "runs": [
+    {
+      "plant": 1,
+      "analysis": {
+        "sensitivity": {
+          "run": true,
+          "cases": [
+            {
+              "name": "interest_rate_npv",
+              "args": {
+                "parameter": "interest_rate",
+                "plus_minus_value": 1,
+                "metric": "NPV",
+                "n_points": 50
+              }
+            },
+            {
+              "name": "methane_feed_pbt",
+              "args": {
+                "parameter": "methane_feed",
+                "plus_minus_value": 0.58,
+                "metric": "PBT",
+                "n_points": 50
+              }
+            },
+            {
+              "name": "solid_carbon_lcop",
+              "args": {
+                "parameter": "solid_carbon",
+                "plus_minus_value": 0.8,
+                "metric": "LCOP",
+                "n_points": 50
+              }
+            },
+            {
+              "name": "electricity_roi",
+              "args": {
+                "parameter": "electricity",
+                "plus_minus_value": 0.55,
+                "metric": "ROI",
+                "n_points": 50
+              }
+            }
+          ]
+        },
+        "tornado": {
+          "run": true,
+          "args": {
+            "plus_minus_value": 0.5,
+            "metric": "LCOP"
+          }
+        },
+        "monte_carlo": {
+          "run": true,
+          "args": {
+            "num_samples": 100000,
+            "batch_size": 10000
+          }
+        }
+      },
+      "sensitivity_plants": [
+        0,
+        1,
+        2
+      ],
+      "tornado_plants": [
+        1
+      ],
+      "monte_carlo_plants": [
+        0,
+        1,
+        2
+      ]
+    }
+  ]
+}

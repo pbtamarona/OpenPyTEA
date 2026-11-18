@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   setProjectMeta, addPlant, activatePlant, duplicatePlant, renamePlant,
   deletePlant,
@@ -50,6 +50,16 @@ export default function ProjectPage({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // The description box grows with its text (CSS field-sizing isn't in
+  // the macOS webview), never below its 3 rows
+  const descRef = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const el = descRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+  }, [meta?.description]);
 
   // The form is local while editing — re-syncing on every overview would
   // clobber a field being typed in while another field's save returns. The
@@ -133,7 +143,9 @@ export default function ProjectPage({
         <div className="form-group" style={{ marginTop: 12 }}>
           <label>Project Description<HelpTip id="project.description" /></label>
           <textarea
+            ref={descRef}
             rows={3}
+            style={{ resize: "vertical", overflow: "hidden" }}
             value={meta.description}
             placeholder="Scope, assumptions, data sources…"
             onChange={(e) => setMeta({ ...meta, description: e.target.value })}
@@ -153,7 +165,7 @@ export default function ProjectPage({
         </div>
         <p className="project-hint">
           Plant Config, Equipment, Results, Analysis and Monte Carlo work on the open plant (●).
-          Examples are added to the project as new plants.
+          An example opens a whole case study as a new project, with its analyses already run.
         </p>
         <div style={{ overflowX: "auto" }}>
           <table>

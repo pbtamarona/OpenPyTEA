@@ -192,5 +192,18 @@ export interface ExamplePreset {
   description: string;
 }
 export const getExamples = () => request<ExamplePreset[]>("/project/examples");
+/** Analyses run on one plant right after an example loads: an analysis
+    input block (the format importAnalysisConfig reads) and the plants each
+    analysis ticks. */
+export interface ExampleAutoRun {
+  plant_id: string;
+  analysis: Record<string, unknown>;
+  sensitivity_plants: string[];
+  tornado_plants: string[];
+  monte_carlo_plants: string[];
+}
 export const loadExample = (id: string) =>
-  request<{ ok: boolean; title: string; equipment_count: number }>(`/project/examples/${id}`, { method: "POST" });
+  request<{
+    ok: boolean; title: string; equipment_count: number;
+    active_plant_id: string | null; autorun: ExampleAutoRun[];
+  }>(`/project/examples/${id}`, { method: "POST" });

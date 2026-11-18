@@ -9,7 +9,7 @@ import {
   newProject, getExamples, loadExample, runCalculations,
   getProject, activatePlant, addPlant,
 } from "./api/client";
-import type { ExamplePreset } from "./api/client";
+import type { ExampleAutoRun, ExamplePreset } from "./api/client";
 import ComparePage from "./pages/ComparePage";
 import { projectComparison } from "./plantSources";
 import WelcomePage from "./pages/WelcomePage";
@@ -68,6 +68,10 @@ function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [examples, setExamples] = useState<ExamplePreset[]>([]);
   const [examplesOpen, setExamplesOpen] = useState(false);
+  // Analyses of the loaded example, by plant id: that plant's Analysis and
+  // Monte Carlo pages run them when they mount (the open plant's pages are
+  // mounted right after loading, the others on their first visit)
+  const [autoRuns, setAutoRuns] = useState<Record<string, ExampleAutoRun>>({});
   const [brandOpen, setBrandOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [dark, setDark] = useState(() => {
@@ -569,18 +573,21 @@ function App() {
 
   const handleLoadExample = async (id: string) => {
     setExamplesOpen(false);
+    // An example is a whole project (all plants of a case study), so it
+    // replaces the open one, as File ▸ Open does
+    if (!(await confirmIfDirty("Load an example"))) return;
     try {
       setLoadingMsg("Loading example…");
-      // The example becomes a new plant of the current project (or takes
-      // over an untouched blank plant), so nothing is discarded and no
-      // unsaved-changes prompt is needed. It only counts as an edit of a
-      // project that has a file — an untitled project assembled from
-      // examples shouldn't nag on quit, as before.
-      await loadExample(id);
-      if (currentPathRef.current) setDirty(true);
+      const loaded = await loadExample(id);
+      setComparedPlants([]);
+      setComparisonDirty(false);
+      setCurrentPath(null);
+      setDirty(false);
       setError(null);
+      resetProjectView();
       setRefreshKey((k) => k + 1);
-      setTab("Plant Config");
+      setTab("Project");
+      setAutoRuns(Object.fromEntries(loaded.autorun.map((r) => [r.plant_id, r])));
 
       setLoadingMsg("Calculating…");
       try {
@@ -588,6 +595,14 @@ function App() {
         setResults(r);
       } catch {
         setResults(null);
+      }
+
+      // Run the example's analyses: mount the open plant's Analysis and
+      // Monte Carlo pages now (hidden), so they run in the background
+      const open = loaded.active_plant_id;
+      if (open && loaded.autorun.some((r) => r.plant_id === open)) {
+        setKept((prev) => [...prev, `Analysis|${open}`, `Monte Carlo|${open}`]);
+        setNotice(`Loaded ${loaded.title}. Its analyses are running in the background; see the Analysis and Monte Carlo tabs.`);
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load example");
@@ -925,12 +940,12 @@ function App() {
         )}
         {keptPlants("Analysis").map((id) => (
           <div key={id} hidden={!shown("Analysis", id)}>
-            <AnalysisPage setError={setError} setNotice={setNotice} project={project} active={shown("Analysis", id)} />
+            <AnalysisPage setError={setError} setNotice={setNotice} project={project} active={shown("Analysis", id)} autoRun={autoRuns[id]} />
           </div>
         ))}
         {keptPlants("Monte Carlo").map((id) => (
           <div key={id} hidden={!shown("Monte Carlo", id)}>
-            <MonteCarloPage setError={setError} setNotice={setNotice} project={project} />
+            <MonteCarloPage setError={setError} setNotice={setNotice} project={project} autoRun={autoRuns[id]} />
           </div>
         ))}
         {tab === "Compare" && (

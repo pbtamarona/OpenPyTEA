@@ -183,7 +183,7 @@ def list_examples():
     examples = []
     for f in sorted(PRESETS_DIR.glob("*.json")):
         try:
-            data = json.loads(f.read_text())
+            data = json.loads(f.read_text(encoding="utf-8"))
             examples.append({
                 "id": data.get("id", f.stem),
                 "title": data.get("title", f.stem),
@@ -203,18 +203,23 @@ def load_example(example_id: str):
     if not preset_file.exists():
         raise HTTPException(status_code=404, detail="Example not found")
 
-    data = json.loads(preset_file.read_text())
-    equipment = data.get("equipment", [])
-    config = data.get("plant", {})
-    build_equipment_list(equipment)  # validate before touching the project
+    data = json.loads(preset_file.read_text(encoding="utf-8"))
+    for entry in data.get("plants", []):
+        build_equipment_list(entry.get("equipment", []))  # validate before touching the project
 
-    # An example becomes a new plant of the current project, so building a
-    # multi-plant comparison from examples never discards work — except
-    # that it takes over an untouched blank plant (e.g. a fresh project's)
-    project_store.ensure_project()
-    if project_store.active_is_blank():
-        project_store.replace_active(equipment, config)
-    else:
-        project_store.add_plant(config.get("plant_name"), equipment, config)
-
-    return {"ok": True, "title": data.get("title"), "equipment_count": len(state.equipment_list)}
+    # An example is a whole project (like File ▸ Open): it replaces the
+    # current one. Its "runs" name the analyses the GUI runs right after
+    # loading, by plant index; they are returned with the new plant ids.
+    n = _restore_project_state(data)
+    ids = [s["id"] for s in state.plants]
+    autorun = [
+        {
+            "plant_id": ids[run["plant"]],
+            "analysis": run.get("analysis", {}),
+            **{key: [ids[i] for i in run.get(key, [])]
+               for key in ("sensitivity_plants", "tornado_plants", "monte_carlo_plants")},
+        }
+        for run in data.get("runs", [])
+    ]
+    return {"ok": True, "title": data.get("title"), "equipment_count": n,
+            "active_plant_id": state.active_plant_id, "autorun": autorun}

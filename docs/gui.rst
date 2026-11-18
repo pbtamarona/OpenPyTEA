@@ -91,11 +91,12 @@ The tabs follow the TEA workflow:
 
 A typical session:
 
-1. **Examples** → pick a case study (or build a plant in the Equipment and
-   Plant Config tabs).
-2. **Results** → **Run Calculations**.
-3. Add more plants (**Examples** again, or **+ Add Plant** on the Project
-   tab).
+1. **Examples** → pick a case study. It opens as a new project with all
+   of the case study's plants calculated and its sensitivity, tornado and
+   Monte Carlo analyses already run (or build a plant yourself in the
+   Equipment and Plant Config tabs).
+2. **Results** → **Run Calculations** after changing inputs.
+3. Add more plants with **+ Add Plant** on the Project tab.
 4. **Analysis** / **Monte Carlo** → tick the plants to overlay, then run.
 5. **Compare** → see all calculated plants side by side.
 6. **File** ▸ **Save As…** to keep the whole project in a ``.openpytea``

@@ -1,0 +1,715 @@
+{
+  "id": "case_study_2",
+  "title": "Case study 2: Hydrogen liquefaction precooling",
+  "description": "Single vs. dual mixed-refrigerant precooling, best and worst optimization cases, 125 t/day, Netherlands",
+  "project": {
+    "name": "Case study 2: Hydrogen liquefaction precooling",
+    "user": "OpenPyTEA",
+    "description": "Comparison of the precooling stage of a 125 t/day hydrogen liquefaction plant in the Netherlands, cooling H2 from 298 K to 80 K with a single mixed refrigerant (SMR) or a dual mixed refrigerant (DMR) cycle. The best- and worst-case designs of a multi-objective optimization (specific energy consumption vs. levelized cost) are costed as four plants. Loaded with a Monte Carlo simulation of all four plants already run. Notebook: https://github.com/pbtamarona/OpenPyTEA/blob/main/examples/case_study_2.ipynb"
+  },
+  "active_plant": 0,
+  "plants": [
+    {
+      "name": "SMR best",
+      "equipment": [
+        {
+          "name": "PFHX-1",
+          "param": 2.83,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 4-to-6-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "PFHX-2",
+          "param": 1.9,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 4-to-6-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "PFHX-3",
+          "param": 1.75,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 3-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "COMP-1",
+          "param": 2950.72,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-1",
+          "param": 3278.577778,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-2",
+          "param": 3561.59,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-2",
+          "param": 3957.322222,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-1",
+          "param": 170.63,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-2",
+          "param": 407.88,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "FS-1",
+          "param": 3100.65,
+          "process_type": "Fluids",
+          "category": "Pressure vessels",
+          "type": "Vertical CS",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "FS-2",
+          "param": 2989.35,
+          "process_type": "Fluids",
+          "category": "Pressure vessels",
+          "type": "Vertical CS",
+          "material": "Carbon steel"
+        }
+      ],
+      "plant": {
+        "plant_name": "SMR best",
+        "process_type": "Fluids",
+        "country": "Netherlands",
+        "interest_rate": 0.09,
+        "project_lifetime": 20,
+        "plant_utilization": 0.95,
+        "operator_hourly_rate": {
+          "rate": 38.11,
+          "rate_uncertainty": {
+            "std": 10,
+            "max": 50,
+            "min": 20
+          }
+        },
+        "plant_products": {
+          "liquid_h2": {
+            "production": 125000
+          }
+        },
+        "variable_opex_inputs": {
+          "electricity": {
+            "consumption": 173661.6,
+            "price": 0.1,
+            "price_uncertainty": {
+              "std": 0.025,
+              "max": 3,
+              "min": 0.01
+            }
+          },
+          "refrigerant": {
+            "consumption": 36,
+            "price": 5,
+            "price_uncertainty": {
+              "std": 1.5,
+              "max": 10,
+              "min": 1
+            }
+          },
+          "cooling_water": {
+            "consumption": 952560,
+            "price": 0.00024592,
+            "price_uncertainty": {
+              "std": 0.0001,
+              "max": 0.0004,
+              "min": 1e-05
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "SMR worst",
+      "equipment": [
+        {
+          "name": "PFHX-1",
+          "param": 0.9,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 4-to-6-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "PFHX-2",
+          "param": 1.27,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 4-to-6-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "PFHX-3",
+          "param": 0.87,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 3-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "COMP-1",
+          "param": 4529.53,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-1",
+          "param": 5032.811111,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-2",
+          "param": 4013.56,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-2",
+          "param": 4459.511111,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-1",
+          "param": 185.49,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-2",
+          "param": 437.37,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "FS-1",
+          "param": 2874.88,
+          "process_type": "Fluids",
+          "category": "Pressure vessels",
+          "type": "Vertical CS",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "FS-2",
+          "param": 3969.61,
+          "process_type": "Fluids",
+          "category": "Pressure vessels",
+          "type": "Vertical CS",
+          "material": "Carbon steel"
+        }
+      ],
+      "plant": {
+        "plant_name": "SMR worst",
+        "process_type": "Fluids",
+        "country": "Netherlands",
+        "interest_rate": 0.09,
+        "project_lifetime": 20,
+        "plant_utilization": 0.95,
+        "operator_hourly_rate": {
+          "rate": 38.11,
+          "rate_uncertainty": {
+            "std": 10,
+            "max": 50,
+            "min": 20
+          }
+        },
+        "plant_products": {
+          "liquid_h2": {
+            "production": 125000
+          }
+        },
+        "variable_opex_inputs": {
+          "electricity": {
+            "consumption": 227815.7333,
+            "price": 0.1,
+            "price_uncertainty": {
+              "std": 0.025,
+              "max": 3,
+              "min": 0.01
+            }
+          },
+          "refrigerant": {
+            "consumption": 36,
+            "price": 5,
+            "price_uncertainty": {
+              "std": 1.5,
+              "max": 10,
+              "min": 1
+            }
+          },
+          "cooling_water": {
+            "consumption": 1128000,
+            "price": 0.00024592,
+            "price_uncertainty": {
+              "std": 0.0001,
+              "max": 0.0004,
+              "min": 1e-05
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "DMR best",
+      "equipment": [
+        {
+          "name": "COMP-1",
+          "param": 2205.75,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-2",
+          "param": 1334.72,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-3",
+          "param": 1874.7,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-4",
+          "param": 481.63,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-1",
+          "param": 2450.833333,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-2",
+          "param": 1483.022222,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-3",
+          "param": 2083,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-4",
+          "param": 535.1444444,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-1",
+          "param": 597.75,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-2",
+          "param": 411.52,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-3",
+          "param": 123.89,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-4",
+          "param": 144.65,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "PFHX-1",
+          "param": 6.27,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 4-to-6-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "PFHX-2",
+          "param": 1.87,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 4-to-6-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "PFHX-3",
+          "param": 0.7,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 3-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "FS-1",
+          "param": 3293.44,
+          "process_type": "Fluids",
+          "category": "Pressure vessels",
+          "type": "Vertical CS",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "FS-2",
+          "param": 2320.89,
+          "process_type": "Fluids",
+          "category": "Pressure vessels",
+          "type": "Vertical CS",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "PUMP-1",
+          "param": 8.55,
+          "process_type": "Fluids",
+          "category": "Pumps",
+          "type": "Centrifugal",
+          "material": "Carbon steel"
+        }
+      ],
+      "plant": {
+        "plant_name": "DMR best",
+        "process_type": "Fluids",
+        "country": "Netherlands",
+        "interest_rate": 0.09,
+        "project_lifetime": 20,
+        "plant_utilization": 0.95,
+        "operator_hourly_rate": {
+          "rate": 38.11,
+          "rate_uncertainty": {
+            "std": 10,
+            "max": 50,
+            "min": 20
+          }
+        },
+        "plant_products": {
+          "liquid_h2": {
+            "production": 125000
+          }
+        },
+        "variable_opex_inputs": {
+          "electricity": {
+            "consumption": 157453.2,
+            "price": 0.1,
+            "price_uncertainty": {
+              "std": 0.025,
+              "max": 3,
+              "min": 0.01
+            }
+          },
+          "refrigerant": {
+            "consumption": 72,
+            "price": 5,
+            "price_uncertainty": {
+              "std": 1.5,
+              "max": 10,
+              "min": 1
+            }
+          },
+          "cooling_water": {
+            "consumption": 906000,
+            "price": 0.00024592,
+            "price_uncertainty": {
+              "std": 0.0001,
+              "max": 0.0004,
+              "min": 1e-05
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "DMR worst",
+      "equipment": [
+        {
+          "name": "COMP-1",
+          "param": 2240.08,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-2",
+          "param": 1551.9,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-3",
+          "param": 1710.11,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP-4",
+          "param": 1277.63,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-1",
+          "param": 2488.977778,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-2",
+          "param": 1724.333333,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-3",
+          "param": 1900.122222,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MTR-4",
+          "param": 1419.588889,
+          "process_type": "Electrical",
+          "category": "Motors & generators",
+          "type": "Totally enclosed motor",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-1",
+          "param": 150.02,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-2",
+          "param": 689.22,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-3",
+          "param": 129.44,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "INT-4",
+          "param": 149.05,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "U-tube shell & tube",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "PFHX-1",
+          "param": 2.62,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 4-to-6-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "PFHX-2",
+          "param": 2.03,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 4-to-6-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "PFHX-3",
+          "param": 0.45,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & fin 3-streams",
+          "material": "Aluminum"
+        },
+        {
+          "name": "FS-2",
+          "param": 2067.6,
+          "process_type": "Fluids",
+          "category": "Pressure vessels",
+          "type": "Vertical CS",
+          "material": "Carbon steel"
+        }
+      ],
+      "plant": {
+        "plant_name": "DMR worst",
+        "process_type": "Fluids",
+        "country": "Netherlands",
+        "interest_rate": 0.09,
+        "project_lifetime": 20,
+        "plant_utilization": 0.95,
+        "operator_hourly_rate": {
+          "rate": 38.11,
+          "rate_uncertainty": {
+            "std": 10,
+            "max": 50,
+            "min": 20
+          }
+        },
+        "plant_products": {
+          "liquid_h2": {
+            "production": 125000
+          }
+        },
+        "variable_opex_inputs": {
+          "electricity": {
+            "consumption": 180792.5333,
+            "price": 0.1,
+            "price_uncertainty": {
+              "std": 0.025,
+              "max": 3,
+              "min": 0.01
+            }
+          },
+          "refrigerant": {
+            "consumption": 72,
+            "price": 5,
+            "price_uncertainty": {
+              "std": 1.5,
+              "max": 10,
+              "min": 1
+            }
+          },
+          "cooling_water": {
+            "consumption": 972480,
+            "price": 0.00024592,
+            "price_uncertainty": {
+              "std": 0.0001,
+              "max": 0.0004,
+              "min": 1e-05
+            }
+          }
+        }
+      }
+    }
+  ],
+  "runs": [
+    {
+      "plant": 0,
+      "analysis": {
+        "tornado": {
+          "run": true,
+          "args": {
+            "plus_minus_value": 0.5,
+            "metric": "LCOP"
+          }
+        },
+        "monte_carlo": {
+          "run": true,
+          "args": {
+            "num_samples": 100000,
+            "batch_size": 10000
+          }
+        }
+      },
+      "sensitivity_plants": [],
+      "tornado_plants": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "monte_carlo_plants": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  ]
+}

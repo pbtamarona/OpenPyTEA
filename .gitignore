@@ -15,3 +15,6 @@ TAURI_PACKAGING_PLAN.md.bak
 docs/_build/
 docs/_static/cost_correlations_table.csv
 frontend/.vite/
+
+# Results written by the example notebooks (run_tea / run_openpytea)
+outputs/

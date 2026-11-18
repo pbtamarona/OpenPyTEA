@@ -1,0 +1,355 @@
+{
+  "id": "case_study_3",
+  "title": "Case study 3: Geothermal heat and power",
+  "description": "Geothermal district heating with a heat pump vs. an ORC power plant, Netherlands",
+  "project": {
+    "name": "Case study 3: Geothermal heat and power",
+    "user": "OpenPyTEA",
+    "description": "Techno-economic assessment of a medium-depth geothermal resource in the Netherlands used for district heating with heat-pump upgrading (part 1) or for electricity generation with an organic Rankine cycle (part 2). Drilling, field gathering, exploration and grid connection are added as additional CAPEX. Loaded with the analyses of the notebook already run: for the heat pump, the sensitivity of payback time, ROI, IRR and NPV to the heat price, an NPV tornado and a Monte Carlo simulation of both plants; for the power plant (open it on the Analysis tab), the sensitivity of NPV to the power price. Notebook: https://github.com/pbtamarona/OpenPyTEA/blob/main/examples/case_study_3.ipynb"
+  },
+  "active_plant": 0,
+  "plants": [
+    {
+      "name": "Heat pump",
+      "equipment": [
+        {
+          "name": "HEX",
+          "param": 60,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & frame",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "EVAP",
+          "param": 286.7,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & frame",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COND",
+          "param": 383.4,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & frame",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COMP",
+          "param": 2640.6,
+          "process_type": "Fluids",
+          "category": "Compressors, fans, & blowers",
+          "type": "Compressor, reciprocating",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "MIX_SPLIT",
+          "process_type": "Fluids",
+          "category": "Mixers & splitters",
+          "type": "Static",
+          "material": "Carbon steel",
+          "num_units": 10,
+          "purchased_cost": 46839.78
+        },
+        {
+          "name": "ESP",
+          "process_type": "Fluids",
+          "category": "Pumps",
+          "type": "Submersible",
+          "material": "Carbon steel",
+          "purchased_cost": 1499118.66
+        },
+        {
+          "name": "Separator",
+          "process_type": "Fluids",
+          "category": "Separators",
+          "type": "Two-phase separator",
+          "material": "Carbon steel",
+          "purchased_cost": 15444
+        },
+        {
+          "name": "Filter",
+          "process_type": "Fluids",
+          "category": "Filters",
+          "type": "Sand filter",
+          "material": "Carbon steel",
+          "purchased_cost": 724428.9
+        }
+      ],
+      "plant": {
+        "plant_name": "Heat pump",
+        "process_type": "Fluids",
+        "country": "Netherlands",
+        "plant_utilization": 0.83,
+        "interest_rate": 0.05,
+        "project_lifetime": 30,
+        "operator_hourly_rate": {
+          "rate": 31,
+          "rate_uncertainty": {
+            "std": 10,
+            "max": 50,
+            "min": 20
+          }
+        },
+        "operators_hired": 3,
+        "plant_products": {
+          "heat": {
+            "production": 601440,
+            "price": 0.06,
+            "price_uncertainty": {
+              "std": 0.02,
+              "max": 0.08,
+              "min": 0.04
+            }
+          }
+        },
+        "variable_opex_inputs": {
+          "electricity": {
+            "consumption": 89157.6,
+            "price": 0.083,
+            "price_uncertainty": {
+              "std": 0.025,
+              "max": 3,
+              "min": 0.01
+            }
+          }
+        },
+        "additional_capex_cost": [
+          9576726,
+          2546841,
+          3706741
+        ],
+        "additional_capex_years": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Power plant",
+      "equipment": [
+        {
+          "name": "EVAP",
+          "param": 150.1,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & frame",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "COND",
+          "param": 625.3,
+          "process_type": "Fluids",
+          "category": "Heat exchangers",
+          "type": "Plate & frame",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "PUMP",
+          "param": 15.8,
+          "process_type": "Fluids",
+          "category": "Pumps",
+          "type": "Centrifugal",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "TURB",
+          "param": 952.9,
+          "process_type": "Fluids",
+          "category": "Turbines",
+          "type": "Radial expander",
+          "material": "Carbon steel"
+        },
+        {
+          "name": "ESP",
+          "process_type": "Fluids",
+          "category": "Pumps",
+          "type": "Submersible",
+          "material": "Carbon steel",
+          "purchased_cost": 1520207.91
+        },
+        {
+          "name": "Separator",
+          "process_type": "Fluids",
+          "category": "Separators",
+          "type": "Two-phase separator",
+          "material": "Carbon steel",
+          "purchased_cost": 15444
+        },
+        {
+          "name": "Filter",
+          "process_type": "Fluids",
+          "category": "Filters",
+          "type": "Sand filter",
+          "material": "Carbon steel",
+          "purchased_cost": 724428.9
+        }
+      ],
+      "plant": {
+        "plant_name": "Power plant",
+        "process_type": "Fluids",
+        "country": "Netherlands",
+        "plant_utilization": 0.83,
+        "interest_rate": 0.05,
+        "project_lifetime": 30,
+        "operator_hourly_rate": {
+          "rate": 31,
+          "rate_uncertainty": {
+            "std": 10,
+            "max": 50,
+            "min": 20
+          }
+        },
+        "operators_hired": 3,
+        "plant_products": {
+          "power": {
+            "production": 22869.6,
+            "price": 0.083,
+            "price_uncertainty": {
+              "std": 0.025,
+              "max": 3,
+              "min": 0.01
+            }
+          }
+        },
+        "variable_opex_inputs": {
+          "electricity": {
+            "consumption": 26769.6,
+            "price": 0.083,
+            "price_uncertainty": {
+              "std": 0.025,
+              "max": 3,
+              "min": 0.01
+            }
+          }
+        },
+        "additional_capex_cost": [
+          9576733,
+          2639527,
+          3700451,
+          1500000
+        ],
+        "additional_capex_years": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  ],
+  "runs": [
+    {
+      "plant": 0,
+      "analysis": {
+        "sensitivity": {
+          "run": true,
+          "cases": [
+            {
+              "name": "heat_pbt",
+              "args": {
+                "parameter": "heat",
+                "plus_minus_value": 0.2,
+                "metric": "PBT",
+                "n_points": 50
+              },
+              "plot_args": {
+                "x_axis": "value"
+              }
+            },
+            {
+              "name": "heat_roi",
+              "args": {
+                "parameter": "heat",
+                "plus_minus_value": 0.2,
+                "metric": "ROI",
+                "n_points": 50
+              },
+              "plot_args": {
+                "x_axis": "value"
+              }
+            },
+            {
+              "name": "heat_irr",
+              "args": {
+                "parameter": "heat",
+                "plus_minus_value": 0.2,
+                "metric": "IRR",
+                "n_points": 50
+              },
+              "plot_args": {
+                "x_axis": "value"
+              }
+            },
+            {
+              "name": "heat_npv",
+              "args": {
+                "parameter": "heat",
+                "plus_minus_value": 0.2,
+                "metric": "NPV",
+                "n_points": 50
+              },
+              "plot_args": {
+                "x_axis": "value"
+              }
+            }
+          ]
+        },
+        "tornado": {
+          "run": true,
+          "args": {
+            "plus_minus_value": 0.2,
+            "metric": "NPV"
+          }
+        },
+        "monte_carlo": {
+          "run": true,
+          "args": {
+            "num_samples": 100000,
+            "batch_size": 10000
+          }
+        }
+      },
+      "sensitivity_plants": [
+        0
+      ],
+      "tornado_plants": [
+        0
+      ],
+      "monte_carlo_plants": [
+        0,
+        1
+      ]
+    },
+    {
+      "plant": 1,
+      "analysis": {
+        "sensitivity": {
+          "run": true,
+          "cases": [
+            {
+              "name": "power_npv",
+              "args": {
+                "parameter": "power",
+                "plus_minus_value": 10,
+                "metric": "NPV",
+                "n_points": 50
+              },
+              "plot_args": {
+                "x_axis": "value"
+              }
+            }
+          ]
+        }
+      },
+      "sensitivity_plants": [
+        1
+      ],
+      "tornado_plants": [],
+      "monte_carlo_plants": []
+    }
+  ]
+}

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { runMonteCarlo, fetchPlotPng } from "../api/client";
+import { useEffect, useRef, useState } from "react";
+import { runMonteCarlo, fetchPlotPng, importAnalysisConfig, type ExampleAutoRun } from "../api/client";
 import type { AnalysisImport, MonteCarloMultiResult, MonteCarloResult, ProjectOverview } from "../types";
 import {
   ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -51,6 +51,9 @@ interface Props {
   setError: (e: string | null) => void;
   setNotice: (m: string | null) => void;
   project: ProjectOverview | null;
+  /** Monte Carlo settings of a just-loaded example, run once when the page
+      mounts (it mounts while its plant is the open one) */
+  autoRun?: ExampleAutoRun;
 }
 
 const SQRT_2PI = Math.sqrt(2 * Math.PI);
@@ -175,7 +178,7 @@ type MCView = "histogram" | "cumulative";
 const DEFAULT_PCTS = ["10", "50", "90"];
 const validPct = (t: string) => t.trim() !== "" && Number.isFinite(Number(t)) && +t >= 0 && +t <= 100;
 
-export default function MonteCarloPage({ setError, setNotice, project }: Props) {
+export default function MonteCarloPage({ setError, setNotice, project, autoRun }: Props) {
   const [numSamples, setNumSamples] = useState(50000);
   // Fitted-normal overlay on the metric histograms (screen and downloads);
   // off by default, as in the library; remembered across sessions
@@ -218,14 +221,16 @@ export default function MonteCarloPage({ setError, setNotice, project }: Props) 
   const selection = usePlantSelection(project);
   const [runCount, setRunCount] = useState(1);
 
-  const run = async () => {
+  /** Run the ticked plants. The arguments let the example auto-run pass the
+      settings and plants it has just set, before React applies them. */
+  const run = async (samples: number = numSamples, batch: number = batchSize, plantIds?: string[]) => {
     setLoading(true);
     setError(null);
     try {
-      const req = await selection.request();
+      const req = plantIds ? await selection.requestFor(plantIds) : await selection.request();
       setRunCount(req.ids.length);
       const r = await runMonteCarlo({
-        num_samples: numSamples, batch_size: batchSize, additional_capex: false,
+        num_samples: samples, batch_size: batch, additional_capex: false,
         ...req.body,
       });
       setResult(r);
@@ -236,6 +241,27 @@ export default function MonteCarloPage({ setError, setNotice, project }: Props) 
       setLoading(false);
     }
   };
+
+  // An example's Monte Carlo settings fill the form and are run straight
+  // away, once
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (!autoRun || autoRan.current || autoRun.monte_carlo_plants.length === 0) return;
+    autoRan.current = true;
+    (async () => {
+      try {
+        const r = await importAnalysisConfig({ analysis: autoRun.analysis });
+        if (!r.monte_carlo) return;
+        setNumSamples(r.monte_carlo.num_samples);
+        setBatchSize(r.monte_carlo.batch_size);
+        selection.setTicked(autoRun.monte_carlo_plants);
+        await run(r.monte_carlo.num_samples, r.monte_carlo.batch_size, autoRun.monte_carlo_plants);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Running the example's Monte Carlo failed");
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRun]);
 
   const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2 });
   // Only the ticked plants of the run are shown
@@ -289,7 +315,7 @@ export default function MonteCarloPage({ setError, setNotice, project }: Props) 
           note="Each ticked plant runs its own Monte Carlo simulation with the same number of samples."
         />
 
-        <button className="btn-primary" onClick={run} disabled={loading}>
+        <button className="btn-primary" onClick={() => run()} disabled={loading}>
           {loading && <span className="spinner" />}
           {loading ? "Running Monte Carlo..." : "Run Monte Carlo"}
         </button>
