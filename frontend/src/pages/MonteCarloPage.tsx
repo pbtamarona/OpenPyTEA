@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { runMonteCarlo, fetchPlotPng, importAnalysisConfig, type ExampleAutoRun } from "../api/client";
-import type { AnalysisImport, MonteCarloMultiResult, MonteCarloResult, ProjectOverview } from "../types";
+import type { AnalysisImport, MCMetricStats, MonteCarloMultiResult, MonteCarloResult, ProjectOverview } from "../types";
 import {
   ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   ReferenceLine, ReferenceDot,
@@ -44,6 +44,12 @@ function inputUnit(name: string, cur: string): string | null {
 }
 
 const withUnit = (label: string, unit: string | null) => (unit ? `${label} / [${unit}]` : label);
+
+/** Statistics in each metric's table, top to bottom */
+const STAT_ROWS: [string, keyof Pick<MCMetricStats, "mean" | "std" | "p5" | "p25" | "p50" | "p75" | "p95" | "min" | "max">][] = [
+  ["Mean", "mean"], ["Std", "std"], ["P5", "p5"], ["P25", "p25"], ["Median", "p50"],
+  ["P75", "p75"], ["P95", "p95"], ["Min", "min"], ["Max", "max"],
+];
 
 const COLORS = ["#4361ee", "#e63946", "#06d6a0", "#f77f00", "#7209b7", "#4cc9f0", "#d62828", "#2a9d8f", "#e9c46a", "#264653"];
 
@@ -358,46 +364,8 @@ export default function MonteCarloPage({ setError, setNotice, project, autoRun, 
 
       {plants.length > 0 && (
         <>
-          {/* Summary statistics — one row per (plant, metric) */}
-          <div className="card">
-            <h2>Results Summary ({plants[0].num_samples.toLocaleString()} samples)</h2>
-            <div style={{ overflowX: "auto" }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Plant</th><th>Metric</th><th>Unit</th><th>Mean</th><th>Std</th>
-                    <th>P5</th><th>P25</th><th>Median</th><th>P75</th><th>P95</th>
-                    <th>Min</th><th>Max</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {plants.flatMap((p) =>
-                    Object.entries(p.metrics).map(([name, stats]) => (
-                      <tr key={`${p.pid}-${name}`}>
-                        <td>
-                          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: colorOf(p), marginRight: 8, verticalAlign: "middle" }} />
-                          <strong>{p.name}</strong>
-                        </td>
-                        <td>{name}</td>
-                        <td>{metricInfo(name, p.currency).unit ?? ""}</td>
-                        <td className="number">{fmt(stats.mean)}</td>
-                        <td className="number">{fmt(stats.std)}</td>
-                        <td className="number">{fmt(stats.p5)}</td>
-                        <td className="number">{fmt(stats.p25)}</td>
-                        <td className="number">{fmt(stats.p50)}</td>
-                        <td className="number">{fmt(stats.p75)}</td>
-                        <td className="number">{fmt(stats.p95)}</td>
-                        <td className="number">{fmt(stats.min)}</td>
-                        <td className="number">{fmt(stats.max)}</td>
-                      </tr>
-                    )),
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
           <div className="mc-plot-options">
+            <span style={{ color: "var(--text-secondary)" }}>{plants[0].num_samples.toLocaleString()} samples</span>
             <label>
               <input type="checkbox" checked={showFit} onChange={(e) => toggleFit(e.target.checked)} />
               Show fitted normal distribution
@@ -464,9 +432,11 @@ export default function MonteCarloPage({ setError, setNotice, project, autoRun, 
                     );
                   })}
                 </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 20, alignItems: "flex-start" }}>
                 <DownloadableChart
                   filename={`mc_${metric}${cumulative ? "_cumulative" : ""}`}
                   height={430}
+                  style={{ flex: "1 1 480px", minWidth: 0 }}
                   serverPlot={(opts) => fetchPlotPng("/plots/monte-carlo", {
                     metric,
                     kind: view,
@@ -583,6 +553,33 @@ export default function MonteCarloPage({ setError, setNotice, project, autoRun, 
                   </ResponsiveContainer>
                   )}
                 </DownloadableChart>
+                {/* This metric's statistics: one column per plant */}
+                <div style={{ flex: "0 1 auto", overflowX: "auto" }}>
+                  <table style={{ fontSize: 13, width: "auto" }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: "left", textTransform: "none" }}>{info.unit && info.unit !== "-" ? info.unit : ""}</th>
+                        {seriesPlants.map((p) => (
+                          <th key={p.pid} style={{ textAlign: "right", textTransform: "none" }}>
+                            <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: colorOf(p), marginRight: 6, verticalAlign: "middle" }} />
+                            {p.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {STAT_ROWS.map(([label, key]) => (
+                        <tr key={key}>
+                          <td>{label}</td>
+                          {seriesPlants.map((p) => (
+                            <td key={p.pid} className="number" style={{ whiteSpace: "nowrap" }}>{fmt(p.metrics[metric]![key])}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                </div>
               </div>
             );
           })}
