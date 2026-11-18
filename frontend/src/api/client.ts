@@ -137,6 +137,8 @@ export const duplicatePlant = (id: string) =>
   request<ProjectOverview>(`/project/plants/${id}/duplicate`, { method: "POST" });
 export const renamePlant = (id: string, name: string) =>
   request<ProjectOverview>(`/project/plants/${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+export const setPlantPfd = (id: string, image: string | null) =>
+  request<ProjectOverview>(`/project/plants/${id}/pfd`, { method: "PUT", body: JSON.stringify({ image }) });
 export const deletePlant = (id: string) =>
   request<ProjectOverview>(`/project/plants/${id}`, { method: "DELETE" });
 export const getPlantSnapshot = (id: string) =>

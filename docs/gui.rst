@@ -96,7 +96,7 @@ A typical session:
    Monte Carlo analyses already run (or build a plant yourself in the
    Equipment and Plant Config tabs).
 2. **Results** → **Run Calculations** after changing inputs.
-3. Add more plants with **+ Add Plant** on the Project tab.
+3. Add more plants with **+ Add Plant** on the Project tab, and see the open plant's process flow diagram below the plants (double-click a plant to open it), where you upload an image (saved in the project file; the window minimizes, or maximizes to full screen).
 4. **Analysis** / **Monte Carlo** → tick the plants to overlay, then run.
 5. **Compare** → see all calculated plants side by side.
 6. **File** ▸ **Save As…** to keep the whole project in a ``.openpytea``

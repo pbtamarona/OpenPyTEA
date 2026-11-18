@@ -266,6 +266,8 @@ export interface ProjectPlantRow {
   currency: string;
   equipment_count: number;
   metrics: CalculationResults["metrics"] | null;
+  /** Process flow diagram as an image data URL */
+  pfd: string | null;
 }
 
 export interface ProjectOverview {

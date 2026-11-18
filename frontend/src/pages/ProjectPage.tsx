@@ -1,10 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   setProjectMeta, addPlant, activatePlant, duplicatePlant, renamePlant,
-  deletePlant,
+  deletePlant, setPlantPfd,
 } from "../api/client";
 import type { ProjectMeta, ProjectOverview } from "../types";
 import HelpTip from "../components/HelpTip";
+import PfdWindow from "../components/PfdWindow";
 
 interface Props {
   project: ProjectOverview | null;
@@ -113,6 +114,14 @@ export default function ProjectPage({
     if (o) onOpenPlant();
   };
 
+  // Double-clicking a row (not its buttons or rename box) opens the plant
+  // here; the process flow diagram window shows the open plant
+  const showPfd = (e: React.MouseEvent, id: string) => {
+    if ((e.target as HTMLElement).closest("button, input") || id === project.active_plant_id) return;
+    run(() => activatePlant(id), { switched: true, dirty: false });
+  };
+  const pfdPlant = project.plants.find((p) => p.id === project.active_plant_id);
+
   return (
     <div className="project-page">
       <div className="card">
@@ -166,6 +175,7 @@ export default function ProjectPage({
         <p className="project-hint">
           Plant Config, Equipment, Results, Analysis and Monte Carlo work on the open plant (●).
           An example opens a whole case study as a new project, with its analyses already run.
+          Double-click a plant to open it and show its process flow diagram below.
         </p>
         <div style={{ overflowX: "auto" }}>
           <table>
@@ -180,7 +190,7 @@ export default function ProjectPage({
               {project.plants.map((p) => {
                 const active = p.id === project.active_plant_id;
                 return (
-                  <tr key={p.id} className={active ? "project-row-active" : undefined}>
+                  <tr key={p.id} className={active ? "project-row-active" : undefined} onDoubleClick={(e) => showPfd(e, p.id)} title="Double-click to open this plant">
                     <td className="project-dot" title={active ? "Open plant" : undefined}>{active ? "●" : "○"}</td>
                     <td>
                       {renamingId === p.id ? (
@@ -239,6 +249,19 @@ export default function ProjectPage({
           </table>
         </div>
       </div>
+
+      {pfdPlant && (
+        <div className="card">
+          <h2>Process Flow Diagram<HelpTip id="project.pfd" /></h2>
+          <PfdWindow
+            key={pfdPlant.id}
+            title={pfdPlant.name}
+            image={pfdPlant.pfd}
+            busy={busy}
+            onChange={(image) => run(() => setPlantPfd(pfdPlant.id, image))}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,8 @@
 """Save/load project + example presets endpoints."""
 
+import base64
 import json
+import mimetypes
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -262,6 +264,17 @@ def load_example(example_id: str):
     data = json.loads(preset_file.read_text(encoding="utf-8"))
     for entry in data.get("plants", []):
         build_equipment_list(entry.get("equipment", []))  # validate before touching the project
+        # a preset's PFD is an image file next to it ("img/CS_1-Fig_1.png");
+        # the project keeps images as data URLs
+        pfd = entry.get("pfd")
+        if isinstance(pfd, str) and not project_store.is_image_data_url(pfd):
+            image = (PRESETS_DIR / pfd).resolve()
+            mime = mimetypes.guess_type(image.name)[0] or ""
+            entry["pfd"] = (
+                f"data:{mime};base64,{base64.b64encode(image.read_bytes()).decode()}"
+                if image.is_relative_to(PRESETS_DIR.resolve()) and image.is_file()
+                and mime.startswith("image/") else None
+            )
 
     # An example is a whole project (like File ▸ Open): it replaces the
     # current one, and its "runs" are run right after loading

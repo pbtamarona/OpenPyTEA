@@ -22,6 +22,7 @@ const GUI: Record<string, HelpEntry> = {
   "project.plants": {
     text: "Every plant of the project. Plant Config, Equipment, Results, Analysis and Monte Carlo work on the open plant (●); pick another with Open or the Plant dropdown.",
   },
+  "project.pfd": { text: "An image of the plant's process flow diagram, saved in the project file. It shows the open plant (●); double-click a plant in the Plants table to open it. Minimize a window to its title bar; maximize (or double-click the image) to view it full screen, Esc to close." },
   "plant.rate_uncertainty": {
     text: "Monte Carlo distribution of the operator hourly rate (nested rate_uncertainty block). Pick a family and its parameters; None samples nothing.",
     doc: MC_KEYS,

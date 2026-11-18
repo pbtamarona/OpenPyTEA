@@ -11,6 +11,7 @@
   "plants": [
     {
       "name": "Steam Reforming",
+      "pfd": "img/CS_1-Fig_1.png",
       "equipment": [
         {
           "name": "COMP-1",
@@ -214,6 +215,7 @@
     },
     {
       "name": "Methane Pyrolysis",
+      "pfd": "img/CS_1-Fig_2.png",
       "equipment": [
         {
           "name": "COMP-1",
@@ -427,6 +429,7 @@
     },
     {
       "name": "Water Electrolysis",
+      "pfd": "img/CS_1-Fig_3.png",
       "equipment": [
         {
           "name": "Stack",

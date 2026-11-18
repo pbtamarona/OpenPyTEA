@@ -267,7 +267,7 @@ A preset file holds ``id``, ``title``, ``description`` (shown in the
 Examples menu), ``project`` (the Project Details: ``name``, ``user``,
 ``description``), ``active_plant`` (index of the plant that opens),
 ``plants`` (each with ``name``, ``equipment`` and ``plant``, as in a saved
-project) and ``runs``. Each run names a ``plant`` by index, an ``analysis``
+project, and optionally ``pfd``, the process flow diagram: an image file path relative to ``backend/app/presets`` such as ``img/CS_1-Fig_1.png``, which becomes an image data URL as in a saved project) and ``runs``. Each run names a ``plant`` by index, an ``analysis``
 block in the format of :func:`openpytea.io.load_analysis_config` (its
 ``sensitivity``, ``tornado`` and ``monte_carlo`` entries), and the plants
 each analysis ticks (``sensitivity_plants``, ``tornado_plants``,

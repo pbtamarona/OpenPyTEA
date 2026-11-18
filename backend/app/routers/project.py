@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 
 from app import project_store, state
-from app.schemas import ProjectMeta, ProjectOverview, PlantNameIn, PlantSnapshot
+from app.schemas import ProjectMeta, ProjectOverview, PlantNameIn, PlantPfdIn, PlantSnapshot
 
 router = APIRouter()
 
@@ -64,6 +64,17 @@ def rename_plant(plant_id: str, data: PlantNameIn):
     if not data.name or not data.name.strip():
         raise HTTPException(status_code=400, detail="Plant name can't be empty")
     if not project_store.rename(plant_id, data.name.strip()):
+        _not_found()
+    return _overview()
+
+
+@router.put("/plants/{plant_id}/pfd", response_model=ProjectOverview)
+def set_plant_pfd(plant_id: str, data: PlantPfdIn):
+    """Set (or with image=None remove) a plant's process flow diagram."""
+    project_store.ensure_project()
+    if data.image is not None and not project_store.is_image_data_url(data.image):
+        raise HTTPException(status_code=400, detail="The PFD must be an image")
+    if not project_store.set_pfd(plant_id, data.image):
         _not_found()
     return _overview()
 

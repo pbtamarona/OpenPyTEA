@@ -11,6 +11,7 @@
   "plants": [
     {
       "name": "Heat pump",
+      "pfd": "img/CS_3-Fig_1.png",
       "equipment": [
         {
           "name": "HEX",
@@ -130,6 +131,7 @@
     },
     {
       "name": "Power plant",
+      "pfd": "img/CS_3-Fig_2.png",
       "equipment": [
         {
           "name": "EVAP",

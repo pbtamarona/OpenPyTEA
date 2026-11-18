@@ -493,6 +493,13 @@ class ProjectPlantRow(BaseModel):
     currency: str = ""
     equipment_count: int
     metrics: Metrics | None = None
+    # Process flow diagram as an image data URL
+    pfd: str | None = None
+
+
+class PlantPfdIn(BaseModel):
+    """A plant's process flow diagram (image data URL), or None to remove it."""
+    image: str | None = Field(default=None, max_length=30_000_000)
 
 
 class ProjectOverview(BaseModel):

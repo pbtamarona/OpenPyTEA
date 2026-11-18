@@ -7,6 +7,7 @@ unchanged. Every plant of the project — the active one included — has a
 slot in state.plants:
 
     {"id", "name", "equipment": [spec], "plant": config, "results": dict|None,
+     "pfd": image data URL|None,
      "analysis": {"tornado_args", "sensitivity_args", "mc_raw", "mc_results",
                   "mc_current"}}
 
@@ -69,13 +70,20 @@ def equipment_specs(equipment_list) -> list[dict]:
     return specs
 
 
-def _new_slot(name: str, equipment: list[dict], config: dict) -> dict:
+def is_image_data_url(value) -> bool:
+    """A plant's PFD as stored: a base64 image data URL."""
+    return isinstance(value, str) and value.startswith("data:image/")
+
+
+def _new_slot(name: str, equipment: list[dict], config: dict,
+              pfd: str | None = None) -> dict:
     return {
         "id": uuid.uuid4().hex[:12],
         "name": name,
         "equipment": equipment,
         "plant": config,
         "results": None,
+        "pfd": pfd,
         "analysis": {"tornado_args": None, "sensitivity_args": {}},
     }
 
@@ -192,7 +200,7 @@ def _unique_name(base: str) -> str:
 
 
 def add_plant(name: str | None = None, equipment: list[dict] | None = None,
-              config: dict | None = None) -> dict:
+              config: dict | None = None, pfd: str | None = None) -> dict:
     """Add a plant to the project and make it active."""
     park_active()
     if config:
@@ -201,7 +209,7 @@ def add_plant(name: str | None = None, equipment: list[dict] | None = None,
     else:
         name = _unique_name(name or f"Plant {len(state.plants) + 1}")
         config = default_plant_config(name)
-    slot = _new_slot(name, copy.deepcopy(equipment or []), config)
+    slot = _new_slot(name, copy.deepcopy(equipment or []), config, pfd)
     state.plants.append(slot)
     _load_slot(slot)
     return slot
@@ -228,7 +236,16 @@ def duplicate(plant_id: str) -> dict | None:
     src = _slot(plant_id)
     if src is None:
         return None
-    return add_plant(f"{src['name']} (copy)", src["equipment"], src["plant"])
+    return add_plant(f"{src['name']} (copy)", src["equipment"], src["plant"],
+                     src.get("pfd"))
+
+
+def set_pfd(plant_id: str, image: str | None) -> bool:
+    slot = _slot(plant_id)
+    if slot is None:
+        return False
+    slot["pfd"] = image
+    return True
 
 
 def rename(plant_id: str, name: str) -> bool:
@@ -269,6 +286,9 @@ def overview() -> dict:
             "currency": s["plant"].get("currency", ""),
             "equipment_count": len(s["equipment"]),
             "metrics": metrics,
+            # ponytail: every overview carries the images; serve them from
+            # their own endpoint if large PFDs make the Project tab slow
+            "pfd": s.get("pfd"),
         })
     return {
         "meta": state.project_meta,
@@ -305,7 +325,7 @@ def to_file_payload() -> dict:
     park_active()
     plants = [
         {"name": s["name"], "equipment": s["equipment"], "plant": s["plant"],
-         "results": s["results"]}
+         "results": s["results"], **({"pfd": s["pfd"]} if s.get("pfd") else {})}
         for s in state.plants
     ]
     active = active_slot()
@@ -340,7 +360,9 @@ def restore(data: dict) -> int:
         config = e.get("plant") or {}
         equipment = e.get("equipment") or []
         name = e.get("name") or config.get("plant_name") or f"Plant {i}"
-        slot = _new_slot(name, equipment, config)
+        pfd = e.get("pfd")
+        slot = _new_slot(name, equipment, config,
+                         pfd if is_image_data_url(pfd) else None)
         plant = _calculate(build_equipment_list(equipment), config)
         slot["results"] = _extract_results(plant) if plant else None
         slots.append(slot)
