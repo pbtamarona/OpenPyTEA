@@ -356,6 +356,18 @@ export default function AnalysisPage({ setError, setNotice, project, active, aut
 
   const anyLoading = panels.some((p) => p.loading);
   const isGrid = panels.length > 1;
+  // One legend for all panels: every ticked plant shown in any of them, in
+  // project order and with its panel colour
+  const sensLegend = (() => {
+    const seen = new Map<string, string>();
+    panels.forEach((panel) => (panel.result?.curves ?? []).forEach((c, i) => {
+      const pid = panel.ids[i];
+      if (pid && sensPlants.isTicked(pid) && !seen.has(pid)) seen.set(pid, c.plant);
+    }));
+    return [...seen].map(([pid, plant], i) => ({ pid, plant, idx: sensPlants.colorIndex(pid, i) }))
+      .sort((a, b) => a.idx - b.idx)
+      .map((p) => ({ ...p, color: COLORS[p.idx % COLORS.length] }));
+  })();
 
   // Tornado chart data — bars are deltas from base_value. With a single plant
   // the x-axis tick formatter adds the base back to display actual metric
@@ -452,6 +464,20 @@ export default function AnalysisPage({ setError, setNotice, project, active, aut
           </label>
         </div>
 
+        {isGrid && multiPlant && sensLegend.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px 20px", marginBottom: 12, fontSize: 14 }}>
+            {sensLegend.map((p) => (
+              <span key={p.pid} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: p.color }}>
+                <svg width="16" height="10" aria-hidden="true">
+                  <line x1="0" y1="5" x2="16" y2="5" stroke={p.color} strokeWidth="2" />
+                  <circle cx="8" cy="5" r="3" fill="var(--card-bg)" stroke={p.color} strokeWidth="1.5" />
+                </svg>
+                {p.plant}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div
           style={
             isGrid
@@ -469,7 +495,7 @@ export default function AnalysisPage({ setError, setNotice, project, active, aut
               label={isGrid ? `(${String.fromCharCode(97 + idx)})` : undefined}
               isTicked={sensPlants.isTicked}
               colorIndex={sensPlants.colorIndex}
-              showLegend={multiPlant}
+              showLegend={multiPlant && !isGrid}
               serverPlot={async (opts) => {
                 // The figure of the result on screen: its run, ticked plants only
                 const req = await sensPlants.requestFor(panel.ids.filter(sensPlants.isTicked));
@@ -753,7 +779,7 @@ function SensitivityPanel({ panel, parameters, showRemove, compact, label, isTic
                   }}
                   labelStyle={{ color: "var(--text)" }}
                 />
-                {(curves.length > 1 || showLegend) && <Legend verticalAlign="top" height={28} />}
+                {showLegend && <Legend verticalAlign="top" height={28} />}
                 {curves.map((c, i) => (
                   <Line key={c.pid} type="monotone" dataKey={c.pid} name={c.plant} stroke={COLORS[colorIndex(c.pid, i) % COLORS.length]} strokeWidth={2} dot={false} connectNulls />
                 ))}
