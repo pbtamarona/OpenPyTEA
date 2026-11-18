@@ -26,6 +26,25 @@ export default function PfdWindow({ title, image, busy, onChange }: {
     reader.readAsDataURL(file);
   };
 
+  const [dragging, setDragging] = useState(false);
+  const isFileDrag = (e: React.DragEvent) => e.dataTransfer.types.includes("Files");
+  const drop = {
+    onDragOver: (e: React.DragEvent) => {
+      if (busy || !isFileDrag(e)) return;
+      e.preventDefault();
+      setDragging(true);
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false);
+    },
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragging(false);
+      const file = e.dataTransfer.files[0];
+      if (file?.type.startsWith("image/")) pick(file);
+    },
+  };
+
   const bar = (
     <div className="pfd-bar">
       <strong>{title}</strong>
@@ -51,15 +70,15 @@ export default function PfdWindow({ title, image, busy, onChange }: {
 
   const body = image
     ? <img src={image} alt={`${title} process flow diagram`} onDoubleClick={() => setMaximized(!maximized)} />
-    : <p className="pfd-empty">No process flow diagram yet. Upload an image (PNG, JPG, SVG…).</p>;
+    : <p className="pfd-empty">No process flow diagram yet. Upload or drop an image here (PNG, JPG, SVG…).</p>;
 
   return (
-    <div className="pfd-window">
+    <div className={`pfd-window${dragging ? " pfd-drag" : ""}`} {...drop}>
       {bar}
       {!minimized && !maximized && <div className="pfd-body">{body}</div>}
       {maximized && (
         <div className="modal-overlay" onClick={() => setMaximized(false)}>
-          <div className="pfd-window pfd-max" onClick={(e) => e.stopPropagation()}>
+          <div className={`pfd-window pfd-max${dragging ? " pfd-drag" : ""}`} onClick={(e) => e.stopPropagation()}>
             {bar}
             <div className="pfd-body">{body}</div>
           </div>
