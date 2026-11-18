@@ -885,6 +885,10 @@ td input[type="number"] {
   color: var(--accent);
   outline: none;
 }
+.ramp-total .help-tip {
+  border-color: var(--success-text);
+  color: var(--success-text);
+}
 .help-bubble {
   position: fixed;
   z-index: 3000;

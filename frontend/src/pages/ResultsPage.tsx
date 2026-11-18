@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { runCalculations, getPlantConfig, setPlantConfig as savePlantConfig, fetchPlotPng, exportJsonResults } from "../api/client";
-import type { CalculationResults, PlantConfig, ProjectOverview } from "../types";
+import type { CalculationResults, PlantConfig, ProjectOverview, QuantityItem } from "../types";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -309,16 +309,30 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
     "f_p scales the whole fixed OPEX (1 = as estimated). Each item's (i) shows its own equation.",
   ].join("\n");
 
+  // "quantity × price × 365 × utilization", as the library computes each
+  // line. The quantity is backed out of the value so a dependent
+  // consumption shows its resolved amount, not the stale config number.
+  const util = plantConfig?.plant_utilization ?? 1;
+  const fmtNum = (n: number) => (Math.abs(n) >= 1 ? fmt(n) : fmtFactor(n));
+  const basisOf = (item: QuantityItem | undefined, qty: "consumption" | "production", value: number) => {
+    if (!item) return "";
+    const price = Number(item.price ?? 0);
+    const q = price && util ? value / (price * 365 * util) : Number(item[qty] ?? 0);
+    return `365 × ${fmtNum(q)} × ${fmtNum(price)} × ${fmtNum(util)}`;
+  };
+  const eqNote = (s: string) => <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 400, marginLeft: 10 }}>{s}</span>;
+
   // Variable OPEX breakdown
   const varOpexData = Object.entries(results.variable_opex.breakdown)
     .filter(([, v]) => typeof v === "number" && (v as number) > 0)
-    .map(([k, v]) => ({ name: nameLabel(k), value: v as number }))
+    .map(([k, v]) => ({ name: nameLabel(k), value: v as number, basis: basisOf(plantConfig?.variable_opex_inputs[k], "consumption", v as number) }))
     .sort(byDesc);
 
   // Revenue breakdown
   const revenueData = Object.entries(results.revenue.breakdown)
-    .map(([k, v]) => ({ name: nameLabel(k), value: v as number }))
+    .map(([k, v]) => ({ name: nameLabel(k), value: v as number, basis: basisOf(plantConfig?.plant_products[k], "production", v as number) }))
     .sort(byDesc);
+  const basisCell = (b: string) => <td style={{ whiteSpace: "nowrap", color: "var(--text-muted)", fontSize: 12, paddingRight: 12 }}>{b}</td>;
 
   // Chart rows, as values or as % of the chart's total
   const capexChart = pctOn.capital ? asShare(capexData) : capexData;
@@ -486,16 +500,16 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
       {varOpexData.length > 0 && (
         <div className="card">
           <div className="card-head">
-            <h2>Annual variable OPEX (in {currency})</h2>
+            <h2>Annual variable OPEX (in {currency}){eqNote("= 365 × consumption × unit price × plant utilization")}</h2>
             <PctToggle pct={!!pctOn.variable_opex} onChange={pctSet("variable_opex")} />
           </div>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
             <table style={{ flexShrink: 0, width: "50%", fontSize: 13 }}>
               <tbody>
                 {varOpexData.map((d) => (
-                  <tr key={d.name}><td style={{ paddingRight: 12, whiteSpace: "nowrap" }}>{d.name}</td><td className="number" style={{ whiteSpace: "nowrap" }}>{fmt(d.value)}</td></tr>
+                  <tr key={d.name}><td style={{ paddingRight: 12, whiteSpace: "nowrap" }}>{d.name}</td>{basisCell(d.basis)}<td className="number" style={{ whiteSpace: "nowrap" }}>{fmt(d.value)}</td></tr>
                 ))}
-                <tr style={{ fontWeight: 700 }}><td style={{ paddingRight: 12 }}>Total</td><td className="number">{fmt(results.variable_opex.total)}</td></tr>
+                <tr style={{ fontWeight: 700 }}><td style={{ paddingRight: 12 }}>Total</td><td /><td className="number">{fmt(results.variable_opex.total)}</td></tr>
               </tbody>
             </table>
             <DownloadableChart filename="variable_opex" serverPlot={(opts) => fetchPlotPng(`/plots/stacked/variable_opex${pctQuery("variable_opex")}`, undefined, opts)} height={varOpexData.length * 40 + 60} style={{ flex: 1, minWidth: 300 }}>
@@ -516,16 +530,16 @@ export default function ResultsPage({ results, setResults, setError, setNotice, 
       {results.revenue.total > 0 && (
         <div className="card">
           <div className="card-head">
-            <h2>Annual revenue (in {currency})</h2>
+            <h2>Annual revenue (in {currency}){eqNote("= 365 × production × unit price × plant utilization")}</h2>
             <PctToggle pct={!!pctOn.revenue} onChange={pctSet("revenue")} />
           </div>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
             <table style={{ flexShrink: 0, width: "50%", fontSize: 13 }}>
               <tbody>
                 {revenueData.map((d) => (
-                  <tr key={d.name}><td style={{ paddingRight: 12, whiteSpace: "nowrap" }}>{d.name}</td><td className="number" style={{ whiteSpace: "nowrap" }}>{fmt(d.value)}</td></tr>
+                  <tr key={d.name}><td style={{ paddingRight: 12, whiteSpace: "nowrap" }}>{d.name}</td>{basisCell(d.basis)}<td className="number" style={{ whiteSpace: "nowrap" }}>{fmt(d.value)}</td></tr>
                 ))}
-                <tr style={{ fontWeight: 700 }}><td style={{ paddingRight: 12 }}>Total</td><td className="number">{fmt(results.revenue.total)}</td></tr>
+                <tr style={{ fontWeight: 700 }}><td style={{ paddingRight: 12 }}>Total</td><td /><td className="number">{fmt(results.revenue.total)}</td></tr>
               </tbody>
             </table>
             {revenueData.length > 0 && (

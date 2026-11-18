@@ -5,6 +5,7 @@ import type { PlantConfig, DependencyBlock, UncertaintyBlock, ProjectOverview } 
 import UncertaintyEditor, { DISTRIBUTIONS, paramSummary } from "../components/UncertaintyEditor";
 import HelpTip from "../components/HelpTip";
 import { openJsonFile, saveJsonFile } from "../jsonFiles";
+import { nameLabel } from "../format";
 
 // ── Parameter dependencies (3.0 dependency DAG) ────────────────────
 // A dependency ties one parameter to others: dependent = Σ weight·parent
@@ -26,7 +27,7 @@ interface DepRule {
 
 const refLabel = (ref: string) => {
   const [kind, name] = ref.split(":");
-  return `${name} (${kind})`;
+  return `${nameLabel(name)} (${kind})`;
 };
 
 const allNodeRefs = (config: PlantConfig): string[] => [
@@ -672,7 +673,7 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
                         style={{ width: 130 }}
                       />
                     ) : (
-                      <button className="value-edit" style={{ fontWeight: 700 }} title="Click to rename" onClick={() => { setEditingProductKey(key); setEditingProductName(key); }}>{key}</button>
+                      <button className="value-edit" style={{ fontWeight: 700 }} title="Click to rename" onClick={() => { setEditingProductKey(key); setEditingProductName(key); }}>{nameLabel(key)}</button>
                     )}
                   </td>
                   <td><input type="number" value={val.production ?? 0} onChange={(e) => updateProduct(key, "production", +e.target.value)} style={{ width: 100 }} /></td>
@@ -728,7 +729,7 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
                         style={{ width: 130 }}
                       />
                     ) : (
-                      <button className="value-edit" style={{ fontWeight: 700 }} title="Click to rename" onClick={() => { setEditingVarOpexKey(key); setEditingVarOpexName(key); }}>{key}</button>
+                      <button className="value-edit" style={{ fontWeight: 700 }} title="Click to rename" onClick={() => { setEditingVarOpexKey(key); setEditingVarOpexName(key); }}>{nameLabel(key)}</button>
                     )}
                   </td>
                   <td><input type="number" value={val.consumption ?? 0} onChange={(e) => updateVarOpex(key, "consumption", +e.target.value)} style={{ width: 100 }} /></td>

@@ -150,8 +150,10 @@ export default function RampEditor({ capexRamp, productionRamp, fixedOpexRamp, v
                   {y < capex.length ? input(capex[y], (v) => setCapex(setAt(capex, y, v)), !totalOk) : <span style={muted}>–</span>}
                 </td>
               ))}
-              <td style={{ whiteSpace: "nowrap", paddingLeft: 12, color: totalOk ? "var(--success-text)" : "var(--error-text)" }}>
-                Total {Math.round(total * 100) / 100}%{totalOk ? " ✓" : " (must be 100%)"}
+              <td className="ramp-total" style={{ whiteSpace: "nowrap", paddingLeft: 12, color: totalOk ? "var(--success-text)" : "var(--error-text)" }}>
+                {totalOk
+                  ? <HelpTip text="Total 100%" icon="✓" />
+                  : `Total ${Math.round(total * 100) / 100}% (must be 100%)`}
               </td>
             </tr>
             <tr>
