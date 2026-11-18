@@ -35,7 +35,7 @@ const GUI: Record<string, HelpEntry> = {
     doc: MC_KEYS,
   },
   "plant.additional_capex": {
-    text: "One-off capital costs during the project (e.g. a replacement or a catalyst change): additional_capex_cost with the project year it is paid in (additional_capex_years, from 1). Charged in the cash flow in that year but never depreciated; years outside the project lifetime are ignored.",
+    text: "One-off capital costs during the project (e.g. a replacement or a catalyst change), each with a unique name: additional_capex_cost {name: cost} with the project year it is paid in (additional_capex_years {name: year}, from 1). Charged in the cash flow in that year but never depreciated; years outside the project lifetime are ignored.",
     doc: "user_guide/plant.html#configuration-reference",
   },
   "plant.dependencies": {

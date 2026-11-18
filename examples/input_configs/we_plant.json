@@ -17,8 +17,8 @@
       }
     },
 
-    "additional_capex_cost": [17194000, 17194000],
-    "additional_capex_years": [10, 20],
+    "additional_capex_cost": {"first_stack_replacement": 17194000, "second_stack_replacement": 17194000},
+    "additional_capex_years": {"first_stack_replacement": 10, "second_stack_replacement": 20},
 
     "plant_products": {
       "hydrogen": { "production": 50000, "price": 5.5 }

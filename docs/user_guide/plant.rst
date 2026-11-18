@@ -66,8 +66,10 @@ Creating a ``Plant``
 
        # Additional CAPEX and OPEX
        "working_capital": None,                     # USD; defaults to 15% of FCI
-       "additional_capex_cost": [500_000, 200_000], # one-off CAPEX events during operation
-       "additional_capex_years": [8, 15],           # years in which they occur
+       # One-off CAPEX events during operation, by name, and the year of each
+       # (unnamed matching lists, [500_000, 200_000] and [8, 15], also work)
+       "additional_capex_cost": {"compressor_overhaul": 500_000, "catalyst_replacement": 200_000},
+       "additional_capex_years": {"compressor_overhaul": 8, "catalyst_replacement": 15},
 
        # Depreciation (optional; defaults to straight-line if omitted)
        "depreciation": {

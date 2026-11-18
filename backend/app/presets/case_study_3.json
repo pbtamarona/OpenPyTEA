@@ -116,16 +116,16 @@
             }
           }
         },
-        "additional_capex_cost": [
-          9576726,
-          2546841,
-          3706741
-        ],
-        "additional_capex_years": [
-          1,
-          1,
-          1
-        ]
+        "additional_capex_cost": {
+          "drilling_and_wells": 9576726,
+          "field_gathering": 2546841,
+          "exploration": 3706741
+        },
+        "additional_capex_years": {
+          "drilling_and_wells": 1,
+          "field_gathering": 1,
+          "exploration": 1
+        }
       }
     },
     {
@@ -226,18 +226,18 @@
             }
           }
         },
-        "additional_capex_cost": [
-          9576733,
-          2639527,
-          3700451,
-          1500000
-        ],
-        "additional_capex_years": [
-          1,
-          1,
-          1,
-          1
-        ]
+        "additional_capex_cost": {
+          "drilling_and_wells": 9576733,
+          "field_gathering": 2639527,
+          "exploration": 3700451,
+          "grid_connection": 1500000
+        },
+        "additional_capex_years": {
+          "drilling_and_wells": 1,
+          "field_gathering": 1,
+          "exploration": 1,
+          "grid_connection": 1
+        }
       }
     }
   ],

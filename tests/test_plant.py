@@ -702,9 +702,60 @@ def test_vectorized_lifetimes_match_scalar_runs(test_plant):
         assert np.isclose(mc_roi[i], scalar.calculate_roi())
 
 
+def test_named_additional_capex_matches_lists(test_plant):
+    # {name: value} dicts compute exactly what the old matching lists do;
+    # years may be a dict by name (any order) or a list in cost order
+    test_plant.additional_capex_cost = [100_000.0, 250_000.0]
+    test_plant.additional_capex_years = [5, 10]
+    test_plant.calculate_cash_flow()
+    by_list = test_plant.cash_flow.copy()
+
+    test_plant.additional_capex_cost = {"exploration": 100_000.0,
+                                        "catalyst": 250_000.0}
+    test_plant.additional_capex_years = {"catalyst": 10, "exploration": 5}
+    test_plant.calculate_cash_flow()
+    assert np.allclose(test_plant.cash_flow, by_list)
+
+    test_plant.additional_capex_years = [5, 10]
+    test_plant.calculate_cash_flow()
+    assert np.allclose(test_plant.cash_flow, by_list)
+    assert "roi_with_additional_capex" in test_plant.to_dict()["metrics"]
+
+
+def test_named_additional_capex_bar_segments(test_plant):
+    from openpytea.analysis import fixed_capital_data
+
+    def segments(plant):
+        data = fixed_capital_data(plant, additional_capex=True)
+        return data["components"][0]
+
+    test_plant.additional_capex_cost = [100_000.0, 250_000.0]
+    test_plant.additional_capex_years = [5, 10]
+    assert segments(test_plant)["Additional CAPEX"] == pytest.approx(350_000)
+
+    test_plant.additional_capex_cost = {"exploration": 100_000.0,
+                                        "catalyst": 250_000.0}
+    test_plant.additional_capex_years = {"exploration": 5, "catalyst": 10}
+    named = segments(test_plant)
+    assert "Additional CAPEX" not in named
+    assert named["Exploration"] == pytest.approx(100_000)
+    assert named["Catalyst"] == pytest.approx(250_000)
+
+
+def test_named_additional_capex_validation(test_plant):
+    test_plant.additional_capex_cost = {"exploration": 1.0}
+    test_plant.additional_capex_years = {"drilling": 5}
+    with pytest.raises(ValueError, match="same items"):
+        test_plant.calculate_npv()
+
+    test_plant.additional_capex_cost = [1.0]
+    test_plant.additional_capex_years = {"exploration": 5}
+    with pytest.raises(ValueError, match="is a dict but"):
+        test_plant.calculate_npv()
+
+
 def test_to_dict_with_multi_entry_additional_capex(test_plant):
-    # After calculate_cash_flow, additional_capex_cost is a numpy array;
-    # to_dict's truthiness check must not raise for 2+ entries
+    # to_dict's "has additional capex" check must not raise for 2+ entries
     test_plant.additional_capex_cost = [100_000, 100_000]
     test_plant.additional_capex_years = [5, 10]
     test_plant.calculate_npv()

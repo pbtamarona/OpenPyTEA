@@ -130,8 +130,9 @@ export interface PlantConfig {
   project_uncertainties?: Record<string, Record<string, unknown>> | null;
   fc: number | null;
   fp: number | null;
-  additional_capex_years: number[] | null;
-  additional_capex_cost: number[] | null;
+  /** {name: value} (named) or matching lists (unnamed, the older form) */
+  additional_capex_years: Record<string, number> | number[] | null;
+  additional_capex_cost: Record<string, number> | number[] | null;
   /** Fraction of fixed capital spent per construction year (sums to 1);
       absent = the library default */
   capex_ramp?: number[] | null;

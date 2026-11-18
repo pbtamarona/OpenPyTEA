@@ -500,14 +500,14 @@
           }
         },
         "operators_hired": 14,
-        "additional_capex_cost": [
-          23071452.53,
-          23071452.53
-        ],
-        "additional_capex_years": [
-          10,
-          20
-        ]
+        "additional_capex_cost": {
+          "first_stack_replacement": 23071452.53,
+          "second_stack_replacement": 23071452.53
+        },
+        "additional_capex_years": {
+          "first_stack_replacement": 10,
+          "second_stack_replacement": 20
+        }
       }
     }
   ],

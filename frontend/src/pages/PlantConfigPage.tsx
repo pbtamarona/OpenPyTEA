@@ -26,6 +26,9 @@ interface DepRule {
   noise: number | null;                        // MC-only additive noise on the DAG-implied mean
 }
 
+/** One additional CAPEX entry, as edited in the table */
+interface CapexRow { name: string; cost: number; year: number }
+
 const refLabel = (ref: string) => {
   const [kind, name] = ref.split(":");
   return `${nameLabel(name)} (${kind})`;
@@ -269,25 +272,27 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
   const u = (field: keyof PlantConfig, value: unknown) =>
     setConfig((prev) => ({ ...prev, [field]: value }));
 
-  // Additional CAPEX is two matching lists in the library: set (or, with a
-  // null cost, remove) entry i of both; none left = no additional CAPEX
-  const setAdditionalCapex = (i: number, cost: number | null, year: number | null) =>
-    setConfig((prev) => {
-      const costs = [...(prev.additional_capex_cost ?? [])];
-      const years = [...(prev.additional_capex_years ?? [])];
-      if (cost === null || year === null) {
-        costs.splice(i, 1);
-        years.splice(i, 1);
-      } else {
-        costs[i] = cost;
-        years[i] = year;
-      }
-      return {
-        ...prev,
-        additional_capex_cost: costs.length ? costs : null,
-        additional_capex_years: costs.length ? years : null,
-      };
-    });
+  // Additional CAPEX rows from either library form; an older unnamed list
+  // gets "Additional CAPEX n" names, and every edit saves the named form
+  // ({name: cost} / {name: year}). None left = no additional CAPEX.
+  const capexRows = (c: PlantConfig): CapexRow[] => {
+    const cost = c.additional_capex_cost ?? [];
+    const years = c.additional_capex_years;
+    const entries = Array.isArray(cost)
+      ? cost.map((v, i): [string, number] => [`Additional CAPEX ${i + 1}`, v])
+      : Object.entries(cost);
+    return entries.map(([name, v], i) => ({
+      name, cost: v,
+      year: (Array.isArray(years) ? years[i] : Array.isArray(cost) ? undefined : years?.[name]) ?? 1,
+    }));
+  };
+  const capex = capexRows(config);
+  const setCapexRows = (rows: CapexRow[]) =>
+    setConfig((prev) => ({
+      ...prev,
+      additional_capex_cost: rows.length ? Object.fromEntries(rows.map((r) => [r.name, r.cost])) : null,
+      additional_capex_years: rows.length ? Object.fromEntries(rows.map((r) => [r.name, r.year])) : null,
+    }));
 
   // Variable OPEX helpers
   const addVarOpex = () => {
@@ -612,36 +617,59 @@ export default function PlantConfigPage({ setError, setNotice, markDirty, projec
       {/* Additional CAPEX */}
       <div className="card">
         <h2>Additional Capital Cost<HelpTip id="plant.additional_capex" /></h2>
-        {(config.additional_capex_cost ?? []).length === 0 ? (
+        {capex.length === 0 ? (
           <p style={{ color: "#868e96", fontSize: 13 }}>No additional capital costs. Add one-off investments during the project, such as an equipment replacement.</p>
         ) : (
           <table style={{ width: "auto" }}>
             <thead>
-              <tr><th>Cost ({config.currency})</th><th>Year</th><th></th></tr>
+              <tr><th>Name</th><th>Cost ({config.currency || "USD"})</th><th>Year</th><th></th></tr>
             </thead>
             <tbody>
-              {(config.additional_capex_cost ?? []).map((cost, i) => {
-                const year = config.additional_capex_years?.[i] ?? 1;
-                const outside = year < 1 || year > config.project_lifetime;
+              {capex.map((row, i) => {
+                const outside = row.year < 1 || row.year > config.project_lifetime;
+                const setRow = (patch: Partial<CapexRow>) => setCapexRows(capex.map((r, j) => (j === i ? { ...r, ...patch } : r)));
                 return (
-                  <tr key={i}>
-                    <td><NumberInput value={cost} onChange={(v) => setAdditionalCapex(i, v, year)} style={{ width: 140 }} /></td>
+                  <tr key={`${i}:${row.name}`}>
+                    <td>
+                      {/* Names key the library dicts: committed on blur, and an
+                          empty or repeated name goes back to the previous one */}
+                      <input
+                        type="text" defaultValue={row.name} style={{ width: 200 }}
+                        title="A unique name, shown in the capital cost breakdown"
+                        onBlur={(e) => {
+                          const name = e.target.value.trim();
+                          if (!name || capex.some((r, j) => j !== i && r.name === name)) e.target.value = row.name;
+                          else if (name !== row.name) setRow({ name });
+                        }}
+                        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                      />
+                    </td>
+                    <td><NumberInput value={row.cost} onChange={(v) => setRow({ cost: v })} style={{ width: 140 }} /></td>
                     <td>
                       <input
-                        type="number" min={1} max={config.project_lifetime} step={1} value={year}
-                        onChange={(e) => setAdditionalCapex(i, cost, Math.round(+e.target.value))}
+                        type="number" min={1} max={config.project_lifetime} step={1} value={row.year}
+                        onChange={(e) => setRow({ year: Math.round(+e.target.value) })}
                         title={outside ? `Outside the project lifetime (1–${config.project_lifetime}), so it is ignored` : undefined}
                         style={{ width: 70, borderColor: outside ? "var(--error-text)" : undefined }}
                       />
                     </td>
-                    <td><button className="btn-danger" onClick={() => setAdditionalCapex(i, null, null)}>Remove</button></td>
+                    <td><button className="btn-danger" onClick={() => setCapexRows(capex.filter((_, j) => j !== i))}>Remove</button></td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         )}
-        <button className="btn-primary" style={{ marginTop: 12 }} onClick={() => setAdditionalCapex((config.additional_capex_cost ?? []).length, 0, config.project_lifetime)}>+ Add Cost</button>
+        <button
+          className="btn-primary" style={{ marginTop: 12 }}
+          onClick={() => {
+            let n = capex.length + 1;
+            while (capex.some((r) => r.name === `Additional CAPEX ${n}`)) n++;
+            setCapexRows([...capex, { name: `Additional CAPEX ${n}`, cost: 0, year: config.project_lifetime }]);
+          }}
+        >
+          + Add Cost
+        </button>
       </div>
 
       {/* Products */}

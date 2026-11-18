@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from copy import deepcopy
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from types import SimpleNamespace
 from typing import Any, List, Dict, Literal, Optional, TypedDict
 from scipy.optimize import root_scalar
@@ -176,8 +176,8 @@ class PlantConfig(TypedDict, total=False):
     production_ramp: Sequence[float] | None
     fixed_opex_ramp: Sequence[float] | None
     variable_opex_ramp: Sequence[float] | None
-    additional_capex_years: Sequence[int] | np.ndarray | None
-    additional_capex_cost: Sequence[float] | np.ndarray | None
+    additional_capex_years: Mapping[str, int] | Sequence[int] | np.ndarray | None
+    additional_capex_cost: Mapping[str, float] | Sequence[float] | np.ndarray | None
     production_type: Literal["continuous", "batch"]
     operators_per_shift: Number | None
     operators_hired: Number | None
@@ -334,8 +334,12 @@ class Plant:
                     "patents_royalties", "distribution_selling_costs",
                     "RnD_costs"
         Additional Capex:
-            additional_capex_years (array): Years when additional capex occurs.
-            additional_capex_cost (array): Corresponding capex amounts.
+            additional_capex_cost (dict or list): One-off capital costs,
+                named as ``{"exploration": 1e6, ...}`` or unnamed as a list.
+            additional_capex_years (dict or list): Project year of each
+                cost: ``{"exploration": 10, ...}`` with the same names (or
+                a list in the same order), or a list matching an unnamed
+                cost list.
         Monte Carlo:
             project_uncertainties (dict): Per-parameter uncertainty settings
                 for Monte Carlo simulation. Each key maps to a sub-dict with
@@ -417,8 +421,8 @@ class Plant:
     working_weeks_per_year: float
     working_shifts_per_week: float
     operating_shifts_per_day: float
-    additional_capex_years: Any  # list or array of years, or None
-    additional_capex_cost: Any  # list or array of costs, or None
+    additional_capex_years: Any  # {name: year}, list or array, or None
+    additional_capex_cost: Any  # {name: cost}, list or array, or None
     fc: float | None
     fp: float | None
     capex_ramp: Sequence[float] | None
@@ -797,23 +801,24 @@ class Plant:
         )
 
         if print_results:
-            show_extra = (
-                additional_capex and self.additional_capex_cost is not None
-            )
+            items = _additional_capex_items(
+                self.additional_capex_cost, self.additional_capex_years
+            ) if additional_capex else None
             print("Capital cost estimation")
             print("===================================")
             print(f"ISBL: {self.isbl:,.2f} {self.currency}")
             print(f"OSBL: {self.osbl:,.2f} {self.currency}")
             print(f"Design and engineering: {self.dne:,.2f} {self.currency}")
             print(f"Contingency: {self.contigency:,.2f} {self.currency}")
-            if show_extra:
-                print(
-                    f"Additional CAPEX: "
-                    f"{sum(self.additional_capex_cost):,.2f} {self.currency}"
-                )
+            if items is not None:
+                names, costs, _ = items
+                # Named items one by one, unnamed ones as one sum
+                for name, cost in (zip(names, costs) if names
+                                   else [("Additional CAPEX", costs.sum())]):
+                    print(f"{name}: {cost:,.2f} {self.currency}")
             print("===================================")
             total_capex = self.fixed_capital + (
-                sum(self.additional_capex_cost) if show_extra else 0
+                items[1].sum() if items is not None else 0
             )
             print(
                 f"Fixed capital investment: "
@@ -1459,31 +1464,12 @@ class Plant:
             capex[np.arange(n_samples), lifetime - 1] -= working_capital
 
         # --- Add additional CAPEX at specified years ---
-        if (
-            self.additional_capex_years is not None
-            and self.additional_capex_cost is not None
-        ):
-            self.additional_capex_years = np.atleast_1d(
-                self.additional_capex_years
-            ).astype(int)
-            self.additional_capex_cost = np.atleast_1d(
-                self.additional_capex_cost
-            ).astype(float)
-
-            # Check if the number of years matches the number of costs
-            if (
-                self.additional_capex_years.shape[0]
-                != self.additional_capex_cost.shape[0]
-            ):
-                raise ValueError(
-                    "The number of additional_capex_years must "
-                    "match the number of additional_capex_cost "
-                    "entries."
-                )
-
-            for i, year in enumerate(
-                self.additional_capex_years
-            ):
+        items = _additional_capex_items(
+            self.additional_capex_cost, self.additional_capex_years
+        )
+        if items is not None:
+            _, extra_costs, extra_years = items
+            for cost, year in zip(extra_costs, extra_years):
                 # Ignore invalid years
                 if year < 1 or year > n_years:
                     continue
@@ -1492,9 +1478,7 @@ class Plant:
                 alive_mask = lifetime >= year
 
                 # Arrays are 0-indexed; NumPy will broadcast the scalar cost
-                additional_capex[
-                    alive_mask, year - 1
-                ] += self.additional_capex_cost[i]
+                additional_capex[alive_mask, year - 1] += cost
         # Kept apart as well so simple payback time can leave it out
         capex += additional_capex
 
@@ -2268,11 +2252,10 @@ class Plant:
             },
         }
 
-        # After calculate_cash_flow this is a numpy array, whose truth
-        # value is ambiguous for 2+ entries -- test length explicitly
-        if self.additional_capex_cost is not None and len(
-            np.atleast_1d(self.additional_capex_cost)
-        ) > 0:
+        items = _additional_capex_items(
+            self.additional_capex_cost, self.additional_capex_years
+        )
+        if items is not None and len(items[1]) > 0:
             plant_dict["metrics"]["roi_with_additional_capex"] = float(
                 self.calculate_roi(additional_capex=True)
             )
@@ -2683,6 +2666,42 @@ def _operator_rate(rate_cfg):
     if rate_cfg is None:
         return DEFAULT_OPERATOR_HOURLY_RATE
     return rate_cfg if isinstance(rate_cfg, np.ndarray) else float(rate_cfg)
+
+
+def _additional_capex_items(cost, years):
+    """
+    ``(names, costs, years)`` of the additional CAPEX, or None when unset.
+    Accepts named dicts (``{"exploration": 1e6}`` with
+    ``{"exploration": 10}``; years may also be a list in the same order)
+    or the unnamed matching lists, whose names are None.
+    """
+    if cost is None or years is None:
+        return None
+    names = None
+    if isinstance(cost, dict):
+        names = list(cost)
+        if isinstance(years, dict):
+            if set(years) != set(names):
+                raise ValueError(
+                    "additional_capex_years must name the same items as "
+                    f"additional_capex_cost (cost: {sorted(names)}, "
+                    f"years: {sorted(years)})."
+                )
+            years = [years[n] for n in names]
+        cost = list(cost.values())
+    elif isinstance(years, dict):
+        raise ValueError(
+            "additional_capex_years is a dict but additional_capex_cost is "
+            "not; give the costs as {name: cost} too."
+        )
+    cost = np.atleast_1d(np.asarray(cost, dtype=float))
+    years = np.atleast_1d(np.asarray(years)).astype(int)
+    if cost.shape[0] != years.shape[0]:
+        raise ValueError(
+            "The number of additional_capex_years must match the number "
+            "of additional_capex_cost entries."
+        )
+    return names, cost, years
 
 
 def _as_ramp(value, name):

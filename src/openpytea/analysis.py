@@ -5,7 +5,8 @@ from scipy import stats
 from scipy.optimize import root_scalar
 import numpy as np
 
-from openpytea.plant import DEFAULT_OPERATOR_HOURLY_RATE
+from openpytea.plant import (DEFAULT_OPERATOR_HOURLY_RATE,
+                             _additional_capex_items)
 from openpytea.helpers import (_make_label,
                                _legacy_label,
                                _tex_escape,
@@ -160,23 +161,19 @@ def fixed_capital_data(plants, additional_capex=False, pct=False):
             "Contingency": plant.contigency,
         }
 
-        # ponytail: isinstance/try coercion; 0.0 if extra is None else
-        #   float(np.sum(extra))
-        if additional_capex:
-            extra = getattr(plant, "additional_capex_cost", None)
-
-            if isinstance(extra, (list, tuple, np.ndarray)):
-                total_extra = float(
-                    sum(x for x in extra if isinstance(x, (int, float)))
+        # Named additional CAPEX ({name: cost}) gets a segment per item,
+        # unnamed (a list) one summed "Additional CAPEX" segment
+        items = _additional_capex_items(
+            plant.additional_capex_cost, plant.additional_capex_years
+        ) if additional_capex else None
+        if items is not None:
+            names, costs, _ = items
+            if names:
+                components.update(
+                    {_make_label(n): float(c) for n, c in zip(names, costs)}
                 )
-            else:
-                try:
-                    total_extra = float(extra) if extra is not None else 0.0
-                except (TypeError, ValueError):
-                    total_extra = 0.0
-
-            if total_extra != 0:
-                components["Additional CAPEX"] = total_extra
+            elif costs.sum() != 0:
+                components["Additional CAPEX"] = float(costs.sum())
 
         components_list.append(components)
         xlabels.append(plant.name)

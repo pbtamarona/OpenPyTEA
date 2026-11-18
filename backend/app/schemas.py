@@ -192,8 +192,9 @@ class PlantConfigIn(BaseModel):
     project_uncertainties: dict[str, dict] | None = None
     fc: float | None = None
     fp: float | None = None
-    additional_capex_years: list[int] | None = None
-    additional_capex_cost: list[float] | None = None
+    # {name: value} (named) or matching lists (unnamed, the older form)
+    additional_capex_years: dict[str, int] | list[int] | None = None
+    additional_capex_cost: dict[str, float] | list[float] | None = None
 
 
 class PlantImportIn(BaseModel):
