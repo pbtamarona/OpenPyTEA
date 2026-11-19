@@ -256,9 +256,12 @@ def test_electrolysis_renamed_to_electrolyzers_and_fuel_cells():
 # The first CSV row matching a category and type is its default correlation,
 # so re-sorting the CSV silently switches these (often to other units)
 @pytest.mark.parametrize("category, type, key", [
-    ("Boilers, heaters, & furnaces", "Hot water heater", "hot_water_heater_turton_2001"),
-    ("Boilers, heaters, & furnaces", "Pyrolysis furnace", "pyrolysis_furnace_turton_2001"),
-    ("Boilers, heaters, & furnaces", "Reformer furnace", "reformer_furnace_turton_2001"),
+    ("Boilers, heaters, & furnaces", "Hot water heater",
+     "hot_water_heater_turton_2001"),
+    ("Boilers, heaters, & furnaces", "Pyrolysis furnace",
+     "pyrolysis_furnace_turton_2001"),
+    ("Boilers, heaters, & furnaces", "Reformer furnace",
+     "reformer_furnace_turton_2001"),
     ("Boilers, heaters, & furnaces", "Steam boiler", "steam_boiler_turton_2001"),
     ("Conveyors", "Belt", "belt_conveyor_turton_2001"),
     ("Conveyors", "Pneumatic", "pneumatic_conveyor_turton_2001"),
