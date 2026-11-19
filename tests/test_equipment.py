@@ -179,3 +179,75 @@ def test_literal_hints_match_the_data():
     defaults = db["default material"].dropna().str.strip()
     expected = (set(Equipment.material_factors) | set(defaults)) - {"n.a."}
     assert set(get_args(Material)) == expected
+
+
+def test_old_cost_func_key_spelling_still_resolves():
+    kw = dict(name="P", param=1000, process_type="Fluids", category="Pumps")
+    new = Equipment(cost_func="centrifugal_1-stage_3600_vsc_seider_2013", **kw)
+    with pytest.warns(DeprecationWarning, match="renamed"):
+        old = Equipment(cost_func="centrifugal_1-stage_3600_VSC_seider_2013", **kw)
+    assert old.purchased_cost == new.purchased_cost
+
+
+def test_old_vsc_key_maps_to_hsc():
+    kw = dict(name="P", param=1000, process_type="Fluids", category="Pumps")
+    new = Equipment(cost_func="centrifugal_2-stage_3600_hsc_seider_2013", **kw)
+    with pytest.warns(DeprecationWarning, match="hsc"):
+        old = Equipment(cost_func="centrifugal_2-stage_3600_VSC_seider_2013", **kw)
+    assert old.purchased_cost == new.purchased_cost
+
+
+def test_old_type_spelling_with_extra_whitespace_still_matches():
+    kw = dict(name="T", param=10, process_type="Fluids",
+              category="Packings & adsorbents")
+    new = Equipment(type="Pall rings, carbon steel, 1 in.", **kw)
+    old = Equipment(type="Pall rings, carbon steel, 1 in. ", **kw)
+    assert old.purchased_cost == new.purchased_cost
+
+
+def test_old_key_year_maps_to_cost_year():
+    with pytest.warns(DeprecationWarning, match="propeller_fan_seider_2013"):
+        Equipment(name="F", param=5000, process_type="Fluids",
+                  category="Compressors, fans, & blowers",
+                  cost_func="propeller_fan_seider_2023")
+
+
+@pytest.mark.parametrize(
+    "old", ["Adsorption & membrane separation", "Gas separation", "CO2 capture"]
+)
+def test_merged_categories_still_work(old):
+    new = "Absorption, adsorption, & membrane separation"
+    with pytest.warns(FutureWarning, match="renamed"):
+        options = equipment_options(old)
+    assert options.equals(equipment_options(new))
+    with pytest.warns(FutureWarning):
+        eq = Equipment("RO", 1, "Fluids", old, "Reverse osmosis, brackish water")
+    assert eq.category == new
+
+
+def test_old_cfb_chp_type_still_works():
+    new = "Circulating fluidized bed (CFB), combined heat & power (CHP)"
+    ref = Equipment("CHP", 2, "Fluids", "Boilers, heaters, & furnaces", new)
+    with pytest.warns(FutureWarning, match="renamed"):
+        old = Equipment("CHP", 2, "Fluids", "Boilers, heaters, & furnaces", "CFB CHP")
+    assert old.type == new
+    assert old.purchased_cost == ref.purchased_cost
+
+
+def test_biomass_combustion_merged_into_boilers():
+    new = "Circulating fluidized bed (CFB), combined heat & power (CHP)"
+    ref = Equipment("CHP", 2, "Fluids", "Boilers, heaters, & furnaces", new)
+    with pytest.warns(FutureWarning, match="renamed"):
+        old = Equipment("CHP", 2, "Fluids", "Biomass combustion", new)
+    assert old.category == "Boilers, heaters, & furnaces"
+    assert old.purchased_cost == ref.purchased_cost
+
+
+def test_electrolysis_renamed_to_electrolyzers_and_fuel_cells():
+    new = "Electrolyzers & fuel cells"
+    ref = Equipment("EL", 10, "Fluids", new, "Electrolyzer (PEM / alkaline)")
+    with pytest.warns(FutureWarning, match="renamed"):
+        old = Equipment("EL", 10, "Fluids", "Electrolysis",
+                        "Electrolyzer (PEM / alkaline)")
+    assert old.category == new
+    assert old.purchased_cost == ref.purchased_cost

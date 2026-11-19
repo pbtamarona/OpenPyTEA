@@ -126,7 +126,7 @@ _COST_DB_COLUMNS = [
     "cost_year",
     "default material",
     "source",
-    "Remarks",
+    "remarks",
     "key",
 ]
 _COST_DB_HEADERS = [
@@ -206,7 +206,7 @@ def _generate_cost_correlations_table(app):
             cells["units"] = _superscript_units(cells["units"])
             cells["s_lower"] = _format_size(cells["s_lower"])
             cells["s_upper"] = _format_size(cells["s_upper"])
-            link = _link_for_source(row.get("doi /  link", ""))
+            link = _link_for_source(row.get("doi / link", ""))
             if link:
                 cells["source"] = f"`{cells['source']} <{link}>`__"
             cells["key"] = f"``{cells['key']}``"

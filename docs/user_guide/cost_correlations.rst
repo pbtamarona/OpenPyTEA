@@ -30,11 +30,34 @@ construction material the quoted cost basis assumes, e.g. ``Carbon
 steel`` or ``Stainless steel`` — override via the ``Equipment``
 constructor's ``material`` argument, see :ref:`materials`), its ``source``
 (clickable, linking to the DOI or reference where available), any
-``Remarks`` (basis of the quoted cost, e.g. free-on-board vs. installed,
+``remarks`` (basis of the quoted cost, e.g. free-on-board vs. installed,
 included/excluded motor, escalation notes), and the correlation ``key``.
 Use the ``key`` value as the ``cost_func`` argument when you need to pin
 a specific correlation (see :ref:`example-select-key`), and the
 ``category``/``type`` values for the ``Equipment`` constructor.
+
+.. note:: **Renamed categories, types and keys (deprecated names).**
+
+   The categories ``Adsorption & membrane separation``, ``Gas separation``
+   and ``CO2 capture`` have been merged into **Absorption, adsorption, &
+   membrane separation**, ``Biomass combustion`` has been merged into
+   **Boilers, heaters, & furnaces**, ``Compressors & blowers`` is now
+   **Compressors, fans, & blowers**, and ``Electrolysis`` is now
+   **Electrolyzers & fuel cells**. The type ``CFB CHP`` is now
+   **Circulating fluidized bed (CFB), combined heat & power (CHP)**. The
+   old category and type names still work but raise a
+   ``FutureWarning`` and will be removed in a future release.
+
+   Some correlation keys were also renamed: keys are now lowercase without
+   spaces (e.g. ``pall_rings_ cs_1in_seider_2013`` →
+   ``pall_rings_cs_1in_seider_2013``), the year in a key now matches its
+   ``cost_year`` (``propeller_fan_seider_2023`` →
+   ``propeller_fan_seider_2013``, ``biomass_cfb_chp_irena_2012`` →
+   ``biomass_cfb_chp_irena_2010``), and two pump keys now say ``hsc``
+   like their type (``centrifugal_2-stage_3600_VSC_seider_2013`` →
+   ``centrifugal_2-stage_3600_hsc_seider_2013``, and likewise for
+   ``2+-stage``). Old keys passed as ``cost_func`` still work but raise a
+   ``DeprecationWarning`` and will be removed in a future release.
 
 **The correlation coefficients themselves are not shown in this summary
 table** — download the full

@@ -30,11 +30,9 @@ ProcessType = Literal["Solids", "Fluids", "Mixed", "Electrical"]
 Param = float | tuple[float, float] | list[float]
 
 Category = Literal[
-    "Adsorption & membrane separation",
+    "Absorption, adsorption, & membrane separation",
     "Agitators, blenders, & mixers",
-    "Biomass combustion",
     "Boilers, heaters, & furnaces",
-    "CO2 capture",
     "Centrifuges",
     "Compressors, fans, & blowers",
     "Conveyors",
@@ -43,11 +41,10 @@ Category = Literal[
     "Dryers",
     "Dust collectors",
     "Ejectors",
-    "Electrolysis",
+    "Electrolyzers & fuel cells",
     "Evaporators",
     "Expression",
     "Filters",
-    "Gas separation",
     "Heat exchangers",
     "Liquid-liquid extractors",
     "Motors & generators",
@@ -115,9 +112,9 @@ EquipmentType = Literal[
     "Belt, 1.0 m wide",
     "Belt, excluding motor",
     "Bent",
-    "Berl saddles, ceramic, 1 in. ",
-    "Berl saddles, ceramic, 1.5 in. ",
-    "Berl saddles, ceramic, 2 in. ",
+    "Berl saddles, ceramic, 1 in.",
+    "Berl saddles, ceramic, 1.5 in.",
+    "Berl saddles, ceramic, 2 in.",
     "Bin",
     "Biogas upgrading, amine scrubber",
     "Biogas upgrading, membrane separation",
@@ -126,24 +123,24 @@ EquipmentType = Literal[
     "Biogas upgrading, water scrubber",
     "Blower",
     "Blower, centrifugal, excluding motor",
-    "Boiler, field erected  (10-70 bar)",
+    "Boiler, field erected (10-70 bar)",
     "Boiler, packaged (15-40 bar)",
     "Bubble-cap",
     "Bucket elevator",
     "Bucket elevator, 0.5 m bucket",
     "Burner",
     "Cartridge",
-    "Cascade minirings, ceramic, 1 in. ",
-    "Cascade minirings, ceramic, 2 in. ",
-    "Cascade minirings, ceramic, 3 in. ",
-    "Cascade minirings, polypropylene, 1 in. ",
-    "Cascade minirings, polypropylene, 2 in. ",
-    "Cascade minirings, polypropylene, 3 in. ",
-    "Cascade minirings, stainless steel, 1 in. ",
-    "Cascade minirings, stainless steel, 1.5 in. ",
-    "Cascade minirings, stainless steel, 2 in. ",
-    "Cascade minirings, stainless steel, 3 in. ",
-    "Cascade minirings, stainless steel, 4 in. ",
+    "Cascade minirings, ceramic, 1 in.",
+    "Cascade minirings, ceramic, 2 in.",
+    "Cascade minirings, ceramic, 3 in.",
+    "Cascade minirings, polypropylene, 1 in.",
+    "Cascade minirings, polypropylene, 2 in.",
+    "Cascade minirings, polypropylene, 3 in.",
+    "Cascade minirings, stainless steel, 1 in.",
+    "Cascade minirings, stainless steel, 1.5 in.",
+    "Cascade minirings, stainless steel, 2 in.",
+    "Cascade minirings, stainless steel, 3 in.",
+    "Cascade minirings, stainless steel, 4 in.",
     "Centrifugal",
     "Centrifugal (turbo) blower",
     "Centrifugal compressor, electric motor drive",
@@ -166,7 +163,7 @@ EquipmentType = Literal[
     "Centrifugal, straight radial fan, head 5-8 in. H2O",
     "Centrifugal, straight radial fan, head 9-15 in. H2O",
     "Centrifugal, straight radial fan, head less than 4 in. H2O",
-    "CFB CHP",
+    "Circulating fluidized bed (CFB), combined heat & power (CHP)",
     "Clarifier, concrete",
     "Clarifier, steel",
     "Cloth, shaker type, including motors",
@@ -204,7 +201,7 @@ EquipmentType = Literal[
     "Drum, excluding motor",
     "DSM",
     "Electric arc furnace",
-    "Electric motor, explosion-proof enclosure, 1,800 rpm ",
+    "Electric motor, explosion-proof enclosure, 1,800 rpm",
     "Electric motor, explosion-proof enclosure, 3,600 rpm",
     "Electric motor, open drip-proof enclosure, 1,800 rpm",
     "Electric motor, open drip-proof enclosure, 3,600 rpm",
@@ -263,12 +260,12 @@ EquipmentType = Literal[
     "Indirect fluidized-bed",
     "Indirect-heat steam-tube rotary",
     "Inoculum tank",
-    "Intalox saddles, ceramic, 1-1.5 in. ",
-    "Intalox saddles, ceramic, 2 in. ",
-    "Intalox saddles, ceramic, 3 in. ",
-    "Intalox saddles, polypropylene, 1 in. ",
-    "Intalox saddles, polypropylene, 2 in. ",
-    "Intalox saddles, polypropylene, 3 in. ",
+    "Intalox saddles, ceramic, 1-1.5 in.",
+    "Intalox saddles, ceramic, 2 in.",
+    "Intalox saddles, ceramic, 3 in.",
+    "Intalox saddles, polypropylene, 1 in.",
+    "Intalox saddles, polypropylene, 2 in.",
+    "Intalox saddles, polypropylene, 3 in.",
     "Internal coils/jackets",
     "Internal combustion engine",
     "Jacketed agitated",
@@ -310,16 +307,16 @@ EquipmentType = Literal[
     "Open/dried-proof",
     "Oscillating screen",
     "Packaged mechanical refrigerator",
-    "Pall rings, carbon steel, 1 in. ",
-    "Pall rings, carbon steel, 1.5 in. ",
-    "Pall rings, carbon steel, 2 in. ",
-    "Pall rings, polypropylene, 1 in. ",
-    "Pall rings, polypropylene, 1.5 in. ",
-    "Pall rings, polypropylene, 2 in. ",
-    "Pall rings, polypropylene, 3 in. ",
-    "Pall rings, stainless steel, 1 in. ",
-    "Pall rings, stainless steel, 1.5 in. ",
-    "Pall rings, stainless steel, 2 in. ",
+    "Pall rings, carbon steel, 1 in.",
+    "Pall rings, carbon steel, 1.5 in.",
+    "Pall rings, carbon steel, 2 in.",
+    "Pall rings, polypropylene, 1 in.",
+    "Pall rings, polypropylene, 1.5 in.",
+    "Pall rings, polypropylene, 2 in.",
+    "Pall rings, polypropylene, 3 in.",
+    "Pall rings, stainless steel, 1 in.",
+    "Pall rings, stainless steel, 1.5 in.",
+    "Pall rings, stainless steel, 2 in.",
     "Pan",
     "Pellet mill",
     "PEM electrolyzer, current (2019)",
@@ -340,12 +337,12 @@ EquipmentType = Literal[
     "Pyrolysis furnace",
     "Radial expander",
     "Radial gas/liquid expanders",
-    "Raschig rings, carbon steel, 1-1.5 in. ",
-    "Raschig rings, carbon steel, 2-3 in. ",
-    "Raschig rings, ceramic, 1-3 in. ",
-    "Raschig rings, stainless steel, 1 in. ",
-    "Raschig rings, stainless steel, 1.5 in. ",
-    "Raschig rings, stainless steel, 2-3 in. ",
+    "Raschig rings, carbon steel, 1-1.5 in.",
+    "Raschig rings, carbon steel, 2-3 in.",
+    "Raschig rings, ceramic, 1-3 in.",
+    "Raschig rings, stainless steel, 1 in.",
+    "Raschig rings, stainless steel, 1.5 in.",
+    "Raschig rings, stainless steel, 2-3 in.",
     "Reciprocating",
     "Reciprocating compressor, electric motor drive",
     "Reciprocating compressor, gas turbine drive",
@@ -410,7 +407,7 @@ EquipmentType = Literal[
     "Table",
     "Tableting press",
     "Teflon tube",
-    "Tellerettes, polyethylene, 1 in. ",
+    "Tellerettes, polyethylene, 1 in.",
     "Thermal screw, including motor",
     "Thermosiphon reboiler",
     "Thickener, concrete",
@@ -502,6 +499,13 @@ Material = Literal[
 # Renamed categories: old name (lowercase, as lookups ignore case) -> current
 _CATEGORY_ALIASES = {
     "compressors & blowers": "Compressors, fans, & blowers",
+    # Merged into one category (deprecated, to be removed in a future release)
+    "adsorption & membrane separation":
+        "Absorption, adsorption, & membrane separation",
+    "gas separation": "Absorption, adsorption, & membrane separation",
+    "co2 capture": "Absorption, adsorption, & membrane separation",
+    "biomass combustion": "Boilers, heaters, & furnaces",
+    "electrolysis": "Electrolyzers & fuel cells",
 }
 
 
@@ -517,6 +521,26 @@ def _current_category(category):
         )
         return new
     return category
+
+
+# Renamed types: old name (lowercase) -> current
+_TYPE_ALIASES = {
+    "cfb chp": "Circulating fluidized bed (CFB), combined heat & power (CHP)",
+}
+
+
+def _current_type(type):
+    """Map a renamed type to its current name, with a warning."""
+    new = _TYPE_ALIASES.get(" ".join(str(type).split()).lower())
+    if new is not None:
+        warnings.warn(
+            f"Type '{type}' has been renamed to '{new}'; "
+            "the old name will be removed in a future release.",
+            FutureWarning,
+            stacklevel=3,
+        )
+        return new
+    return type
 
 
 def _unknown(what, value, valid, scope="", see=None):
@@ -558,7 +582,7 @@ def equipment_options(category=None):
     Examples
     --------
     >>> equipment_options()[:2]
-    ['Adsorption & membrane separation', 'Agitators, blenders, & mixers']
+    ['Absorption, adsorption, & membrane separation', 'Agitators, blenders, & mixers']
     >>> equipment_options("Pumps")["type"].head(1).tolist()
     ['Centrifugal']
     """
@@ -573,6 +597,18 @@ def equipment_options(category=None):
     columns = ["type", "units", "s_lower", "s_upper", "s2_lower", "s2_upper",
                "default material", "cost_year", "source", "key"]
     return rows[columns].reset_index(drop=True)
+
+
+# Keys renamed beyond lowercasing/removing spaces: the year now matches
+# cost_year, and two pump keys said VSC where the type is HSC
+_RENAMED_KEYS = {
+    "propeller_fan_seider_2023": "propeller_fan_seider_2013",
+    "biomass_cfb_chp_irena_2012": "biomass_cfb_chp_irena_2010",
+    "centrifugal_2-stage_3600_vsc_seider_2013":
+        "centrifugal_2-stage_3600_hsc_seider_2013",
+    "centrifugal_2+-stage_3600_vsc_seider_2013":
+        "centrifugal_2+-stage_3600_hsc_seider_2013",
+}
 
 
 def inflation_adjustment(equipment_cost, cost_year, target_year=2024):
@@ -825,18 +861,21 @@ class CostCorrelationDB:
         str | None
             Correlation key if found, None otherwise.
         """
-        t = eq_category.lower()
-        st = type.lower() if type else ""
+        # Ignore case and surrounding/repeated whitespace (some types used
+        # to end in a space in the CSV)
+        def norm(s):
+            return " ".join(str(s).split()).lower()
+
+        t = norm(eq_category)
+        st = norm(type) if type else ""
         df = self.df
 
         if "category" not in df.columns:
             return None
 
-        cand = df[df["category"].str.lower() == t]
+        cand = df[df["category"].map(norm) == t]
         if "type" in df.columns:
-            cand = cand[
-                cand["type"].fillna("").str.lower() == st
-            ]
+            cand = cand[cand["type"].fillna("").map(norm) == st]
 
         if cand.empty:
             return None
@@ -1180,7 +1219,7 @@ class Equipment:
             None if purchased_cost is not None else param
         )
         self.category = _current_category(category)
-        self.type = type
+        self.type = _current_type(type)
         self.num_units = num_units
         self.cost_year = cost_year
         self.target_year = target_year
@@ -1275,7 +1314,20 @@ class Equipment:
             and no explicit cost_func was provided.
         """
         if self._cost_func:
-            return self._cost_func
+            key = self._cost_func
+            # Keys used to contain spaces/capitals (e.g. "pall_rings_ cs_1in_
+            # seider_2013"); accept the old spelling of a renamed key
+            new = "".join(key.split()).lower()
+            new = _RENAMED_KEYS.get(new, new)
+            keys = set(self._db.df["key"])
+            if key not in keys and new in keys:
+                warnings.warn(
+                    f"Correlation key '{key}' was renamed to '{new}'; "
+                    "the old spelling will be removed in a future release.",
+                    DeprecationWarning, stacklevel=3,
+                )
+                return new
+            return key
 
         key = self._db.key_for_category_type(
             self.category, self.type
@@ -1589,7 +1641,7 @@ class CompositeEquipment:
         self.name = name
         self.process_type = process_type
         self.category = _current_category(category)
-        self.type = type
+        self.type = _current_type(type)
         self.installation = installation
         self.target_year = target_year
         self.num_units = num_units
