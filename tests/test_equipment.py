@@ -251,3 +251,33 @@ def test_electrolysis_renamed_to_electrolyzers_and_fuel_cells():
                         "Electrolyzer (PEM / alkaline)")
     assert old.category == new
     assert old.purchased_cost == ref.purchased_cost
+
+
+# The first CSV row matching a category and type is its default correlation,
+# so re-sorting the CSV silently switches these (often to other units)
+@pytest.mark.parametrize("category, type, key", [
+    ("Boilers, heaters, & furnaces", "Hot water heater", "hot_water_heater_turton_2001"),
+    ("Boilers, heaters, & furnaces", "Pyrolysis furnace", "pyrolysis_furnace_turton_2001"),
+    ("Boilers, heaters, & furnaces", "Reformer furnace", "reformer_furnace_turton_2001"),
+    ("Boilers, heaters, & furnaces", "Steam boiler", "steam_boiler_turton_2001"),
+    ("Conveyors", "Belt", "belt_conveyor_turton_2001"),
+    ("Conveyors", "Pneumatic", "pneumatic_conveyor_turton_2001"),
+    ("Conveyors", "Screw", "screw_conveyor_turton_2001"),
+    ("Dryers", "Drum", "drum_dryer_turton_2001"),
+    ("Dust collectors", "Electrostatic precipitator",
+     "electrostatic_precipitator_turton_2001"),
+    ("Evaporators", "Falling film", "falling_film_evaporator_turton_2001"),
+    ("Filters", "Plate & frame", "plate_n_frame_filter_towler_2010"),
+    ("Heat exchangers", "Plate & frame", "plate_frame_hx_towler_2010"),
+    ("Heat exchangers", "Spiral plate", "spiral_plate_hx_turton_2001"),
+    ("Heat exchangers", "Spiral tube", "spiral_tube_hx_turton_2001"),
+    ("Motors & generators", "Internal combustion engine",
+     "internal_combustion_engine_turton_2001"),
+    ("Trays", "Bubble-cap", "bubble_cap_tray_towler_2010"),
+    ("Trays", "Sieve", "sieve_tray_towler_2010"),
+    ("Trays", "Valve", "valve_tray_towler_2010"),
+    ("Turbines", "Gas turbine", "gas_turbine_turton_2001"),
+])
+def test_default_correlation_per_category_type(category, type, key):
+    from openpytea.equipment import CostCorrelationDB
+    assert CostCorrelationDB().key_for_category_type(category, type) == key
