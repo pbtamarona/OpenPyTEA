@@ -35,7 +35,7 @@ jobs:
       matrix:
         include:
           - label: macOS (Apple Silicon)
-            os: macos-14
+            os: macos-15
             artifact: macos-arm64
             bundles: app,dmg
             rc_bundles: app,dmg
