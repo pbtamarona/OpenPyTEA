@@ -20,7 +20,7 @@ https://openpytea.readthedocs.io
 https://github.com/pbtamarona/OpenPyTEA/tree/main/examples
 
 **To use OpenPyTEA without writing code, download the desktop app for Windows or macOS** (installing is explained in the Graphical User Interface section below):
-https://github.com/pbtamarona/OpenPyTEA/releases/tag/v3.2.2
+https://github.com/pbtamarona/OpenPyTEA/releases/tag/v3.2.3
 
 ---
 ## ✨ Key Features
@@ -115,12 +115,12 @@ Software architecture and data flow of **OpenPyTEA**, illustrating the progressi
 
 An optional desktop app provides the full TEA workflow — equipment costing, plant configuration, results, sensitivity/tornado analysis, Monte Carlo, and multi-plant comparison — without writing Python code. No Python or Node.js required.
 
-**Download** the installer for your platform from the **[OpenPyTEA 3.2.2 release](https://github.com/pbtamarona/OpenPyTEA/releases/tag/v3.2.2)**:
+**Download** the installer for your platform from the **[OpenPyTEA 3.2.3 release](https://github.com/pbtamarona/OpenPyTEA/releases/tag/v3.2.3)**:
 
 | Platform | File |
 |---|---|
-| **Windows** (x64) | `OpenPyTEA_3.2.2_x64-setup.exe` (or the `.msi`) |
-| **macOS** (Apple Silicon) | `OpenPyTEA_3.2.2_aarch64.dmg` |
+| **Windows** (x64) | `OpenPyTEA_3.2.3_x64-setup.exe` (or the `.msi`) |
+| **macOS** (Apple Silicon) | `OpenPyTEA_3.2.3_aarch64.dmg` |
 
 **Install:**
 - **Windows:** run the `.exe` and follow the setup wizard. If SmartScreen shows *"Windows protected your PC"* (the app isn't code-signed), click **More info** → **Run anyway**.
